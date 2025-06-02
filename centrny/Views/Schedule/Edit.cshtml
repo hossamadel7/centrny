@@ -1,0 +1,235 @@
+﻿@model centrny.Models.Schedule
+
+@{
+    ViewData["Title"] = "Edit Schedule";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Schedule: @Model.ScheduleName
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" id="scheduleEditForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <input type="hidden" asp-for="ScheduleCode" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ScheduleName" class="form-label required"></label>
+                                <input asp-for="ScheduleName" class="form-control form-control-lg" placeholder="Enter schedule name" />
+                                <span asp-validation-for="ScheduleName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DayOfWeek" class="form-label required"></label>
+                                <select asp-for="DayOfWeek" class="form-select form-select-lg" asp-items="ViewBag.DaysOfWeek">
+                                    <option value="">Select Day of Week</option>
+                                </select>
+                                <span asp-validation-for="DayOfWeek" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartTime" class="form-label required"></label>
+                                <input asp-for="StartTime" type="time" class="form-control form-control-lg"
+                                       value="@Model.StartTime?.ToString("HH:mm")" />
+                                <span asp-validation-for="StartTime" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EndTime" class="form-label required"></label>
+                                <input asp-for="EndTime" type="time" class="form-control form-control-lg"
+                                       value="@Model.EndTime?.ToString("HH:mm")" />
+                                <span asp-validation-for="EndTime" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="HallCode" class="form-label"></label>
+                                <select asp-for="HallCode" class="form-select form-select-lg" asp-items="ViewBag.HallCode">
+                                    <option value="">Select Hall (Optional)</option>
+                                </select>
+                                <span asp-validation-for="HallCode" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RootCode" class="form-label"></label>
+                                <select asp-for="RootCode" class="form-select form-select-lg" asp-items="ViewBag.RootCode">
+                                    <option value="">Select Root/Center (Optional)</option>
+                                </select>
+                                <span asp-validation-for="RootCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EduYearCode" class="form-label"></label>
+                                <select asp-for="EduYearCode" class="form-select form-select-lg" asp-items="ViewBag.EduYearCode">
+                                    <option value="">Select Educational Year (Optional)</option>
+                                </select>
+                                <span asp-validation-for="EduYearCode" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TeacherCode" class="form-label"></label>
+                                <select asp-for="TeacherCode" class="form-select form-select-lg" asp-items="ViewBag.TeacherCode">
+                                    <option value="">Select Teacher (Optional)</option>
+                                </select>
+                                <span asp-validation-for="TeacherCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SubjectCode" class="form-label"></label>
+                                <select asp-for="SubjectCode" class="form-select form-select-lg" asp-items="ViewBag.SubjectCode">
+                                    <option value="">Select Subject (Optional)</option>
+                                </select>
+                                <span asp-validation-for="SubjectCode" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ScheduleAmount" class="form-label"></label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="ScheduleAmount" class="form-control" step="0.01" min="0" placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="ScheduleAmount" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> Editing this schedule will affect all future occurrences. Existing classes and attendance records will remain unchanged.
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg px-4">
+                                <i class="fas fa-save me-2"></i>
+                                Update Schedule
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.ScheduleCode" class="btn btn-outline-info btn-lg px-4">
+                                <i class="fas fa-eye me-2"></i>
+                                View Details
+                            </a>
+                            <a asp-action="Calendar" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-times me-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #f093fb;
+            box-shadow: 0 0 0 0.2rem rgba(240, 147, 251, 0.25);
+        }
+
+    .btn {
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+
+    .input-group-text {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-right: none;
+    }
+
+    .input-group .form-control {
+        border-left: none;
+    }
+
+        .input-group .form-control:focus {
+            border-left: none;
+        }
+
+    .input-group:focus-within .input-group-text {
+        border-color: #f093fb;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Time validation
+            const startTimeInput = document.querySelector('input[name="StartTime"]');
+            const endTimeInput = document.querySelector('input[name="EndTime"]');
+
+            function validateTime() {
+                if (startTimeInput.value && endTimeInput.value) {
+                    if (startTimeInput.value >= endTimeInput.value) {
+                        endTimeInput.setCustomValidity('End time must be after start time');
+                    } else {
+                        endTimeInput.setCustomValidity('');
+                    }
+                }
+            }
+
+            startTimeInput.addEventListener('change', validateTime);
+            endTimeInput.addEventListener('change', validateTime);
+
+            // Form submission enhancement
+            document.getElementById('scheduleEditForm').addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+                submitBtn.disabled = true;
+            });
+
+            // Auto-save draft functionality (optional)
+            const form = document.getElementById('scheduleEditForm');
+            const inputs = form.querySelectorAll('input, select');
+
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Could implement auto-save to localStorage here
+                    console.log('Field changed:', this.name, this.value);
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,171 @@
+﻿@model List<centrny.Models.WalletExam>
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Wallet Exams";
+    string FormatDate(DateOnly d) => d.ToString("MMM dd, yyyy", CultureInfo.InvariantCulture);
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<div class="container mt-4">
+    <h1>Wallet Exams</h1>
+
+    <!-- Filters and Selectors -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input id="searchInput" class="form-control" placeholder="Search by WalletExamCode..." />
+        </div>
+        <div class="col-md-3">
+            <select id="statusFilter" class="form-select">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="expiryFilter" class="form-select">
+                <option value="">All Expiry</option>
+                <option value="expired">Expired</option>
+                <option value="active">Active</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- New: Center/Teacher Selection -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-3">
+            <label class="form-label">Select Type:</label>
+            <div>
+                <input type="radio" id="typeCenter" name="rootType" value="center" checked>
+                <label for="typeCenter">Center</label>
+
+                <input type="radio" id="typeTeacher" name="rootType" value="teacher" class="ms-3">
+                <label for="typeTeacher">Teacher</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label for="rootSelect" class="form-label">Select:</label>
+            <select id="rootSelect" class="form-select">
+                <option value="">-- Select Center --</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Wallet Exams Table -->
+    <table class="table table-bordered table-striped" id="walletExamTable">
+        <thead>
+            <tr>
+                <th>WalletExamCode</th>
+                <th>Amount</th>
+                <th>Count</th>
+                <th>OriginalCount</th>
+                <th>DateStart</th>
+                <th>ExpireDate</th>
+                <th>Days Left</th>
+                <th>Status</th>
+                <th>RootCode</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            @foreach (var item in Model)
+            {
+                var daysLeft = (item.ExpireDate.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
+                var daysLeftText = daysLeft < 0 ? "Expired" : $"{daysLeft} days";
+                var statusText = item.IsActive ? "Active" : "Inactive";
+
+                <tr data-id="@item.WalletExamCode">
+                    <td class="walletExamCode">@item.WalletExamCode</td>
+                    <td class="amount">@item.Amount</td>
+                    <td class="count">@item.Count</td>
+                    <td class="originalCount">@item.OriginalCount</td>
+                    <td class="dateStart">@FormatDate(item.DateStart)</td>
+                    <td class="expireDate">@FormatDate(item.ExpireDate)</td>
+                    <td class="daysLeft">@daysLeftText</td>
+                    <td class="status">@statusText</td>
+                    <td class="rootCode">@item.RootCode</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary btn-edit">Edit</button>
+                        <button class="btn btn-sm btn-danger btn-delete">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div id="alertPlaceholder"></div>
+
+    <!-- Add Button -->
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addWalletExamModal">
+        Add Wallet Exam
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="addWalletExamModal" tabindex="-1" aria-labelledby="addWalletExamModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="addWalletExamForm" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addWalletExamModalLabel">Add Wallet Exam</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" name="amount" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Count</label>
+                        <input type="number" name="count" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Original Count</label>
+                        <input type="number" name="originalCount" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Date Start</label>
+                        <input type="date" name="dateStart" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Expire Date</label>
+                        <input type="date" name="expireDate" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Is Active</label>
+                        <select name="isActive" class="form-select">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Root Code</label>
+                        <input type="number" name="rootCode" class="form-control" required>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    window.updateWalletExamUrl = '@Url.Action("UpdateWalletExam", "WalletExam")';
+</script>
+<script src="~/js/Wallet.js"></script>
+
+<form asp-controller="WalletExam" asp-action="Index" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>

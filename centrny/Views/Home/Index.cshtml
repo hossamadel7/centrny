@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Link to your JavaScript file -->
+<script src="~/js/site.js"></script>
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    <h4 class="mt-4">Root Modules Table</h4>
+
+    <!-- Table to display root modules -->
+    <table id="rootModulesTable" class="table table-bordered" style="width: 60%; margin: 0 auto;">
+        <thead>
+            <tr>
+                <th>Root Code</th>
+                <th>Root name</th>
+                <th>Root phone</th>
+                <th>Root owner</th>
+                   <th> Iscenter</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data rows will be inserted here dynamically -->
+        </tbody>
+    </table>
+</div>

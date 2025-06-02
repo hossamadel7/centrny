@@ -1,0 +1,1069 @@
+﻿@{
+    ViewData["Title"] = "Schedule Calendar";
+}
+
+<link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.min.css' rel='stylesheet' />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        --success-color-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        --border-radius: 15px;
+        --border-radius-lg: 20px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    body, .calendar-page {
+        background: var(--primary-gradient);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .calendar-container {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-lg);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        padding: 35px;
+        margin: 20px auto;
+        max-width: 1600px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .calendar-header {
+        background: var(--success-gradient);
+        color: white;
+        padding: 30px;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 35px;
+        box-shadow: 0 15px 35px rgba(79, 172, 254, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .calendar-header h1 {
+        margin: 0;
+        font-size: 2.8rem;
+        font-weight: 300;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .calendar-header p {
+        position: relative;
+        z-index: 1;
+        opacity: 0.95;
+        font-size: 1.1rem;
+    }
+
+    .calendar-controls {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-modern {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 30px;
+        font-weight: 600;
+        transition: var(--transition);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+    }
+
+    .btn-modern:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+
+    .btn-success-modern {
+        background: var(--success-gradient);
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+    }
+
+    .btn-info {
+        background: var(--info-gradient);
+        box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+    }
+
+    #calendar {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 25px;
+        box-shadow: var(--box-shadow);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .fc-toolbar {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        padding: 20px;
+        border-radius: var(--border-radius);
+        margin-bottom: 25px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .fc-toolbar-title {
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        color: #495057 !important;
+    }
+
+    .fc-button-primary {
+        background: var(--primary-gradient) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 10px 20px !important;
+        transition: var(--transition) !important;
+        font-weight: 600 !important;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+
+    .fc-button-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .fc-event {
+        border-radius: 12px !important;
+        border: none !important;
+        padding: 6px 12px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+        transition: var(--transition) !important;
+        font-size: 0.9rem !important;
+        margin: 2px !important;
+        opacity: 0.95 !important;
+        cursor: pointer !important;
+    }
+
+    .fc-event:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+        opacity: 1 !important;
+        z-index: 999 !important;
+    }
+
+    .fc-col-header-cell {
+        background: var(--primary-gradient) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        padding: 15px 10px !important;
+        border: none !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .fc-day-today {
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.08) 0%, rgba(0, 242, 254, 0.08) 100%) !important;
+    }
+
+    .fc-now-indicator {
+        border-color: #e74c3c !important;
+        border-width: 3px !important;
+        box-shadow: 0 0 15px rgba(231, 76, 60, 0.6) !important;
+    }
+
+    .legend {
+        display: flex;
+        gap: 25px;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+        border-radius: var(--border-radius);
+        margin-bottom: 25px;
+        box-shadow: var(--box-shadow);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        color: #495057;
+        padding: 8px 15px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 25px;
+        transition: var(--transition);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .legend-color {
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .floating-add-btn {
+        position: fixed;
+        bottom: 35px;
+        right: 35px;
+        width: 70px;
+        height: 70px;
+        background: var(--success-gradient);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 28px;
+        box-shadow: 0 15px 35px rgba(79, 172, 254, 0.4);
+        transition: var(--transition);
+        z-index: 1000;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .floating-add-btn:hover {
+        transform: scale(1.15) rotate(90deg);
+        box-shadow: 0 20px 40px rgba(79, 172, 254, 0.6);
+    }
+
+    .quick-actions {
+        position: fixed;
+        bottom: 100px;
+        right: 35px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 999;
+    }
+
+    .quick-action-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        color: white;
+        font-size: 18px;
+        transition: var(--transition);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        opacity: 0.8;
+    }
+
+    .quick-action-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .quick-refresh {
+        background: var(--success-color-gradient);
+    }
+
+    .quick-today {
+        background: var(--warning-gradient);
+    }
+
+    .modal-content {
+        border-radius: var(--border-radius-lg);
+        border: none;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: var(--success-gradient);
+        color: white;
+        border: none;
+        padding: 25px 30px;
+        position: relative;
+    }
+
+    .modal-title {
+        position: relative;
+        z-index: 1;
+        font-weight: 600;
+    }
+
+    .modal-body {
+        padding: 30px;
+        background: linear-gradient(135deg, #fafafa 0%, #f8f9fa 100%);
+    }
+
+    .form-control, .form-select {
+        border-radius: var(--border-radius);
+        border: 2px solid #e9ecef;
+        padding: 15px 20px;
+        transition: var(--transition);
+        background: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+        transform: translateY(-2px);
+        background: white;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+    }
+
+    .alert {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+    }
+
+    .toast-container {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        z-index: 1050;
+    }
+
+    .btn-modern.loading {
+        pointer-events: none;
+        position: relative;
+    }
+
+    .btn-modern.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @@media (max-width: 768px) {
+        .calendar-container {
+            margin: 10px;
+            padding: 20px;
+        }
+
+        .calendar-header h1 {
+            font-size: 2rem;
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .floating-add-btn {
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="container-fluid calendar-page">
+    <div class="calendar-container animate-fade-in">
+        <div class="calendar-header">
+            <h1>
+                <i class="fas fa-calendar-week"></i>
+                Weekly Schedule Management
+            </h1>
+            <p class="mb-0 mt-2">View and manage daily schedules in weekly and daily views</p>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Center Schedules</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Teacher Schedules</span>
+            </div>
+            <div class="legend-item">
+                <i class="fas fa-layer-group text-success me-2"></i>
+                <span>Multiple classes can run simultaneously in different halls</span>
+            </div>
+            <div class="legend-item">
+                <i class="fas fa-info-circle text-info me-2"></i>
+                <span>Click any schedule to view hall details and edit</span>
+            </div>
+        </div>
+
+        <div class="calendar-controls">
+            <button type="button" class="btn btn-modern btn-success-modern" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                <i class="fas fa-plus"></i> Add New Schedule
+            </button>
+            <button type="button" class="btn btn-modern btn-info" data-bs-toggle="modal" data-bs-target="#monthPickerModal">
+                <i class="fas fa-calendar-alt"></i> Jump to Month
+            </button>
+            <a href="@Url.Action("Index")" class="btn btn-modern">
+                <i class="fas fa-list"></i> List View
+            </a>
+            <button type="button" class="btn btn-modern" onclick="refreshCalendar()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button type="button" class="btn btn-modern" onclick="goToToday()">
+                <i class="fas fa-calendar-day"></i> This Week
+            </button>
+        </div>
+
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Floating Add Button -->
+<button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addScheduleModal" title="Add New Schedule">
+    <i class="fas fa-plus"></i>
+</button>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <button class="quick-action-btn quick-refresh" onclick="refreshCalendar()" title="Refresh Calendar">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+    <button class="quick-action-btn quick-today" onclick="goToToday()" title="Go to This Week">
+        <i class="fas fa-calendar-day"></i>
+    </button>
+</div>
+
+<!-- Add Schedule Modal -->
+<div class="modal fade" id="addScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus"></i> Add New Schedule
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Schedule Name *</label>
+                            <input type="text" class="form-control" id="scheduleName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Day of Week *</label>
+                            <select class="form-select" id="dayOfWeek" required>
+                                <option value="">Select Day</option>
+                                <option value="Sunday">Sunday</option>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Time *</label>
+                            <input type="time" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Time *</label>
+                            <input type="time" class="form-control" id="endTime" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hall</label>
+                            <select class="form-select" id="hallCode">
+                                <option value="">Select Hall</option>
+                                @if(ViewData["HallCode"] != null)
+                                {
+                                    @foreach(var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["HallCode"])
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Root/Center</label>
+                            <select class="form-select" id="rootCode">
+                                <option value="">Select Root</option>
+                                @if(ViewData["RootCode"] != null)
+                                {
+                                    @foreach(var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["RootCode"])
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Educational Year</label>
+                            <select class="form-select" id="eduYearCode">
+                                <option value="">Select Year</option>
+                                @if(ViewData["EduYearCode"] != null)
+                                {
+                                    @foreach(var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teacher</label>
+                            <select class="form-select" id="teacherCode">
+                                <option value="">Select Teacher</option>
+                                @if(ViewData["TeacherCode"] != null)
+                                {
+                                    @foreach(var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subject</label>
+                            <select class="form-select" id="subjectCode">
+                                <option value="">Select Subject</option>
+                                @if(ViewData["SubjectCode"] != null)
+                                {
+                                    @foreach(var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["SubjectCode"])
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Amount</label>
+                            <input type="number" class="form-control" id="scheduleAmount" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> This schedule will be automatically repeated throughout the educational year based on the selected day of the week.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-modern btn-success-modern" onclick="saveSchedule()">
+                    <i class="fas fa-save"></i> Save Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Month Picker Modal -->
+<div class="modal fade" id="monthPickerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-alt"></i> Navigate to Specific Month
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Select Year</label>
+                        <select class="form-select" id="yearSelect"></select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Select Month</label>
+                        <select class="form-select" id="monthSelect">
+                            <option value="0">January</option>
+                            <option value="1">February</option>
+                            <option value="2">March</option>
+                            <option value="3">April</option>
+                            <option value="4">May</option>
+                            <option value="5">June</option>
+                            <option value="6">July</option>
+                            <option value="7">August</option>
+                            <option value="8">September</option>
+                            <option value="9">October</option>
+                            <option value="10">November</option>
+                            <option value="11">December</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Or pick a specific date</label>
+                        <input type="date" class="form-control" id="specificDate">
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tip:</strong> Select any month/year to jump directly to that period.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-modern btn-success-modern" onclick="navigateToSelectedMonth()">
+                    <i class="fas fa-arrow-right"></i> Go to Selected Month
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> Schedule Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventDetailsContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-modern" id="editEventBtn">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button type="button" class="btn btn-danger" id="deleteEventBtn">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js'></script>
+
+<script>
+    let calendar;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCalendar();
+        showWelcomeMessage();
+
+        // Debug: Check if events are loading
+        console.log('Calendar initialized. Checking for events...');
+    });
+
+    function initializeCalendar() {
+    const calendarEl = document.getElementById('calendar');
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,timeGridDay'
+        },
+        height: 'auto',
+        slotMinTime: '06:00:00',
+        slotMaxTime: '22:00:00',
+        slotDuration: '00:30:00',
+        slotLabelInterval: '01:00:00',
+        allDaySlot: false,
+        nowIndicator: true,
+        scrollTime: '08:00:00',
+        firstDay: 0, // Sunday
+        dayHeaderFormat: { weekday: 'long', month: 'short', day: 'numeric' },
+        slotLabelFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        },
+        slotEventOverlap: true,
+        eventOverlap: true,
+
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch(`/Schedule/GetCalendarEvents?start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        console.error('Server error:', data.error);
+                        showErrorToast('Error loading events: ' + data.error);
+                        failureCallback(data.error);
+                        return;
+                    }
+
+                    const processedEvents = Array.isArray(data) ? data.map(event => ({
+                        ...event,
+                        start: event.start,
+                        end: event.end,
+                        display: 'block',
+                        backgroundColor: event.backgroundColor || '#4e73df',
+                        borderColor: event.borderColor || event.backgroundColor || '#4e73df',
+                        textColor: event.textColor || '#ffffff'
+                    })) : [];
+
+                    successCallback(processedEvents);
+                })
+                .catch(error => {
+                    console.error('Error fetching events:', error);
+                    showErrorToast('Failed to load calendar events');
+                    failureCallback(error);
+                });
+        },
+
+        eventClick: function(info) {
+            showEventDetails(info.event);
+        },
+
+        eventDidMount: function(info) {
+            const hallName = info.event.extendedProps.hallName;
+            const tooltip = `${info.event.title}${hallName ? ' - ' + hallName : ''}`;
+            info.el.setAttribute('title', tooltip);
+
+            // Hall badge pill
+            if (hallName) {
+                const badge = document.createElement('span');
+                badge.textContent = hallName;
+                badge.classList.add('badge-hall');
+                const titleContainer = info.el.querySelector('.fc-event-title-container');
+                if (titleContainer) {
+                    titleContainer.appendChild(badge);
+                }
+            }
+
+            info.el.style.borderRadius = '0.5rem';
+            info.el.style.opacity = '0.95';
+            info.el.style.cursor = 'pointer';
+            info.el.style.padding = '4px';
+        },
+
+        loading: function(isLoading) {
+            console.log(isLoading ? 'Loading events...' : 'Finished loading events');
+        }
+    });
+
+    calendar.render();
+
+    // Debug
+    setTimeout(() => {
+        const events = calendar.getEvents();
+        console.log('Total events loaded:', events.length);
+    }, 1000);
+}
+
+
+    function saveSchedule() {
+        const submitBtn = document.querySelector('#addScheduleModal .btn-success-modern');
+        const originalText = submitBtn.innerHTML;
+
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '';
+        submitBtn.disabled = true;
+
+        const scheduleName = document.getElementById('scheduleName').value;
+        const dayOfWeek = document.getElementById('dayOfWeek').value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        const formData = {
+            title: scheduleName,
+            dayOfWeek: dayOfWeek,
+            // Send time in ISO format with a dummy date
+            startTime: new Date('2000-01-01T' + startTime).toISOString(),
+            endTime: new Date('2000-01-01T' + endTime).toISOString(),
+            hallCode: document.getElementById('hallCode').value || null,
+            rootCode: document.getElementById('rootCode').value || null,
+            eduYearCode: document.getElementById('eduYearCode').value || null,
+            teacherCode: document.getElementById('teacherCode').value || null,
+            subjectCode: document.getElementById('subjectCode').value || null,
+            scheduleAmount: parseFloat(document.getElementById('scheduleAmount').value) || null
+        };
+
+        console.log('Saving schedule:', formData);
+
+        if (!formData.title || !formData.dayOfWeek || !startTime || !endTime) {
+            showErrorToast('Please fill in all required fields');
+            resetSubmitButton(submitBtn, originalText);
+            return;
+        }
+
+        if (startTime >= endTime) {
+            showErrorToast('End time must be after start time');
+            resetSubmitButton(submitBtn, originalText);
+            return;
+        }
+
+        fetch('/Schedule/CreateScheduleEvent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            resetSubmitButton(submitBtn, originalText);
+
+            if (data.success) {
+                showSuccessToast('Schedule created successfully! 🎉');
+                bootstrap.Modal.getInstance(document.getElementById('addScheduleModal')).hide();
+                document.getElementById('scheduleForm').reset();
+                calendar.refetchEvents();
+            } else {
+                showErrorToast('Error creating schedule: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resetSubmitButton(submitBtn, originalText);
+            showErrorToast('Network error occurred. Please try again.');
+        });
+    }
+
+    function refreshCalendar() {
+        console.log('Refreshing calendar...');
+        calendar.refetchEvents();
+        showSuccessToast('Calendar refreshed! 🔄');
+    }
+
+    function goToToday() {
+        calendar.today();
+        showSuccessToast('Navigated to current week! 📅');
+    }
+
+    function navigateToSelectedMonth() {
+        const year = document.getElementById('yearSelect').value;
+        const month = document.getElementById('monthSelect').value;
+        const specificDate = document.getElementById('specificDate').value;
+
+        let targetDate;
+
+        if (specificDate) {
+            targetDate = new Date(specificDate);
+        } else {
+            targetDate = new Date(year, month, 1);
+        }
+
+        calendar.gotoDate(targetDate);
+        bootstrap.Modal.getInstance(document.getElementById('monthPickerModal')).hide();
+
+        const monthName = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        showSuccessToast(`Navigated to ${monthName}! 🗓️`);
+    }
+
+    function showEventDetails(event) {
+        const props = event.extendedProps;
+        const startTime = new Date(event.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const endTime = new Date(event.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const dayName = new Date(event.start).toLocaleDateString('en-US', {weekday: 'long'});
+        const dateStr = new Date(event.start).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+
+        const content = `
+            <div class="text-center mb-3">
+                <h4 class="text-primary">${event.title}</h4>
+                <div class="badge bg-info fs-6 px-3 py-2 me-2">
+                    ${dayName}, ${dateStr}
+                </div>
+                <div class="badge bg-success fs-6 px-3 py-2">
+                    ${startTime} - ${endTime}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-sm-4"><strong>Type:</strong></div>
+                <div class="col-sm-8">
+                    <span class="badge ${props.isCenter ? 'bg-primary' : 'bg-danger'}">
+                        ${props.isCenter ? 'Center Schedule' : 'Teacher Schedule'}
+                    </span>
+                </div>
+            </div>
+            ${props.hallName ? `
+            <div class="row mt-2">
+                <div class="col-sm-4"><strong>Hall:</strong></div>
+                <div class="col-sm-8">${props.hallName}</div>
+            </div>` : ''}
+            ${props.teacherName ? `
+            <div class="row mt-2">
+                <div class="col-sm-4"><strong>Teacher:</strong></div>
+                <div class="col-sm-8">${props.teacherName}</div>
+            </div>` : ''}
+            ${props.subjectName ? `
+            <div class="row mt-2">
+                <div class="col-sm-4"><strong>Subject:</strong></div>
+                <div class="col-sm-8">${props.subjectName}</div>
+            </div>` : ''}
+            ${props.amount ? `
+            <div class="row mt-2">
+                <div class="col-sm-4"><strong>Amount:</strong></div>
+                <div class="col-sm-8">$${props.amount}</div>
+            </div>` : ''}
+        `;
+
+        document.getElementById('eventDetailsContent').innerHTML = content;
+
+        document.getElementById('editEventBtn').onclick = () => {
+            window.location.href = `/Schedule/Edit/${props.scheduleCode}`;
+        };
+
+        document.getElementById('deleteEventBtn').onclick = () => {
+            if (confirm('Are you sure you want to delete this schedule?')) {
+                fetch(`/Schedule/Delete/${props.scheduleCode}`, {
+                    method: 'POST'
+                }).then(() => {
+                    showSuccessToast('Schedule deleted successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal')).hide();
+                    calendar.refetchEvents();
+                });
+            }
+        };
+
+        new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
+    }
+
+    function resetSubmitButton(button, originalText) {
+        button.classList.remove('loading');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+
+    function showSuccessToast(message) {
+        showToast(message, 'success');
+    }
+
+    function showErrorToast(message) {
+        showToast(message, 'danger');
+    }
+
+    function showToast(message, type, duration = 4000) {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = 'toast-' + Date.now();
+
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type} border-0 shadow-lg" role="alert" id="${toastId}">
+                <div class="d-flex align-items-center p-3">
+                    <div class="toast-body fw-bold">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: duration });
+        toast.show();
+
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    function showWelcomeMessage() {
+        setTimeout(() => {
+            showToast('📅 Welcome to Schedule Manager!', 'info', 3000);
+        }, 1000);
+    }
+
+    // Initialize month picker when modal opens
+    document.getElementById('monthPickerModal').addEventListener('show.bs.modal', function() {
+        const yearSelect = document.getElementById('yearSelect');
+        const currentYear = new Date().getFullYear();
+        yearSelect.innerHTML = '';
+
+        for (let year = currentYear - 2; year <= currentYear + 5; year++) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            if (year === currentYear) option.selected = true;
+            yearSelect.appendChild(option);
+        }
+
+        const currentMonth = new Date().getMonth();
+        document.getElementById('monthSelect').value = currentMonth;
+
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('specificDate').value = today;
+    });
+
+    // Debug function to check schedules
+    function debugSchedules() {
+        fetch('/Schedule/DebugSchedules')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Debug Schedule Data:', data);
+                if (data.schedules) {
+                    console.table(data.schedules);
+                }
+            })
+            .catch(error => console.error('Debug error:', error));
+    }
+
+    // Add debug button handler
+    document.addEventListener('keydown', function(e) {
+        // Press Ctrl+Shift+D to debug
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            debugSchedules();
+        }
+    });
+</script>
