@@ -4,35 +4,418 @@
     ViewData["Title"] = "Schedule List";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient-primary text-white">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        --success-gradient: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
+        --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
+        --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+        --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        --primary-color: #6c5ce7;
+        --success-color: #00b894;
+        --danger-color: #e17055;
+        --warning-color: #f39c12;
+        --info-color: #74b9ff;
+        --text-dark: #2d3436;
+        --text-muted: #636e72;
+        --bg-light: #f8f9fa;
+        --bg-white: #ffffff;
+        --border-color: #e9ecef;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        color: var(--text-dark);
+    }
+
+    .page-container {
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .main-card {
+        background: var(--bg-white);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        border: none;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--primary-gradient) !important;
+        color: white !important;
+        border: none !important;
+        padding: 2rem;
+    }
+
+        .card-header h2 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+    .btn-modern {
+        background: var(--success-gradient);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+        }
+
+        .btn-modern.btn-info {
+            background: var(--info-gradient);
+        }
+
+        .btn-modern.btn-warning {
+            background: var(--warning-gradient);
+            color: var(--text-dark);
+        }
+
+        .btn-modern.btn-danger {
+            background: var(--danger-gradient);
+        }
+
+    .table-container {
+        padding: 2rem;
+        background: var(--bg-white);
+    }
+
+    .table {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        margin: 0;
+    }
+
+        .table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+        }
+
+        .table td {
+            vertical-align: middle;
+            border-color: var(--border-color);
+            padding: 1rem;
+            font-weight: 500;
+        }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(108, 92, 231, 0.05);
+        transition: var(--transition);
+    }
+
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .badge-center {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .badge-teacher {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .badge-day {
+        background: var(--info-color);
+        color: white;
+    }
+
+    .btn-group-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-action.btn-view {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .btn-action.btn-edit {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-action.btn-delete {
+            background: var(--danger-color);
+            color: white;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h4 {
+            margin-bottom: 1rem;
+        }
+
+    .controls-section {
+        padding: 1.5rem 2rem;
+        background: var(--bg-light);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .user-info {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        flex-grow: 1;
+    }
+
+    /* Modal Customizations */
+    .modal-content {
+        border-radius: var(--border-radius) !important;
+        border: none !important;
+        box-shadow: var(--shadow-lg) !important;
+    }
+
+    .modal-header {
+        background: var(--primary-gradient) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    }
+
+        .modal-header.bg-warning {
+            background: var(--warning-gradient) !important;
+            color: var(--text-dark) !important;
+        }
+
+        .modal-header.bg-danger {
+            background: var(--danger-gradient) !important;
+            color: white !important;
+        }
+
+    .modal-title {
+        font-weight: 600 !important;
+    }
+
+    .modal-body {
+        padding: 2rem !important;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--border-color) !important;
+        border-radius: var(--border-radius) !important;
+        padding: 0.75rem 1rem !important;
+        transition: var(--transition) !important;
+        font-weight: 500 !important;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25) !important;
+        }
+
+    .form-label {
+        font-weight: 600 !important;
+        color: var(--text-dark) !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Event Details Modal Styles */
+    .event-details-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .event-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+
+    .event-details-body .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+        .event-details-body .detail-item:last-child {
+            border-bottom: none;
+        }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .detail-value {
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    /* Delete confirmation styles */
+    .delete-warning {
+        background: linear-gradient(135deg, rgba(225, 112, 85, 0.1) 0%, rgba(253, 121, 168, 0.1) 100%);
+        border: 2px solid rgba(225, 112, 85, 0.3);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+
+        .delete-warning h5 {
+            color: var(--danger-color);
+            margin-bottom: 1rem;
+        }
+
+    .schedule-summary {
+        background: var(--bg-light);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        z-index: 1050;
+    }
+
+    .toast {
+        border: none !important;
+        border-radius: var(--border-radius) !important;
+        box-shadow: var(--shadow-lg) !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .table-responsive
+
+    {
+        font-size: 0.9rem;
+    }
+
+    .btn-group-actions {
+        flex-direction: column;
+    }
+
+    .controls-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    }
+</style>
+
+<div class="container-fluid page-container">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card main-card">
+                <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0">
+                        <h2>
                             <i class="fas fa-calendar-alt me-2"></i>
                             Schedule Management
                         </h2>
                         <div class="btn-group" role="group">
-                            <a href="@Url.Action("Calendar")" class="btn btn-light">
+                            <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                                <i class="fas fa-plus me-1"></i> Add Schedule
+                            </button>
+                            <a href="@Url.Action("Calendar")" class="btn-modern btn-info">
                                 <i class="fas fa-calendar me-1"></i> Calendar View
-                            </a>
-                            <a href="@Url.Action("Create")" class="btn btn-success">
-                                <i class="fas fa-plus me-1"></i> Add New Schedule
                             </a>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
+
+                @if (ViewBag.CurrentUserRootCode != null)
+                {
+                    <div class="controls-section">
+                        <div class="user-info">
+                            <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
+                            Showing schedules for: <strong>@ViewBag.UserRootName</strong>
+                            (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root: @ViewBag.CurrentUserRootCode)
+                            | Total: <strong>@ViewBag.ScheduleCount</strong> schedules
+                        </div>
+                        <button type="button" class="btn-modern btn-info" onclick="refreshList()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                }
+
+                <div class="table-container">
                     @if (Model.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
-                                <thead class="table-dark">
+                            <table class="table table-hover">
+                                <thead>
                                     <tr>
-                                        <th>@Html.DisplayNameFor(model => model.ScheduleName)</th>
-                                        <th>Day of Week</th>
+                                        <th>Schedule Name</th>
+                                        <th>Day</th>
                                         <th>Time</th>
                                         <th>Type</th>
                                         <th>Hall</th>
@@ -50,7 +433,7 @@
                                                 <strong>@Html.DisplayFor(modelItem => item.ScheduleName)</strong>
                                             </td>
                                             <td>
-                                                <span class="badge bg-secondary">
+                                                <span class="badge badge-modern badge-day">
                                                     @Html.DisplayFor(modelItem => item.DayOfWeek)
                                                 </span>
                                             </td>
@@ -58,20 +441,20 @@
                                                 @if (item.StartTime.HasValue && item.EndTime.HasValue)
                                                 {
                                                     <small class="text-muted">
-                                                        @item.StartTime.Value.ToString("HH:mm") - @item.EndTime.Value.ToString("HH:mm")
+                                                        @item.StartTime.Value.ToString("hh:mm tt") - @item.EndTime.Value.ToString("hh:mm tt")
                                                     </small>
                                                 }
                                             </td>
                                             <td>
                                                 @if (item.RootCodeNavigation?.IsCenter == true)
                                                 {
-                                                    <span class="badge bg-primary">
+                                                    <span class="badge badge-modern badge-center">
                                                         <i class="fas fa-building me-1"></i>Center
                                                     </span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="badge bg-warning">
+                                                    <span class="badge badge-modern badge-teacher">
                                                         <i class="fas fa-user me-1"></i>Teacher
                                                     </span>
                                                 }
@@ -94,19 +477,22 @@
                                                 }
                                             </td>
                                             <td>
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="@Url.Action("Details", new { id = item.ScheduleCode })"
-                                                       class="btn btn-outline-info" title="View Details">
+                                                <div class="btn-group-actions">
+                                                    <button type="button" class="btn-action btn-view"
+                                                            onclick="showScheduleDetails(@item.ScheduleCode)"
+                                                            title="View Details">
                                                         <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <a href="@Url.Action("Edit", new { id = item.ScheduleCode })"
-                                                       class="btn btn-outline-warning" title="Edit">
+                                                    </button>
+                                                    <button type="button" class="btn-action btn-edit"
+                                                            onclick="editSchedule(@item.ScheduleCode)"
+                                                            title="Edit">
                                                         <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <a href="@Url.Action("Delete", new { id = item.ScheduleCode })"
-                                                       class="btn btn-outline-danger" title="Delete">
+                                                    </button>
+                                                    <button type="button" class="btn-action btn-delete"
+                                                            onclick="deleteSchedule(@item.ScheduleCode)"
+                                                            title="Delete">
                                                         <i class="fas fa-trash"></i>
-                                                    </a>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -117,15 +503,13 @@
                     }
                     else
                     {
-                        <div class="text-center py-5">
-                            <div class="mb-4">
-                                <i class="fas fa-calendar-times fa-5x text-muted"></i>
-                            </div>
-                            <h4 class="text-muted">No Schedules Found</h4>
-                            <p class="text-muted">Get started by creating your first schedule.</p>
-                            <a href="@Url.Action("Create")" class="btn btn-primary btn-lg">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <h4>No Schedules Found</h4>
+                            <p>Get started by creating your first schedule.</p>
+                            <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
                                 <i class="fas fa-plus me-2"></i> Create New Schedule
-                            </a>
+                            </button>
                         </div>
                     }
                 </div>
@@ -134,39 +518,803 @@
     </div>
 </div>
 
-<style>
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+<!-- Modals Section -->
+@if (ViewBag.CurrentUserRootCode != null)
+{
+    <!-- Main Schedule Modal (Create/Edit) -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" id="scheduleModalHeader">
+                    <h5 class="modal-title" id="scheduleModalTitle">
+                        <i class="fas fa-calendar-plus me-2"></i>Add New Schedule
+                        @if (ViewBag.UserRootName != null)
+                        {
+                            <small class="text-muted">for @ViewBag.UserRootName</small>
+                        }
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="scheduleForm">
+                        <!-- User context info in form -->
+                        @if (ViewBag.CurrentUserRootCode != null)
+                        {
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> This schedule will be created for <strong>@ViewBag.UserRootName</strong>
+                                (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode)
+                            </div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Schedule Name *</label>
+                                <input type="text" class="form-control" id="scheduleName" required placeholder="Enter schedule name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Day of Week *</label>
+                                <select class="form-select" id="dayOfWeek" required>
+                                    <option value="">Select Day</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Time *</label>
+                                <input type="time" class="form-control" id="startTime" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Time *</label>
+                                <input type="time" class="form-control" id="endTime" required>
+                            </div>
+                        </div>
+
+                        <!-- Root is hidden and auto-set -->
+                        <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hall</label>
+                                <select class="form-select" id="hallCode">
+                                    <option value="">Select Hall (Optional)</option>
+                                    @if (ViewData["HallCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["HallCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Educational Year</label>
+                                <select class="form-select" id="eduYearCode">
+                                    <option value="">Select Year (Optional)</option>
+                                    @if (ViewData["EduYearCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Year *</label>
+                                <select class="form-select" id="yearCode" required>
+                                    <option value="">Select Year</option>
+                                    @if (ViewData["YearCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["YearCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Teacher</label>
+                                <select class="form-select" id="teacherCode">
+                                    <option value="">Select Teacher (Optional)</option>
+                                    @if (ViewData["TeacherCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Subject</label>
+                                <select class="form-select" id="subjectCode">
+                                    <option value="">Select Subject (Optional)</option>
+                                    @if (ViewData["SubjectCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["SubjectCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-control" id="scheduleAmount" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-modern" id="saveScheduleBtn">
+                        <i class="fas fa-save me-2"></i>Save Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div class="modal fade" id="eventDetailsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>Schedule Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="eventDetailsContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn-modern btn-warning" id="editEventBtn">
+                        <i class="fas fa-edit me-2"></i>Edit
+                    </button>
+                    <button type="button" class="btn-modern btn-danger" id="deleteEventBtn">
+                        <i class="fas fa-trash me-2"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="delete-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Warning</h5>
+                        <p class="mb-0">This action cannot be undone. Are you sure you want to delete this schedule?</p>
+                    </div>
+                    <div class="schedule-summary" id="deleteScheduleSummary">
+                        <!-- Schedule details will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-modern btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-2"></i>Delete Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
+
+<!-- Anti-forgery token for AJAX requests -->
+@Html.AntiForgeryToken()
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let isEditMode = false;
+    let editingScheduleId = null;
+    let scheduleToDelete = null;
+    let allSchedules = [];
+
+    // Store user context from server
+    const userContext = {
+        currentUserRootCode: @Json.Serialize(ViewBag.CurrentUserRootCode),
+        userRootName: @Json.Serialize(ViewBag.UserRootName ?? ""),
+        isCenter: @Json.Serialize(ViewBag.IsCenter ?? false),
+        hasError: @Json.Serialize(ViewBag.Error != null)
+    };
+
+    // Load all schedules on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAllSchedules();
+
+        if (!userContext.hasError) {
+            // Setup modal event handlers
+            setupModalHandlers();
+        }
+    });
+
+    function setupModalHandlers() {
+        // Reset modal when closed
+        const scheduleModal = document.getElementById('scheduleModal');
+        if (scheduleModal) {
+            scheduleModal.addEventListener('hidden.bs.modal', function() {
+                resetModalForCreate();
+            });
+        }
+
+        // Setup save button click handler
+        const saveBtn = document.getElementById('saveScheduleBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                console.log('Save button clicked!');
+                saveSchedule();
+            });
+        }
+
+        // Setup delete confirmation handler
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', function() {
+                if (scheduleToDelete) {
+                    performDelete(scheduleToDelete);
+                }
+            });
+        }
     }
 
-    .card {
-        border-radius: 15px;
-        overflow: hidden;
+    function loadAllSchedules() {
+        if (userContext.hasError) {
+            console.log('User has no root assignment - skipping schedule load');
+            return;
+        }
+
+        fetch('/Schedule/GetCalendarEvents?start=2024-01-01&end=2024-12-31')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch schedules');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    console.error('Server error:', data.error);
+                    showErrorToast('Error loading schedules: ' + data.error);
+                    return;
+                }
+
+                allSchedules = Array.isArray(data) ? data : [];
+                console.log(`Loaded ${allSchedules.length} schedules for user context:`, userContext);
+            })
+            .catch(error => {
+                console.error('Error fetching schedules:', error);
+                showErrorToast('Failed to load schedules. Please try again.');
+            });
     }
 
-    .table th {
-        border-top: none;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
+    function showScheduleDetails(scheduleId) {
+        // Find schedule from our loaded data
+        const schedule = allSchedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
+        if (!schedule) {
+            // If not found in loaded data, fetch from server
+            fetchScheduleById(scheduleId);
+            return;
+        }
+
+        displayScheduleDetails(schedule);
     }
 
-    .table td {
-        vertical-align: middle;
-        border-color: #e9ecef;
+    function fetchScheduleById(scheduleId) {
+        fetch(`/Schedule/Details/${scheduleId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Schedule not found');
+                }
+                // Note: This would need to be implemented as a JSON endpoint
+                // For now, we'll use the calendar data
+                showErrorToast('Schedule details not available. Please refresh the page.');
+            })
+            .catch(error => {
+                console.error('Error fetching schedule:', error);
+                showErrorToast('Error loading schedule details.');
+            });
     }
 
-    .table-hover tbody tr:hover {
-        background-color: rgba(0, 123, 255, 0.05);
+    function displayScheduleDetails(schedule) {
+        const props = schedule.extendedProps;
+
+        const content = `
+            <div class="event-details-header">
+                <div class="event-icon">
+                    <i class="fas ${props.isCenter ? 'fa-building' : 'fa-chalkboard-teacher'}"></i>
+                </div>
+                <h4>${schedule.title}</h4>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <span class="badge ${props.isCenter ? 'bg-success' : 'bg-danger'}">
+                        ${props.isCenter ? 'Center Schedule' : 'Teacher Schedule'}
+                    </span>
+                    ${props.dayOfWeek ? `<span class="badge bg-info">${props.dayOfWeek}</span>` : ''}
+                    <span class="badge bg-secondary">${userContext.userRootName}</span>
+                </div>
+            </div>
+
+            <div class="event-details-body">
+                ${props.startTime && props.endTime ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Time</span>
+                        <span class="detail-value">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</span>
+                    </div>
+                ` : ''}
+                ${props.hallName ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Hall</span>
+                        <span class="detail-value">${props.hallName}</span>
+                    </div>
+                ` : ''}
+                ${props.teacherName ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Teacher</span>
+                        <span class="detail-value">${props.teacherName}</span>
+                    </div>
+                ` : ''}
+                ${props.subjectName ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Subject</span>
+                        <span class="detail-value">${props.subjectName}</span>
+                    </div>
+                ` : ''}
+                ${props.amount ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Amount</span>
+                        <span class="detail-value">$${props.amount}</span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        document.getElementById('eventDetailsContent').innerHTML = content;
+
+        // Setup modal buttons
+        document.getElementById('editEventBtn').onclick = () => {
+            editScheduleInModal(props.scheduleCode);
+        };
+
+        document.getElementById('deleteEventBtn').onclick = () => {
+            showDeleteConfirmation(props.scheduleCode);
+        };
+
+        new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
     }
 
-    .btn-group-sm .btn {
-        padding: 0.375rem 0.5rem;
+    function editSchedule(scheduleId) {
+        editScheduleInModal(scheduleId);
     }
 
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.375rem 0.75rem;
+    function deleteSchedule(scheduleId) {
+        showDeleteConfirmation(scheduleId);
     }
-</style>
+
+    function editScheduleInModal(scheduleId) {
+        const schedule = allSchedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
+        if (!schedule) {
+            showErrorToast('Schedule data not found. Please refresh the page.');
+            return;
+        }
+
+        const props = schedule.extendedProps;
+
+        // Set edit mode
+        isEditMode = true;
+        editingScheduleId = scheduleId;
+
+        // Update modal title and header
+        const header = document.getElementById('scheduleModalHeader');
+        header.className = 'modal-header bg-warning';
+        document.querySelector('#scheduleModal .modal-title').innerHTML =
+            '<i class="fas fa-edit me-2"></i>Edit Schedule' +
+            (userContext.userRootName ? `<small class="text-muted">for ${userContext.userRootName}</small>` : '');
+
+        // Populate form with existing data
+        document.getElementById('scheduleName').value = schedule.title;
+        document.getElementById('dayOfWeek').value = props.dayOfWeek;
+        document.getElementById('startTime').value = convertTo24Hour(props.startTime);
+        document.getElementById('endTime').value = convertTo24Hour(props.endTime);
+
+        // Set optional fields
+        document.getElementById('hallCode').value = props.hallCode || '';
+        document.getElementById('eduYearCode').value = props.eduYearCode || '';
+        document.getElementById('teacherCode').value = props.teacherCode || '';
+        document.getElementById('subjectCode').value = props.subjectCode || '';
+        document.getElementById('scheduleAmount').value = props.scheduleAmount || '';
+        document.getElementById('yearCode').value = props.yearCode || '';
+
+        // Root code is always auto-set
+        const rootCodeInput = document.getElementById('rootCode');
+        if (rootCodeInput) {
+            rootCodeInput.value = userContext.currentUserRootCode;
+        }
+
+        // Hide the event details modal if open and show the edit modal
+        const detailsModalInstance = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+        if (detailsModalInstance) {
+            detailsModalInstance.hide();
+        }
+
+        new bootstrap.Modal(document.getElementById('scheduleModal')).show();
+    }
+
+    function showDeleteConfirmation(scheduleId) {
+        const schedule = allSchedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
+        if (!schedule) {
+            showErrorToast('Schedule data not found. Please refresh the page.');
+            return;
+        }
+
+        scheduleToDelete = scheduleId;
+        const props = schedule.extendedProps;
+
+        // Populate delete confirmation modal
+        const summaryHtml = `
+            <h5 class="text-danger mb-3">
+                <i class="fas fa-calendar-times me-2"></i>
+                ${schedule.title}
+            </h5>
+            <div class="row">
+                <div class="col-6"><strong>Day:</strong></div>
+                <div class="col-6">${props.dayOfWeek}</div>
+            </div>
+            ${props.startTime && props.endTime ? `
+                <div class="row">
+                    <div class="col-6"><strong>Time:</strong></div>
+                    <div class="col-6">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</div>
+                </div>
+            ` : ''}
+            ${props.hallName ? `
+                <div class="row">
+                    <div class="col-6"><strong>Hall:</strong></div>
+                    <div class="col-6">${props.hallName}</div>
+                </div>
+            ` : ''}
+            ${props.teacherName ? `
+                <div class="row">
+                    <div class="col-6"><strong>Teacher:</strong></div>
+                    <div class="col-6">${props.teacherName}</div>
+                </div>
+            ` : ''}
+        `;
+
+        document.getElementById('deleteScheduleSummary').innerHTML = summaryHtml;
+
+        // Hide details modal if open and show delete confirmation
+        const detailsModalInstance = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+        if (detailsModalInstance) {
+            detailsModalInstance.hide();
+        }
+
+        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+    }
+
+    function performDelete(scheduleId) {
+        console.log('Performing delete for schedule:', scheduleId);
+
+        const submitBtn = document.getElementById('confirmDeleteBtn');
+        const originalText = submitBtn.innerHTML;
+
+        // Show loading state
+        submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Deleting...';
+        submitBtn.disabled = true;
+
+        // Call the correct DELETE API endpoint
+        fetch(`/Schedule/DeleteScheduleEvent/${scheduleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        })
+        .then(response => {
+            console.log('Delete response received:', response);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            console.log('Delete response data:', data);
+
+            if (data.success) {
+                showSuccessToast(data.message || 'Schedule deleted successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+
+                // Refresh the page to update the table
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
+                scheduleToDelete = null;
+            } else {
+                console.error('Delete failed:', data.error);
+                showErrorToast('Error deleting schedule: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showErrorToast('Network error occurred while deleting: ' + error.message);
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+
+    function saveSchedule() {
+        console.log('Save schedule function called');
+
+        if (userContext.hasError) {
+            showErrorToast('Unable to save schedule. Please contact administrator.');
+            return;
+        }
+
+        const submitBtn = document.getElementById('saveScheduleBtn');
+        const originalText = submitBtn.innerHTML;
+
+        // Manual validation
+        const requiredFields = [
+            { id: 'scheduleName', name: 'Schedule Name' },
+            { id: 'dayOfWeek', name: 'Day of Week' },
+            { id: 'startTime', name: 'Start Time' },
+            { id: 'endTime', name: 'End Time' },
+            { id: 'yearCode', name: 'Year' }
+        ];
+
+        // Check required fields
+        for (const field of requiredFields) {
+            const element = document.getElementById(field.id);
+            if (!element.value || element.value.trim() === '') {
+                console.log(`Validation failed: ${field.name} is empty`);
+                showErrorToast(`${field.name} is required`);
+                element.focus();
+                return;
+            }
+        }
+
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        if (startTime >= endTime) {
+            console.log('Validation failed: End time must be after start time');
+            showErrorToast('End time must be after start time');
+            return;
+        }
+
+        console.log('Validation passed, preparing data...');
+
+        // Show loading state
+        const loadingText = isEditMode ? 'Updating...' : 'Saving...';
+        submitBtn.innerHTML = `<div class="spinner-border spinner-border-sm me-2"></div>${loadingText}`;
+        submitBtn.disabled = true;
+
+        // Get root code - always auto-set for users
+        const rootCodeInput = document.getElementById('rootCode');
+        const rootCodeValue = rootCodeInput ? parseInt(rootCodeInput.value) || null : userContext.currentUserRootCode;
+
+        const formData = {
+            title: document.getElementById('scheduleName').value,
+            dayOfWeek: document.getElementById('dayOfWeek').value,
+            startTime: startTime,
+            endTime: endTime,
+            hallCode: parseInt(document.getElementById('hallCode').value) || null,
+            rootCode: rootCodeValue,
+            eduYearCode: parseInt(document.getElementById('eduYearCode').value) || null,
+            teacherCode: parseInt(document.getElementById('teacherCode').value) || null,
+            subjectCode: parseInt(document.getElementById('subjectCode').value) || null,
+            scheduleAmount: parseFloat(document.getElementById('scheduleAmount').value) || null,
+            yearCode: parseInt(document.getElementById('yearCode').value) || null
+        };
+
+        console.log('Form data prepared:', formData);
+
+        const url = isEditMode ? `/Schedule/EditScheduleEvent/${editingScheduleId}` : '/Schedule/CreateScheduleEvent';
+        const method = 'POST';
+
+        console.log(`Making ${method} request to:`, url);
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            console.log('Response received:', response);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+
+            if (data.success) {
+                const successMessage = isEditMode ? 'Schedule updated successfully!' : 'Schedule created successfully!';
+                console.log('Success:', successMessage);
+                showSuccessToast(successMessage);
+                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                resetFormFields();
+                resetModalForCreate();
+
+                // Refresh the page to update the table
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                const errorMessage = isEditMode ? 'Error updating schedule: ' : 'Error creating schedule: ';
+                console.error('Server error:', data.error);
+                showErrorToast(errorMessage + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            showErrorToast('Network error occurred: ' + error.message);
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+
+    function resetModalForCreate() {
+        isEditMode = false;
+        editingScheduleId = null;
+
+        // Reset modal header and title
+        const header = document.getElementById('scheduleModalHeader');
+        header.className = 'modal-header';
+        document.querySelector('#scheduleModal .modal-title').innerHTML =
+            '<i class="fas fa-calendar-plus me-2"></i>Add New Schedule' +
+            (userContext.userRootName ? `<small class="text-muted">for ${userContext.userRootName}</small>` : '');
+
+        // Clear form fields
+        resetFormFields();
+    }
+
+    function resetFormFields() {
+        const fieldIds = ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'scheduleAmount', 'yearCode'];
+
+        fieldIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (element.type === 'select-one') {
+                    element.selectedIndex = 0;
+                } else {
+                    element.value = '';
+                }
+            }
+        });
+
+        // Auto-set root code
+        if (userContext.currentUserRootCode) {
+            const rootCodeInput = document.getElementById('rootCode');
+            if (rootCodeInput) {
+                rootCodeInput.value = userContext.currentUserRootCode;
+            }
+        }
+    }
+
+    function convertTo24Hour(time12h) {
+        if (!time12h) return '';
+
+        // If already in 24-hour format, return as is
+        if (!time12h.includes('AM') && !time12h.includes('PM')) {
+            return time12h;
+        }
+
+        try {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes] = time.split(':');
+
+            if (hours === '12') {
+                hours = '00';
+            }
+
+            if (modifier === 'PM') {
+                hours = parseInt(hours, 10) + 12;
+            }
+
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        } catch (e) {
+            return time12h;
+        }
+    }
+
+    function formatTime12Hour(timeString) {
+        if (!timeString) return '';
+
+        // If already in 12-hour format (contains AM/PM), return as is
+        if (timeString.includes('AM') || timeString.includes('PM')) {
+            return timeString;
+        }
+
+        // Convert 24-hour format to 12-hour format
+        try {
+            const [hours, minutes] = timeString.split(':');
+            const hour24 = parseInt(hours);
+            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+            const ampm = hour24 < 12 ? 'AM' : 'PM';
+            return `${hour12}:${minutes} ${ampm}`;
+        } catch (e) {
+            return timeString; // Return original if parsing fails
+        }
+    }
+
+    function refreshList() {
+        window.location.reload();
+    }
+
+    function showSuccessToast(message) {
+        showToast(message, 'bg-success');
+    }
+
+    function showErrorToast(message) {
+        showToast(message, 'bg-danger');
+    }
+
+    function showToast(message, bgClass) {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = 'toast-' + Date.now();
+
+        const toastHtml = `
+            <div class="toast ${bgClass} text-white" role="alert" id="${toastId}">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="fas ${bgClass === 'bg-success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+                    <span class="flex-grow-1">${message}</span>
+                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    // Helper function to get anti-forgery token
+    function getAntiForgeryToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    }
+</script>

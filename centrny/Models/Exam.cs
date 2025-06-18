@@ -11,7 +11,7 @@ public partial class Exam
 
     public string ExamDegree { get; set; } = null!;
 
-    public string ExamResult { get; set; } = null!;
+    public string? ExamResult { get; set; }
 
     public string? ExamPercentage { get; set; }
 
@@ -31,6 +31,12 @@ public partial class Exam
 
     public int BranchCode { get; set; }
 
+    public int? YearCode { get; set; }
+
+    public int? LessonCode { get; set; }
+
+    public bool? IsActive { get; set; }
+
     public int InsertUser { get; set; }
 
     public DateTime InserTime { get; set; }
@@ -49,9 +55,15 @@ public partial class Exam
 
     public virtual User? LastUpdateUserNavigation { get; set; }
 
+    public virtual Lesson? LessonCodeNavigation { get; set; }
+
     public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+
+    public virtual ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
 
     public virtual Subject SubjectCodeNavigation { get; set; } = null!;
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
+
+    public virtual Year? YearCodeNavigation { get; set; }
 }

@@ -1,0 +1,72 @@
+﻿@model List<centrny.Models.Group>
+@{
+    ViewData["Title"] = "Page Permissions Administration";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Page Permissions Administration</h2>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Groups Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Group Name</th>
+                                    <th>Description</th>
+                                    <th>Root Name</th>
+                                    <th>Users</th>
+                                    <th>Page Access</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var group in Model)
+                                {
+                                    <tr>
+                                        <td><strong>@group.GroupName</strong></td>
+                                        <td>@(group.GroupDesc ?? "No description")</td>
+                                        <td>@group.RootCodeNavigation.RootName</td>
+                                        <td>
+                                            <span class="badge bg-info">@group.Users.Count(u => u.IsActive) users</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">@group.GroupPages.Count(gp => gp.InsertFlag || gp.UpdateFlag || gp.DeleteFlag) pages</span>
+                                        </td>
+                                        <td>
+                                            <a asp-action="ManageGroupPermissions" asp-route-groupCode="@group.GroupCode"
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-cog"></i> Manage Permissions
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

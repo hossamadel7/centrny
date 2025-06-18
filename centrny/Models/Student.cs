@@ -45,7 +45,11 @@ public partial class Student
 
     public virtual User? LastInsertUserNavigation { get; set; }
 
+    public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
+
     public virtual Root RootCodeNavigation { get; set; } = null!;
+
+    public virtual ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
 
     public virtual ICollection<StudentPlan> StudentPlans { get; set; } = new List<StudentPlan>();
 

@@ -1,0 +1,2145 @@
+﻿@model centrny.Controllers.StudentProfileViewModel
+
+@{
+    ViewData["Title"] = $"Student Profile - {Model.StudentName}";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        --success-gradient: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
+        --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
+        --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+        --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        --attendance-gradient: linear-gradient(135deg, #00cec9 0%, #55efc4 100%);
+        --primary-color: #6c5ce7;
+        --success-color: #00b894;
+        --danger-color: #e17055;
+        --warning-color: #f39c12;
+        --info-color: #74b9ff;
+        --attendance-color: #00cec9;
+        --text-dark: #2d3436;
+        --text-muted: #636e72;
+        --bg-light: #f8f9fa;
+        --bg-white: #ffffff;
+        --border-color: #e9ecef;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        color: var(--text-dark);
+    }
+
+    .student-profile-page {
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .profile-container {
+        background: var(--bg-white);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        margin: 0 auto;
+        max-width: 1400px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    /* Header Section */
+    .profile-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        font-size: 3rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .profile-name {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .profile-subtitle {
+        opacity: 0.9;
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .profile-status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: var(--border-radius);
+        margin-top: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Content Section */
+    .profile-content {
+        padding: 2rem;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-white);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    /* Section Cards */
+    .section-card {
+        background: var(--bg-white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+        .section-title i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+    .section-content {
+        padding: 1.5rem;
+    }
+
+    /* Upcoming Classes Styles */
+    .upcoming-classes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .class-card {
+        background: var(--bg-white);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .class-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--attendance-gradient);
+        }
+
+        .class-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .class-card.attended {
+            opacity: 0.7;
+            background: var(--bg-light);
+        }
+
+            .class-card.attended::before {
+                background: var(--success-gradient);
+            }
+
+    .class-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .class-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--attendance-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        font-size: 1.3rem;
+    }
+
+    .class-info h3 {
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 1.1rem;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .class-subject {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .class-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .class-detail {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+        .class-detail i {
+            color: var(--attendance-color);
+            width: 16px;
+        }
+
+    .class-time {
+        background: var(--bg-light);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--attendance-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .time-info {
+        text-align: center;
+    }
+
+    .time-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .time-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--attendance-color);
+    }
+
+    /* Attendance Controls */
+    .attendance-controls {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .attendance-type-select {
+        flex: 1;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.75rem;
+        font-weight: 500;
+        transition: var(--transition);
+        background: var(--bg-white);
+    }
+
+        .attendance-type-select:focus {
+            border-color: var(--attendance-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 206, 201, 0.25);
+            outline: none;
+        }
+
+    .attend-btn {
+        background: var(--attendance-gradient);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: var(--transition);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 120px;
+        justify-content: center;
+    }
+
+        .attend-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .attend-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .attend-btn.attending {
+            background: var(--warning-gradient);
+        }
+
+    .attended-badge {
+        background: var(--success-gradient);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* View Weekly Classes Button */
+    .view-weekly-btn {
+        background: var(--info-gradient);
+        border: none;
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: var(--transition);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+        .view-weekly-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+    /* Admin-specific styles */
+    .admin-section {
+        border-left: 4px solid var(--warning-color);
+    }
+
+        .admin-section .section-header {
+            background: linear-gradient(135deg, #fff7e6 0%, #ffeaa7 20%);
+        }
+
+    .admin-badge {
+        background: var(--warning-gradient);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Unauthorized message styles */
+    .unauthorized-message {
+        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        color: #d63031;
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: 1px solid #fdcb6e;
+    }
+
+    /* Weekly Classes Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+    }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+    .weekly-modal {
+        background: var(--bg-white);
+        border-radius: var(--border-radius-lg);
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+        transform: translateY(20px);
+        transition: var(--transition);
+    }
+
+    .modal-overlay.show .weekly-modal {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        background: var(--info-gradient);
+        color: white;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: var(--transition);
+    }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    /* Filter and Search */
+    .filter-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .search-input, .filter-select {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        transition: var(--transition);
+        background: var(--bg-white);
+    }
+
+        .search-input:focus, .filter-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+            outline: none;
+        }
+
+    /* Student Information Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: var(--bg-light);
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .info-content {
+        flex: 1;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 1rem;
+    }
+
+    /* Subject Cards */
+    .subjects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .subject-card {
+        background: var(--bg-white);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .subject-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--success-gradient);
+        }
+
+        .subject-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+    .subject-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .subject-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--success-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .subject-name {
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .subject-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .subject-detail {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+        .subject-detail i {
+            color: var(--primary-color);
+            width: 16px;
+        }
+
+    .schedule-info {
+        background: var(--bg-light);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid var(--info-color);
+    }
+
+    .schedule-day {
+        font-weight: 600;
+        color: var(--info-color);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .schedule-time {
+        background: rgba(116, 185, 255, 0.1);
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        margin-top: 0.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+        .schedule-time span {
+            color: var(--text-dark);
+        }
+
+    /* Table Styles */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+        .data-table th {
+            background: var(--bg-light);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background: var(--bg-light);
+        }
+
+    /* Badge Styles */
+    .badge-custom {
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--border-radius);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .badge-warning {
+        background: var(--warning-gradient);
+        color: white;
+    }
+
+    .badge-danger {
+        background: var(--danger-gradient);
+        color: white;
+    }
+
+    .badge-info {
+        background: var(--info-gradient);
+        color: white;
+    }
+
+    /* Loading State */
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-color);
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 1rem;
+    }
+
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+    /* Alert Messages */
+    .alert-message {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background: rgba(0, 184, 148, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(0, 184, 148, 0.2);
+    }
+
+    .alert-error {
+        background: rgba(225, 112, 85, 0.1);
+        color: var(--danger-color);
+        border: 1px solid rgba(225, 112, 85, 0.2);
+    }
+
+    .alert-info {
+        background: rgba(116, 185, 255, 0.1);
+        color: var(--info-color);
+        border: 1px solid rgba(116, 185, 255, 0.2);
+    }
+
+    /* Pagination */
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .pagination-btn {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+        .pagination-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .pagination-info {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .profile-container
+
+    {
+        margin: 1rem;
+    }
+
+    .profile-content {
+        padding: 1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .upcoming-classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subjects-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-input, .filter-select {
+        width: 100%;
+    }
+
+    .attendance-controls {
+        flex-direction: column;
+    }
+
+    .attendance-type-select {
+        width: 100%;
+    }
+
+    .weekly-modal {
+        margin: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+
+    }
+</style>
+
+<div class="container-fluid student-profile-page">
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h1 class="profile-name">@Model.StudentName</h1>
+            <p class="profile-subtitle">@Model.YearName @(!string.IsNullOrEmpty(Model.LevelName) ? $"- {Model.LevelName}" : "") Student</p>
+            <div class="profile-status">
+                <i class="fas @(Model.IsActive ? "fa-check-circle" : "fa-times-circle") me-2"></i>
+                @(Model.IsActive ? "Active Student" : "Inactive Student")
+            </div>
+        </div>
+
+        <!-- Profile Content -->
+        <div class="profile-content">
+            <!-- Statistics -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--success-gradient);">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-value" id="subjectsCount">-</div>
+                    <div class="stat-label">Subjects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--info-gradient);">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-value" id="attendanceCount">-</div>
+                    <div class="stat-label">Total Attendance</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--warning-gradient);">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-value" id="examsCount">-</div>
+                    <div class="stat-label">Exams Taken</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--primary-gradient);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-value" id="averageGrade">-</div>
+                    <div class="stat-label">Average Grade</div>
+                </div>
+            </div>
+
+            <!-- Upcoming Classes Section - Now visible to everyone -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Upcoming Classes (Available to Attend)
+                        @if (Model.CanMarkAttendance)
+                        {
+                            <span class="admin-badge">Admin</span>
+                        }
+                    </h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-info-circle text-info"></i>
+                        <small class="text-muted">
+                            Classes available from 1 hour before start until class ends
+                            @if (Model.CanMarkAttendance)
+                            {
+                                <span> • You can mark attendance</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div id="alertContainer"></div>
+                    <div class="upcoming-classes-grid" id="upcomingClassesGrid">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <span>Loading upcoming classes...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Information Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user"></i>
+                        Student Information
+                    </h2>
+                </div>
+                <div class="section-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Student Phone</div>
+                                <div class="info-value">@Model.StudentPhone</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Parent Phone</div>
+                                <div class="info-value">@Model.StudentParentPhone</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-birthday-cake"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Age</div>
+                                <div class="info-value">@Model.Age years old</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas @(Model.StudentGender == true ? "fa-mars" : "fa-venus")"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Gender</div>
+                                <div class="info-value">@(Model.StudentGender == true ? "Male" : "Female")</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Branch</div>
+                                <div class="info-value">@Model.BranchName</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Member Since</div>
+                                <div class="info-value">@Model.SubscriptionTime.ToString("MMMM yyyy")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subjects Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        Learning Subjects
+                    </h2>
+                </div>
+                <div class="section-content">
+                    <div class="filter-controls">
+                        <input type="text" class="search-input" id="subjectsSearch" placeholder="Search subjects...">
+                        <select class="filter-select" id="subjectsFilter">
+                            <option value="">All Subjects</option>
+                            <option value="online">Online Classes</option>
+                            <option value="offline">Offline Classes</option>
+                        </select>
+                    </div>
+                    <div class="subjects-grid" id="subjectsGrid">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <span>Loading subjects...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Plans Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-credit-card"></i>
+                        Subscription Plans
+                    </h2>
+                </div>
+                <div class="section-content">
+                    <div id="plansContent">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <span>Loading subscription plans...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance History Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-calendar-check"></i>
+                        Attendance History
+                    </h2>
+                </div>
+                <div class="section-content">
+                    <div id="attendanceContent">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <span>Loading attendance history...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Results Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Exam Results
+                    </h2>
+                </div>
+                <div class="section-content">
+                    <div id="examsContent">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <span>Loading exam results...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Classes Modal -->
+<div class="modal-overlay" id="weeklyModal">
+    <div class="weekly-modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Weekly Classes</h3>
+            <button class="close-btn" onclick="closeWeeklyModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="weeklyClassesContent">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span>Loading weekly classes...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include the JavaScript file -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Student Profile JavaScript functionality
+    // NOTE: Profile and upcoming classes are accessible to everyone, but attendance marking is admin-only
+    const ITEM_KEY = '@Model.ItemKey';
+    const CAN_MARK_ATTENDANCE = @Html.Raw(Model.CanMarkAttendance.ToString().ToLower());
+    const IS_ADMIN = CAN_MARK_ATTENDANCE; // Only admins can mark attendance
+    const STUDENT_YEAR_CODE = @(Model.YearCode ?? 0); // Get year code from model
+
+    let subjectsData = [];
+    let currentAttendancePage = 1;
+    let attendanceTypes = [];
+    const ATTENDANCE_PAGE_SIZE = 10;
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStudentStats();
+        loadStudentSubjects();
+        loadStudentPlans();
+        loadStudentAttendance();
+        loadStudentExams();
+
+        // Load upcoming classes for everyone
+        loadUpcomingClasses();
+        // Refresh upcoming classes every 5 minutes
+        setInterval(loadUpcomingClasses, 300000);
+
+        // Load admin-only features
+        if (CAN_MARK_ATTENDANCE) {
+            loadAttendanceTypes();
+        }
+
+        setupEventListeners();
+    });
+
+    // Setup event listeners
+    function setupEventListeners() {
+        // Subjects search and filter
+        document.getElementById('subjectsSearch').addEventListener('input', filterSubjects);
+        document.getElementById('subjectsFilter').addEventListener('change', filterSubjects);
+
+        // Close modal when clicking outside
+        document.getElementById('weeklyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeWeeklyModal();
+            }
+        });
+
+        // Close modal with escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeWeeklyModal();
+            }
+        });
+    }
+
+    // Load attendance types (admin only)
+    async function loadAttendanceTypes() {
+        try {
+            const response = await fetch('/Student/GetAttendanceTypes');
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Error loading attendance types:', data.error);
+                return;
+            }
+
+            attendanceTypes = data;
+        } catch (error) {
+            console.error('Error loading attendance types:', error);
+        }
+    }
+
+    // Load upcoming classes (available to everyone)
+    async function loadUpcomingClasses() {
+        try {
+            const response = await fetch(`/Student/GetUpcomingClasses/${ITEM_KEY}`);
+            const data = await response.json();
+
+            if (data.error) {
+                showError('upcomingClassesGrid', 'Error loading upcoming classes: ' + data.error);
+                return;
+            }
+
+            renderUpcomingClasses(data);
+
+        } catch (error) {
+            console.error('Error loading upcoming classes:', error);
+            showError('upcomingClassesGrid', 'Failed to load upcoming classes.');
+        }
+    }
+
+    // Render upcoming classes
+    function renderUpcomingClasses(classes) {
+        const container = document.getElementById('upcomingClassesGrid');
+
+        if (classes.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clock"></i>
+                    <h4>No Upcoming Classes</h4>
+                    <p>There are no classes available to attend right now.</p>
+                    <small class="text-muted">Classes are available from 1 hour before start time until the class ends.</small>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = classes.map(classItem => createClassCard(classItem)).join('');
+    }
+
+    // Create class card
+    function createClassCard(classItem) {
+        const canAttend = classItem.canAttend && CAN_MARK_ATTENDANCE;
+        const isAttended = !classItem.canAttend;
+
+        return `
+            <div class="class-card ${isAttended ? 'attended' : ''}" id="class-${classItem.classCode}">
+                <div class="class-header">
+                    <div class="class-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="class-info">
+                        <h3>${classItem.className}</h3>
+                        <div class="class-subject">${classItem.subjectName}</div>
+                    </div>
+                </div>
+
+                <div class="class-details">
+                    <div class="class-detail">
+                        <i class="fas fa-user-tie"></i>
+                        <span>${classItem.teacherName}</span>
+                    </div>
+                    <div class="class-detail">
+                        <i class="fas fa-door-open"></i>
+                        <span>${classItem.hallName}</span>
+                    </div>
+                    <div class="class-detail">
+                        <i class="fas fa-building"></i>
+                        <span>${classItem.branchName}</span>
+                    </div>
+                    <div class="class-detail">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>$${classItem.totalAmount || 0}</span>
+                    </div>
+                </div>
+
+                <div class="class-time">
+                    <div class="time-info">
+                        <div class="time-label">Start Time</div>
+                        <div class="time-value">${classItem.startTime}</div>
+                    </div>
+                    <div class="time-info">
+                        <div class="time-label">End Time</div>
+                        <div class="time-value">${classItem.endTime}</div>
+                    </div>
+                </div>
+
+                ${renderAttendanceControls(classItem, canAttend, isAttended)}
+            </div>
+        `;
+    }
+
+    // Render attendance controls
+    function renderAttendanceControls(classItem, canAttend, isAttended) {
+        if (isAttended) {
+            return `
+                <div class="attended-badge">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Already Attended</span>
+                </div>
+            `;
+        }
+
+        if (!CAN_MARK_ATTENDANCE) {
+            return `
+                <div class="alert-message alert-info" style="margin-top: 1rem;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Class is available to attend. Administrator access required to mark attendance.</span>
+                </div>
+            `;
+        }
+
+        const attendanceOptions = attendanceTypes.map(type =>
+            `<option value="${type.value}">${type.text}</option>`
+        ).join('');
+
+        return `
+            <div class="attendance-controls">
+                <select class="attendance-type-select" id="attendanceType-${classItem.classCode}">
+                    <option value="">Select Type</option>
+                    ${attendanceOptions}
+                </select>
+                <button class="attend-btn" onclick="markAttendance(${classItem.classCode})" id="attendBtn-${classItem.classCode}">
+                    <i class="fas fa-check"></i>
+                    <span>Mark Attend</span>
+                </button>
+            </div>
+        `;
+    }
+
+    // Show weekly classes modal
+    async function showWeeklyClasses(subjectName, teacherName, yearCode, branchName, subjectCode, teacherCode, branchCode) {
+        const modal = document.getElementById('weeklyModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const content = document.getElementById('weeklyClassesContent');
+
+        // Update modal title
+        modalTitle.textContent = `Weekly Schedule - ${subjectName} with ${teacherName}`;
+
+        // Show modal
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+        // Reset content to loading
+        content.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <span>Loading weekly classes...</span>
+            </div>
+        `;
+
+        try {
+            const response = await fetch(`/Student/GetWeeklyClasses/${ITEM_KEY}?subjectCode=${subjectCode}&teacherCode=${teacherCode}&yearCode=${yearCode}&branchCode=${branchCode}`);
+            const data = await response.json();
+
+            if (data.error) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i>
+                        <h4>Error</h4>
+                        <p>${data.error}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            renderWeeklyClasses(data, subjectName, teacherName, branchName);
+
+        } catch (error) {
+            console.error('Error loading weekly classes:', error);
+            content.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i>
+                    <h4>Error</h4>
+                    <p>Failed to load weekly classes.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Render weekly classes
+    function renderWeeklyClasses(classes, subjectName, teacherName, branchName) {
+        const content = document.getElementById('weeklyClassesContent');
+
+        if (classes.length === 0) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>No Classes This Week</h4>
+                    <p>No classes found for ${subjectName} with ${teacherName} at ${branchName} this week.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Group classes by day
+        const classesToday = [];
+        const classesByDay = {};
+        const today = new Date().toDateString();
+
+        classes.forEach(classItem => {
+            const classDate = new Date(classItem.classDate).toDateString();
+            const dayName = new Date(classItem.classDate).toLocaleDateString('en-US', { weekday: 'long' });
+
+            if (classDate === today) {
+                classesToday.push(classItem);
+            }
+
+            if (!classesByDay[dayName]) {
+                classesByDay[dayName] = [];
+            }
+            classesByDay[dayName].push(classItem);
+        });
+
+        let html = `
+            <div class="mb-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Course Details
+                </h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Subject</div>
+                                <div class="info-value">${subjectName}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Teacher</div>
+                                <div class="info-value">${teacherName}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Branch</div>
+                                <div class="info-value">${branchName}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        html += `<h5 class="mb-3"><i class="fas fa-calendar-week text-primary me-2"></i>Weekly Schedule</h5>`;
+
+        // Render classes by day
+        const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        dayOrder.forEach(day => {
+            if (classesByDay[day]) {
+                const isToday = classesByDay[day].some(c => new Date(c.classDate).toDateString() === today);
+                html += `
+                    <div class="mb-4">
+                        <h6 class="mb-3 ${isToday ? 'text-primary' : 'text-muted'}">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            ${day} ${isToday ? '(Today)' : ''}
+                        </h6>
+                        <div class="row">
+                `;
+
+                classesByDay[day].forEach(classItem => {
+                    const isCurrentClass = new Date(classItem.classDate).toDateString() === today;
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="class-card ${isCurrentClass ? 'border-primary' : ''}" style="padding: 1rem;">
+                                <div class="class-header" style="margin-bottom: 0.5rem;">
+                                    <div class="class-icon" style="width: 40px; height: 40px; margin-right: 0.75rem; font-size: 1rem;">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="class-info">
+                                        <h6 style="margin: 0; font-size: 1rem;">${classItem.className}</h6>
+                                        <small class="text-muted">${new Date(classItem.classDate).toLocaleDateString()}</small>
+                                    </div>
+                                </div>
+                                <div class="class-details" style="grid-template-columns: 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <div class="class-detail">
+                                        <i class="fas fa-clock"></i>
+                                        <span>${classItem.startTime} - ${classItem.endTime}</span>
+                                    </div>
+                                    <div class="class-detail">
+                                        <i class="fas fa-door-open"></i>
+                                        <span>${classItem.hallName}</span>
+                                    </div>
+                                    <div class="class-detail">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        <span>$${classItem.totalAmount || 0}</span>
+                                    </div>
+                                </div>
+                                ${classItem.isAttended ? `
+                                    <div class="attended-badge" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Attended</span>
+                                    </div>
+                                ` : (isCurrentClass ? `
+                                    <div class="badge-custom badge-info" style="font-size: 0.8rem;">
+                                        <i class="fas fa-star"></i>
+                                        Available to Attend
+                                    </div>
+                                ` : `
+                                    <div class="badge-custom badge-secondary" style="font-size: 0.8rem;">
+                                        <i class="fas fa-calendar"></i>
+                                        Scheduled
+                                    </div>
+                                `)}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div></div>';
+            }
+        });
+
+        content.innerHTML = html;
+    }
+
+    // Close weekly classes modal
+    function closeWeeklyModal() {
+        const modal = document.getElementById('weeklyModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    // Mark attendance (admin only)
+    async function markAttendance(classCode) {
+        if (!CAN_MARK_ATTENDANCE) {
+            showAlert('Only administrators can mark attendance.', 'error');
+            return;
+        }
+
+        const typeSelect = document.getElementById(`attendanceType-${classCode}`);
+        const attendBtn = document.getElementById(`attendBtn-${classCode}`);
+
+        if (!typeSelect.value) {
+            showAlert('Please select an attendance type.', 'error');
+            return;
+        }
+
+        // Disable button and show loading
+        attendBtn.disabled = true;
+        attendBtn.classList.add('attending');
+        attendBtn.innerHTML = `
+            <div class="spinner" style="width: 16px; height: 16px; margin-right: 0.5rem;"></div>
+            <span>Marking...</span>
+        `;
+
+        try {
+            const response = await fetch('/Student/MarkAttendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ItemKey: ITEM_KEY,
+                    ClassCode: classCode,
+                    AttendanceType: parseInt(typeSelect.value)
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showAlert(result.message, 'success');
+
+                // Update the card to show attended state
+                const classCard = document.getElementById(`class-${classCode}`);
+                classCard.classList.add('attended');
+
+                const controlsContainer = classCard.querySelector('.attendance-controls');
+                controlsContainer.outerHTML = `
+                    <div class="attended-badge">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Attended at ${result.attendanceDate}</span>
+                    </div>
+                `;
+
+                // Reload attendance history to show the new record
+                loadStudentAttendance();
+
+                // Update stats
+                loadStudentStats();
+
+            } else {
+                showAlert(result.error || 'Failed to mark attendance.', 'error');
+
+                // Reset button
+                attendBtn.disabled = false;
+                attendBtn.classList.remove('attending');
+                attendBtn.innerHTML = `
+                    <i class="fas fa-check"></i>
+                    <span>Mark Attend</span>
+                `;
+            }
+
+        } catch (error) {
+            console.error('Error marking attendance:', error);
+            showAlert('An error occurred while marking attendance.', 'error');
+
+            // Reset button
+            attendBtn.disabled = false;
+            attendBtn.classList.remove('attending');
+            attendBtn.innerHTML = `
+                <i class="fas fa-check"></i>
+                <span>Mark Attend</span>
+            `;
+        }
+    }
+
+    // Show alert message
+    function showAlert(message, type = 'info') {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertClass = type === 'success' ? 'alert-success' :
+                          type === 'error' ? 'alert-error' : 'alert-info';
+        const iconClass = type === 'success' ? 'fa-check-circle' :
+                         type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+        const alertHtml = `
+            <div class="alert-message ${alertClass}">
+                <i class="fas ${iconClass}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+        alertContainer.innerHTML = alertHtml;
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            alertContainer.innerHTML = '';
+        }, 5000);
+    }
+
+    // Load student statistics
+    async function loadStudentStats() {
+        try {
+            const response = await fetch(`/Student/GetStudentStats/${ITEM_KEY}`);
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Error loading stats:', data.error);
+                return;
+            }
+
+            // Update stat values
+            document.getElementById('subjectsCount').textContent = data.subjectsCount;
+            document.getElementById('attendanceCount').textContent = data.totalAttendance;
+            document.getElementById('examsCount').textContent = data.examsCount;
+            document.getElementById('averageGrade').textContent = data.averageGrade + '%';
+
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    // Load student subjects
+    async function loadStudentSubjects() {
+        try {
+            const response = await fetch(`/Student/GetStudentSubjects/${ITEM_KEY}`);
+            const data = await response.json();
+
+            if (data.error) {
+                showError('subjectsGrid', 'Error loading subjects: ' + data.error);
+                return;
+            }
+
+            subjectsData = data;
+            renderSubjects(data);
+
+        } catch (error) {
+            console.error('Error loading subjects:', error);
+            showError('subjectsGrid', 'Failed to load subjects.');
+        }
+    }
+
+    // Render subjects
+    function renderSubjects(subjects) {
+        const container = document.getElementById('subjectsGrid');
+
+        if (subjects.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-book-open"></i>
+                    <h4>No Subjects Found</h4>
+                    <p>This student is not enrolled in any subjects yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = subjects.map(subject => `
+            <div class="subject-card">
+                <div class="subject-header">
+                    <div class="subject-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="subject-name">${subject.subjectName}</h3>
+                </div>
+                <div class="subject-details">
+                    <div class="subject-detail">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>${subject.teacherName}</span>
+                    </div>
+                    <div class="subject-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>${subject.teacherPhone || 'N/A'}</span>
+                    </div>
+                    <div class="subject-detail">
+                        <i class="fas fa-building"></i>
+                        <span>${subject.branchName}</span>
+                    </div>
+                    <div class="subject-detail">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>${subject.eduYearName}</span>
+                    </div>
+                    <div class="subject-detail">
+                        <i class="fas ${subject.isOnline ? 'fa-wifi' : 'fa-map-marker-alt'}"></i>
+                        <span>${subject.isOnline ? 'Online' : 'In-Person'}</span>
+                    </div>
+                    ${subject.hallName ? `
+                        <div class="subject-detail">
+                            <i class="fas fa-door-open"></i>
+                            <span>${subject.hallName}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                ${subject.scheduleDay && subject.scheduleStartTime && subject.scheduleEndTime ? `
+                    <div class="schedule-info">
+                        <div class="schedule-day">
+                            <i class="fas fa-clock"></i>
+                            Class Schedule
+                        </div>
+                        <div class="subject-detail schedule-time">
+                            <i class="fas fa-calendar-day"></i>
+                            <span><strong>${subject.scheduleDay}</strong> ${subject.scheduleStartTime} - ${subject.scheduleEndTime}</span>
+                        </div>
+                    </div>
+                ` : ''}
+                ${subject.chapterName ? `
+                    <div class="subject-detail" style="margin-top: 1rem;">
+                        <i class="fas fa-bookmark"></i>
+                        <span>Chapter: ${subject.chapterName}</span>
+                    </div>
+                ` : ''}
+                ${subject.studentFee ? `
+                    <div class="subject-detail" style="margin-top: 1rem; justify-content: center; font-weight: 600; color: var(--success-color);">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Fee: ${subject.studentFee}</span>
+                    </div>
+                ` : ''}
+                <button class="view-weekly-btn" onclick="showWeeklyClasses('${subject.subjectName}', '${subject.teacherName}', ${STUDENT_YEAR_CODE}, '${subject.branchName}', ${subject.subjectCode}, ${subject.teacherCode}, ${subject.branchCode})" style="width: 100%; margin-top: 1rem;">
+                    <i class="fas fa-calendar-week"></i>
+                    <span>View Week Schedule</span>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // Filter subjects
+    function filterSubjects() {
+        const searchTerm = document.getElementById('subjectsSearch').value.toLowerCase();
+        const filterValue = document.getElementById('subjectsFilter').value;
+
+        let filteredSubjects = subjectsData.filter(subject => {
+            const matchesSearch = subject.subjectName.toLowerCase().includes(searchTerm) ||
+                                 subject.teacherName.toLowerCase().includes(searchTerm) ||
+                                 subject.branchName.toLowerCase().includes(searchTerm);
+
+            const matchesFilter = filterValue === '' ||
+                                 (filterValue === 'online' && subject.isOnline) ||
+                                 (filterValue === 'offline' && !subject.isOnline);
+
+            return matchesSearch && matchesFilter;
+        });
+
+        renderSubjects(filteredSubjects);
+    }
+
+    // Load student plans
+    async function loadStudentPlans() {
+        try {
+            const response = await fetch(`/Student/GetStudentPlans/${ITEM_KEY}`);
+            const data = await response.json();
+
+            if (data.error) {
+                showError('plansContent', 'Error loading plans: ' + data.error);
+                return;
+            }
+
+            renderPlans(data);
+
+        } catch (error) {
+            console.error('Error loading plans:', error);
+            showError('plansContent', 'Failed to load subscription plans.');
+        }
+    }
+
+    // Render subscription plans
+    function renderPlans(plans) {
+        const container = document.getElementById('plansContent');
+
+        if (plans.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-credit-card"></i>
+                    <h4>No Subscription Plans</h4>
+                    <p>This student has no active subscription plans.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="row">
+                ${plans.map(plan => `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="subject-card">
+                            <div class="subject-header">
+                                <div class="subject-icon" style="background: ${plan.isExpired ? 'var(--danger-gradient)' : 'var(--success-gradient)'};">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <h3 class="subject-name">${plan.planName}</h3>
+                            </div>
+                            <div class="section-content">
+                                <p class="text-muted">${plan.description}</p>
+                                <div class="subject-details">
+                                    <div class="subject-detail">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        <span>$${plan.price}</span>
+                                    </div>
+                                    <div class="subject-detail">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span>${plan.eduYearName}</span>
+                                    </div>
+                                    <div class="subject-detail">
+                                        <i class="fas fa-clock"></i>
+                                        <span>${plan.expiryMonths} months</span>
+                                    </div>
+                                    <div class="subject-detail">
+                                        <i class="fas fa-hashtag"></i>
+                                        <span>${plan.totalCount} classes</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="subject-detail">
+                                        <i class="fas fa-calendar-check"></i>
+                                        <span>Subscribed: ${new Date(plan.subDate).toLocaleDateString()}</span>
+                                    </div>
+                                    <div class="subject-detail">
+                                        <i class="fas fa-calendar-times"></i>
+                                        <span>Expires: ${new Date(plan.expiryDate).toLocaleDateString()}</span>
+                                    </div>
+                                    ${!plan.isExpired ? `
+                                        <div class="subject-detail">
+                                            <i class="fas fa-hourglass-half"></i>
+                                            <span>${plan.daysRemaining} days remaining</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="mt-3 text-center">
+                                    <span class="badge-custom ${plan.isExpired ? 'badge-danger' : 'badge-success'}">
+                                        ${plan.isExpired ? 'Expired' : 'Active'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Load student attendance
+    async function loadStudentAttendance(page = 1) {
+        try {
+            const response = await fetch(`/Student/GetStudentAttendance/${ITEM_KEY}?page=${page}&pageSize=${ATTENDANCE_PAGE_SIZE}`);
+            const data = await response.json();
+
+            if (data.error) {
+                showError('attendanceContent', 'Error loading attendance: ' + data.error);
+                return;
+            }
+
+            renderAttendance(data);
+
+        } catch (error) {
+            console.error('Error loading attendance:', error);
+            showError('attendanceContent', 'Failed to load attendance history.');
+        }
+    }
+
+    // Render attendance
+    function renderAttendance(data) {
+        const container = document.getElementById('attendanceContent');
+
+        if (data.attendance.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>No Attendance Records</h4>
+                    <p>This student has no attendance history yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Teacher</th>
+                            <th>Subject</th>
+                            <th>Class</th>
+                            <th>Hall</th>
+                            <th>Session Price</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.attendance.map(record => `
+                            <tr>
+                                <td>${new Date(record.attendDate).toLocaleString()}</td>
+                                <td>${record.teacherName}</td>
+                                <td>${record.subjectName}</td>
+                                <td>${record.className}</td>
+                                <td>${record.hallName}</td>
+                                <td>$${record.sessionPrice}</td>
+                                <td>
+                                    <span class="badge-custom badge-info">${record.type}</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${data.totalPages > 1 ? `
+                <div class="pagination-controls">
+                    <button class="pagination-btn" onclick="loadStudentAttendance(${data.currentPage - 1})"
+                            ${data.currentPage <= 1 ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span class="pagination-info">
+                        Page ${data.currentPage} of ${data.totalPages} (${data.totalCount} total records)
+                    </span>
+                    <button class="pagination-btn" onclick="loadStudentAttendance(${data.currentPage + 1})"
+                            ${data.currentPage >= data.totalPages ? 'disabled' : ''}>
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    // Load student exams
+    async function loadStudentExams() {
+        try {
+            const response = await fetch(`/Student/GetStudentExams/${ITEM_KEY}`);
+            const data = await response.json();
+
+            if (data.error) {
+                showError('examsContent', 'Error loading exams: ' + data.error);
+                return;
+            }
+
+            renderExams(data);
+
+        } catch (error) {
+            console.error('Error loading exams:', error);
+            showError('examsContent', 'Failed to load exam results.');
+        }
+    }
+
+    // Render exams
+    function renderExams(exams) {
+        const container = document.getElementById('examsContent');
+
+        if (exams.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h4>No Exam Results</h4>
+                    <p>This student has not taken any exams yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="row">
+                ${exams.map(exam => `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="subject-card">
+                            <div class="subject-header">
+                                <div class="subject-icon" style="background: ${exam.passed ? 'var(--success-gradient)' : 'var(--danger-gradient)'};">
+                                    <i class="fas fa-${exam.examType === 'Exam' ? 'file-alt' : 'question-circle'}"></i>
+                                </div>
+                                <h3 class="subject-name">${exam.examName}</h3>
+                            </div>
+                            <div class="subject-details">
+                                <div class="subject-detail">
+                                    <i class="fas fa-book"></i>
+                                    <span>${exam.subjectName}</span>
+                                </div>
+                                <div class="subject-detail">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <span>${exam.teacherName}</span>
+                                </div>
+                                <div class="subject-detail">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>${exam.examDate}</span>
+                                </div>
+                                <div class="subject-detail">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${exam.examTime}</span>
+                                </div>
+                            </div>
+                            <div class="schedule-info">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-value" style="font-size: 1.5rem;">${exam.studentResult || 0}</div>
+                                        <div class="stat-label">Score</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-value" style="font-size: 1.5rem;">${Math.round(exam.studentPercentage || 0)}%</div>
+                                        <div class="stat-label">Percentage</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-value" style="font-size: 1.5rem;">${exam.grade}</div>
+                                        <div class="stat-label">Grade</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-3">
+                                <span class="badge-custom ${exam.passed ? 'badge-success' : 'badge-danger'}">
+                                    ${exam.passed ? 'Passed' : 'Failed'}
+                                </span>
+                                <span class="badge-custom badge-info ms-2">
+                                    ${exam.examType}
+                                </span>
+                                ${exam.isOnline ? '<span class="badge-custom badge-warning ms-2">Online</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Show error message
+    function showError(containerId, message) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i>
+                <h4>Error</h4>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+</script>

@@ -1,4 +1,5 @@
 ﻿using centrny.Models;
+using centrny.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
@@ -6,6 +7,8 @@ using System.Linq;
 
 namespace centrny.Controllers
 {
+    // Apply page access to the entire controller for view permission
+    [RequirePageAccess("WalletExam")] // This uses Page_Code 20 from your database
     public class WalletExamController : Controller
     {
         private readonly CenterContext _context;
@@ -15,18 +18,22 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // View permission - inherited from controller-level attribute
         public async Task<IActionResult> Index()
         {
             var walletExams = await _context.WalletExams.ToListAsync();
             return View(walletExams);
         }
 
+        // INSERT permission required for showing create form
+        [RequirePageAccess("WalletExam", "insert")]
         public IActionResult Create()
         {
             return View();
         }
 
-
+        // INSERT permission required for creating new wallet exam
+        [RequirePageAccess("WalletExam", "insert")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(WalletExam walletExam)
@@ -40,8 +47,8 @@ namespace centrny.Controllers
             return View(walletExam);
         }
 
-       
-
+        // UPDATE permission required for editing
+        [RequirePageAccess("WalletExam", "update")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, WalletExam walletExam)
@@ -74,7 +81,8 @@ namespace centrny.Controllers
             return View(walletExam);
         }
 
-       
+        // UPDATE permission required for AJAX updates
+        [RequirePageAccess("WalletExam", "update")]
         [HttpPost]
         public async Task<IActionResult> UpdateWalletExam([FromBody] WalletExam walletExam)
         {
@@ -101,7 +109,8 @@ namespace centrny.Controllers
             return Ok();
         }
 
-
+        // INSERT permission required for AJAX creation
+        [RequirePageAccess("WalletExam", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddWalletExam([FromBody] WalletExam walletExam)
         {
@@ -116,6 +125,8 @@ namespace centrny.Controllers
             return Ok();
         }
 
+        // DELETE permission required for showing delete confirmation
+        [RequirePageAccess("WalletExam", "delete")]
         public async Task<IActionResult> Delete(int id)
         {
             var walletExam = await _context.WalletExams.FindAsync(id);
@@ -126,13 +137,18 @@ namespace centrny.Controllers
             return View(walletExam);
         }
 
+        // DELETE permission required for actual deletion
+        [RequirePageAccess("WalletExam", "delete")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var walletExam = await _context.WalletExams.FindAsync(id);
-            _context.WalletExams.Remove(walletExam);
-            await _context.SaveChangesAsync();
+            if (walletExam != null)
+            {
+                _context.WalletExams.Remove(walletExam);
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
         }
     }

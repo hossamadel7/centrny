@@ -45,6 +45,8 @@ public partial class Branch
 
     public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
 
+    public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+
     public virtual Root RootCodeNavigation { get; set; } = null!;
 
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();

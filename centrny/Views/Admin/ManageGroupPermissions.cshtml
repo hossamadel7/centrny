@@ -1,0 +1,64 @@
+﻿@model centrny.Models.Group
+
+<h2>Manage Permissions for "@Model.GroupName"</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form asp-action="SaveGroupPermissions" method="post">
+    <input type="hidden" name="groupCode" value="@Model.GroupCode" />
+
+    @if (Model.GroupPages != null && Model.GroupPages.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Page Name</th>
+                    <th>Path</th>
+                    <th>Access</th>
+                    <th>Insert</th>
+                    <th>Update</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var groupPage in Model.GroupPages)
+                {
+                    var pageItem = groupPage.PageCodeNavigation;
+                    bool hasAccess = groupPage.InsertFlag || groupPage.UpdateFlag || groupPage.DeleteFlag;
+
+                    <tr>
+                        <td>@(pageItem.PageName)</td>
+                        <td>@(pageItem.PagePath)</td>
+                        <td>
+                            <input type="checkbox" name="access_@(pageItem.PageCode)" value="true" @(hasAccess ? "checked" : "") />
+                        </td>
+                        <td>
+                            <input type="checkbox" name="insert_@(pageItem.PageCode)" value="true" @(groupPage.InsertFlag ? "checked" : "") />
+                        </td>
+                        <td>
+                            <input type="checkbox" name="update_@(pageItem.PageCode)" value="true" @(groupPage.UpdateFlag ? "checked" : "") />
+                        </td>
+                        <td>
+                            <input type="checkbox" name="delete_@(pageItem.PageCode)" value="true" @(groupPage.DeleteFlag ? "checked" : "") />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No pages available for this group.</p>
+    }
+
+    <button type="submit" class="btn btn-success">Save Permissions</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to Groups</a>
+</form>

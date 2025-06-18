@@ -101,6 +101,8 @@ public partial class User
 
     public virtual ICollection<Question> QuestionLastUpdateUserNavigations { get; set; } = new List<Question>();
 
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+
     public virtual ICollection<Student> StudentInsertUserNavigations { get; set; } = new List<Student>();
 
     public virtual ICollection<Student> StudentLastInsertUserNavigations { get; set; } = new List<Student>();

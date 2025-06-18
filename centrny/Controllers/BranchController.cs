@@ -1,10 +1,12 @@
 using System;
+using centrny.Attributes;
 using centrny.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace centrny.Controllers
 {
+    [RequirePageAccess("Branch")]
     public class BranchController : Controller
     {
         private readonly CenterContext _context;
@@ -61,6 +63,7 @@ namespace centrny.Controllers
             });
         }
 
+        [RequirePageAccess("Branch", "insert")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Branch branch)
         {
@@ -81,6 +84,7 @@ namespace centrny.Controllers
             return Json(new { success = true });
         }
 
+        [RequirePageAccess("Branch", "update")] // Only users with UPDATE permission
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] Branch branch)
         {
@@ -109,6 +113,7 @@ namespace centrny.Controllers
             return Json(new { success = true });
         }
 
+        [RequirePageAccess("Branch", "delete")] // Only users with DELETE permission
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {

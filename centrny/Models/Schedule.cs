@@ -27,6 +27,12 @@ public partial class Schedule
 
     public DateTime? EndTime { get; set; }
 
+    public int YearCode { get; set; }
+
+    public int? InsertUser { get; set; }
+
+    public DateTime? InsertTime { get; set; }
+
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
@@ -35,9 +41,15 @@ public partial class Schedule
 
     public virtual Hall? HallCodeNavigation { get; set; }
 
+    public virtual User? InsertUserNavigation { get; set; }
+
+    public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
+
     public virtual Root? RootCodeNavigation { get; set; }
 
     public virtual Subject? SubjectCodeNavigation { get; set; }
 
     public virtual Teacher? TeacherCodeNavigation { get; set; }
+
+    public virtual Year YearCodeNavigation { get; set; } = null!;
 }

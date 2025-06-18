@@ -57,6 +57,8 @@ public partial class Root
 
     public virtual ICollection<Item> Items { get; set; } = new List<Item>();
 
+    public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
+
     public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
 
     public virtual ICollection<Level> Levels { get; set; } = new List<Level>();

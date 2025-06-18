@@ -9,7 +9,9 @@ public partial class Question
 
     public string QuestionContent { get; set; } = null!;
 
-    public int ExamCode { get; set; }
+    public int? ExamCode { get; set; }
+
+    public int? LessonCode { get; set; }
 
     public int InsertUser { get; set; }
 
@@ -21,11 +23,13 @@ public partial class Question
 
     public virtual ICollection<Answer> Answers { get; set; } = new List<Answer>();
 
-    public virtual Exam ExamCodeNavigation { get; set; } = null!;
+    public virtual Exam? ExamCodeNavigation { get; set; }
 
     public virtual ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
 
     public virtual User InsertUserNavigation { get; set; } = null!;
 
     public virtual User? LastUpdateUserNavigation { get; set; }
+
+    public virtual Lesson? LessonCodeNavigation { get; set; }
 }

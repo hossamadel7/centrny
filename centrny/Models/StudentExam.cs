@@ -24,4 +24,8 @@ public partial class StudentExam
     public int? LastUpdateUser { get; set; }
 
     public DateTime? LastUpdateTime { get; set; }
+
+    public virtual Exam ExamCodeNavigation { get; set; } = null!;
+
+    public virtual Student StudentCodeNavigation { get; set; } = null!;
 }

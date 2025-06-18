@@ -15,6 +15,8 @@ public partial class Teach
 
     public int RootCode { get; set; }
 
+    public int YearCode { get; set; }
+
     public double? CenterPercentage { get; set; }
 
     public double? CenterAmount { get; set; }
@@ -42,4 +44,6 @@ public partial class Teach
     public virtual Subject SubjectCodeNavigation { get; set; } = null!;
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
+
+    public virtual Year YearCodeNavigation { get; set; } = null!;
 }

@@ -37,6 +37,8 @@ public partial class Teacher
 
     public virtual User? LastUpdateUserNavigation { get; set; }
 
+    public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
+
     public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
