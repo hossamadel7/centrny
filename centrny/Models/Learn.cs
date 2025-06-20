@@ -19,6 +19,8 @@ public partial class Learn
 
     public int RootCode { get; set; }
 
+    public int? YearCode { get; set; }
+
     public bool IsOnline { get; set; }
 
     public bool IsActive { get; set; }
@@ -33,11 +35,7 @@ public partial class Learn
 
     public int? StudentFee { get; set; }
 
-    public int? ChapterCode { get; set; }
-
     public virtual Branch BranchCodeNavigation { get; set; } = null!;
-
-    public virtual Lesson? ChapterCodeNavigation { get; set; }
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 
@@ -50,4 +48,8 @@ public partial class Learn
     public virtual Subject SubjectCodeNavigation { get; set; } = null!;
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
+
+    public virtual Year? YearCode1 { get; set; }
+
+    public virtual Lesson? YearCodeNavigation { get; set; }
 }

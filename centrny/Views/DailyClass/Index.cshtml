@@ -650,16 +650,12 @@
     }
 
     @@keyframes spin {
-        0%
-
-    {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     /* Toast Notifications */
@@ -678,78 +674,75 @@
 
     /* Responsive Design */
     @@media (max-width: 768px) {
-        .daily-container
+        .daily-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
 
-    {
-        margin: 1rem;
-        padding: 1rem;
-    }
+        .page-header h1 {
+            font-size: 2rem;
+        }
 
-    .page-header h1 {
-        font-size: 2rem;
-    }
+        .date-navigation {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-    .date-navigation {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+        .controls-section {
+            justify-content: center;
+        }
 
-    .controls-section {
-        justify-content: center;
-    }
+        .legend {
+            justify-content: center;
+        }
 
-    .legend {
-        justify-content: center;
-    }
+        .floating-add-btn {
+            bottom: 1rem;
+            right: 1rem;
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+        }
 
-    .floating-add-btn {
-        bottom: 1rem;
-        right: 1rem;
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
-    }
+        .timeline-grid {
+            grid-template-columns: 80px 1fr;
+            min-height: 1200px; /* Adjusted for mobile */
+        }
 
-    .timeline-grid {
-        grid-template-columns: 80px 1fr;
-        min-height: 1200px; /* Adjusted for mobile */
-    }
+        .time-slot {
+            font-size: 0.75rem;
+            height: 60px; /* Slightly smaller on mobile */
+        }
 
-    .time-slot {
-        font-size: 0.75rem;
-        height: 60px; /* Slightly smaller on mobile */
-    }
+        .class-slot {
+            height: 60px; /* Match time slot height */
+            padding: 0.15rem;
+        }
 
-    .class-slot {
-        height: 60px; /* Match time slot height */
-        padding: 0.15rem;
-    }
+        .class-item {
+            font-size: 0.75rem;
+            padding: 0.3rem;
+            min-width: 100px;
+        }
 
-    .class-item {
-        font-size: 0.75rem;
-        padding: 0.3rem;
-        min-width: 100px;
-    }
+        /* Responsive generation banner */
+        .weekly-generation-banner .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
 
-    /* Responsive generation banner */
-    .weekly-generation-banner .d-flex {
-        flex-direction: column;
-        gap: 1rem;
-    }
+        .generation-actions {
+            justify-content: center;
+        }
 
-    .generation-actions {
-        justify-content: center;
-    }
+        .day-breakdown {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
 
-    .day-breakdown {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
-    }
-
-    .generation-summary {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
+        .generation-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 
@@ -778,6 +771,14 @@
                     <span class="badge ms-2">
                         Root Code: @ViewBag.CurrentUserRootCode
                     </span>
+                    @if (ViewBag.IsCenter == true)
+                    {
+                        <span class="badge bg-success ms-2">Center User</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning ms-2">Teacher User</span>
+                    }
                 </h6>
                 <small>You can view and manage classes for your assigned organization only</small>
             </div>
@@ -1086,6 +1087,14 @@
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Note:</strong> This class will be created for <strong>@ViewBag.UserRootName</strong>
                                 (Root Code: @ViewBag.CurrentUserRootCode)
+                                @if (ViewBag.IsCenter == true)
+                                {
+                                    <span class="badge bg-success ms-2">Center User</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning ms-2">Teacher User</span>
+                                }
                                 on <strong id="formSelectedDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</strong>
                             </div>
                         }
@@ -1093,25 +1102,49 @@
                         <!-- Hidden fields -->
                         <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
                         <input type="hidden" id="classDate" value="@ViewBag.SelectedDateFormatted">
+                        <input type="hidden" id="isCenter" value="@ViewBag.IsCenter">
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Class Name *</label>
                                 <input type="text" class="form-control" id="className" required placeholder="Enter class name">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Teacher *</label>
-                                <select class="form-select" id="teacherCode" required>
-                                    <option value="">Select Teacher</option>
-                                    @if (ViewData["TeacherCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
+                            
+                            <!-- Teacher field - only for Center users -->
+                            @if (ViewBag.IsCenter == true)
+                            {
+                                <div class="col-md-6 mb-3" id="teacherField">
+                                    <label class="form-label">Teacher *</label>
+                                    <select class="form-select" id="teacherCode" required>
+                                        <option value="">Select Teacher</option>
+                                        @if (ViewData["TeacherCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
+                                    </select>
+                                </div>
+                            }
+                            
+                            <!-- Center field - only for Teacher users -->
+                            @if (ViewBag.IsCenter != true)
+                            {
+                                <div class="col-md-6 mb-3" id="centerField">
+                                    <label class="form-label">Center *</label>
+                                    <select class="form-select" id="centerCode" required onchange="loadBranchesByCenter()">
+                                        <option value="">Select Center</option>
+                                        @if (ViewData["CenterCode"] != null)
+                                        {
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            }
                         </div>
 
                         <div class="row">
@@ -1198,8 +1231,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Number of Students</label>
-                                <input type="number" class="form-control" id="noOfStudents" min="0" placeholder="0">
+                                <label class="form-label">Number of Students <small class="text-muted">(Auto-updated from attendance)</small></label>
+                                <input type="text" class="form-control" id="noOfStudents" readonly style="background-color: #f8f9fa; cursor: not-allowed;" value="0">
+                                <small class="form-text text-muted">This count increases automatically when students attend the class</small>
                             </div>
                         </div>
 
@@ -1616,6 +1650,37 @@
         generateWeeklyClasses();
     }
 
+    // ==================== CENTER/BRANCH FILTERING ====================
+
+    async function loadBranchesByCenter() {
+        const centerCode = document.getElementById('centerCode').value;
+        const branchSelect = document.getElementById('branchCode');
+        
+        // Clear existing options
+        branchSelect.innerHTML = '<option value="">Select Branch</option>';
+        
+        if (!centerCode) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/DailyClass/GetBranchesByCenter?centerCode=${centerCode}`);
+            if (!response.ok) throw new Error('Failed to load branches');
+            
+            const branches = await response.json();
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.value;
+                option.textContent = branch.text;
+                branchSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading branches:', error);
+            showErrorToast('Failed to load branches for selected center');
+        }
+    }
+
     // ==================== DAILY CLASS FUNCTIONS ====================
 
     function renderDailyTimeline() {
@@ -1648,7 +1713,7 @@
             }
         });
 
-        // Render classes in their time slots (side by side)
+        // Render classes in their time slots
         Object.keys(classesByHour).forEach(hour => {
             const slot = document.querySelector(`[data-hour="${hour}"]`);
             if (!slot) return;
@@ -1657,6 +1722,18 @@
             let classesHtml = '';
 
             classes.forEach(cls => {
+                // Determine what to display based on user type
+                let displayInfo = '';
+                if (userContext.isCenter) {
+                    // Center users see teacher name
+                    displayInfo = cls.teacherName || '';
+                } else {
+                    // Teacher users see center and branch names
+                    const centerPart = cls.centerName || '';
+                    const branchPart = cls.branchName || '';
+                    displayInfo = [centerPart, branchPart].filter(part => part).join(' • ');
+                }
+
                 classesHtml += `
                     <div class="class-item" onclick="showClassDetails(${cls.classCode})" data-class-id="${cls.classCode}">
                         <div class="class-title">
@@ -1664,11 +1741,14 @@
                             ${cls.title}
                         </div>
                         <div class="class-time">${cls.startTime12} - ${cls.endTime12}</div>
-                        ${cls.teacherName || cls.subjectName ? `
+                        ${displayInfo ? `
                             <div class="class-details">
-                                ${cls.teacherName ? cls.teacherName : ''}
-                                ${cls.teacherName && cls.subjectName ? ' • ' : ''}
-                                ${cls.subjectName ? cls.subjectName : ''}
+                                ${displayInfo}
+                            </div>
+                        ` : ''}
+                        ${cls.subjectName ? `
+                            <div class="class-details" style="opacity: 0.8;">
+                                ${cls.subjectName}
                             </div>
                         ` : ''}
                     </div>
@@ -1717,10 +1797,9 @@
         const submitBtn = document.getElementById('saveClassBtn');
         const originalText = submitBtn.innerHTML;
 
-        // Validate required fields
+        // Validate required fields based on user type
         const requiredFields = [
             { id: 'className', name: 'Class Name' },
-            { id: 'teacherCode', name: 'Teacher' },
             { id: 'startTime', name: 'Start Time' },
             { id: 'endTime', name: 'End Time' },
             { id: 'subjectCode', name: 'Subject' },
@@ -1729,11 +1808,18 @@
             { id: 'eduYearCode', name: 'Education Year' }
         ];
 
+        // Add user-type specific required fields
+        if (userContext.isCenter) {
+            requiredFields.push({ id: 'teacherCode', name: 'Teacher' });
+        } else {
+            requiredFields.push({ id: 'centerCode', name: 'Center' });
+        }
+
         for (const field of requiredFields) {
             const element = document.getElementById(field.id);
-            if (!element.value || element.value.trim() === '') {
+            if (!element || !element.value || element.value.trim() === '') {
                 showErrorToast(`${field.name} is required`);
-                element.focus();
+                if (element) element.focus();
                 return;
             }
         }
@@ -1755,19 +1841,25 @@
             className: document.getElementById('className').value,
             startTime: startTime,
             endTime: endTime,
-            teacherCode: parseInt(document.getElementById('teacherCode').value),
             subjectCode: parseInt(document.getElementById('subjectCode').value),
             branchCode: parseInt(document.getElementById('branchCode').value),
             hallCode: parseInt(document.getElementById('hallCode').value),
             eduYearCode: parseInt(document.getElementById('eduYearCode').value),
             yearCode: parseInt(document.getElementById('yearCode').value) || null,
-            noOfStudents: parseInt(document.getElementById('noOfStudents').value) || null,
+            // noOfStudents removed - will be managed by attendance system
             totalAmount: parseFloat(document.getElementById('totalAmount').value) || null,
             teacherAmount: parseFloat(document.getElementById('teacherAmount').value) || null,
             centerAmount: parseFloat(document.getElementById('centerAmount').value) || null,
             rootCode: userContext.currentUserRootCode,
-            classDate: currentDate // Set the class date to the current selected date
+            classDate: currentDate
         };
+
+        // Add user-type specific fields
+        if (userContext.isCenter) {
+            formData.teacherCode = parseInt(document.getElementById('teacherCode').value);
+        } else {
+            formData.centerCode = parseInt(document.getElementById('centerCode').value);
+        }
 
         console.log('Form data prepared:', formData);
 
@@ -1814,6 +1906,21 @@
         const cls = dailyClasses.find(c => c.classCode === classCode);
         if (!cls) return;
 
+        // Build display content based on user type
+        let organizationInfo = '';
+        let teacherInfo = '';
+
+        if (userContext.isCenter) {
+            // Center users see teacher information
+            teacherInfo = cls.teacherName ? `<div class="detail-item mb-2"><strong>Teacher:</strong> ${cls.teacherName}</div>` : '';
+        } else {
+            // Teacher users see center and branch information
+            organizationInfo = `
+                ${cls.centerName ? `<div class="detail-item mb-2"><strong>Center:</strong> ${cls.centerName}</div>` : ''}
+                ${cls.branchName ? `<div class="detail-item mb-2"><strong>Branch:</strong> ${cls.branchName}</div>` : ''}
+            `;
+        }
+
         const content = `
             <div class="class-details-header text-center mb-3">
                 <div class="mb-2">
@@ -1837,15 +1944,15 @@
                     <div class="detail-item mb-2">
                         <strong>Time:</strong> ${cls.startTime12} - ${cls.endTime12}
                     </div>
-                    ${cls.teacherName ? `<div class="detail-item mb-2"><strong>Teacher:</strong> ${cls.teacherName}</div>` : ''}
+                    ${teacherInfo}
+                    ${organizationInfo}
                     ${cls.subjectName ? `<div class="detail-item mb-2"><strong>Subject:</strong> ${cls.subjectName}</div>` : ''}
-                    ${cls.hallName ? `<div class="detail-item mb-2"><strong>Hall:</strong> ${cls.hallName}</div>` : ''}
                 </div>
                 <div class="col-md-6">
-                    ${cls.branchName ? `<div class="detail-item mb-2"><strong>Branch:</strong> ${cls.branchName}</div>` : ''}
+                    ${cls.hallName ? `<div class="detail-item mb-2"><strong>Hall:</strong> ${cls.hallName}</div>` : ''}
                     ${cls.eduYearName ? `<div class="detail-item mb-2"><strong>Education Year:</strong> ${cls.eduYearName}</div>` : ''}
                     ${cls.yearName ? `<div class="detail-item mb-2"><strong>Year:</strong> ${cls.yearName}</div>` : ''}
-                    ${cls.noOfStudents ? `<div class="detail-item mb-2"><strong>Students:</strong> ${cls.noOfStudents}</div>` : ''}
+                    ${cls.noOfStudents !== undefined ? `<div class="detail-item mb-2"><strong>Students:</strong> ${cls.noOfStudents} <small class="text-muted">(from attendance)</small></div>` : ''}
                 </div>
             </div>
 
@@ -1890,13 +1997,23 @@
         document.getElementById('className').value = cls.title;
         document.getElementById('startTime').value = cls.startTime;
         document.getElementById('endTime').value = cls.endTime;
-        document.getElementById('teacherCode').value = cls.teacherCode || '';
+        
+        if (userContext.isCenter) {
+            document.getElementById('teacherCode').value = cls.teacherCode || '';
+        } else {
+            // For teachers, we might need to populate center if available
+            const centerField = document.getElementById('centerCode');
+            if (centerField) {
+                // You might need to implement logic to get center from class data
+            }
+        }
+        
         document.getElementById('subjectCode').value = cls.subjectCode || '';
         document.getElementById('branchCode').value = cls.branchCode || '';
         document.getElementById('hallCode').value = cls.hallCode || '';
         document.getElementById('eduYearCode').value = cls.eduYearCode || '';
         document.getElementById('yearCode').value = cls.yearCode || '';
-        document.getElementById('noOfStudents').value = cls.noOfStudents || '';
+        document.getElementById('noOfStudents').value = cls.noOfStudents || '0'; // Show current count but readonly
         document.getElementById('totalAmount').value = cls.totalAmount ? parseFloat(cls.totalAmount) : '';
         document.getElementById('teacherAmount').value = cls.teacherAmount ? parseFloat(cls.teacherAmount) : '';
         document.getElementById('centerAmount').value = cls.centerAmount ? parseFloat(cls.centerAmount) : '';
@@ -1952,7 +2069,14 @@
     }
 
     function resetFormFields() {
-        const fieldIds = ['className', 'teacherCode', 'startTime', 'endTime', 'subjectCode', 'branchCode', 'hallCode', 'eduYearCode', 'yearCode', 'noOfStudents', 'totalAmount', 'teacherAmount', 'centerAmount'];
+        const fieldIds = ['className', 'startTime', 'endTime', 'subjectCode', 'branchCode', 'hallCode', 'eduYearCode', 'yearCode', 'totalAmount', 'teacherAmount', 'centerAmount'];
+        
+        // Add user-type specific fields
+        if (userContext.isCenter) {
+            fieldIds.push('teacherCode');
+        } else {
+            fieldIds.push('centerCode');
+        }
 
         fieldIds.forEach(id => {
             const element = document.getElementById(id);
@@ -1964,6 +2088,9 @@
                 }
             }
         });
+
+        // Set student count to 0 for new classes (always readonly)
+        document.getElementById('noOfStudents').value = '0';
 
         // Update date fields
         updateDateDisplay();
@@ -1978,7 +2105,8 @@
         let message = 'Welcome to Daily Classes Management!';
 
         if (userContext.userRootName) {
-            message = `Welcome ${userContext.userRootName}! Manage your daily classes here.`;
+            const userType = userContext.isCenter ? 'Center' : 'Teacher';
+            message = `Welcome ${userContext.userRootName}! Manage your daily classes here as a ${userType}.`;
         }
 
         showToast(message, 'bg-info');

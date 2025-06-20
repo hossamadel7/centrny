@@ -159,6 +159,16 @@
         color: white;
     }
 
+    .badge-branch {
+        background: var(--warning-color);
+        color: white;
+    }
+
+    .badge-subject {
+        background: var(--primary-color);
+        color: white;
+    }
+
     .btn-group-actions {
         display: flex;
         gap: 0.5rem;
@@ -353,21 +363,18 @@
 
     /* Responsive */
     @@media (max-width: 768px) {
-        .table-responsive
+        .table-responsive {
+            font-size: 0.9rem;
+        }
 
-    {
-        font-size: 0.9rem;
-    }
+        .btn-group-actions {
+            flex-direction: column;
+        }
 
-    .btn-group-actions {
-        flex-direction: column;
-    }
-
-    .controls-section {
-        flex-direction: column;
-        text-align: center;
-    }
-
+        .controls-section {
+            flex-direction: column;
+            text-align: center;
+        }
     }
 </style>
 
@@ -399,6 +406,10 @@
                             <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
                             Showing schedules for: <strong>@ViewBag.UserRootName</strong>
                             (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root: @ViewBag.CurrentUserRootCode)
+                            @if (ViewBag.BranchName != null)
+                            {
+                                <span> at <strong>@ViewBag.BranchName</strong></span>
+                            }
                             | Total: <strong>@ViewBag.ScheduleCount</strong> schedules
                         </div>
                         <button type="button" class="btn-modern btn-info" onclick="refreshList()">
@@ -419,8 +430,14 @@
                                         <th>Time</th>
                                         <th>Type</th>
                                         <th>Hall</th>
-                                        <th>Teacher</th>
-                                        <th>Subject</th>
+                                        @if (ViewBag.IsTeacher == true)
+                                        {
+                                            <th>Center / Branch</th>
+                                        }
+                                        else
+                                        {
+                                            <th>Teacher / Subject</th>
+                                        }
                                         <th>Amount</th>
                                         <th>Actions</th>
                                     </tr>
@@ -463,10 +480,44 @@
                                                 @Html.DisplayFor(modelItem => item.HallCodeNavigation.HallName)
                                             </td>
                                             <td>
-                                                @Html.DisplayFor(modelItem => item.TeacherCodeNavigation.TeacherName)
-                                            </td>
-                                            <td>
-                                                @Html.DisplayFor(modelItem => item.SubjectCodeNavigation.SubjectName)
+                                                @if (ViewBag.IsTeacher == true)
+                                                {
+                                                    <!-- Show Center/Branch for teacher users -->
+                                                    <div>
+                                                        @if (item.CenterCodeNavigation != null)
+                                                        {
+                                                            <span class="badge badge-modern badge-center mb-1">
+                                                                <i class="fas fa-building me-1"></i>@item.CenterCodeNavigation.CenterName
+                                                            </span>
+                                                        }
+                                                        @if (item.BranchCodeNavigation != null)
+                                                        {
+                                                            <br>
+                                                            <span class="badge badge-modern badge-branch">
+                                                                <i class="fas fa-map-marker-alt me-1"></i>@item.BranchCodeNavigation.BranchName
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <!-- Show Teacher/Subject for center users -->
+                                                    <div>
+                                                        @if (item.TeacherCodeNavigation != null)
+                                                        {
+                                                            <span class="badge badge-modern badge-teacher mb-1">
+                                                                <i class="fas fa-user me-1"></i>@item.TeacherCodeNavigation.TeacherName
+                                                            </span>
+                                                        }
+                                                        @if (item.SubjectCodeNavigation != null)
+                                                        {
+                                                            <br>
+                                                            <span class="badge badge-modern badge-subject">
+                                                                <i class="fas fa-book me-1"></i>@item.SubjectCodeNavigation.SubjectName
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                }
                                             </td>
                                             <td>
                                                 @if (item.ScheduleAmount.HasValue)
@@ -523,14 +574,14 @@
 {
     <!-- Main Schedule Modal (Create/Edit) -->
     <div class="modal fade" id="scheduleModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header" id="scheduleModalHeader">
                     <h5 class="modal-title" id="scheduleModalTitle">
                         <i class="fas fa-calendar-plus me-2"></i>Add New Schedule
-                        @if (ViewBag.UserRootName != null)
+                        @if (ViewBag.UserRootName != null && ViewBag.BranchName != null)
                         {
-                            <small class="text-muted">for @ViewBag.UserRootName</small>
+                            <small class="text-muted">for @ViewBag.UserRootName - @ViewBag.BranchName</small>
                         }
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -544,6 +595,16 @@
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Note:</strong> This schedule will be created for <strong>@ViewBag.UserRootName</strong>
                                 (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode)
+                                @if (ViewBag.BranchName != null)
+                                {
+                                    <span> at <strong>@ViewBag.BranchName</strong></span>
+                                }
+                                @if (ViewBag.IsTeacher)
+                                {
+                                    <br>
+                        
+                                    <small class="text-muted">Teacher will be automatically assigned to your account.</small>
+                                }
                             </div>
                         }
 
@@ -581,6 +642,36 @@
                         <!-- Root is hidden and auto-set -->
                         <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
 
+                        <!-- Center and Branch dropdowns -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Center</label>
+                                <select class="form-select" id="centerCode">
+                                    <option value="">Select Center (Optional)</option>
+                                    @if (ViewData["CenterCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Branch</label>
+                                <select class="form-select" id="branchCode">
+                                    <option value="">Select Branch (Optional)</option>
+                                    @if (ViewData["BranchCode"] != null)
+                                    {
+                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["BranchCode"])
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Hall</label>
@@ -613,7 +704,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Year *</label>
-                                <select class="form-select" id="yearCode" required>
+                                <select class="form-select" id="yearCode" required onchange="loadSubjectsForTeacher()">
                                     <option value="">Select Year</option>
                                     @if (ViewData["YearCode"] != null)
                                     {
@@ -624,19 +715,34 @@
                                     }
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Teacher</label>
-                                <select class="form-select" id="teacherCode">
-                                    <option value="">Select Teacher (Optional)</option>
-                                    @if (ViewData["TeacherCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
+                            <!-- Conditionally show teacher dropdown only for center users -->
+                            @if (!ViewBag.IsTeacher)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Teacher *</label>
+                                    <select class="form-select" id="teacherCode" required onchange="loadSubjectsForTeacher()">
+                                        <option value="">Select Teacher</option>
+                                        @if (ViewData["TeacherCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
+                                    </select>
+                                    <small class="text-muted">Select teacher first to see available subjects</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Hidden teacher field for teacher users -->
+                                <input type="hidden" id="teacherCode" value="">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Your Assignment</label>
+                                    <input type="text" class="form-control" value="@ViewBag.UserRootName - @ViewBag.BranchName" readonly>
+                                    <small class="text-muted">Your schedule will be assigned to this center/branch</small>
+                                </div>
+                            }
                         </div>
 
                         <div class="row">
@@ -652,6 +758,14 @@
                                         }
                                     }
                                 </select>
+                                @if (ViewBag.IsTeacher)
+                                {
+                                    <small class="text-muted">Subjects available in your center/branch</small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">Available subjects will appear after selecting a teacher</small>
+                                }
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Amount</label>
@@ -745,6 +859,8 @@
         currentUserRootCode: @Json.Serialize(ViewBag.CurrentUserRootCode),
         userRootName: @Json.Serialize(ViewBag.UserRootName ?? ""),
         isCenter: @Json.Serialize(ViewBag.IsCenter ?? false),
+        isTeacher: @Json.Serialize(ViewBag.IsTeacher ?? false),
+        branchName: @Json.Serialize(ViewBag.BranchName ?? ""),
         hasError: @Json.Serialize(ViewBag.Error != null)
     };
 
@@ -785,6 +901,51 @@
                 }
             });
         }
+    }
+
+    // Load subjects for selected teacher (for center users only)
+    function loadSubjectsForTeacher() {
+        if (userContext.isTeacher) return; // Not applicable for teacher users - they have pre-filtered subjects
+
+        const teacherSelect = document.getElementById('teacherCode');
+        const subjectSelect = document.getElementById('subjectCode');
+        const yearSelect = document.getElementById('yearCode');
+
+        if (!teacherSelect.value) {
+            subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
+            subjectSelect.disabled = true;
+            return;
+        }
+
+        const teacherCode = parseInt(teacherSelect.value);
+        const yearCode = parseInt(yearSelect.value) || null;
+
+        // Show loading state
+        subjectSelect.innerHTML = '<option value="">Loading subjects...</option>';
+        subjectSelect.disabled = true;
+
+        fetch(`/Schedule/GetSubjectsForTeacher?teacherCode=${teacherCode}&yearCode=${yearCode}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
+                    data.subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.value;
+                        option.textContent = subject.text;
+                        subjectSelect.appendChild(option);
+                    });
+                    subjectSelect.disabled = false;
+                } else {
+                    subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
+                    showErrorToast('Error loading subjects: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error loading subjects:', error);
+                subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
+                showErrorToast('Network error while loading subjects');
+            });
     }
 
     function loadAllSchedules() {
@@ -847,6 +1008,76 @@
     function displayScheduleDetails(schedule) {
         const props = schedule.extendedProps;
 
+        let detailsHtml = '';
+
+        // Always show time
+        if (props.startTime && props.endTime) {
+            detailsHtml += `
+                <div class="detail-item">
+                    <span class="detail-label">Time</span>
+                    <span class="detail-value">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</span>
+                </div>
+            `;
+        }
+
+        // For teacher users, show center/branch info; for center users, show teacher info
+        if (userContext.isTeacher) {
+            // Show center/branch information for teacher users
+            if (props.centerName) {
+                detailsHtml += `
+                    <div class="detail-item">
+                        <span class="detail-label">Center</span>
+                        <span class="detail-value">${props.centerName}</span>
+                    </div>
+                `;
+            }
+            if (props.branchName) {
+                detailsHtml += `
+                    <div class="detail-item">
+                        <span class="detail-label">Branch</span>
+                        <span class="detail-value">${props.branchName}</span>
+                    </div>
+                `;
+            }
+        } else {
+            // Show teacher information for center users
+            if (props.teacherName) {
+                detailsHtml += `
+                    <div class="detail-item">
+                        <span class="detail-label">Teacher</span>
+                        <span class="detail-value">${props.teacherName}</span>
+                    </div>
+                `;
+            }
+            if (props.subjectName) {
+                detailsHtml += `
+                    <div class="detail-item">
+                        <span class="detail-label">Subject</span>
+                        <span class="detail-value">${props.subjectName}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Common details
+        if (props.hallName) {
+            detailsHtml += `
+                <div class="detail-item">
+                    <span class="detail-label">Hall</span>
+                    <span class="detail-value">${props.hallName}</span>
+                </div>
+            `;
+        }
+
+        if (props.amount) {
+            detailsHtml += `
+                <div class="detail-item">
+                    <span class="detail-label">Amount</span>
+                    <span class="detail-value">$${props.amount}</span>
+                </div>
+            `;
+        }
+
         const content = `
             <div class="event-details-header">
                 <div class="event-icon">
@@ -858,41 +1089,12 @@
                         ${props.isCenter ? 'Center Schedule' : 'Teacher Schedule'}
                     </span>
                     ${props.dayOfWeek ? `<span class="badge bg-info">${props.dayOfWeek}</span>` : ''}
-                    <span class="badge bg-secondary">${userContext.userRootName}</span>
+                    <span class="badge bg-secondary">${userContext.userRootName} - ${userContext.branchName}</span>
                 </div>
             </div>
 
             <div class="event-details-body">
-                ${props.startTime && props.endTime ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Time</span>
-                        <span class="detail-value">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</span>
-                    </div>
-                ` : ''}
-                ${props.hallName ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Hall</span>
-                        <span class="detail-value">${props.hallName}</span>
-                    </div>
-                ` : ''}
-                ${props.teacherName ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Teacher</span>
-                        <span class="detail-value">${props.teacherName}</span>
-                    </div>
-                ` : ''}
-                ${props.subjectName ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Subject</span>
-                        <span class="detail-value">${props.subjectName}</span>
-                    </div>
-                ` : ''}
-                ${props.amount ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Amount</span>
-                        <span class="detail-value">$${props.amount}</span>
-                    </div>
-                ` : ''}
+                ${detailsHtml}
             </div>
         `;
 
@@ -936,7 +1138,7 @@
         header.className = 'modal-header bg-warning';
         document.querySelector('#scheduleModal .modal-title').innerHTML =
             '<i class="fas fa-edit me-2"></i>Edit Schedule' +
-            (userContext.userRootName ? `<small class="text-muted">for ${userContext.userRootName}</small>` : '');
+            (userContext.userRootName && userContext.branchName ? `<small class="text-muted">for ${userContext.userRootName} - ${userContext.branchName}</small>` : '');
 
         // Populate form with existing data
         document.getElementById('scheduleName').value = schedule.title;
@@ -946,11 +1148,22 @@
 
         // Set optional fields
         document.getElementById('hallCode').value = props.hallCode || '';
+        document.getElementById('centerCode').value = props.centerCode || '';
+        document.getElementById('branchCode').value = props.branchCode || '';
         document.getElementById('eduYearCode').value = props.eduYearCode || '';
-        document.getElementById('teacherCode').value = props.teacherCode || '';
         document.getElementById('subjectCode').value = props.subjectCode || '';
         document.getElementById('scheduleAmount').value = props.scheduleAmount || '';
         document.getElementById('yearCode').value = props.yearCode || '';
+
+        // Handle teacher field based on user type
+        const teacherCodeElement = document.getElementById('teacherCode');
+        if (teacherCodeElement && !userContext.isTeacher) {
+            teacherCodeElement.value = props.teacherCode || '';
+            // Load subjects for the selected teacher
+            if (props.teacherCode) {
+                setTimeout(() => loadSubjectsForTeacher(), 100);
+            }
+        }
 
         // Root code is always auto-set
         const rootCodeInput = document.getElementById('rootCode');
@@ -978,7 +1191,7 @@
         const props = schedule.extendedProps;
 
         // Populate delete confirmation modal
-        const summaryHtml = `
+        let summaryContent = `
             <h5 class="text-danger mb-3">
                 <i class="fas fa-calendar-times me-2"></i>
                 ${schedule.title}
@@ -987,27 +1200,64 @@
                 <div class="col-6"><strong>Day:</strong></div>
                 <div class="col-6">${props.dayOfWeek}</div>
             </div>
-            ${props.startTime && props.endTime ? `
+        `;
+
+        if (props.startTime && props.endTime) {
+            summaryContent += `
                 <div class="row">
                     <div class="col-6"><strong>Time:</strong></div>
                     <div class="col-6">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</div>
                 </div>
-            ` : ''}
-            ${props.hallName ? `
+            `;
+        }
+
+        // Show appropriate details based on user type
+        if (userContext.isTeacher) {
+            if (props.centerName) {
+                summaryContent += `
+                    <div class="row">
+                        <div class="col-6"><strong>Center:</strong></div>
+                        <div class="col-6">${props.centerName}</div>
+                    </div>
+                `;
+            }
+            if (props.branchName) {
+                summaryContent += `
+                    <div class="row">
+                        <div class="col-6"><strong>Branch:</strong></div>
+                        <div class="col-6">${props.branchName}</div>
+                    </div>
+                `;
+            }
+        } else {
+            if (props.teacherName) {
+                summaryContent += `
+                    <div class="row">
+                        <div class="col-6"><strong>Teacher:</strong></div>
+                        <div class="col-6">${props.teacherName}</div>
+                    </div>
+                `;
+            }
+            if (props.subjectName) {
+                summaryContent += `
+                    <div class="row">
+                        <div class="col-6"><strong>Subject:</strong></div>
+                        <div class="col-6">${props.subjectName}</div>
+                    </div>
+                `;
+            }
+        }
+
+        if (props.hallName) {
+            summaryContent += `
                 <div class="row">
                     <div class="col-6"><strong>Hall:</strong></div>
                     <div class="col-6">${props.hallName}</div>
                 </div>
-            ` : ''}
-            ${props.teacherName ? `
-                <div class="row">
-                    <div class="col-6"><strong>Teacher:</strong></div>
-                    <div class="col-6">${props.teacherName}</div>
-                </div>
-            ` : ''}
-        `;
+            `;
+        }
 
-        document.getElementById('deleteScheduleSummary').innerHTML = summaryHtml;
+        document.getElementById('deleteScheduleSummary').innerHTML = summaryContent;
 
         // Hide details modal if open and show delete confirmation
         const detailsModalInstance = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
@@ -1093,6 +1343,11 @@
             { id: 'yearCode', name: 'Year' }
         ];
 
+        // For center users, teacher is required
+        if (!userContext.isTeacher) {
+            requiredFields.push({ id: 'teacherCode', name: 'Teacher' });
+        }
+
         // Check required fields
         for (const field of requiredFields) {
             const element = document.getElementById(field.id);
@@ -1131,6 +1386,8 @@
             endTime: endTime,
             hallCode: parseInt(document.getElementById('hallCode').value) || null,
             rootCode: rootCodeValue,
+            centerCode: parseInt(document.getElementById('centerCode').value) || null,
+            branchCode: parseInt(document.getElementById('branchCode').value) || null,
             eduYearCode: parseInt(document.getElementById('eduYearCode').value) || null,
             teacherCode: parseInt(document.getElementById('teacherCode').value) || null,
             subjectCode: parseInt(document.getElementById('subjectCode').value) || null,
@@ -1202,14 +1459,22 @@
         header.className = 'modal-header';
         document.querySelector('#scheduleModal .modal-title').innerHTML =
             '<i class="fas fa-calendar-plus me-2"></i>Add New Schedule' +
-            (userContext.userRootName ? `<small class="text-muted">for ${userContext.userRootName}</small>` : '');
+            (userContext.userRootName && userContext.branchName ? `<small class="text-muted">for ${userContext.userRootName} - ${userContext.branchName}</small>` : '');
 
         // Clear form fields
         resetFormFields();
     }
 
     function resetFormFields() {
-        const fieldIds = ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'scheduleAmount', 'yearCode'];
+        const fieldIds = ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'hallCode', 'centerCode', 'branchCode', 'eduYearCode', 'scheduleAmount', 'yearCode'];
+
+        // Only include teacherCode if user is not a teacher
+        if (!userContext.isTeacher) {
+            fieldIds.push('teacherCode');
+        }
+
+        // Add subjectCode for both user types
+        fieldIds.push('subjectCode');
 
         fieldIds.forEach(id => {
             const element = document.getElementById(id);
@@ -1221,6 +1486,15 @@
                 }
             }
         });
+
+        // Reset subject dropdown based on user type
+        const subjectSelect = document.getElementById('subjectCode');
+        if (subjectSelect && !userContext.isTeacher) {
+            // For center users, reset to disabled state
+            subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
+            subjectSelect.disabled = true;
+        }
+        // For teacher users, keep subjects enabled (they're pre-filtered by server)
 
         // Auto-set root code
         if (userContext.currentUserRootCode) {

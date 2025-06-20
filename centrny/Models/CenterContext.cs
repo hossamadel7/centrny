@@ -497,23 +497,23 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => e.ExamCode);
 
-            entity.ToTable("Exam", tb => tb.HasTrigger("CalculateExamPercentage"));
+            entity.ToTable("Exam");
 
             entity.Property(e => e.ExamCode).HasColumnName("Exam_Code");
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
+            entity.Property(e => e.ExamAverageMark)
+                .HasMaxLength(50)
+                .HasColumnName("Exam_Average_Mark");
             entity.Property(e => e.ExamDegree)
                 .HasMaxLength(50)
                 .HasColumnName("Exam_Degree");
             entity.Property(e => e.ExamName)
                 .HasMaxLength(100)
                 .HasColumnName("Exam_Name");
-            entity.Property(e => e.ExamPercentage)
+            entity.Property(e => e.ExamSuccessPercent)
                 .HasMaxLength(10)
-                .HasColumnName("Exam_Percentage");
-            entity.Property(e => e.ExamResult)
-                .HasMaxLength(50)
-                .HasColumnName("Exam_Result");
+                .HasColumnName("Exam_Success_Percent");
             entity.Property(e => e.ExamTimer).HasColumnName("Exam_timer");
             entity.Property(e => e.InserTime)
                 .HasDefaultValueSql("(getdate())")
@@ -856,7 +856,6 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
-            entity.Property(e => e.ChapterCode).HasColumnName("Chapter_Code");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -870,15 +869,12 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.StudentFee).HasColumnName("Student_Fee");
+            entity.Property(e => e.YearCode).HasColumnName("Year_Code");
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Learns)
                 .HasForeignKey(d => d.BranchCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Learn_Branch");
-
-            entity.HasOne(d => d.ChapterCodeNavigation).WithMany(p => p.Learns)
-                .HasForeignKey(d => d.ChapterCode)
-                .HasConstraintName("FK_Learn_Lesson");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Learns)
                 .HasForeignKey(d => d.EduYearCode)
@@ -909,6 +905,14 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.TeacherCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Learn_Teacher");
+
+            entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.Learns)
+                .HasForeignKey(d => d.YearCode)
+                .HasConstraintName("FK_Learn_Lesson");
+
+            entity.HasOne(d => d.YearCode1).WithMany(p => p.Learns)
+                .HasForeignKey(d => d.YearCode)
+                .HasConstraintName("FK_Learn_Year");
         });
 
         modelBuilder.Entity<Lesson>(entity =>
@@ -1329,6 +1333,8 @@ public partial class CenterContext : DbContext
             entity.ToTable("Schedule");
 
             entity.Property(e => e.ScheduleCode).HasColumnName("Schedule_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_code");
+            entity.Property(e => e.CenterCode).HasColumnName("Center_code");
             entity.Property(e => e.DayOfWeek)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1351,6 +1357,14 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.SubjectCode).HasColumnName("Subject_code");
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
+
+            entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Schedules)
+                .HasForeignKey(d => d.BranchCode)
+                .HasConstraintName("FK_Schedule_Branch");
+
+            entity.HasOne(d => d.CenterCodeNavigation).WithMany(p => p.Schedules)
+                .HasForeignKey(d => d.CenterCode)
+                .HasConstraintName("FK_Schedule_Center");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.EduYearCode)
@@ -1378,7 +1392,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.YearCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Schedule_Year");
         });
 
@@ -1476,6 +1489,7 @@ public partial class CenterContext : DbContext
                     tb.HasTrigger("CalculateStudentPercentage");
                     tb.HasTrigger("DecreaseWalletCount");
                     tb.HasTrigger("InsertQuestionsToStudentAnswers");
+                    tb.HasTrigger("UpdateExamAverageMark");
                 });
 
             entity.Property(e => e.StudentCode).HasColumnName("Student_Code");

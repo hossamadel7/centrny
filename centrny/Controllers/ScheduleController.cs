@@ -39,15 +39,56 @@ namespace centrny.Controllers
         }
 
         /// <summary>
-        /// Gets user context information for UI display
+        /// Checks if current user is a teacher (not a center admin)
         /// </summary>
-        private async Task<(int? rootCode, string rootName, bool isCenter)> GetUserContext()
+        private bool IsCurrentUserTeacher()
+        {
+            var isCenterClaim = User.FindFirst("IsCenter");
+            return isCenterClaim?.Value != "True";
+        }
+
+        /// <summary>
+        /// Gets the teacher code for teacher users
+        /// </summary>
+        private async Task<int?> GetCurrentUserTeacherCode()
+        {
+            if (!IsCurrentUserTeacher()) return null;
+
+            var userRootCode = GetCurrentUserRootCode();
+            if (!userRootCode.HasValue) return null;
+
+            // Get the teacher record for this root code
+            var teacher = await _context.Teachers
+                .Where(t => t.RootCode == userRootCode.Value)
+                .FirstOrDefaultAsync();
+
+            return teacher?.TeacherCode;
+        }
+
+        /// <summary>
+        /// Gets user context information for UI display including branch info
+        /// </summary>
+        private async Task<(int? rootCode, string rootName, bool isCenter, string branchName)> GetUserContext()
         {
             var rootCode = GetCurrentUserRootCode();
             var rootName = User.FindFirst("RootName")?.Value ?? "Unknown";
             var isCenter = User.FindFirst("IsCenter")?.Value == "True";
 
-            return (rootCode, rootName, isCenter);
+            // Get branch information
+            string branchName = "Unknown Branch";
+            if (rootCode.HasValue)
+            {
+                var branch = await _context.Branches
+                    .Where(b => b.RootCode == rootCode.Value)
+                    .FirstOrDefaultAsync();
+
+                if (branch != null)
+                {
+                    branchName = branch.BranchName;
+                }
+            }
+
+            return (rootCode, rootName, isCenter, branchName);
         }
 
         /// <summary>
@@ -98,7 +139,56 @@ namespace centrny.Controllers
                 .Include(s => s.HallCodeNavigation)
                 .Include(s => s.RootCodeNavigation)
                 .Include(s => s.SubjectCodeNavigation)
-                .Include(s => s.TeacherCodeNavigation);
+                .Include(s => s.TeacherCodeNavigation)
+                .Include(s => s.CenterCodeNavigation)
+                .Include(s => s.BranchCodeNavigation)
+                .Include(s => s.YearCodeNavigation);
+        }
+
+        // ==================== API ENDPOINTS ====================
+
+        /// <summary>
+        /// GET: Schedule/GetSubjectsForTeacher - API endpoint to get subjects that a teacher can teach
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetSubjectsForTeacher(int teacherCode, int? yearCode)
+        {
+            try
+            {
+                var userRootCode = GetCurrentUserRootCode();
+                if (!userRootCode.HasValue)
+                {
+                    return Json(new { success = false, error = "Unable to determine your root assignment." });
+                }
+
+                // Build the query with all where clauses first, then include
+                var query = _context.Teaches
+                    .Where(t => t.TeacherCode == teacherCode && t.RootCode == userRootCode.Value && t.IsActive);
+
+                // Filter by year if provided
+                if (yearCode.HasValue && yearCode > 0)
+                {
+                    query = query.Where(t => t.YearCode == yearCode.Value);
+                }
+
+                // Apply include after all where clauses
+                var subjects = await query
+                    .Include(t => t.SubjectCodeNavigation)
+                    .Select(t => new {
+                        value = t.SubjectCode,
+                        text = t.SubjectCodeNavigation.SubjectName
+                    })
+                    .Distinct()
+                    .OrderBy(s => s.text)
+                    .ToListAsync();
+
+                return Json(new { success = true, subjects = subjects });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting subjects for teacher {TeacherCode}", teacherCode);
+                return Json(new { success = false, error = "Error retrieving subjects." });
+            }
         }
 
         // ==================== MAIN ACTIONS ====================
@@ -108,7 +198,7 @@ namespace centrny.Controllers
         /// </summary>
         public async Task<IActionResult> Index()
         {
-            var (rootCode, rootName, isCenter) = await GetUserContext();
+            var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!rootCode.HasValue)
             {
@@ -125,6 +215,8 @@ namespace centrny.Controllers
             ViewBag.CurrentUserRootCode = rootCode;
             ViewBag.UserRootName = rootName;
             ViewBag.IsCenter = isCenter;
+            ViewBag.IsTeacher = IsCurrentUserTeacher();
+            ViewBag.BranchName = branchName;
             ViewBag.ScheduleCount = schedules.Count;
 
             _logger.LogInformation("Loaded {Count} schedules for user {Username} (Root: {RootCode})",
@@ -138,7 +230,7 @@ namespace centrny.Controllers
         /// </summary>
         public async Task<IActionResult> Calendar()
         {
-            var (rootCode, rootName, isCenter) = await GetUserContext();
+            var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!rootCode.HasValue)
             {
@@ -146,6 +238,8 @@ namespace centrny.Controllers
                 ViewBag.CurrentUserRootCode = null;
                 ViewBag.UserRootName = "Unknown";
                 ViewBag.IsCenter = false;
+                ViewBag.IsTeacher = true;
+                ViewBag.BranchName = "Unknown Branch";
                 return View();
             }
 
@@ -155,6 +249,8 @@ namespace centrny.Controllers
             ViewBag.CurrentUserRootCode = rootCode;
             ViewBag.UserRootName = rootName;
             ViewBag.IsCenter = isCenter;
+            ViewBag.IsTeacher = IsCurrentUserTeacher();
+            ViewBag.BranchName = branchName;
 
             return View();
         }
@@ -166,7 +262,7 @@ namespace centrny.Controllers
         {
             try
             {
-                var (rootCode, rootName, isCenter) = await GetUserContext();
+                var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
 
                 if (!rootCode.HasValue)
                 {
@@ -217,6 +313,10 @@ namespace centrny.Controllers
                             subjectCode = schedule.SubjectCode,
                             rootName = schedule.RootCodeNavigation?.RootName,
                             rootCode = schedule.RootCode,
+                            centerName = schedule.CenterCodeNavigation?.CenterName,
+                            centerCode = schedule.CenterCode,
+                            branchName = schedule.BranchCodeNavigation?.BranchName,
+                            branchCode = schedule.BranchCode,
                             eduYearCode = schedule.EduYearCode,
                             yearCode = schedule.YearCode,
                             amount = schedule.ScheduleAmount?.ToString("F2"),
@@ -251,7 +351,7 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Invalid data received." });
                 }
 
-                var (userRootCode, rootName, isCenter) = await GetUserContext();
+                var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
                 if (!userRootCode.HasValue)
                 {
@@ -262,6 +362,18 @@ namespace centrny.Controllers
                 model.RootCode = userRootCode.Value;
                 _logger.LogDebug("Auto-setting RootCode to {RootCode} for user {Username}",
                     userRootCode.Value, User.Identity?.Name);
+
+                // Auto-assign teacher code for teacher users
+                if (IsCurrentUserTeacher())
+                {
+                    var teacherCode = await GetCurrentUserTeacherCode();
+                    if (teacherCode.HasValue)
+                    {
+                        model.TeacherCode = teacherCode.Value;
+                        _logger.LogDebug("Auto-setting TeacherCode to {TeacherCode} for teacher user {Username}",
+                            teacherCode.Value, User.Identity?.Name);
+                    }
+                }
 
                 // Validate required fields
                 if (string.IsNullOrEmpty(model.Title) || string.IsNullOrEmpty(model.DayOfWeek))
@@ -286,6 +398,25 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Selected year does not exist." });
                 }
 
+                // Validate center and branch belong to user's root
+                if (model.CenterCode.HasValue)
+                {
+                    var centerExists = await _context.Centers.AnyAsync(c => c.CenterCode == model.CenterCode && c.RootCode == userRootCode.Value);
+                    if (!centerExists)
+                    {
+                        return Json(new { success = false, error = "Selected center does not belong to your root." });
+                    }
+                }
+
+                if (model.BranchCode.HasValue)
+                {
+                    var branchExists = await _context.Branches.AnyAsync(b => b.BranchCode == model.BranchCode && b.RootCode == userRootCode.Value);
+                    if (!branchExists)
+                    {
+                        return Json(new { success = false, error = "Selected branch does not belong to your root." });
+                    }
+                }
+
                 // Parse and validate times
                 if (!TimeOnly.TryParse(model.StartTime, out TimeOnly startTime) ||
                     !TimeOnly.TryParse(model.EndTime, out TimeOnly endTime))
@@ -308,6 +439,9 @@ namespace centrny.Controllers
                     EndTime = baseDate.Add(endTime.ToTimeSpan()),
                     YearCode = model.YearCode.Value,
                     RootCode = model.RootCode, // Always the user's root
+                    TeacherCode = model.TeacherCode, // Auto-set for teachers
+                    CenterCode = model.CenterCode,
+                    BranchCode = model.BranchCode,
                     InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1"),
                     InsertTime = DateTime.Now
                 };
@@ -348,7 +482,8 @@ namespace centrny.Controllers
                     }
                 }
 
-                if (model.TeacherCode.HasValue && model.TeacherCode > 0)
+                // For center users, allow teacher selection; for teacher users, it's already set
+                if (!IsCurrentUserTeacher() && model.TeacherCode.HasValue && model.TeacherCode > 0)
                 {
                     var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == model.TeacherCode && t.RootCode == userRootCode.Value);
                     if (teacherExists)
@@ -406,7 +541,7 @@ namespace centrny.Controllers
         {
             try
             {
-                var (userRootCode, rootName, isCenter) = await GetUserContext();
+                var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
                 if (!userRootCode.HasValue)
                 {
@@ -531,15 +666,52 @@ namespace centrny.Controllers
                     schedule.EduYearCode = null;
                 }
 
-                var teacherCode = GetIntValue("teacherCode");
-                if (teacherCode.HasValue && teacherCode > 0)
+                // Update center and branch codes with validation
+                var centerCode = GetIntValue("centerCode");
+                if (centerCode.HasValue && centerCode > 0)
                 {
-                    var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == teacherCode && t.RootCode == userRootCode.Value);
-                    schedule.TeacherCode = teacherExists ? teacherCode : null;
+                    var centerExists = await _context.Centers.AnyAsync(c => c.CenterCode == centerCode && c.RootCode == userRootCode.Value);
+                    schedule.CenterCode = centerExists ? centerCode : null;
                 }
                 else
                 {
-                    schedule.TeacherCode = null;
+                    schedule.CenterCode = null;
+                }
+
+                var branchCode = GetIntValue("branchCode");
+                if (branchCode.HasValue && branchCode > 0)
+                {
+                    var branchExists = await _context.Branches.AnyAsync(b => b.BranchCode == branchCode && b.RootCode == userRootCode.Value);
+                    schedule.BranchCode = branchExists ? branchCode : null;
+                }
+                else
+                {
+                    schedule.BranchCode = null;
+                }
+
+                // Handle teacher code - for teacher users, maintain their teacher code; for center users, allow changes
+                if (IsCurrentUserTeacher())
+                {
+                    // For teacher users, keep their own teacher code (don't allow changes)
+                    var currentTeacherCode = await GetCurrentUserTeacherCode();
+                    if (currentTeacherCode.HasValue)
+                    {
+                        schedule.TeacherCode = currentTeacherCode.Value;
+                    }
+                }
+                else
+                {
+                    // For center users, allow teacher selection
+                    var teacherCode = GetIntValue("teacherCode");
+                    if (teacherCode.HasValue && teacherCode > 0)
+                    {
+                        var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == teacherCode && t.RootCode == userRootCode.Value);
+                        schedule.TeacherCode = teacherExists ? teacherCode : null;
+                    }
+                    else
+                    {
+                        schedule.TeacherCode = null;
+                    }
                 }
 
                 var subjectCode = GetIntValue("subjectCode");
@@ -580,7 +752,7 @@ namespace centrny.Controllers
         {
             try
             {
-                var (userRootCode, rootName, isCenter) = await GetUserContext();
+                var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
                 if (!userRootCode.HasValue)
                 {
@@ -639,7 +811,7 @@ namespace centrny.Controllers
                 return NotFound();
             }
 
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!userRootCode.HasValue)
             {
@@ -664,7 +836,7 @@ namespace centrny.Controllers
         [RequirePageAccess("Schedule", "insert")]
         public async Task<IActionResult> Create()
         {
-            var (rootCode, rootName, isCenter) = await GetUserContext();
+            var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!rootCode.HasValue)
             {
@@ -677,6 +849,8 @@ namespace centrny.Controllers
             ViewBag.CurrentUserRootCode = rootCode;
             ViewBag.UserRootName = rootName;
             ViewBag.IsCenter = isCenter;
+            ViewBag.IsTeacher = IsCurrentUserTeacher();
+            ViewBag.BranchName = branchName;
 
             return View();
         }
@@ -687,9 +861,9 @@ namespace centrny.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequirePageAccess("Schedule", "insert")]
-        public async Task<IActionResult> Create([Bind("ScheduleCode,ScheduleName,HallCode,ScheduleAmount,EduYearCode,TeacherCode,SubjectCode,DayOfWeek,StartTime,EndTime,YearCode")] Schedule schedule)
+        public async Task<IActionResult> Create([Bind("ScheduleCode,ScheduleName,HallCode,ScheduleAmount,EduYearCode,CenterCode,BranchCode,TeacherCode,SubjectCode,DayOfWeek,StartTime,EndTime,YearCode")] Schedule schedule)
         {
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!userRootCode.HasValue)
             {
@@ -699,6 +873,16 @@ namespace centrny.Controllers
 
             // ALWAYS set RootCode to current user's root
             schedule.RootCode = userRootCode.Value;
+
+            // Auto-assign teacher code for teacher users
+            if (IsCurrentUserTeacher())
+            {
+                var teacherCode = await GetCurrentUserTeacherCode();
+                if (teacherCode.HasValue)
+                {
+                    schedule.TeacherCode = teacherCode.Value;
+                }
+            }
 
             // Set audit fields
             schedule.InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1");
@@ -715,6 +899,8 @@ namespace centrny.Controllers
             ViewBag.CurrentUserRootCode = userRootCode;
             ViewBag.UserRootName = rootName;
             ViewBag.IsCenter = isCenter;
+            ViewBag.IsTeacher = IsCurrentUserTeacher();
+            ViewBag.BranchName = branchName;
 
             return View(schedule);
         }
@@ -730,7 +916,7 @@ namespace centrny.Controllers
                 return NotFound("Schedule ID is required.");
             }
 
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!userRootCode.HasValue)
             {
@@ -752,6 +938,8 @@ namespace centrny.Controllers
                 ViewBag.CurrentUserRootCode = userRootCode;
                 ViewBag.UserRootName = rootName;
                 ViewBag.IsCenter = isCenter;
+                ViewBag.IsTeacher = IsCurrentUserTeacher();
+                ViewBag.BranchName = branchName;
 
                 return View(schedule);
             }
@@ -768,14 +956,14 @@ namespace centrny.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequirePageAccess("Schedule", "update")]
-        public async Task<IActionResult> Edit(int id, [Bind("ScheduleCode,ScheduleName,HallCode,ScheduleAmount,EduYearCode,TeacherCode,SubjectCode,DayOfWeek,StartTime,EndTime,YearCode")] Schedule schedule)
+        public async Task<IActionResult> Edit(int id, [Bind("ScheduleCode,ScheduleName,HallCode,ScheduleAmount,EduYearCode,CenterCode,BranchCode,TeacherCode,SubjectCode,DayOfWeek,StartTime,EndTime,YearCode")] Schedule schedule)
         {
             if (id != schedule.ScheduleCode)
             {
                 return NotFound();
             }
 
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!userRootCode.HasValue)
             {
@@ -794,6 +982,16 @@ namespace centrny.Controllers
 
             // Keep the original RootCode
             schedule.RootCode = userRootCode.Value;
+
+            // Handle teacher code based on user type
+            if (IsCurrentUserTeacher())
+            {
+                var teacherCode = await GetCurrentUserTeacherCode();
+                if (teacherCode.HasValue)
+                {
+                    schedule.TeacherCode = teacherCode.Value;
+                }
+            }
 
             if (ModelState.IsValid)
             {
@@ -820,6 +1018,8 @@ namespace centrny.Controllers
             ViewBag.CurrentUserRootCode = userRootCode;
             ViewBag.UserRootName = rootName;
             ViewBag.IsCenter = isCenter;
+            ViewBag.IsTeacher = IsCurrentUserTeacher();
+            ViewBag.BranchName = branchName;
 
             return View(schedule);
         }
@@ -835,7 +1035,7 @@ namespace centrny.Controllers
                 return NotFound();
             }
 
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!userRootCode.HasValue)
             {
@@ -862,7 +1062,7 @@ namespace centrny.Controllers
         [RequirePageAccess("Schedule", "delete")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             if (!userRootCode.HasValue)
             {
@@ -896,7 +1096,7 @@ namespace centrny.Controllers
 
         private async Task PopulateDropDownsSafe(Schedule schedule = null)
         {
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
 
             try
             {
@@ -922,6 +1122,8 @@ namespace centrny.Controllers
                     ViewData["SubjectCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
                     ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
                     ViewData["YearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["CenterCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["BranchCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
                     return;
                 }
 
@@ -943,14 +1145,46 @@ namespace centrny.Controllers
                     .ToListAsync();
                 ViewData["RootCode"] = new SelectList(currentRoot, "RootCode", "RootName", schedule?.RootCode);
 
-                // Subjects - global (no filtering needed)
-                var subjects = await _context.Subjects.ToListAsync();
+                // Centers - filter by user's root
+                var centers = await _context.Centers
+                    .Where(c => c.RootCode == userRootCode.Value)
+                    .ToListAsync();
+                ViewData["CenterCode"] = new SelectList(centers, "CenterCode", "CenterName", schedule?.CenterCode);
+
+                // Branches - filter by user's root
+                var branches = await _context.Branches
+                    .Where(b => b.RootCode == userRootCode.Value)
+                    .ToListAsync();
+                ViewData["BranchCode"] = new SelectList(branches, "BranchCode", "BranchName", schedule?.BranchCode);
+
+                // Subjects - filter based on user type
+                List<Subject> subjects;
+                if (IsCurrentUserTeacher())
+                {
+                    // For teacher users, show only subjects available in their root code from Teach table
+                    subjects = await _context.Teaches
+                        .Where(t => t.RootCode == userRootCode.Value && t.IsActive)
+                        .Include(t => t.SubjectCodeNavigation)
+                        .Select(t => t.SubjectCodeNavigation)
+                        .Distinct()
+                        .OrderBy(s => s.SubjectName)
+                        .ToListAsync();
+                }
+                else
+                {
+                    // For center users, show empty list initially - subjects will be loaded via AJAX after teacher selection
+                    // This ensures subjects are filtered by root code + selected teacher from Teach table
+                    subjects = new List<Subject>();
+                }
                 ViewData["SubjectCode"] = new SelectList(subjects, "SubjectCode", "SubjectName", schedule?.SubjectCode);
 
-                // Teachers - filter by user's root
-                var teachers = await _context.Teachers
-                    .Where(t => t.RootCode == userRootCode.Value)
-                    .ToListAsync();
+                // Teachers - filter by user's root and include active teachers from Teach table
+                var teachersQuery = _context.Teachers
+                    .Where(t => t.RootCode == userRootCode.Value);
+
+                // For center users, show all teachers in their root
+                // For teacher users, this will be handled differently in the UI
+                var teachers = await teachersQuery.ToListAsync();
                 ViewData["TeacherCode"] = new SelectList(teachers, "TeacherCode", "TeacherName", schedule?.TeacherCode);
 
                 // Years - global (no filtering needed)
@@ -970,6 +1204,8 @@ namespace centrny.Controllers
                 ViewData["SubjectCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
                 ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
                 ViewData["YearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["CenterCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["BranchCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
 
                 ViewBag.DropdownError = $"Error loading dropdown data: {ex.Message}";
             }
@@ -995,7 +1231,9 @@ namespace centrny.Controllers
         public int? HallCode { get; set; }
         public int? RootCode { get; set; } // This will be auto-set to user's root
         public int? EduYearCode { get; set; }
-        public int? TeacherCode { get; set; }
+        public int? CenterCode { get; set; } // New field
+        public int? BranchCode { get; set; } // New field
+        public int? TeacherCode { get; set; } // This will be auto-set for teacher users
         public int? SubjectCode { get; set; }
         public decimal? ScheduleAmount { get; set; }
         public int? YearCode { get; set; }

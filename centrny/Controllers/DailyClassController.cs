@@ -145,6 +145,7 @@ namespace centrny.Controllers
                     .Include(c => c.SubjectCodeNavigation)
                     .Include(c => c.HallCodeNavigation)
                     .Include(c => c.BranchCodeNavigation)
+                        .ThenInclude(b => b.CenterCodeNavigation)
                     .Include(c => c.EduYearCodeNavigation)
                     .Include(c => c.YearCodeNavigation)
                     .Include(c => c.ReservationCodeNavigation)
@@ -161,9 +162,11 @@ namespace centrny.Controllers
                     .Include(c => c.SubjectCodeNavigation)
                     .Include(c => c.HallCodeNavigation)
                     .Include(c => c.BranchCodeNavigation)
+                        .ThenInclude(b => b.CenterCodeNavigation)
                     .Include(c => c.EduYearCodeNavigation)
                     .Include(c => c.YearCodeNavigation)
                     .Include(c => c.ScheduleCodeNavigation)
+                        .ThenInclude(s => s.CenterCodeNavigation)
                     .Include(c => c.RootCodeNavigation)
                     .ToListAsync();
 
@@ -177,6 +180,7 @@ namespace centrny.Controllers
                     .Include(c => c.SubjectCodeNavigation)
                     .Include(c => c.HallCodeNavigation)
                     .Include(c => c.BranchCodeNavigation)
+                        .ThenInclude(b => b.CenterCodeNavigation)
                     .Include(c => c.EduYearCodeNavigation)
                     .Include(c => c.YearCodeNavigation)
                     .Include(c => c.RootCodeNavigation)
@@ -202,8 +206,9 @@ namespace centrny.Controllers
                     allClasses.Add(CreateClassViewModel(cls, date, "direct"));
                 }
 
-                _logger.LogInformation("Loaded {Count} classes for date {Date} and user {Username} (Root: {RootCode}) - Reservation: {ReservationCount}, Schedule: {ScheduleCount}, Direct: {DirectCount}",
-                    allClasses.Count, date.ToString("yyyy-MM-dd"), User.Identity?.Name, userRootCode, reservationClasses.Count, scheduleClasses.Count, directDateClasses.Count);
+                _logger.LogInformation("Loaded {Count} classes for date {Date} and user {Username} (Root: {RootCode}, Type: {UserType}) - Reservation: {ReservationCount}, Schedule: {ScheduleCount}, Direct: {DirectCount}",
+                    allClasses.Count, date.ToString("yyyy-MM-dd"), User.Identity?.Name, userRootCode,
+                    isCenter ? "Center" : "Teacher", reservationClasses.Count, scheduleClasses.Count, directDateClasses.Count);
 
                 return Json(allClasses);
             }
@@ -212,6 +217,35 @@ namespace centrny.Controllers
                 _logger.LogError(ex, "Error loading daily classes for date {Date} and user {Username}",
                     date.ToString("yyyy-MM-dd"), User.Identity?.Name);
                 return Json(new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// GET: DailyClass/GetBranchesByCenter - Get branches filtered by center code
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetBranchesByCenter(int centerCode)
+        {
+            try
+            {
+                var (userRootCode, rootName, isCenter) = await GetUserContext();
+
+                if (!userRootCode.HasValue)
+                {
+                    return Json(new List<object>());
+                }
+
+                var branches = await _context.Branches
+                    .Where(b => b.CenterCode == centerCode && b.RootCode == userRootCode.Value && b.IsActive)
+                    .Select(b => new { value = b.BranchCode, text = b.BranchName })
+                    .ToListAsync();
+
+                return Json(branches);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting branches for center {CenterCode}", centerCode);
+                return Json(new List<object>());
             }
         }
 
@@ -246,10 +280,37 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Class name, start time, and end time are required." });
                 }
 
-                if (!model.TeacherCode.HasValue || !model.SubjectCode.HasValue ||
-                    !model.BranchCode.HasValue || !model.HallCode.HasValue || !model.EduYearCode.HasValue)
+                // Different validation based on user type
+                if (isCenter)
                 {
-                    return Json(new { success = false, error = "Teacher, subject, branch, hall, and education year are required." });
+                    // Center users must provide teacher
+                    if (!model.TeacherCode.HasValue || !model.SubjectCode.HasValue ||
+                        !model.BranchCode.HasValue || !model.HallCode.HasValue || !model.EduYearCode.HasValue)
+                    {
+                        return Json(new { success = false, error = "Teacher, subject, branch, hall, and education year are required." });
+                    }
+                }
+                else
+                {
+                    // Teacher users must provide center
+                    if (!model.CenterCode.HasValue || !model.SubjectCode.HasValue ||
+                        !model.BranchCode.HasValue || !model.HallCode.HasValue || !model.EduYearCode.HasValue)
+                    {
+                        return Json(new { success = false, error = "Center, subject, branch, hall, and education year are required." });
+                    }
+
+                    // For teachers, set TeacherCode to the teacher belonging to this root
+                    var teacherCode = await _context.Teachers
+                        .Where(t => t.RootCode == userRootCode.Value && t.IsActive)
+                        .Select(t => t.TeacherCode)
+                        .FirstOrDefaultAsync();
+
+                    if (teacherCode == 0)
+                    {
+                        return Json(new { success = false, error = "No teacher found for your account." });
+                    }
+
+                    model.TeacherCode = teacherCode;
                 }
 
                 // Parse and validate times
@@ -280,7 +341,7 @@ namespace centrny.Controllers
                     ClassName = model.ClassName.Trim(),
                     ClassStartTime = startTime,
                     ClassEndTime = endTime,
-                    ClassDate = classDateOnly, // Set the class date directly
+                    ClassDate = classDateOnly,
                     RootCode = userRootCode.Value,
                     TeacherCode = model.TeacherCode.Value,
                     SubjectCode = model.SubjectCode.Value,
@@ -288,7 +349,7 @@ namespace centrny.Controllers
                     HallCode = model.HallCode.Value,
                     EduYearCode = model.EduYearCode.Value,
                     YearCode = model.YearCode,
-                    NoOfStudents = model.NoOfStudents ?? 0,
+                    NoOfStudents = 0, // Always start with 0, will be updated by attendance system
                     TotalAmount = model.TotalAmount,
                     TeacherAmount = model.TeacherAmount,
                     CenterAmount = model.CenterAmount,
@@ -302,8 +363,8 @@ namespace centrny.Controllers
                 _context.Classes.Add(newClass);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Created class {ClassName} for RootCode {RootCode} by user {Username}",
-                    newClass.ClassName, newClass.RootCode, User.Identity?.Name);
+                _logger.LogInformation("Created class {ClassName} for RootCode {RootCode} by user {Username} (UserType: {UserType})",
+                    newClass.ClassName, newClass.RootCode, User.Identity?.Name, isCenter ? "Center" : "Teacher");
 
                 return Json(new { success = true, id = newClass.ClassCode });
             }
@@ -407,15 +468,33 @@ namespace centrny.Controllers
                 existingClass.ClassStartTime = startTime;
                 existingClass.ClassEndTime = endTime;
 
-                // Update optional fields with root validation
+                // Handle teacher assignment based on user type
                 var teacherCode = GetIntValue("teacherCode");
-                if (teacherCode.HasValue && teacherCode > 0)
+                if (isCenter)
                 {
-                    var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == teacherCode && t.RootCode == userRootCode.Value);
-                    if (teacherExists)
-                        existingClass.TeacherCode = teacherCode.Value;
+                    // Center users can change teacher
+                    if (teacherCode.HasValue && teacherCode > 0)
+                    {
+                        var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == teacherCode && t.RootCode == userRootCode.Value);
+                        if (teacherExists)
+                            existingClass.TeacherCode = teacherCode.Value;
+                    }
+                }
+                else
+                {
+                    // For teacher users, ensure teacher is set to the teacher of this root (don't allow changing)
+                    var rootTeacherCode = await _context.Teachers
+                        .Where(t => t.RootCode == userRootCode.Value && t.IsActive)
+                        .Select(t => t.TeacherCode)
+                        .FirstOrDefaultAsync();
+
+                    if (rootTeacherCode > 0)
+                    {
+                        existingClass.TeacherCode = rootTeacherCode;
+                    }
                 }
 
+                // Update other fields with root validation
                 var subjectCode = GetIntValue("subjectCode");
                 if (subjectCode.HasValue && subjectCode > 0)
                 {
@@ -452,11 +531,7 @@ namespace centrny.Controllers
                     existingClass.YearCode = yearCode;
                 }
 
-                var noOfStudents = GetIntValue("noOfStudents");
-                if (noOfStudents.HasValue)
-                {
-                    existingClass.NoOfStudents = noOfStudents.Value;
-                }
+                // NoOfStudents is not updated here - it's managed by the attendance system
 
                 var totalAmount = GetDecimalValue("totalAmount");
                 if (totalAmount.HasValue)
@@ -483,7 +558,8 @@ namespace centrny.Controllers
                 _context.Classes.Update(existingClass);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Updated class {ClassId} by user {Username}", id, User.Identity?.Name);
+                _logger.LogInformation("Updated class {ClassId} by user {Username} (UserType: {UserType})",
+                    id, User.Identity?.Name, isCenter ? "Center" : "Teacher");
 
                 return Json(new { success = true });
             }
@@ -686,6 +762,245 @@ namespace centrny.Controllers
             {
                 _logger.LogError(ex, "Error getting weekly generation status for user {Username}", User.Identity?.Name);
                 return Json(new { error = ex.Message });
+            }
+        }
+
+        // ==================== UTILITY METHODS ====================
+
+        private object CreateClassViewModel(Class cls, DateTime date, string classType)
+        {
+            // Get user context
+            var (userRootCode, rootName, isCenter) = GetUserContext().Result;
+
+            // Determine the actual times for the class based on type
+            TimeOnly? startTime = cls.ClassStartTime;
+            TimeOnly? endTime = cls.ClassEndTime;
+
+            // If class doesn't have specific times, try to get from schedule or reservation
+            if (!startTime.HasValue || !endTime.HasValue)
+            {
+                if (cls.ScheduleCode.HasValue && cls.ScheduleCodeNavigation != null)
+                {
+                    if (cls.ScheduleCodeNavigation.StartTime.HasValue)
+                        startTime = TimeOnly.FromDateTime(cls.ScheduleCodeNavigation.StartTime.Value);
+                    if (cls.ScheduleCodeNavigation.EndTime.HasValue)
+                        endTime = TimeOnly.FromDateTime(cls.ScheduleCodeNavigation.EndTime.Value);
+                }
+                else if (cls.ReservationCode.HasValue && cls.ReservationCodeNavigation != null)
+                {
+                    startTime = cls.ReservationCodeNavigation.ReservationStartTime;
+                    endTime = cls.ReservationCodeNavigation.ReservationEndTime;
+                }
+            }
+
+            // Get center and branch information based on user type and class type
+            string centerName = null;
+            string branchName = null;
+            string teacherName = null;
+
+            if (isCenter)
+            {
+                // For center users, show teacher name only
+                teacherName = cls.TeacherCodeNavigation?.TeacherName;
+            }
+            else
+            {
+                // For teacher users, show center and branch names
+                branchName = cls.BranchCodeNavigation?.BranchName;
+
+                // Get center name based on class type and relationships
+                if (cls.ScheduleCode.HasValue && cls.ScheduleCodeNavigation?.CenterCodeNavigation != null)
+                {
+                    // For schedule-based classes, get center from schedule
+                    centerName = cls.ScheduleCodeNavigation.CenterCodeNavigation.CenterName;
+                }
+                else if (cls.BranchCodeNavigation?.CenterCodeNavigation != null)
+                {
+                    // For other classes, get center through branch relationship
+                    centerName = cls.BranchCodeNavigation.CenterCodeNavigation.CenterName;
+                }
+            }
+
+            return new
+            {
+                id = $"class_{cls.ClassCode}",
+                classCode = cls.ClassCode,
+                title = cls.ClassName,
+                startTime = startTime?.ToString("HH:mm") ?? "00:00",
+                endTime = endTime?.ToString("HH:mm") ?? "23:59",
+                startTime12 = startTime?.ToString("h:mm tt") ?? "",
+                endTime12 = endTime?.ToString("h:mm tt") ?? "",
+                classType = classType,
+                backgroundColor = "#6c5ce7",
+                borderColor = "#5a4fcf",
+                textColor = "#ffffff",
+
+                // Conditional display based on user type
+                teacherName = teacherName,
+                teacherCode = cls.TeacherCode,
+                centerName = centerName,
+                branchName = branchName,
+
+                // Always include for form population
+                subjectName = cls.SubjectCodeNavigation?.SubjectName,
+                subjectCode = cls.SubjectCode,
+                hallName = cls.HallCodeNavigation?.HallName,
+                hallCode = cls.HallCode,
+                branchCode = cls.BranchCode,
+                eduYearName = cls.EduYearCodeNavigation?.EduName,
+                eduYearCode = cls.EduYearCode,
+                yearName = cls.YearCodeNavigation?.YearName,
+                yearCode = cls.YearCode,
+                rootName = cls.RootCodeNavigation?.RootName,
+                rootCode = cls.RootCode,
+                noOfStudents = cls.NoOfStudents,
+                totalAmount = cls.TotalAmount?.ToString("F2"),
+                teacherAmount = cls.TeacherAmount?.ToString("F2"),
+                centerAmount = cls.CenterAmount?.ToString("F2"),
+                date = date.ToString("yyyy-MM-dd"),
+                classDate = cls.ClassDate?.ToString("yyyy-MM-dd"),
+
+                // User context for display logic
+                isCenter = isCenter
+            };
+        }
+
+        private async Task<bool> ValidateClassResources(DailyClassModel model, int rootCode)
+        {
+            var (userRootCode, rootName, isCenter) = await GetUserContext();
+
+            // Validate teacher belongs to root (only for center users)
+            if (isCenter && model.TeacherCode.HasValue)
+            {
+                var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == model.TeacherCode && t.RootCode == rootCode);
+                if (!teacherExists) return false;
+            }
+
+            // Validate center belongs to root (only for teacher users)
+            if (!isCenter && model.CenterCode.HasValue)
+            {
+                var centerExists = await _context.Centers.AnyAsync(c => c.CenterCode == model.CenterCode && c.RootCode == rootCode);
+                if (!centerExists) return false;
+            }
+
+            // Validate branch belongs to root and center (if specified)
+            if (model.BranchCode.HasValue)
+            {
+                var branchQuery = _context.Branches.Where(b => b.BranchCode == model.BranchCode && b.RootCode == rootCode);
+
+                // For teacher users, also validate branch belongs to selected center
+                if (!isCenter && model.CenterCode.HasValue)
+                {
+                    branchQuery = branchQuery.Where(b => b.CenterCode == model.CenterCode);
+                }
+
+                var branchExists = await branchQuery.AnyAsync();
+                if (!branchExists) return false;
+            }
+
+            // Validate hall belongs to root
+            if (model.HallCode.HasValue)
+            {
+                var hallExists = await _context.Halls.AnyAsync(h => h.HallCode == model.HallCode && h.RootCode == rootCode);
+                if (!hallExists) return false;
+            }
+
+            // Validate education year belongs to root
+            if (model.EduYearCode.HasValue)
+            {
+                var eduYearExists = await _context.EduYears.AnyAsync(e => e.EduCode == model.EduYearCode && e.RootCode == rootCode);
+                if (!eduYearExists) return false;
+            }
+
+            return true;
+        }
+
+        private async Task PopulateDropDownsSafe()
+        {
+            var (userRootCode, rootName, isCenter) = await GetUserContext();
+
+            try
+            {
+                if (!userRootCode.HasValue)
+                {
+                    // Provide empty dropdowns if no root code
+                    ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["SubjectCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["BranchCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["HallCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["EduYearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["YearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    ViewData["CenterCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                    return;
+                }
+
+                // Teachers - filter by user's root (only for centers, teachers won't see this)
+                if (isCenter)
+                {
+                    var teachers = await _context.Teachers
+                        .Where(t => t.RootCode == userRootCode.Value && t.IsActive)
+                        .ToListAsync();
+                    ViewData["TeacherCode"] = new SelectList(teachers, "TeacherCode", "TeacherName");
+                }
+                else
+                {
+                    ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                }
+
+                // Subjects - global (no filtering needed)
+                var subjects = await _context.Subjects.ToListAsync();
+                ViewData["SubjectCode"] = new SelectList(subjects, "SubjectCode", "SubjectName");
+
+                // Centers - for teachers only, filtered by root code
+                if (!isCenter)
+                {
+                    var centers = await _context.Centers
+                        .Where(c => c.RootCode == userRootCode.Value && c.IsActive)
+                        .ToListAsync();
+                    ViewData["CenterCode"] = new SelectList(centers, "CenterCode", "CenterName");
+                }
+                else
+                {
+                    ViewData["CenterCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                }
+
+                // Branches - filter by user's root (initial load, will be filtered by center via AJAX)
+                var branches = await _context.Branches
+                    .Where(b => b.RootCode == userRootCode.Value && b.IsActive)
+                    .ToListAsync();
+                ViewData["BranchCode"] = new SelectList(branches, "BranchCode", "BranchName");
+
+                // Halls - filter by user's root
+                var halls = await _context.Halls
+                    .Where(h => h.RootCode == userRootCode.Value)
+                    .ToListAsync();
+                ViewData["HallCode"] = new SelectList(halls, "HallCode", "HallName");
+
+                // EduYears - filter by user's root
+                var eduYears = await _context.EduYears
+                    .Where(e => e.RootCode == userRootCode.Value && e.IsActive)
+                    .ToListAsync();
+                ViewData["EduYearCode"] = new SelectList(eduYears, "EduCode", "EduName");
+
+                // Years - global (no filtering needed)
+                var years = await _context.Years.ToListAsync();
+                ViewData["YearCode"] = new SelectList(years, "YearCode", "YearName");
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in PopulateDropDownsSafe for user {Username}", User.Identity?.Name);
+
+                // Create empty dropdowns as fallback
+                ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["SubjectCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["BranchCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["HallCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["EduYearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["YearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+                ViewData["CenterCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
+
+                ViewBag.DropdownError = $"Error loading dropdown data: {ex.Message}";
             }
         }
 
@@ -926,167 +1241,6 @@ namespace centrny.Controllers
 
             return firstEduYear > 0 ? firstEduYear : 1; // Fallback to 1 if no edu year found
         }
-
-        // ==================== UTILITY METHODS ====================
-
-        private object CreateClassViewModel(Class cls, DateTime date, string classType)
-        {
-            // Determine the actual times for the class based on type
-            TimeOnly? startTime = cls.ClassStartTime;
-            TimeOnly? endTime = cls.ClassEndTime;
-
-            // If class doesn't have specific times, try to get from schedule or reservation
-            if (!startTime.HasValue || !endTime.HasValue)
-            {
-                if (cls.ScheduleCode.HasValue && cls.ScheduleCodeNavigation != null)
-                {
-                    if (cls.ScheduleCodeNavigation.StartTime.HasValue)
-                        startTime = TimeOnly.FromDateTime(cls.ScheduleCodeNavigation.StartTime.Value);
-                    if (cls.ScheduleCodeNavigation.EndTime.HasValue)
-                        endTime = TimeOnly.FromDateTime(cls.ScheduleCodeNavigation.EndTime.Value);
-                }
-                else if (cls.ReservationCode.HasValue && cls.ReservationCodeNavigation != null)
-                {
-                    startTime = cls.ReservationCodeNavigation.ReservationStartTime;
-                    endTime = cls.ReservationCodeNavigation.ReservationEndTime;
-                }
-            }
-
-            return new
-            {
-                id = $"class_{cls.ClassCode}",
-                classCode = cls.ClassCode,
-                title = cls.ClassName,
-                startTime = startTime?.ToString("HH:mm") ?? "00:00",
-                endTime = endTime?.ToString("HH:mm") ?? "23:59",
-                startTime12 = startTime?.ToString("h:mm tt") ?? "",
-                endTime12 = endTime?.ToString("h:mm tt") ?? "",
-                classType = classType,
-                backgroundColor = "#6c5ce7", // Single color for all classes
-                borderColor = "#5a4fcf",
-                textColor = "#ffffff",
-                teacherName = cls.TeacherCodeNavigation?.TeacherName,
-                teacherCode = cls.TeacherCode,
-                subjectName = cls.SubjectCodeNavigation?.SubjectName,
-                subjectCode = cls.SubjectCode,
-                hallName = cls.HallCodeNavigation?.HallName,
-                hallCode = cls.HallCode,
-                branchName = cls.BranchCodeNavigation?.BranchName,
-                branchCode = cls.BranchCode,
-                eduYearName = cls.EduYearCodeNavigation?.EduName,
-                eduYearCode = cls.EduYearCode,
-                yearName = cls.YearCodeNavigation?.YearName,
-                yearCode = cls.YearCode,
-                rootName = cls.RootCodeNavigation?.RootName,
-                rootCode = cls.RootCode,
-                noOfStudents = cls.NoOfStudents,
-                totalAmount = cls.TotalAmount?.ToString("F2"),
-                teacherAmount = cls.TeacherAmount?.ToString("F2"),
-                centerAmount = cls.CenterAmount?.ToString("F2"),
-                date = date.ToString("yyyy-MM-dd"),
-                classDate = cls.ClassDate?.ToString("yyyy-MM-dd")
-            };
-        }
-
-        private async Task<bool> ValidateClassResources(DailyClassModel model, int rootCode)
-        {
-            // Validate teacher belongs to root
-            if (model.TeacherCode.HasValue)
-            {
-                var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == model.TeacherCode && t.RootCode == rootCode);
-                if (!teacherExists) return false;
-            }
-
-            // Validate branch belongs to root
-            if (model.BranchCode.HasValue)
-            {
-                var branchExists = await _context.Branches.AnyAsync(b => b.BranchCode == model.BranchCode && b.RootCode == rootCode);
-                if (!branchExists) return false;
-            }
-
-            // Validate hall belongs to root
-            if (model.HallCode.HasValue)
-            {
-                var hallExists = await _context.Halls.AnyAsync(h => h.HallCode == model.HallCode && h.RootCode == rootCode);
-                if (!hallExists) return false;
-            }
-
-            // Validate education year belongs to root
-            if (model.EduYearCode.HasValue)
-            {
-                var eduYearExists = await _context.EduYears.AnyAsync(e => e.EduCode == model.EduYearCode && e.RootCode == rootCode);
-                if (!eduYearExists) return false;
-            }
-
-            return true;
-        }
-
-        private async Task PopulateDropDownsSafe()
-        {
-            var (userRootCode, rootName, isCenter) = await GetUserContext();
-
-            try
-            {
-                if (!userRootCode.HasValue)
-                {
-                    // Provide empty dropdowns if no root code
-                    ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                    ViewData["SubjectCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                    ViewData["BranchCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                    ViewData["HallCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                    ViewData["EduYearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                    ViewData["YearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                    return;
-                }
-
-                // Teachers - filter by user's root
-                var teachers = await _context.Teachers
-                    .Where(t => t.RootCode == userRootCode.Value && t.IsActive)
-                    .ToListAsync();
-                ViewData["TeacherCode"] = new SelectList(teachers, "TeacherCode", "TeacherName");
-
-                // Subjects - global (no filtering needed)
-                var subjects = await _context.Subjects.ToListAsync();
-                ViewData["SubjectCode"] = new SelectList(subjects, "SubjectCode", "SubjectName");
-
-                // Branches - filter by user's root
-                var branches = await _context.Branches
-                    .Where(b => b.RootCode == userRootCode.Value && b.IsActive)
-                    .ToListAsync();
-                ViewData["BranchCode"] = new SelectList(branches, "BranchCode", "BranchName");
-
-                // Halls - filter by user's root
-                var halls = await _context.Halls
-                    .Where(h => h.RootCode == userRootCode.Value)
-                    .ToListAsync();
-                ViewData["HallCode"] = new SelectList(halls, "HallCode", "HallName");
-
-                // EduYears - filter by user's root
-                var eduYears = await _context.EduYears
-                    .Where(e => e.RootCode == userRootCode.Value && e.IsActive)
-                    .ToListAsync();
-                ViewData["EduYearCode"] = new SelectList(eduYears, "EduCode", "EduName");
-
-                // Years - global (no filtering needed)
-                var years = await _context.Years.ToListAsync();
-                ViewData["YearCode"] = new SelectList(years, "YearCode", "YearName");
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in PopulateDropDownsSafe for user {Username}", User.Identity?.Name);
-
-                // Create empty dropdowns as fallback
-                ViewData["TeacherCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                ViewData["SubjectCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                ViewData["BranchCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                ViewData["HallCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                ViewData["EduYearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-                ViewData["YearCode"] = new SelectList(new List<dynamic>(), "Value", "Text");
-
-                ViewBag.DropdownError = $"Error loading dropdown data: {ex.Message}";
-            }
-        }
     }
 
     // ==================== VIEW MODELS ====================
@@ -1097,12 +1251,13 @@ namespace centrny.Controllers
         public string StartTime { get; set; } = string.Empty;
         public string EndTime { get; set; } = string.Empty;
         public int? TeacherCode { get; set; }
+        public int? CenterCode { get; set; } // New field for teachers to select center
         public int? SubjectCode { get; set; }
         public int? BranchCode { get; set; }
         public int? HallCode { get; set; }
         public int? EduYearCode { get; set; }
         public int? YearCode { get; set; }
-        public int? NoOfStudents { get; set; }
+        // NoOfStudents removed - managed by attendance system
         public decimal? TotalAmount { get; set; }
         public decimal? TeacherAmount { get; set; }
         public decimal? CenterAmount { get; set; }

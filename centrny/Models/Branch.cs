@@ -49,6 +49,8 @@ public partial class Branch
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
 
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
     public virtual ICollection<Teach> Teaches { get; set; } = new List<Teach>();

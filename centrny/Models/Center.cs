@@ -34,4 +34,6 @@ public partial class Center
     public virtual User? LastInsertUserNavigation { get; set; }
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
+
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 }

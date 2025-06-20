@@ -31,6 +31,8 @@ public partial class Year
 
     public virtual User? LastUpdateUserNavigation { get; set; }
 
+    public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
+
     public virtual Level LevelCodeNavigation { get; set; } = null!;
 
     public virtual ICollection<PlanSubject> PlanSubjects { get; set; } = new List<PlanSubject>();

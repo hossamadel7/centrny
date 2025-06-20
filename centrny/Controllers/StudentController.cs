@@ -424,7 +424,6 @@ namespace centrny.Controllers
                     .Include(l => l.TeacherCodeNavigation)
                     .Include(l => l.BranchCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
-                    .Include(l => l.ChapterCodeNavigation)
                     .Include(l => l.ScheduleCodeNavigation)
                         .ThenInclude(s => s.HallCodeNavigation)
                     .Select(l => new
@@ -439,7 +438,6 @@ namespace centrny.Controllers
                         branchAddress = l.BranchCodeNavigation.Address,
                         branchPhone = l.BranchCodeNavigation.Phone,
                         eduYearName = l.EduYearCodeNavigation.EduName,
-                        chapterName = l.ChapterCodeNavigation != null ? l.ChapterCodeNavigation.LessonName : null,
                         studentFee = l.StudentFee,
                         isOnline = l.IsOnline,
                         insertTime = l.InsertTime.ToString("yyyy-MM-dd"),

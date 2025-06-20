@@ -17,6 +17,10 @@ public partial class Schedule
 
     public int? EduYearCode { get; set; }
 
+    public int? CenterCode { get; set; }
+
+    public int? BranchCode { get; set; }
+
     public int? TeacherCode { get; set; }
 
     public int? SubjectCode { get; set; }
@@ -27,13 +31,17 @@ public partial class Schedule
 
     public DateTime? EndTime { get; set; }
 
-    public int YearCode { get; set; }
+    public int? YearCode { get; set; }
 
     public int? InsertUser { get; set; }
 
     public DateTime? InsertTime { get; set; }
 
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
+
+    public virtual Branch? BranchCodeNavigation { get; set; }
+
+    public virtual Center? CenterCodeNavigation { get; set; }
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
@@ -51,5 +59,5 @@ public partial class Schedule
 
     public virtual Teacher? TeacherCodeNavigation { get; set; }
 
-    public virtual Year YearCodeNavigation { get; set; } = null!;
+    public virtual Year? YearCodeNavigation { get; set; }
 }

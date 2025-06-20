@@ -11,9 +11,9 @@ public partial class Exam
 
     public string ExamDegree { get; set; } = null!;
 
-    public string? ExamResult { get; set; }
+    public string? ExamAverageMark { get; set; }
 
-    public string? ExamPercentage { get; set; }
+    public string? ExamSuccessPercent { get; set; }
 
     public bool IsDone { get; set; }
 
