@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Chapters and Lessons";
+}
+
+<!-- 🟩 NAVBAR -->
+<nav class="navbar custom-navbar px-3">
+    <div class="d-flex align-items-center gap-3">
+        <h5 class="navbar-title m-0">Root Management</h5>
+        <a class="nav-btn" href="/Item">Item management</a>
+        <a class="nav-btn" href="/Security/Security">Security</a>
+        <a class="nav-btn" href="/Class">Classes</a>
+        <a class="nav-btn" href="/Reservation">Reservations</a>
+        <a class="nav-btn" href="/Exam">Exams</a>
+        <a class="nav-btn" href="/TeacherClass/Teacher">Teacher schedule</a>
+        <a class="nav-btn" href="/Root">Root management</a>
+    </div>
+</nav>
+
+<!-- User/Root/Teacher Info Box (AJAX loaded) -->
+<div id="user-root-info-box" style="display:none;"></div>
+
+<div id="chapter-lesson-container">
+    <h2 id="chapter-lesson-title">
+        <i class="fa-solid fa-book-open-reader" style="color:#4f8cff;margin-right:12px;"></i>
+        Questions
+    </h2>
+
+
+    <!-- ===== SEARCH BAR START ===== -->
+    <div id="question-search-bar" style="margin: 24px 0 16px 0; text-align: left;">
+        <input type="text" id="questionSearchInput" placeholder="Search questions..." class="modern-input" style="width:260px;max-width:100%;" />
+        <button id="questionSearchBtn" class="modern-btn" style="margin-left:8px;">Search</button>
+        <button id="questionSearchClearBtn" class="modern-btn btn-cancel" style="margin-left:6px;display:none;">Clear</button>
+    </div>
+    <!-- ===== SEARCH BAR END ===== -->
+    <!-- ===== SEARCH RESULTS ===== -->
+    <div id="question-search-results" style="display:none; margin-bottom: 30px;"></div>
+    <!-- ========================= -->
+    <!-- 🟩 ADD CHAPTER BUTTON -->
+    <button class="modern-btn" id="add-chapter-btn" style="margin:16px 0;">Add Chapter</button>
+
+    <div id="chapters-container">
+        <!-- Dynamic content loaded here by JS -->
+    </div>
+    <div id="pagination-container" style="margin-top: 20px; text-align: center;"></div>
+</div>
+
+<!-- ------------------ -->
+<!-- ADD CHAPTER MODAL -->
+<!-- ------------------ -->
+<div id="chapter-modal" class="modal-background" style="display:none;">
+    <div class="modal-content">
+        <h3>Add Chapter</h3>
+        <form id="chapter-form">
+            <div class="form-group">
+                <label for="chapter-lessonname">Chapter Name<span style="color:red;">*</span></label>
+                <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input" />
+            </div>
+            <div class="form-group">
+                <label for="chapter-eduyearcode">Education Year<span style="color:red;">*</span></label>
+                <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input"></select>
+            </div>
+            <div class="form-group" id="teacher-group" style="display:none;">
+                <label for="chapter-teachercode">Teacher<span style="color:red;">*</span></label>
+                <select id="chapter-teachercode" name="TeacherCode" class="modern-input"></select>
+            </div>
+            <input type="hidden" id="chapter-teachercode-hidden" name="TeacherCode" />
+            <div class="form-group">
+                <label for="chapter-subjectcode">Subject<span style="color:red;">*</span></label>
+                <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input"></select>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="modern-btn">Save</button>
+                <button type="button" id="cancel-chapter-btn" class="modern-btn btn-cancel">Cancel</button>
+            </div>
+            <div id="chapter-message"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ------------------ -->
+<!-- ADD LESSON MODAL -->
+<!-- ------------------ -->
+<div id="lesson-modal" class="modal-background" style="display:none;">
+    <div class="modal-content">
+        <h3>Add Lesson</h3>
+        <form id="lesson-form">
+            <div class="form-group">
+                <label for="lesson-name">Lesson Name<span style="color:red;">*</span></label>
+                <input type="text" id="lesson-name" name="LessonName" required class="modern-input" />
+            </div>
+            <input type="hidden" id="lesson-rootcode" name="RootCode" />
+            <input type="hidden" id="lesson-teachercode" name="TeacherCode" />
+            <input type="hidden" id="lesson-subjectcode" name="SubjectCode" />
+            <input type="hidden" id="lesson-eduyearcode" name="EduYearCode" />
+            <input type="hidden" id="lesson-chaptercode" name="ChapterCode" />
+            <input type="hidden" id="lesson-yearcode" name="YearCode" />
+            <div class="modal-actions">
+                <button type="submit" class="modern-btn">Save</button>
+                <button type="button" id="cancel-lesson-btn" class="modern-btn btn-cancel">Cancel</button>
+            </div>
+            <div id="lesson-message"></div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals for adding and editing questions/answers -->
+<div id="question-modal" class="modal-background" style="display:none;">
+    <div class="modal-content">
+        <h3 id="question-modal-title">Question</h3>
+        <form id="question-form">
+            <input type="hidden" id="question-id" name="QuestionCode" />
+            <input type="hidden" id="question-lessoncode" name="LessonCode" />
+            <div class="form-group">
+                <label for="question-content">Question Content<span style="color:red;">*</span></label>
+                <textarea id="question-content" name="QuestionContent" required class="modern-input"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="question-examcode">Exam Code (optional)</label>
+                <input type="number" id="question-examcode" name="ExamCode" class="modern-input" />
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="modern-btn" id="save-question-btn">Save</button>
+                <button type="button" id="cancel-question-btn" class="modern-btn btn-cancel">Cancel</button>
+            </div>
+            <div id="question-message"></div>
+        </form>
+    </div>
+</div>
+
+<div id="answers-modal" class="modal-background" style="display:none;">
+    <div class="modal-content">
+        <h3 id="answers-modal-title">Add Answers</h3>
+        <form id="answers-form">
+            <input type="hidden" id="answers-questioncode" name="QuestionCode" />
+            <div id="answers-fields">
+                <!-- Dynamic answer fields here -->
+            </div>
+            <button type="button" id="add-more-answer-btn" class="modern-btn" style="margin-bottom:8px;">Add another answer</button>
+            <div class="modal-actions">
+                <button type="submit" class="modern-btn" id="save-answers-btn">Save</button>
+                <button type="button" id="cancel-answers-btn" class="modern-btn btn-cancel">Cancel</button>
+            </div>
+            <div id="answers-message"></div>
+        </form>
+    </div>
+</div>
+
+<div id="edit-answer-modal" class="modal-background" style="display:none;">
+    <div class="modal-content">
+        <h3>Edit Answer</h3>
+        <form id="edit-answer-form">
+            <input type="hidden" id="edit-answer-code" name="AnswerCode" />
+            <input type="hidden" id="edit-answer-questioncode" name="QuestionCode" />
+            <div class="form-group">
+                <label for="edit-answer-content">Answer Content<span style="color:red;">*</span></label>
+                <input type="text" id="edit-answer-content" name="AnswerContent" required class="modern-input" />
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="edit-answer-istrue" name="IsTrue" />
+                    Is Correct Answer
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="modern-btn">Save</button>
+                <button type="button" id="cancel-edit-answer-btn" class="modern-btn btn-cancel">Cancel</button>
+            </div>
+            <div id="edit-answer-message"></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/Question.js"></script>
+}
