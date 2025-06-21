@@ -1117,13 +1117,6 @@
                                     <label class="form-label">Teacher *</label>
                                     <select class="form-select" id="teacherCode" required>
                                         <option value="">Select Teacher</option>
-                                        @if (ViewData["TeacherCode"] != null)
-                                        {
-                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        }
                                     </select>
                                 </div>
                             }
@@ -1135,13 +1128,6 @@
                                     <label class="form-label">Center *</label>
                                     <select class="form-select" id="centerCode" required onchange="loadBranchesByCenter()">
                                         <option value="">Select Center</option>
-                                        @if (ViewData["CenterCode"] != null)
-                                        {
-                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        }
                                     </select>
                                 </div>
                             }
@@ -1163,26 +1149,12 @@
                                 <label class="form-label">Subject *</label>
                                 <select class="form-select" id="subjectCode" required>
                                     <option value="">Select Subject</option>
-                                    @if (ViewData["SubjectCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["SubjectCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Branch *</label>
                                 <select class="form-select" id="branchCode" required>
                                     <option value="">Select Branch</option>
-                                    @if (ViewData["BranchCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["BranchCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
                                 </select>
                             </div>
                         </div>
@@ -1192,26 +1164,12 @@
                                 <label class="form-label">Hall *</label>
                                 <select class="form-select" id="hallCode" required>
                                     <option value="">Select Hall</option>
-                                    @if (ViewData["HallCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["HallCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Education Year *</label>
                                 <select class="form-select" id="eduYearCode" required>
                                     <option value="">Select Education Year</option>
-                                    @if (ViewData["EduYearCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
                                 </select>
                             </div>
                         </div>
@@ -1221,13 +1179,6 @@
                                 <label class="form-label">Year</label>
                                 <select class="form-select" id="yearCode">
                                     <option value="">Select Year (Optional)</option>
-                                    @if (ViewData["YearCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["YearCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -1296,13 +1247,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // OPTIMIZED JAVASCRIPT WITH CACHING AND PERFORMANCE IMPROVEMENTS
+    
     let currentDate = new Date('@ViewBag.SelectedDateFormatted');
     let dailyClasses = [];
     let isEditMode = false;
     let editingClassId = null;
-
-    // Weekly class generation functionality
     let weeklyGenerationStatus = null;
+
+    // OPTIMIZATION: Cache management
+    let classesCache = new Map();
+    let dropdownCache = null;
+    let cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
     // Store user context from server
     const userContext = {
@@ -1314,16 +1270,29 @@
 
     console.log('User Context:', userContext);
 
+    // OPTIMIZATION: Parallel loading instead of sequential
     document.addEventListener('DOMContentLoaded', function() {
         if (!userContext.hasError) {
             setupEventListeners();
-            loadDailyClasses();
-            setTimeout(() => {
+            
+            // Load critical data in parallel
+            Promise.all([
+                loadDailyClassesOptimized(),
+                loadDropdownDataOptimized()
+            ]).then(() => {
                 hideInitialLoader();
                 showWelcomeMessage();
-                checkWeeklyGenerationStatus();
-                autoGenerateIfNeeded();
-            }, 1000);
+                
+                // Load non-critical features after main content
+                setTimeout(() => {
+                    checkWeeklyGenerationStatusOptimized();
+                    conditionalAutoGenerate();
+                }, 500);
+            }).catch(error => {
+                console.error('Error during initial load:', error);
+                hideInitialLoader();
+                showErrorToast('Error loading page data');
+            });
         } else {
             hideInitialLoader();
         }
@@ -1340,23 +1309,29 @@
         document.getElementById('saveClassBtn').addEventListener('click', saveClass);
     }
 
+    // OPTIMIZATION: Debounced navigation with caching
     function navigateDate(days) {
         currentDate.setDate(currentDate.getDate() + days);
         updateDateDisplay();
-        loadDailyClasses();
+        
+        // Debounce the class loading
+        clearTimeout(window.navigationTimeout);
+        window.navigationTimeout = setTimeout(() => {
+            loadDailyClassesOptimized();
+        }, 150);
     }
 
     function onDatePickerChange() {
         const selectedDate = document.getElementById('datePicker').value;
         currentDate = new Date(selectedDate + 'T00:00:00');
         updateDateDisplay();
-        loadDailyClasses();
+        loadDailyClassesOptimized();
     }
 
     function goToToday() {
         currentDate = new Date();
         updateDateDisplay();
-        loadDailyClasses();
+        loadDailyClassesOptimized();
     }
 
     function updateDateDisplay() {
@@ -1382,57 +1357,236 @@
         }
     }
 
-    function loadDailyClasses() {
+    // OPTIMIZATION: Cached loading with timeout
+    async function loadDailyClassesOptimized() {
         if (userContext.hasError) {
             console.log('User has no root assignment - skipping classes load');
             return;
         }
 
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const cacheKey = `classes_${dateStr}_${userContext.currentUserRootCode}`;
+        
+        // Check cache first
+        const cached = classesCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp) < cacheTimeout) {
+            console.log('Using cached classes data');
+            dailyClasses = cached.data;
+            renderDailyTimelineOptimized();
+            return;
+        }
+
         showLoadingOverlay();
 
-        const dateStr = currentDate.toISOString().split('T')[0];
-
-        fetch(`/DailyClass/GetDailyClasses?date=${dateStr}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch daily classes');
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoadingOverlay();
-
-                if (data.error) {
-                    console.error('Server error:', data.error);
-                    showErrorToast('Error loading classes: ' + data.error);
-                    return;
-                }
-
-                dailyClasses = Array.isArray(data) ? data : [];
-                console.log(`Loaded ${dailyClasses.length} classes for date ${dateStr}`);
-                renderDailyTimeline();
-
-                // Check generation status when loading classes
-                setTimeout(checkWeeklyGenerationStatus, 1000);
-            })
-            .catch(error => {
-                hideLoadingOverlay();
-                console.error('Error fetching daily classes:', error);
-                showErrorToast('Failed to load classes. Please try again.');
+        try {
+            const response = await fetch(`/DailyClass/GetDailyClasses?date=${dateStr}`, {
+                signal: AbortSignal.timeout(10000) // 10 second timeout
             });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            dailyClasses = Array.isArray(data) ? data : [];
+            
+            // Cache the result
+            classesCache.set(cacheKey, {
+                data: dailyClasses,
+                timestamp: Date.now()
+            });
+            
+            // Clean old cache entries
+            cleanCache();
+            
+            console.log(`Loaded ${dailyClasses.length} classes for date ${dateStr}`);
+            renderDailyTimelineOptimized();
+
+        } catch (error) {
+            console.error('Error fetching daily classes:', error);
+            showErrorToast('Failed to load classes: ' + error.message);
+        } finally {
+            hideLoadingOverlay();
+        }
     }
 
-    // ==================== WEEKLY GENERATION FUNCTIONS ====================
+    // OPTIMIZATION: Async dropdown loading with caching
+    async function loadDropdownDataOptimized() {
+        if (dropdownCache && (Date.now() - dropdownCache.timestamp) < cacheTimeout) {
+            console.log('Using cached dropdown data');
+            populateDropdownsFromCache(dropdownCache.data);
+            return;
+        }
 
-    async function checkWeeklyGenerationStatus() {
         try {
-            const response = await fetch('/DailyClass/GetWeeklyGenerationStatus');
-            if (!response.ok) throw new Error('Failed to get status');
+            const response = await fetch('/DailyClass/GetDropdownData');
+            if (!response.ok) throw new Error('Failed to load dropdown data');
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                console.warn('Dropdown data error:', data.error);
+                return;
+            }
 
-            weeklyGenerationStatus = await response.json();
-            updateWeeklyGenerationBanner();
+            // Cache the data
+            dropdownCache = {
+                data: data,
+                timestamp: Date.now()
+            };
+
+            populateDropdownsFromCache(data);
+            
         } catch (error) {
-            console.error('Error checking weekly generation status:', error);
+            console.error('Error loading dropdown data:', error);
+        }
+    }
+
+    function populateDropdownsFromCache(data) {
+        // Populate dropdowns efficiently using document fragments
+        populateSelectAsync('subjectCode', data.subjects);
+        populateSelectAsync('yearCode', data.years);
+        populateSelectAsync('hallCode', data.halls);
+        populateSelectAsync('eduYearCode', data.eduYears);
+        
+        if (userContext.isCenter) {
+            populateSelectAsync('teacherCode', data.teachers);
+            populateSelectAsync('branchCode', data.branches);
+        } else {
+            populateSelectAsync('centerCode', data.centers);
+            populateSelectAsync('branchCode', data.branches);
+        }
+    }
+
+    function populateSelectAsync(selectId, options) {
+        const select = document.getElementById(selectId);
+        if (!select || !options) return;
+        
+        // Clear existing options except first
+        select.innerHTML = '<option value="">Select...</option>';
+        
+        // Add options efficiently using document fragment
+        const fragment = document.createDocumentFragment();
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.value;
+            optionElement.textContent = option.text;
+            fragment.appendChild(optionElement);
+        });
+        
+        select.appendChild(fragment);
+    }
+
+    // OPTIMIZATION: Efficient rendering with document fragments
+    function renderDailyTimelineOptimized() {
+        // Group classes by hour efficiently
+        const classesByHour = dailyClasses.reduce((acc, cls) => {
+            const startHour = parseInt(cls.startTime.split(':')[0]);
+            if ((startHour >= 6 && startHour <= 23) || startHour === 0) {
+                if (!acc[startHour]) acc[startHour] = [];
+                acc[startHour].push(cls);
+            }
+            return acc;
+        }, {});
+
+        // Batch DOM updates
+        const classSlots = document.querySelectorAll('.class-slot');
+        const updates = [];
+
+        classSlots.forEach(slot => {
+            const hour = parseInt(slot.dataset.hour);
+            const classes = classesByHour[hour] || [];
+            
+            updates.push({
+                slot,
+                hour,
+                classes,
+                html: generateSlotHTML(hour, classes)
+            });
+        });
+
+        // Apply all updates at once using requestAnimationFrame
+        requestAnimationFrame(() => {
+            updates.forEach(update => {
+                update.slot.innerHTML = update.html;
+            });
+        });
+    }
+
+    function generateSlotHTML(hour, classes) {
+        const hourDisplay = hour === 0 ? '12:00 AM' :
+                           hour < 12 ? `${hour}:00 AM` :
+                           hour === 12 ? '12:00 PM' :
+                           `${hour - 12}:00 PM`;
+
+        if (classes.length === 0) {
+            return `
+                <div class="empty-slot">No classes</div>
+                <button class="add-class-btn" onclick="addClassAtTime('${hour.toString().padStart(2, '0')}:00')" title="Add class at ${hourDisplay}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            `;
+        }
+
+        const classesHtml = classes.map(cls => {
+            let displayInfo = '';
+            if (userContext.isCenter) {
+                displayInfo = cls.teacherName || '';
+            } else {
+                const centerPart = cls.centerName || '';
+                const branchPart = cls.branchName || '';
+                displayInfo = [centerPart, branchPart].filter(part => part).join(' • ');
+            }
+
+            return `
+                <div class="class-item" onclick="showClassDetails(${cls.classCode})" data-class-id="${cls.classCode}">
+                    <div class="class-title">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        ${cls.title}
+                    </div>
+                    <div class="class-time">${cls.startTime12} - ${cls.endTime12}</div>
+                    ${displayInfo ? `<div class="class-details">${displayInfo}</div>` : ''}
+                    ${cls.subjectName ? `<div class="class-details" style="opacity: 0.8;">${cls.subjectName}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        return `
+            ${classesHtml}
+            <button class="add-class-btn" onclick="addClassAtTime('${hour.toString().padStart(2, '0')}:00')" title="Add class at ${hourDisplay}">
+                <i class="fas fa-plus"></i>
+            </button>
+        `;
+    }
+
+    // ==================== WEEKLY GENERATION FUNCTIONS (OPTIMIZED) ====================
+
+    // OPTIMIZATION: Conditional auto-generation (not on every page load)
+    async function conditionalAutoGenerate() {
+        // Only check on Saturdays or if explicitly needed
+        const today = new Date();
+        const isSaturday = today.getDay() === 6;
+        
+        if (isSaturday || shouldCheckGeneration()) {
+            await autoGenerateIfNeeded();
+        }
+    }
+
+    function shouldCheckGeneration() {
+        // Check if last generation check was more than 24 hours ago
+        try {
+            const lastCheck = localStorage.getItem('lastGenerationCheck');
+            if (!lastCheck) return true;
+            
+            const daysSinceCheck = (Date.now() - parseInt(lastCheck)) / (1000 * 60 * 60 * 24);
+            return daysSinceCheck >= 1;
+        } catch (e) {
+            return true; // If localStorage fails, check anyway
         }
     }
 
@@ -1441,8 +1595,7 @@
             const response = await fetch('/DailyClass/CheckAndGenerateWeeklyClasses', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -1453,12 +1606,38 @@
             if (result.success && result.autoGenerated) {
                 showSuccessToast(result.message);
                 // Refresh the current view
-                loadDailyClasses();
-                checkWeeklyGenerationStatus();
+                loadDailyClassesOptimized();
+                checkWeeklyGenerationStatusOptimized();
+            }
+
+            // Update last check time
+            try {
+                localStorage.setItem('lastGenerationCheck', Date.now().toString());
+            } catch (e) {
+                // localStorage might be disabled
+                console.warn('Could not save to localStorage');
             }
         } catch (error) {
             console.error('Error in auto-generation check:', error);
         }
+    }
+
+    // OPTIMIZATION: Debounced status check
+    let statusCheckTimeout;
+    async function checkWeeklyGenerationStatusOptimized() {
+        clearTimeout(statusCheckTimeout);
+        
+        statusCheckTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch('/DailyClass/GetWeeklyGenerationStatus');
+                if (!response.ok) throw new Error('Failed to get status');
+
+                weeklyGenerationStatus = await response.json();
+                updateWeeklyGenerationBanner();
+            } catch (error) {
+                console.error('Error checking weekly generation status:', error);
+            }
+        }, 300);
     }
 
     function updateWeeklyGenerationBanner() {
@@ -1506,8 +1685,7 @@
             const response = await fetch('/DailyClass/GenerateWeeklyClasses', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -1518,8 +1696,8 @@
             if (result.success) {
                 showSuccessToast(result.message);
                 // Refresh views
-                loadDailyClasses();
-                checkWeeklyGenerationStatus();
+                loadDailyClassesOptimized();
+                checkWeeklyGenerationStatusOptimized();
 
                 // Close modal if open
                 const modal = bootstrap.Modal.getInstance(document.getElementById('weeklyGenerationModal'));
@@ -1551,7 +1729,7 @@
         `;
 
         try {
-            await checkWeeklyGenerationStatus();
+            await checkWeeklyGenerationStatusOptimized();
 
             if (weeklyGenerationStatus && !weeklyGenerationStatus.error) {
                 content.innerHTML = renderWeeklyGenerationStatus();
@@ -1650,7 +1828,7 @@
         generateWeeklyClasses();
     }
 
-    // ==================== CENTER/BRANCH FILTERING ====================
+    // ==================== CENTER/BRANCH FILTERING (OPTIMIZED) ====================
 
     async function loadBranchesByCenter() {
         const centerCode = document.getElementById('centerCode').value;
@@ -1669,105 +1847,23 @@
             
             const branches = await response.json();
             
+            // Use document fragment for efficiency
+            const fragment = document.createDocumentFragment();
             branches.forEach(branch => {
                 const option = document.createElement('option');
                 option.value = branch.value;
                 option.textContent = branch.text;
-                branchSelect.appendChild(option);
+                fragment.appendChild(option);
             });
+            
+            branchSelect.appendChild(fragment);
         } catch (error) {
             console.error('Error loading branches:', error);
             showErrorToast('Failed to load branches for selected center');
         }
     }
 
-    // ==================== DAILY CLASS FUNCTIONS ====================
-
-    function renderDailyTimeline() {
-        // Clear all class slots
-        const classSlots = document.querySelectorAll('.class-slot');
-        classSlots.forEach(slot => {
-            const hour = parseInt(slot.dataset.hour);
-            const hourDisplay = hour === 0 ? '12:00 AM' :
-                               hour < 12 ? `${hour}:00 AM` :
-                               hour === 12 ? '12:00 PM' :
-                               `${hour - 12}:00 PM`;
-
-            slot.innerHTML = `
-                <div class="empty-slot">No classes</div>
-                <button class="add-class-btn" onclick="addClassAtTime('${hour.toString().padStart(2, '0')}:00')" title="Add class at ${hourDisplay}">
-                    <i class="fas fa-plus"></i>
-                </button>
-            `;
-        });
-
-        // Group classes by hour
-        const classesByHour = {};
-        dailyClasses.forEach(cls => {
-            const startHour = parseInt(cls.startTime.split(':')[0]);
-            if ((startHour >= 6 && startHour <= 23) || startHour === 0) {
-                if (!classesByHour[startHour]) {
-                    classesByHour[startHour] = [];
-                }
-                classesByHour[startHour].push(cls);
-            }
-        });
-
-        // Render classes in their time slots
-        Object.keys(classesByHour).forEach(hour => {
-            const slot = document.querySelector(`[data-hour="${hour}"]`);
-            if (!slot) return;
-
-            const classes = classesByHour[hour];
-            let classesHtml = '';
-
-            classes.forEach(cls => {
-                // Determine what to display based on user type
-                let displayInfo = '';
-                if (userContext.isCenter) {
-                    // Center users see teacher name
-                    displayInfo = cls.teacherName || '';
-                } else {
-                    // Teacher users see center and branch names
-                    const centerPart = cls.centerName || '';
-                    const branchPart = cls.branchName || '';
-                    displayInfo = [centerPart, branchPart].filter(part => part).join(' • ');
-                }
-
-                classesHtml += `
-                    <div class="class-item" onclick="showClassDetails(${cls.classCode})" data-class-id="${cls.classCode}">
-                        <div class="class-title">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            ${cls.title}
-                        </div>
-                        <div class="class-time">${cls.startTime12} - ${cls.endTime12}</div>
-                        ${displayInfo ? `
-                            <div class="class-details">
-                                ${displayInfo}
-                            </div>
-                        ` : ''}
-                        ${cls.subjectName ? `
-                            <div class="class-details" style="opacity: 0.8;">
-                                ${cls.subjectName}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-
-            const hourDisplay = hour == 0 ? '12:00 AM' :
-                               hour < 12 ? `${hour}:00 AM` :
-                               hour == 12 ? '12:00 PM' :
-                               `${hour - 12}:00 PM`;
-
-            slot.innerHTML = `
-                ${classesHtml}
-                <button class="add-class-btn" onclick="addClassAtTime('${hour.toString().padStart(2, '0')}:00')" title="Add class at ${hourDisplay}">
-                    <i class="fas fa-plus"></i>
-                </button>
-            `;
-        });
-    }
+    // ==================== DAILY CLASS FUNCTIONS (OPTIMIZED) ====================
 
     function addClassAtTime(time) {
         if (userContext.hasError) {
@@ -1846,7 +1942,6 @@
             hallCode: parseInt(document.getElementById('hallCode').value),
             eduYearCode: parseInt(document.getElementById('eduYearCode').value),
             yearCode: parseInt(document.getElementById('yearCode').value) || null,
-            // noOfStudents removed - will be managed by attendance system
             totalAmount: parseFloat(document.getElementById('totalAmount').value) || null,
             teacherAmount: parseFloat(document.getElementById('teacherAmount').value) || null,
             centerAmount: parseFloat(document.getElementById('centerAmount').value) || null,
@@ -1868,8 +1963,7 @@
         fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(formData)
         })
@@ -1886,7 +1980,10 @@
                 bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
                 resetFormFields();
                 resetModalForCreate();
-                loadDailyClasses();
+                loadDailyClassesOptimized();
+                
+                // Clear cache
+                cleanCache();
             } else {
                 const errorMessage = isEditMode ? 'Error updating class: ' : 'Error creating class: ';
                 showErrorToast(errorMessage + (data.error || 'Unknown error'));
@@ -2031,7 +2128,7 @@
         fetch('/DailyClass/DeleteClass/' + classCode, {
             method: 'POST',
             headers: {
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                'Content-Type': 'application/json'
             }
         })
         .then(response => {
@@ -2044,7 +2141,10 @@
             if (data.success) {
                 showSuccessToast('Class deleted successfully!');
                 bootstrap.Modal.getInstance(document.getElementById('classDetailsModal')).hide();
-                loadDailyClasses();
+                loadDailyClassesOptimized();
+                
+                // Clear cache
+                cleanCache();
             } else {
                 throw new Error(data.error || 'Failed to delete class');
             }
@@ -2097,7 +2197,9 @@
     }
 
     function refreshClasses() {
-        loadDailyClasses();
+        // Clear cache and reload
+        cleanCache();
+        loadDailyClassesOptimized();
         showSuccessToast('Classes refreshed!');
     }
 
@@ -2112,25 +2214,55 @@
         showToast(message, 'bg-info');
     }
 
-    function showLoadingOverlay() {
-        const existing = document.getElementById('loadingOverlay');
-        if (existing) return;
+    // ==================== UTILITY FUNCTIONS (OPTIMIZED) ====================
 
-        const overlay = document.createElement('div');
-        overlay.id = 'loadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = '<div class="spinner"></div>';
-
-        const container = document.querySelector('.timeline-container');
-        if (container) {
-            container.appendChild(overlay);
+    function cleanCache() {
+        const now = Date.now();
+        
+        // Clean classes cache
+        for (const [key, value] of classesCache.entries()) {
+            if (now - value.timestamp > cacheTimeout) {
+                classesCache.delete(key);
+            }
         }
+        
+        // Limit cache size
+        if (classesCache.size > 50) {
+            const entries = Array.from(classesCache.entries());
+            entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+            
+            // Remove oldest 10 entries
+            for (let i = 0; i < 10; i++) {
+                classesCache.delete(entries[i][0]);
+            }
+        }
+
+        // Clear dropdown cache if too old
+        if (dropdownCache && (now - dropdownCache.timestamp) > cacheTimeout) {
+            dropdownCache = null;
+        }
+    }
+
+    function showLoadingOverlay() {
+        let overlay = document.getElementById('loadingOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = '<div class="spinner"></div>';
+
+            const container = document.querySelector('.timeline-container');
+            if (container) {
+                container.appendChild(overlay);
+            }
+        }
+        overlay.style.display = 'flex';
     }
 
     function hideLoadingOverlay() {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
-            overlay.remove();
+            overlay.style.display = 'none';
         }
     }
 
@@ -2138,7 +2270,11 @@
         const loader = document.getElementById('initialLoader');
         if (loader) {
             loader.style.opacity = '0';
-            setTimeout(() => loader.remove(), 300);
+            setTimeout(() => {
+                if (loader.parentNode) {
+                    loader.remove();
+                }
+            }, 300);
         }
     }
 

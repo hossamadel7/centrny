@@ -1,0 +1,78 @@
+﻿@{
+    ViewBag.Title = "Student Exams";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Student Exams</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    <nav class="navbar custom-navbar px-3">
+        <div class="d-flex align-items-center gap-3">
+            <h5 class="navbar-title m-0">Root Management</h5>
+            <a class="nav-btn" href="/Item">Item management</a>
+            <a class="nav-btn" href="/Security/Security">Security</a>
+            <a class="nav-btn" href="/Class">Classes</a>
+            <a class="nav-btn" href="/Reservation">Reservations</a>
+            <a class="nav-btn" href="/Exam">Exams</a>
+            <a class="nav-btn" href="/TeacherClass/Teacher">Teacher schedule</a>
+            <a class="nav-btn" href="/Question">Questions management</a>
+            <a class="nav-btn" href="/Root">Root Managment</a>
+            <a class="nav-btn" href="/StudentExam">Student Exams</a>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <div class="exam-index-card p-4">
+            <!-- Student code input (no button, loads automatically) -->
+            <div class="mb-3">
+                <label for="studentCodeInput" class="form-label">Student Code:</label>
+                <input type="number" id="studentCodeInput" class="form-control" style="max-width:200px;display:inline-block;" value="21" min="1">
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0" style="font-weight:700;color:#232d3b;">
+                    Student Exams <small id="currentStudentCodeLabel" class="text-muted" style="font-size:1rem;">(Student Code: 21)</small>
+                </h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table exam-index-table" id="examsTable">
+                    <thead>
+                        <tr>
+                            <th>Exam ID</th>
+                            <th>Title</th>
+                            <th>Duration</th>
+                            <th>Subject Code</th>
+                            <th>Teacher Code</th>
+                            <th>Edu Year Code</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Modal -->
+    <div id="attendExamModal" class="modal-background" style="display:none;">
+        <div class="modal-content" style="max-width:900px;">
+            <h3 id="examTitle"></h3>
+            <div style="font-weight:bold;color:#fff;background:#dc3545;padding:8px 16px;border-radius:8px;display:inline-block;margin-bottom:16px;">
+                Time Left: <span id="examTimer" style="font-weight:900;font-size:1.4em;"></span>
+            </div>
+            <form id="examForm">
+                <div id="questionsContainer"></div>
+                <div id="examErrorMsg" style="color:#dc3545;font-weight:bold;margin:12px 0;display:none;"></div>
+                <div class="modal-actions mt-4">
+                    <button type="button" class="modern-btn btn-cancel" id="closeExamModal">Cancel</button>
+                    <button type="submit" class="modern-btn" style="background:#007bff;">Submit Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/js/StudentExam.js"></script>
+</body>
+</html>
