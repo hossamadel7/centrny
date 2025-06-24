@@ -1,4 +1,4 @@
-﻿@model IEnumerable<centrny.Models.Schedule>
+﻿﻿@@model List<centrny.Models.Schedule>
 
 @{
     ViewData["Title"] = "Schedule List";
@@ -7,562 +7,193 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
-<style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-        --success-gradient: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
-        --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
-        --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
-        --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-        --primary-color: #6c5ce7;
-        --success-color: #00b894;
-        --danger-color: #e17055;
-        --warning-color: #f39c12;
-        --info-color: #74b9ff;
-        --text-dark: #2d3436;
-        --text-muted: #636e72;
-        --bg-light: #f8f9fa;
-        --bg-white: #ffffff;
-        --border-color: #e9ecef;
-        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
-        --border-radius: 12px;
-        --border-radius-lg: 16px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        color: var(--text-dark);
-    }
-
-    .page-container {
-        min-height: 100vh;
-        padding: 2rem 0;
-    }
-
-    .main-card {
-        background: var(--bg-white);
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-lg);
-        border: none;
-        overflow: hidden;
-    }
-
-    .card-header {
-        background: var(--primary-gradient) !important;
-        color: white !important;
-        border: none !important;
-        padding: 2rem;
-    }
-
-        .card-header h2 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 2rem;
-        }
-
-    .btn-modern {
-        background: var(--success-gradient);
-        border: none;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: var(--transition);
-        box-shadow: var(--shadow);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            color: white;
-        }
-
-        .btn-modern.btn-info {
-            background: var(--info-gradient);
-        }
-
-        .btn-modern.btn-warning {
-            background: var(--warning-gradient);
-            color: var(--text-dark);
-        }
-
-        .btn-modern.btn-danger {
-            background: var(--danger-gradient);
-        }
-
-    .table-container {
-        padding: 2rem;
-        background: var(--bg-white);
-    }
-
-    .table {
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: var(--shadow);
-        margin: 0;
-    }
-
-        .table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-        }
-
-        .table td {
-            vertical-align: middle;
-            border-color: var(--border-color);
-            padding: 1rem;
-            font-weight: 500;
-        }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(108, 92, 231, 0.05);
-        transition: var(--transition);
-    }
-
-    .badge-modern {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-
-    .badge-center {
-        background: var(--success-color);
-        color: white;
-    }
-
-    .badge-teacher {
-        background: var(--danger-color);
-        color: white;
-    }
-
-    .badge-day {
-        background: var(--info-color);
-        color: white;
-    }
-
-    .badge-branch {
-        background: var(--warning-color);
-        color: white;
-    }
-
-    .badge-subject {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    .btn-group-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .btn-action {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.9rem;
-        transition: var(--transition);
-        cursor: pointer;
-    }
-
-        .btn-action:hover {
-            transform: scale(1.1);
-        }
-
-        .btn-action.btn-view {
-            background: var(--info-color);
-            color: white;
-        }
-
-        .btn-action.btn-edit {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .btn-action.btn-delete {
-            background: var(--danger-color);
-            color: white;
-        }
-
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: var(--text-muted);
-    }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            opacity: 0.5;
-        }
-
-        .empty-state h4 {
-            margin-bottom: 1rem;
-        }
-
-    .controls-section {
-        padding: 1.5rem 2rem;
-        background: var(--bg-light);
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        justify-content: between;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .user-info {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        flex-grow: 1;
-    }
-
-    /* Modal Customizations */
-    .modal-content {
-        border-radius: var(--border-radius) !important;
-        border: none !important;
-        box-shadow: var(--shadow-lg) !important;
-    }
-
-    .modal-header {
-        background: var(--primary-gradient) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-    }
-
-        .modal-header.bg-warning {
-            background: var(--warning-gradient) !important;
-            color: var(--text-dark) !important;
-        }
-
-        .modal-header.bg-danger {
-            background: var(--danger-gradient) !important;
-            color: white !important;
-        }
-
-    .modal-title {
-        font-weight: 600 !important;
-    }
-
-    .modal-body {
-        padding: 2rem !important;
-    }
-
-    .form-control, .form-select {
-        border: 2px solid var(--border-color) !important;
-        border-radius: var(--border-radius) !important;
-        padding: 0.75rem 1rem !important;
-        transition: var(--transition) !important;
-        font-weight: 500 !important;
-    }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color) !important;
-            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25) !important;
-        }
-
-    .form-label {
-        font-weight: 600 !important;
-        color: var(--text-dark) !important;
-        margin-bottom: 0.5rem !important;
-    }
-
-    /* Event Details Modal Styles */
-    .event-details-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .event-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: var(--primary-color);
-    }
-
-    .event-details-body .detail-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-        .event-details-body .detail-item:last-child {
-            border-bottom: none;
-        }
-
-    .detail-label {
-        font-weight: 600;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .detail-value {
-        color: var(--text-dark);
-        font-weight: 500;
-    }
-
-    /* Delete confirmation styles */
-    .delete-warning {
-        background: linear-gradient(135deg, rgba(225, 112, 85, 0.1) 0%, rgba(253, 121, 168, 0.1) 100%);
-        border: 2px solid rgba(225, 112, 85, 0.3);
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
-
-        .delete-warning h5 {
-            color: var(--danger-color);
-            margin-bottom: 1rem;
-        }
-
-    .schedule-summary {
-        background: var(--bg-light);
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-left: 4px solid var(--primary-color);
-    }
-
-    /* Toast Notifications */
-    .toast-container {
-        position: fixed;
-        top: 2rem;
-        right: 2rem;
-        z-index: 1050;
-    }
-
-    .toast {
-        border: none !important;
-        border-radius: var(--border-radius) !important;
-        box-shadow: var(--shadow-lg) !important;
-    }
-
-    /* Responsive */
-    @@media (max-width: 768px) {
-        .table-responsive {
-            font-size: 0.9rem;
-        }
-
-        .btn-group-actions {
-            flex-direction: column;
-        }
-
-        .controls-section {
-            flex-direction: column;
-            text-align: center;
-        }
-    }
-</style>
-
-<div class="container-fluid page-container">
-    <div class="row justify-content-center">
-        <div class="col-12">
-            <div class="card main-card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2>
-                            <i class="fas fa-calendar-alt me-2"></i>
-                            Schedule Management
-                        </h2>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                                <i class="fas fa-plus me-1"></i> Add Schedule
-                            </button>
-                            <a href="@Url.Action("Calendar")" class="btn-modern btn-info">
-                                <i class="fas fa-calendar me-1"></i> Calendar View
-                            </a>
+<div class="schedule-page">
+    <div class="container-fluid page-container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="card main-card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2>
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Schedule Management
+                            </h2>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                                    <i class="fas fa-plus me-1"></i> Add Schedule
+                                </button>
+                                <a href="@Url.Action("Calendar")" class="btn-modern btn-info">
+                                    <i class="fas fa-calendar me-1"></i> Calendar View
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                @if (ViewBag.CurrentUserRootCode != null)
-                {
-                    <div class="controls-section">
-                        <div class="user-info">
-                            <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
-                            Showing schedules for: <strong>@ViewBag.UserRootName</strong>
-                            (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root: @ViewBag.CurrentUserRootCode)
-                            @if (ViewBag.BranchName != null)
-                            {
-                                <span> at <strong>@ViewBag.BranchName</strong></span>
-                            }
-                            | Total: <strong>@ViewBag.ScheduleCount</strong> schedules
-                        </div>
-                        <button type="button" class="btn-modern btn-info" onclick="refreshList()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                    </div>
-                }
-
-                <div class="table-container">
-                    @if (Model.Any())
+                    @if (ViewBag.CurrentUserRootCode != null)
                     {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Schedule Name</th>
-                                        <th>Day</th>
-                                        <th>Time</th>
-                                        <th>Type</th>
-                                        <th>Hall</th>
-                                        @if (ViewBag.IsTeacher == true)
-                                        {
-                                            <th>Center / Branch</th>
-                                        }
-                                        else
-                                        {
-                                            <th>Teacher / Subject</th>
-                                        }
-                                        <th>Amount</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in Model)
-                                    {
+                        <div class="controls-section">
+                            <div class="user-info">
+                                <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
+                                Showing schedules for: <strong>@ViewBag.UserRootName</strong>
+                                (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root: @ViewBag.CurrentUserRootCode)
+                                @if (ViewBag.BranchName != null)
+                                {
+                                    <span> at <strong>@ViewBag.BranchName</strong></span>
+                                }
+                                | Total: <strong>@ViewBag.ScheduleCount</strong> schedules
+                            </div>
+                            <button type="button" class="btn-modern btn-info" onclick="refreshList()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    }
+
+                    <div class="table-container">
+                        @if (Model != null && Model.Count > 0)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover schedule-table">
+                                    <thead>
                                         <tr>
-                                            <td>
-                                                <strong>@Html.DisplayFor(modelItem => item.ScheduleName)</strong>
-                                            </td>
-                                            <td>
-                                                <span class="badge badge-modern badge-day">
-                                                    @Html.DisplayFor(modelItem => item.DayOfWeek)
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if (item.StartTime.HasValue && item.EndTime.HasValue)
-                                                {
-                                                    <small class="text-muted">
-                                                        @item.StartTime.Value.ToString("hh:mm tt") - @item.EndTime.Value.ToString("hh:mm tt")
-                                                    </small>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (item.RootCodeNavigation?.IsCenter == true)
-                                                {
-                                                    <span class="badge badge-modern badge-center">
-                                                        <i class="fas fa-building me-1"></i>Center
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge badge-modern badge-teacher">
-                                                        <i class="fas fa-user me-1"></i>Teacher
-                                                    </span>
-                                                }
-                                            </td>
-                                            <td>
-                                                @Html.DisplayFor(modelItem => item.HallCodeNavigation.HallName)
-                                            </td>
-                                            <td>
-                                                @if (ViewBag.IsTeacher == true)
-                                                {
-                                                    <!-- Show Center/Branch for teacher users -->
-                                                    <div>
-                                                        @if (item.CenterCodeNavigation != null)
-                                                        {
-                                                            <span class="badge badge-modern badge-center mb-1">
-                                                                <i class="fas fa-building me-1"></i>@item.CenterCodeNavigation.CenterName
-                                                            </span>
-                                                        }
-                                                        @if (item.BranchCodeNavigation != null)
-                                                        {
-                                                            <br>
-                                                            <span class="badge badge-modern badge-branch">
-                                                                <i class="fas fa-map-marker-alt me-1"></i>@item.BranchCodeNavigation.BranchName
-                                                            </span>
-                                                        }
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <!-- Show Teacher/Subject for center users -->
-                                                    <div>
-                                                        @if (item.TeacherCodeNavigation != null)
-                                                        {
-                                                            <span class="badge badge-modern badge-teacher mb-1">
-                                                                <i class="fas fa-user me-1"></i>@item.TeacherCodeNavigation.TeacherName
-                                                            </span>
-                                                        }
-                                                        @if (item.SubjectCodeNavigation != null)
-                                                        {
-                                                            <br>
-                                                            <span class="badge badge-modern badge-subject">
-                                                                <i class="fas fa-book me-1"></i>@item.SubjectCodeNavigation.SubjectName
-                                                            </span>
-                                                        }
-                                                    </div>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (item.ScheduleAmount.HasValue)
-                                                {
-                                                    <span class="text-success fw-bold">
-                                                        $@item.ScheduleAmount.Value.ToString("F2")
-                                                    </span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <div class="btn-group-actions">
-                                                    <button type="button" class="btn-action btn-view"
-                                                            onclick="showScheduleDetails(@item.ScheduleCode)"
-                                                            title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button type="button" class="btn-action btn-edit"
-                                                            onclick="editSchedule(@item.ScheduleCode)"
-                                                            title="Edit">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn-action btn-delete"
-                                                            onclick="deleteSchedule(@item.ScheduleCode)"
-                                                            title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            <th>Schedule Name</th>
+                                            <th>Day</th>
+                                            <th>Time</th>
+                                            <th>Type</th>
+                                            <th>Hall</th>
+                                            @if (ViewBag.IsTeacher == true)
+                                            {
+                                                <th>Center / Branch</th>
+                                            }
+                                            else
+                                            {
+                                                <th>Teacher / Subject</th>
+                                            }
+                                            <th>Amount</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-times"></i>
-                            <h4>No Schedules Found</h4>
-                            <p>Get started by creating your first schedule.</p>
-                            <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                                <i class="fas fa-plus me-2"></i> Create New Schedule
-                            </button>
-                        </div>
-                    }
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@item.ScheduleName</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-modern badge-day">
+                                                        @item.DayOfWeek
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (item.StartTime.HasValue && item.EndTime.HasValue)
+                                                    {
+                                                        <small class="text-muted">
+                                                            @item.StartTime.Value.ToString("hh:mm tt") - @item.EndTime.Value.ToString("hh:mm tt")
+                                                        </small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.RootCodeNavigation?.IsCenter == true)
+                                                    {
+                                                        <span class="badge badge-modern badge-center">
+                                                            <i class="fas fa-building me-1"></i>Center
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-modern badge-teacher">
+                                                            <i class="fas fa-user me-1"></i>Teacher
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @(item.HallCodeNavigation?.HallName ?? "")
+                                                </td>
+                                                <td>
+                                                    @if (ViewBag.IsTeacher == true)
+                                                    {
+                                                        <!-- Show Center/Branch for teacher users -->
+                                                        <div>
+                                                            @if (item.CenterCodeNavigation != null)
+                                                            {
+                                                                <span class="badge badge-modern badge-center mb-1">
+                                                                    <i class="fas fa-building me-1"></i>@item.CenterCodeNavigation.CenterName
+                                                                </span>
+                                                            }
+                                                            @if (item.BranchCodeNavigation != null)
+                                                            {
+                                                                <br>
+                                                                <span class="badge badge-modern badge-branch">
+                                                                    <i class="fas fa-map-marker-alt me-1"></i>@item.BranchCodeNavigation.BranchName
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <!-- Show Teacher/Subject for center users -->
+                                                        <div>
+                                                            @if (item.TeacherCodeNavigation != null)
+                                                            {
+                                                                <span class="badge badge-modern badge-teacher mb-1">
+                                                                    <i class="fas fa-user me-1"></i>@item.TeacherCodeNavigation.TeacherName
+                                                                </span>
+                                                            }
+                                                            @if (item.SubjectCodeNavigation != null)
+                                                            {
+                                                                <br>
+                                                                <span class="badge badge-modern badge-subject">
+                                                                    <i class="fas fa-book me-1"></i>@item.SubjectCodeNavigation.SubjectName
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.ScheduleAmount.HasValue)
+                                                    {
+                                                        <span class="text-success fw-bold">
+                                                            $@item.ScheduleAmount.Value.ToString("F2")
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group-actions">
+                                                        <button type="button" class="btn-action btn-view"
+                                                                onclick="showScheduleDetails(@item.ScheduleCode)"
+                                                                title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="btn-action btn-edit"
+                                                                onclick="editSchedule(@item.ScheduleCode)"
+                                                                title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn-action btn-delete"
+                                                                onclick="deleteSchedule(@item.ScheduleCode)"
+                                                                title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <h4>No Schedules Found</h4>
+                                <p>Get started by creating your first schedule.</p>
+                                <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                                    <i class="fas fa-plus me-2"></i> Create New Schedule
+                                </button>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -573,7 +204,7 @@
 @if (ViewBag.CurrentUserRootCode != null)
 {
     <!-- Main Schedule Modal (Create/Edit) -->
-    <div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal fade schedule-modal" id="scheduleModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header" id="scheduleModalHeader">
@@ -602,8 +233,12 @@
                                 @if (ViewBag.IsTeacher)
                                 {
                                     <br>
-                        
                                     <small class="text-muted">Teacher will be automatically assigned to your account.</small>
+                                }
+                                else
+                                {
+                                    <br>
+                                    <small class="text-muted">Center will be automatically assigned. Select branch and teacher for this schedule.</small>
                                 }
                             </div>
                         }
@@ -642,65 +277,105 @@
                         <!-- Root is hidden and auto-set -->
                         <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
 
-                        <!-- Center and Branch dropdowns -->
+                        <!-- Center and Branch dropdowns - NO CENTER FIELD FOR CENTER USERS -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Center</label>
-                                <select class="form-select" id="centerCode">
-                                    <option value="">Select Center (Optional)</option>
-                                    @if (ViewData["CenterCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                            @if (ViewBag.IsCenter == true)
+                            {
+                                <!-- For CENTER USERS: NO CENTER FIELD AT ALL, just hidden input -->
+                                <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
+                                
+                                <!-- Only show Branch and Educational Year for center users -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Branch</label>
+                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                        <option value="">Select Branch (Optional)</option>
+                                        <!-- Branches will be loaded via JavaScript -->
+                                    </select>
+                                    <small class="text-muted">Select branch for this schedule</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Educational Year</label>
+                                    <select class="form-select" id="eduYearCode">
+                                        <option value="">Select Year (Optional)</option>
+                                        @if (ViewData["EduYearCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Branch</label>
-                                <select class="form-select" id="branchCode">
-                                    <option value="">Select Branch (Optional)</option>
-                                    @if (ViewData["BranchCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["BranchCode"])
+                                    </select>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- For TEACHER USERS: Show center and branch fields -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Center</label>
+                                    <select class="form-select" id="centerCode" onchange="loadBranchesForCenter()">
+                                        <option value="">Select Center (Optional)</option>
+                                        @if (ViewData["CenterCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Branch</label>
+                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                        <option value="">Select Center First</option>
+                                    </select>
+                                </div>
+                            }
                         </div>
 
+                        <!-- Halls row - separate for both user types -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Hall</label>
-                                <select class="form-select" id="hallCode">
-                                    <option value="">Select Hall (Optional)</option>
-                                    @if (ViewData["HallCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["HallCode"])
+                            @if (ViewBag.IsCenter == true)
+                            {
+                                <!-- For CENTER USERS: Hall -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hall</label>
+                                    <select class="form-select" id="hallCode">
+                                        <option value="">Select Branch First</option>
+                                    </select>
+                                    <small class="text-muted">Select branch first to see available halls</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <!-- Empty space for center users -->
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- For TEACHER USERS: Hall and Educational Year -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hall</label>
+                                    <select class="form-select" id="hallCode">
+                                        <option value="">Select Branch First</option>
+                                    </select>
+                                    <small class="text-muted">Select branch first to see available halls</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Educational Year</label>
+                                    <select class="form-select" id="eduYearCode">
+                                        <option value="">Select Year (Optional)</option>
+                                        @if (ViewData["EduYearCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Educational Year</label>
-                                <select class="form-select" id="eduYearCode">
-                                    <option value="">Select Year (Optional)</option>
-                                    @if (ViewData["EduYearCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
+                                    </select>
+                                </div>
+                            }
                         </div>
 
+                        <!-- Teacher and Year section - UPDATED LOGIC -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Year *</label>
@@ -715,9 +390,10 @@
                                     }
                                 </select>
                             </div>
-                            <!-- Conditionally show teacher dropdown only for center users -->
-                            @if (!ViewBag.IsTeacher)
+                            
+                            @if (ViewBag.IsCenter == true)
                             {
+                                <!-- For CENTER USERS: Show teacher dropdown (required) -->
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Teacher *</label>
                                     <select class="form-select" id="teacherCode" required onchange="loadSubjectsForTeacher()">
@@ -729,18 +405,21 @@
                                                 <option value="@item.Value">@item.Text</option>
                                             }
                                         }
+                                        else
+                                        {
+                                            <option value="">No teachers data available</option>
+                                        }
                                     </select>
-                                    <small class="text-muted">Select teacher first to see available subjects</small>
                                 </div>
                             }
                             else
                             {
-                                <!-- Hidden teacher field for teacher users -->
+                                <!-- For TEACHER USERS: Hide teacher dropdown, auto-assign -->
                                 <input type="hidden" id="teacherCode" value="">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Your Assignment</label>
                                     <input type="text" class="form-control" value="@ViewBag.UserRootName - @ViewBag.BranchName" readonly>
-                                    <small class="text-muted">Your schedule will be assigned to this center/branch</small>
+                                    <small class="text-muted">Your schedule will be assigned to this teacher account</small>
                                 </div>
                             }
                         </div>
@@ -785,7 +464,7 @@
     </div>
 
     <!-- Event Details Modal -->
-    <div class="modal fade" id="eventDetailsModal" tabindex="-1">
+    <div class="modal fade schedule-modal" id="eventDetailsModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -811,7 +490,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal fade schedule-modal" id="deleteConfirmModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger">
@@ -848,747 +527,81 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    let isEditMode = false;
-    let editingScheduleId = null;
-    let scheduleToDelete = null;
-    let allSchedules = [];
+<!-- Include the common schedule management JavaScript -->
+<script src="~/js/schedule-common.js"></script>
 
-    // Store user context from server
-    const userContext = {
+<script>
+    // Set up user context for the common script
+    window.userContext = {
         currentUserRootCode: @Json.Serialize(ViewBag.CurrentUserRootCode),
         userRootName: @Json.Serialize(ViewBag.UserRootName ?? ""),
         isCenter: @Json.Serialize(ViewBag.IsCenter ?? false),
         isTeacher: @Json.Serialize(ViewBag.IsTeacher ?? false),
         branchName: @Json.Serialize(ViewBag.BranchName ?? ""),
+        singleCenterCode: @Json.Serialize(ViewBag.SingleCenterCode ?? null),
         hasError: @Json.Serialize(ViewBag.Error != null)
     };
 
-    // Load all schedules on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        loadAllSchedules();
-
-        if (!userContext.hasError) {
-            // Setup modal event handlers
-            setupModalHandlers();
-        }
-    });
-
-    function setupModalHandlers() {
-        // Reset modal when closed
-        const scheduleModal = document.getElementById('scheduleModal');
-        if (scheduleModal) {
-            scheduleModal.addEventListener('hidden.bs.modal', function() {
-                resetModalForCreate();
-            });
+    // Index-specific functionality
+    class IndexScheduleManager {
+        constructor() {
+            this.setupIndexSpecific();
         }
 
-        // Setup save button click handler
-        const saveBtn = document.getElementById('saveScheduleBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', function() {
-                console.log('Save button clicked!');
-                saveSchedule();
-            });
+        setupIndexSpecific() {
+            // Override the common manager's callbacks
+            scheduleManager.onScheduleSaved = () => this.refreshList();
+            scheduleManager.onScheduleDeleted = () => this.refreshList();
+            
+            // Load initial data
+            this.loadAllSchedules();
         }
 
-        // Setup delete confirmation handler
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', function() {
-                if (scheduleToDelete) {
-                    performDelete(scheduleToDelete);
-                }
-            });
-        }
-    }
-
-    // Load subjects for selected teacher (for center users only)
-    function loadSubjectsForTeacher() {
-        if (userContext.isTeacher) return; // Not applicable for teacher users - they have pre-filtered subjects
-
-        const teacherSelect = document.getElementById('teacherCode');
-        const subjectSelect = document.getElementById('subjectCode');
-        const yearSelect = document.getElementById('yearCode');
-
-        if (!teacherSelect.value) {
-            subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
-            subjectSelect.disabled = true;
-            return;
-        }
-
-        const teacherCode = parseInt(teacherSelect.value);
-        const yearCode = parseInt(yearSelect.value) || null;
-
-        // Show loading state
-        subjectSelect.innerHTML = '<option value="">Loading subjects...</option>';
-        subjectSelect.disabled = true;
-
-        fetch(`/Schedule/GetSubjectsForTeacher?teacherCode=${teacherCode}&yearCode=${yearCode}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
-                    data.subjects.forEach(subject => {
-                        const option = document.createElement('option');
-                        option.value = subject.value;
-                        option.textContent = subject.text;
-                        subjectSelect.appendChild(option);
-                    });
-                    subjectSelect.disabled = false;
-                } else {
-                    subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
-                    showErrorToast('Error loading subjects: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error loading subjects:', error);
-                subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
-                showErrorToast('Network error while loading subjects');
-            });
-    }
-
-    function loadAllSchedules() {
-        if (userContext.hasError) {
-            console.log('User has no root assignment - skipping schedule load');
-            return;
-        }
-
-        fetch('/Schedule/GetCalendarEvents?start=2024-01-01&end=2024-12-31')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch schedules');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    console.error('Server error:', data.error);
-                    showErrorToast('Error loading schedules: ' + data.error);
-                    return;
-                }
-
-                allSchedules = Array.isArray(data) ? data : [];
-                console.log(`Loaded ${allSchedules.length} schedules for user context:`, userContext);
-            })
-            .catch(error => {
-                console.error('Error fetching schedules:', error);
-                showErrorToast('Failed to load schedules. Please try again.');
-            });
-    }
-
-    function showScheduleDetails(scheduleId) {
-        // Find schedule from our loaded data
-        const schedule = allSchedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
-        if (!schedule) {
-            // If not found in loaded data, fetch from server
-            fetchScheduleById(scheduleId);
-            return;
-        }
-
-        displayScheduleDetails(schedule);
-    }
-
-    function fetchScheduleById(scheduleId) {
-        fetch(`/Schedule/Details/${scheduleId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Schedule not found');
-                }
-                // Note: This would need to be implemented as a JSON endpoint
-                // For now, we'll use the calendar data
-                showErrorToast('Schedule details not available. Please refresh the page.');
-            })
-            .catch(error => {
-                console.error('Error fetching schedule:', error);
-                showErrorToast('Error loading schedule details.');
-            });
-    }
-
-    function displayScheduleDetails(schedule) {
-        const props = schedule.extendedProps;
-
-        let detailsHtml = '';
-
-        // Always show time
-        if (props.startTime && props.endTime) {
-            detailsHtml += `
-                <div class="detail-item">
-                    <span class="detail-label">Time</span>
-                    <span class="detail-value">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</span>
-                </div>
-            `;
-        }
-
-        // For teacher users, show center/branch info; for center users, show teacher info
-        if (userContext.isTeacher) {
-            // Show center/branch information for teacher users
-            if (props.centerName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Center</span>
-                        <span class="detail-value">${props.centerName}</span>
-                    </div>
-                `;
-            }
-            if (props.branchName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Branch</span>
-                        <span class="detail-value">${props.branchName}</span>
-                    </div>
-                `;
-            }
-        } else {
-            // Show teacher information for center users
-            if (props.teacherName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Teacher</span>
-                        <span class="detail-value">${props.teacherName}</span>
-                    </div>
-                `;
-            }
-            if (props.subjectName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Subject</span>
-                        <span class="detail-value">${props.subjectName}</span>
-                    </div>
-                `;
+        async loadAllSchedules() {
+            try {
+                const response = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
+                const events = await response.json();
+                
+                // Transform events to schedule format for the common manager
+                scheduleManager.allSchedules = events.map(event => ({
+                    scheduleCode: event.extendedProps.scheduleCode,
+                    scheduleName: event.title,
+                    dayOfWeek: event.extendedProps.dayOfWeek,
+                    startTime: event.extendedProps.startTime,
+                    endTime: event.extendedProps.endTime,
+                    hallName: event.extendedProps.hallName,
+                    hallCode: event.extendedProps.hallCode,
+                    teacherName: event.extendedProps.teacherName,
+                    teacherCode: event.extendedProps.teacherCode,
+                    subjectName: event.extendedProps.subjectName,
+                    subjectCode: event.extendedProps.subjectCode,
+                    centerName: event.extendedProps.centerName,
+                    centerCode: event.extendedProps.centerCode,
+                    branchName: event.extendedProps.branchName,
+                    branchCode: event.extendedProps.branchCode,
+                    eduYearCode: event.extendedProps.eduYearCode,
+                    yearCode: event.extendedProps.yearCode,
+                    scheduleAmount: event.extendedProps.scheduleAmount,
+                    isCenter: event.extendedProps.isCenter
+                }));
+                
+                console.log('✅ Schedules loaded for Index view:', scheduleManager.allSchedules.length);
+            } catch (error) {
+                console.error('❌ Error loading schedules:', error);
+                scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
             }
         }
 
-        // Common details
-        if (props.hallName) {
-            detailsHtml += `
-                <div class="detail-item">
-                    <span class="detail-label">Hall</span>
-                    <span class="detail-value">${props.hallName}</span>
-                </div>
-            `;
-        }
-
-        if (props.amount) {
-            detailsHtml += `
-                <div class="detail-item">
-                    <span class="detail-label">Amount</span>
-                    <span class="detail-value">$${props.amount}</span>
-                </div>
-            `;
-        }
-
-        const content = `
-            <div class="event-details-header">
-                <div class="event-icon">
-                    <i class="fas ${props.isCenter ? 'fa-building' : 'fa-chalkboard-teacher'}"></i>
-                </div>
-                <h4>${schedule.title}</h4>
-                <div class="d-flex justify-content-center gap-2 flex-wrap">
-                    <span class="badge ${props.isCenter ? 'bg-success' : 'bg-danger'}">
-                        ${props.isCenter ? 'Center Schedule' : 'Teacher Schedule'}
-                    </span>
-                    ${props.dayOfWeek ? `<span class="badge bg-info">${props.dayOfWeek}</span>` : ''}
-                    <span class="badge bg-secondary">${userContext.userRootName} - ${userContext.branchName}</span>
-                </div>
-            </div>
-
-            <div class="event-details-body">
-                ${detailsHtml}
-            </div>
-        `;
-
-        document.getElementById('eventDetailsContent').innerHTML = content;
-
-        // Setup modal buttons
-        document.getElementById('editEventBtn').onclick = () => {
-            editScheduleInModal(props.scheduleCode);
-        };
-
-        document.getElementById('deleteEventBtn').onclick = () => {
-            showDeleteConfirmation(props.scheduleCode);
-        };
-
-        new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
-    }
-
-    function editSchedule(scheduleId) {
-        editScheduleInModal(scheduleId);
-    }
-
-    function deleteSchedule(scheduleId) {
-        showDeleteConfirmation(scheduleId);
-    }
-
-    function editScheduleInModal(scheduleId) {
-        const schedule = allSchedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
-        if (!schedule) {
-            showErrorToast('Schedule data not found. Please refresh the page.');
-            return;
-        }
-
-        const props = schedule.extendedProps;
-
-        // Set edit mode
-        isEditMode = true;
-        editingScheduleId = scheduleId;
-
-        // Update modal title and header
-        const header = document.getElementById('scheduleModalHeader');
-        header.className = 'modal-header bg-warning';
-        document.querySelector('#scheduleModal .modal-title').innerHTML =
-            '<i class="fas fa-edit me-2"></i>Edit Schedule' +
-            (userContext.userRootName && userContext.branchName ? `<small class="text-muted">for ${userContext.userRootName} - ${userContext.branchName}</small>` : '');
-
-        // Populate form with existing data
-        document.getElementById('scheduleName').value = schedule.title;
-        document.getElementById('dayOfWeek').value = props.dayOfWeek;
-        document.getElementById('startTime').value = convertTo24Hour(props.startTime);
-        document.getElementById('endTime').value = convertTo24Hour(props.endTime);
-
-        // Set optional fields
-        document.getElementById('hallCode').value = props.hallCode || '';
-        document.getElementById('centerCode').value = props.centerCode || '';
-        document.getElementById('branchCode').value = props.branchCode || '';
-        document.getElementById('eduYearCode').value = props.eduYearCode || '';
-        document.getElementById('subjectCode').value = props.subjectCode || '';
-        document.getElementById('scheduleAmount').value = props.scheduleAmount || '';
-        document.getElementById('yearCode').value = props.yearCode || '';
-
-        // Handle teacher field based on user type
-        const teacherCodeElement = document.getElementById('teacherCode');
-        if (teacherCodeElement && !userContext.isTeacher) {
-            teacherCodeElement.value = props.teacherCode || '';
-            // Load subjects for the selected teacher
-            if (props.teacherCode) {
-                setTimeout(() => loadSubjectsForTeacher(), 100);
-            }
-        }
-
-        // Root code is always auto-set
-        const rootCodeInput = document.getElementById('rootCode');
-        if (rootCodeInput) {
-            rootCodeInput.value = userContext.currentUserRootCode;
-        }
-
-        // Hide the event details modal if open and show the edit modal
-        const detailsModalInstance = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
-        if (detailsModalInstance) {
-            detailsModalInstance.hide();
-        }
-
-        new bootstrap.Modal(document.getElementById('scheduleModal')).show();
-    }
-
-    function showDeleteConfirmation(scheduleId) {
-        const schedule = allSchedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
-        if (!schedule) {
-            showErrorToast('Schedule data not found. Please refresh the page.');
-            return;
-        }
-
-        scheduleToDelete = scheduleId;
-        const props = schedule.extendedProps;
-
-        // Populate delete confirmation modal
-        let summaryContent = `
-            <h5 class="text-danger mb-3">
-                <i class="fas fa-calendar-times me-2"></i>
-                ${schedule.title}
-            </h5>
-            <div class="row">
-                <div class="col-6"><strong>Day:</strong></div>
-                <div class="col-6">${props.dayOfWeek}</div>
-            </div>
-        `;
-
-        if (props.startTime && props.endTime) {
-            summaryContent += `
-                <div class="row">
-                    <div class="col-6"><strong>Time:</strong></div>
-                    <div class="col-6">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</div>
-                </div>
-            `;
-        }
-
-        // Show appropriate details based on user type
-        if (userContext.isTeacher) {
-            if (props.centerName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Center:</strong></div>
-                        <div class="col-6">${props.centerName}</div>
-                    </div>
-                `;
-            }
-            if (props.branchName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Branch:</strong></div>
-                        <div class="col-6">${props.branchName}</div>
-                    </div>
-                `;
-            }
-        } else {
-            if (props.teacherName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Teacher:</strong></div>
-                        <div class="col-6">${props.teacherName}</div>
-                    </div>
-                `;
-            }
-            if (props.subjectName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Subject:</strong></div>
-                        <div class="col-6">${props.subjectName}</div>
-                    </div>
-                `;
-            }
-        }
-
-        if (props.hallName) {
-            summaryContent += `
-                <div class="row">
-                    <div class="col-6"><strong>Hall:</strong></div>
-                    <div class="col-6">${props.hallName}</div>
-                </div>
-            `;
-        }
-
-        document.getElementById('deleteScheduleSummary').innerHTML = summaryContent;
-
-        // Hide details modal if open and show delete confirmation
-        const detailsModalInstance = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
-        if (detailsModalInstance) {
-            detailsModalInstance.hide();
-        }
-
-        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    }
-
-    function performDelete(scheduleId) {
-        console.log('Performing delete for schedule:', scheduleId);
-
-        const submitBtn = document.getElementById('confirmDeleteBtn');
-        const originalText = submitBtn.innerHTML;
-
-        // Show loading state
-        submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Deleting...';
-        submitBtn.disabled = true;
-
-        // Call the correct DELETE API endpoint
-        fetch(`/Schedule/DeleteScheduleEvent/${scheduleId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
-        })
-        .then(response => {
-            console.log('Delete response received:', response);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            return response.json();
-        })
-        .then(data => {
-            console.log('Delete response data:', data);
-
-            if (data.success) {
-                showSuccessToast(data.message || 'Schedule deleted successfully!');
-                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-
-                // Refresh the page to update the table
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-
-                scheduleToDelete = null;
-            } else {
-                console.error('Delete failed:', data.error);
-                showErrorToast('Error deleting schedule: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Delete error:', error);
-            showErrorToast('Network error occurred while deleting: ' + error.message);
-        })
-        .finally(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    }
-
-    function saveSchedule() {
-        console.log('Save schedule function called');
-
-        if (userContext.hasError) {
-            showErrorToast('Unable to save schedule. Please contact administrator.');
-            return;
-        }
-
-        const submitBtn = document.getElementById('saveScheduleBtn');
-        const originalText = submitBtn.innerHTML;
-
-        // Manual validation
-        const requiredFields = [
-            { id: 'scheduleName', name: 'Schedule Name' },
-            { id: 'dayOfWeek', name: 'Day of Week' },
-            { id: 'startTime', name: 'Start Time' },
-            { id: 'endTime', name: 'End Time' },
-            { id: 'yearCode', name: 'Year' }
-        ];
-
-        // For center users, teacher is required
-        if (!userContext.isTeacher) {
-            requiredFields.push({ id: 'teacherCode', name: 'Teacher' });
-        }
-
-        // Check required fields
-        for (const field of requiredFields) {
-            const element = document.getElementById(field.id);
-            if (!element.value || element.value.trim() === '') {
-                console.log(`Validation failed: ${field.name} is empty`);
-                showErrorToast(`${field.name} is required`);
-                element.focus();
-                return;
-            }
-        }
-
-        const startTime = document.getElementById('startTime').value;
-        const endTime = document.getElementById('endTime').value;
-
-        if (startTime >= endTime) {
-            console.log('Validation failed: End time must be after start time');
-            showErrorToast('End time must be after start time');
-            return;
-        }
-
-        console.log('Validation passed, preparing data...');
-
-        // Show loading state
-        const loadingText = isEditMode ? 'Updating...' : 'Saving...';
-        submitBtn.innerHTML = `<div class="spinner-border spinner-border-sm me-2"></div>${loadingText}`;
-        submitBtn.disabled = true;
-
-        // Get root code - always auto-set for users
-        const rootCodeInput = document.getElementById('rootCode');
-        const rootCodeValue = rootCodeInput ? parseInt(rootCodeInput.value) || null : userContext.currentUserRootCode;
-
-        const formData = {
-            title: document.getElementById('scheduleName').value,
-            dayOfWeek: document.getElementById('dayOfWeek').value,
-            startTime: startTime,
-            endTime: endTime,
-            hallCode: parseInt(document.getElementById('hallCode').value) || null,
-            rootCode: rootCodeValue,
-            centerCode: parseInt(document.getElementById('centerCode').value) || null,
-            branchCode: parseInt(document.getElementById('branchCode').value) || null,
-            eduYearCode: parseInt(document.getElementById('eduYearCode').value) || null,
-            teacherCode: parseInt(document.getElementById('teacherCode').value) || null,
-            subjectCode: parseInt(document.getElementById('subjectCode').value) || null,
-            scheduleAmount: parseFloat(document.getElementById('scheduleAmount').value) || null,
-            yearCode: parseInt(document.getElementById('yearCode').value) || null
-        };
-
-        console.log('Form data prepared:', formData);
-
-        const url = isEditMode ? `/Schedule/EditScheduleEvent/${editingScheduleId}` : '/Schedule/CreateScheduleEvent';
-        const method = 'POST';
-
-        console.log(`Making ${method} request to:`, url);
-
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            console.log('Response received:', response);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-
-            if (data.success) {
-                const successMessage = isEditMode ? 'Schedule updated successfully!' : 'Schedule created successfully!';
-                console.log('Success:', successMessage);
-                showSuccessToast(successMessage);
-                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
-                resetFormFields();
-                resetModalForCreate();
-
-                // Refresh the page to update the table
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                const errorMessage = isEditMode ? 'Error updating schedule: ' : 'Error creating schedule: ';
-                console.error('Server error:', data.error);
-                showErrorToast(errorMessage + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            showErrorToast('Network error occurred: ' + error.message);
-        })
-        .finally(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    }
-
-    function resetModalForCreate() {
-        isEditMode = false;
-        editingScheduleId = null;
-
-        // Reset modal header and title
-        const header = document.getElementById('scheduleModalHeader');
-        header.className = 'modal-header';
-        document.querySelector('#scheduleModal .modal-title').innerHTML =
-            '<i class="fas fa-calendar-plus me-2"></i>Add New Schedule' +
-            (userContext.userRootName && userContext.branchName ? `<small class="text-muted">for ${userContext.userRootName} - ${userContext.branchName}</small>` : '');
-
-        // Clear form fields
-        resetFormFields();
-    }
-
-    function resetFormFields() {
-        const fieldIds = ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'hallCode', 'centerCode', 'branchCode', 'eduYearCode', 'scheduleAmount', 'yearCode'];
-
-        // Only include teacherCode if user is not a teacher
-        if (!userContext.isTeacher) {
-            fieldIds.push('teacherCode');
-        }
-
-        // Add subjectCode for both user types
-        fieldIds.push('subjectCode');
-
-        fieldIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (element.type === 'select-one') {
-                    element.selectedIndex = 0;
-                } else {
-                    element.value = '';
-                }
-            }
-        });
-
-        // Reset subject dropdown based on user type
-        const subjectSelect = document.getElementById('subjectCode');
-        if (subjectSelect && !userContext.isTeacher) {
-            // For center users, reset to disabled state
-            subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
-            subjectSelect.disabled = true;
-        }
-        // For teacher users, keep subjects enabled (they're pre-filtered by server)
-
-        // Auto-set root code
-        if (userContext.currentUserRootCode) {
-            const rootCodeInput = document.getElementById('rootCode');
-            if (rootCodeInput) {
-                rootCodeInput.value = userContext.currentUserRootCode;
-            }
+        refreshList() {
+            console.log('🔄 Refreshing schedule list...');
+            // Reload the page to refresh the server-rendered table
+            window.location.reload();
         }
     }
 
-    function convertTo24Hour(time12h) {
-        if (!time12h) return '';
+    // Initialize Index-specific manager
+    const indexManager = new IndexScheduleManager();
 
-        // If already in 24-hour format, return as is
-        if (!time12h.includes('AM') && !time12h.includes('PM')) {
-            return time12h;
-        }
-
-        try {
-            const [time, modifier] = time12h.split(' ');
-            let [hours, minutes] = time.split(':');
-
-            if (hours === '12') {
-                hours = '00';
-            }
-
-            if (modifier === 'PM') {
-                hours = parseInt(hours, 10) + 12;
-            }
-
-            return `${hours.toString().padStart(2, '0')}:${minutes}`;
-        } catch (e) {
-            return time12h;
-        }
-    }
-
-    function formatTime12Hour(timeString) {
-        if (!timeString) return '';
-
-        // If already in 12-hour format (contains AM/PM), return as is
-        if (timeString.includes('AM') || timeString.includes('PM')) {
-            return timeString;
-        }
-
-        // Convert 24-hour format to 12-hour format
-        try {
-            const [hours, minutes] = timeString.split(':');
-            const hour24 = parseInt(hours);
-            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-            const ampm = hour24 < 12 ? 'AM' : 'PM';
-            return `${hour12}:${minutes} ${ampm}`;
-        } catch (e) {
-            return timeString; // Return original if parsing fails
-        }
-    }
-
-    function refreshList() {
-        window.location.reload();
-    }
-
-    function showSuccessToast(message) {
-        showToast(message, 'bg-success');
-    }
-
-    function showErrorToast(message) {
-        showToast(message, 'bg-danger');
-    }
-
-    function showToast(message, bgClass) {
-        const toastContainer = document.querySelector('.toast-container');
-        const toastId = 'toast-' + Date.now();
-
-        const toastHtml = `
-            <div class="toast ${bgClass} text-white" role="alert" id="${toastId}">
-                <div class="toast-body d-flex align-items-center">
-                    <i class="fas ${bgClass === 'bg-success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-                    <span class="flex-grow-1">${message}</span>
-                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
-    }
-
-    // Helper function to get anti-forgery token
-    function getAntiForgeryToken() {
-        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-    }
+    // Index-specific global functions (for backward compatibility)
+    window.refreshList = () => indexManager.refreshList();
 </script>

@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewData["Title"] = "Schedule Calendar";
 }
 
@@ -6,745 +6,161 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
-<style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-        --success-gradient: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
-        --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
-        --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
-        --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-        --primary-color: #6c5ce7;
-        --success-color: #00b894;
-        --danger-color: #e17055;
-        --warning-color: #f39c12;
-        --info-color: #74b9ff;
-        --text-dark: #2d3436;
-        --text-muted: #636e72;
-        --bg-light: #f8f9fa;
-        --bg-white: #ffffff;
-        --border-color: #e9ecef;
-        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
-        --border-radius: 12px;
-        --border-radius-lg: 16px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        color: var(--text-dark);
-    }
-
-    .calendar-page {
-        min-height: 100vh;
-        padding: 2rem 0;
-    }
-
-    .calendar-container {
-        background: var(--bg-white);
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-lg);
-        padding: 2rem;
-        margin: 0 auto;
-        max-width: 1400px;
-        border: 1px solid var(--border-color);
-    }
-
-    .page-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding: 2rem 0;
-        background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(162, 155, 254, 0.1) 100%);
-        border-radius: var(--border-radius);
-        border: 1px solid rgba(108, 92, 231, 0.1);
-    }
-
-        .page-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .page-header p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin: 0;
-        }
-
-    /* User Context Banner */
-    .user-context-banner {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 1rem;
-        text-align: center;
-        box-shadow: var(--shadow);
-    }
-
-        .user-context-banner h6 {
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .user-context-banner .badge {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            font-size: 0.85rem;
-            padding: 0.4rem 0.8rem;
-        }
-
-        .user-context-banner small {
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-    .center-banner {
-        background: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
-    }
-
-    .teacher-banner {
-        background: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
-    }
-
-    .error-banner {
-        background: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 1rem;
-        text-align: center;
-        font-weight: 600;
-        box-shadow: var(--shadow);
-    }
-
-    .legend {
-        display: flex;
-        gap: 1.5rem;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        background: var(--bg-light);
-        border-radius: var(--border-radius);
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        border: 1px solid var(--border-color);
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 500;
-        color: var(--text-dark);
-        font-size: 0.9rem;
-    }
-
-    .legend-color {
-        width: 16px;
-        height: 16px;
-        border-radius: 4px;
-        flex-shrink: 0;
-    }
-
-    .controls-section {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-
-    .btn-modern {
-        background: var(--primary-gradient);
-        border: none;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: var(--transition);
-        box-shadow: var(--shadow);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            color: white;
-        }
-
-        .btn-modern:active {
-            transform: translateY(0);
-        }
-
-    .btn-success {
-        background: var(--success-gradient);
-    }
-
-    .btn-info {
-        background: var(--info-gradient);
-    }
-
-    .btn-warning {
-        background: var(--warning-gradient);
-        color: var(--text-dark);
-    }
-
-    .btn-danger {
-        background: var(--danger-gradient);
-    }
-
-    /* Custom Weekly Template Grid */
-    .weekly-template-grid {
-        background: var(--bg-white);
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-        overflow: hidden;
-    }
-
-    .week-header {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 1rem;
-        text-align: center;
-        font-weight: 700;
-        font-size: 1.2rem;
-        letter-spacing: 0.5px;
-    }
-
-    .days-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 0;
-        min-height: 500px;
-    }
-
-    .day-column {
-        border-right: 1px solid var(--border-color);
-        background: var(--bg-white);
-        display: flex;
-        flex-direction: column;
-    }
-
-        .day-column:last-child {
-            border-right: none;
-        }
-
-    .day-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem 0.5rem;
-        text-align: center;
-        font-weight: 700;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .day-content {
-        flex: 1;
-        padding: 0.75rem 0.5rem;
-        min-height: 400px;
-        background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
-        position: relative;
-    }
-
-    .schedule-event {
-        background: var(--success-color);
-        color: white;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        transition: var(--transition);
-        cursor: pointer;
-        border-left: 4px solid rgba(255, 255, 255, 0.3);
-    }
-
-        .schedule-event:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .schedule-event.teacher-event {
-            background: var(--danger-color);
-            border-left-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .schedule-event.center-event {
-            background: var(--success-color);
-            border-left-color: rgba(255, 255, 255, 0.3);
-        }
-
-    .event-title {
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .event-time {
-        font-size: 0.75rem;
-        opacity: 0.9;
-        font-weight: 500;
-    }
-
-    .event-details {
-        font-size: 0.7rem;
-        opacity: 0.8;
-        margin-top: 0.25rem;
-    }
-
-    .empty-day {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-muted);
-        font-style: italic;
-        height: 100%;
-        min-height: 200px;
-    }
-
-    .add-schedule-btn {
-        position: absolute;
-        bottom: 0.5rem;
-        right: 0.5rem;
-        width: 30px;
-        height: 30px;
-        background: var(--primary-color);
-        border: none;
-        border-radius: 50%;
-        color: white;
-        font-size: 0.8rem;
-        opacity: 0.7;
-        transition: var(--transition);
-        cursor: pointer;
-    }
-
-        .add-schedule-btn:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-    /* Floating Action Button */
-    .floating-add-btn {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        width: 60px;
-        height: 60px;
-        background: var(--success-gradient);
-        border: none;
-        border-radius: 50%;
-        color: white;
-        font-size: 1.5rem;
-        box-shadow: var(--shadow-lg);
-        transition: var(--transition);
-        z-index: 1000;
-    }
-
-        .floating-add-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 40px rgba(0, 184, 148, 0.3);
-        }
-
-    /* Modal Customizations */
-    .modal-content {
-        border-radius: var(--border-radius) !important;
-        border: none !important;
-        box-shadow: var(--shadow-lg) !important;
-    }
-
-    .modal-header {
-        background: var(--primary-gradient) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-    }
-
-        .modal-header.bg-warning {
-            background: var(--warning-gradient) !important;
-            color: var(--text-dark) !important;
-        }
-
-        .modal-header.bg-danger {
-            background: var(--danger-gradient) !important;
-            color: white !important;
-        }
-
-    .modal-title {
-        font-weight: 600 !important;
-    }
-
-    .modal-body {
-        padding: 2rem !important;
-    }
-
-    .form-control, .form-select {
-        border: 2px solid var(--border-color) !important;
-        border-radius: var(--border-radius) !important;
-        padding: 0.75rem 1rem !important;
-        transition: var(--transition) !important;
-        font-weight: 500 !important;
-    }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color) !important;
-            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25) !important;
-        }
-
-    .form-label {
-        font-weight: 600 !important;
-        color: var(--text-dark) !important;
-        margin-bottom: 0.5rem !important;
-    }
-
-    /* Event Details Modal Styles */
-    .event-details-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .event-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: var(--primary-color);
-    }
-
-    .event-details-body .detail-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-        .event-details-body .detail-item:last-child {
-            border-bottom: none;
-        }
-
-    .detail-label {
-        font-weight: 600;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .detail-value {
-        color: var(--text-dark);
-        font-weight: 500;
-    }
-
-    /* Delete confirmation styles */
-    .delete-warning {
-        background: linear-gradient(135deg, rgba(225, 112, 85, 0.1) 0%, rgba(253, 121, 168, 0.1) 100%);
-        border: 2px solid rgba(225, 112, 85, 0.3);
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
-
-        .delete-warning h5 {
-            color: var(--danger-color);
-            margin-bottom: 1rem;
-        }
-
-    .schedule-summary {
-        background: var(--bg-light);
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-left: 4px solid var(--primary-color);
-    }
-
-    /* Loading State */
-    .loading-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        border-radius: var(--border-radius);
-    }
-
-    .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid var(--border-color);
-        border-top: 3px solid var(--primary-color);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @@keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    /* Toast Notifications */
-    .toast-container {
-        position: fixed;
-        top: 2rem;
-        right: 2rem;
-        z-index: 1050;
-    }
-
-    .toast {
-        border: none !important;
-        border-radius: var(--border-radius) !important;
-        box-shadow: var(--shadow-lg) !important;
-    }
-
-    .week-template-info {
-        background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(85, 163, 255, 0.1) 100%);
-        border: 1px solid rgba(0, 184, 148, 0.2);
-        border-radius: var(--border-radius);
-        padding: 1rem;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-
-        .week-template-info h5 {
-            color: var(--success-color);
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .week-template-info p {
-            color: var(--text-muted);
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-    /* Responsive Design */
-    @@media (max-width: 768px) {
-        .calendar-container {
-            margin: 1rem;
-            padding: 1rem;
-        }
-
-        .page-header h1 {
-            font-size: 2rem;
-        }
-
-        .controls-section {
-            justify-content: center;
-        }
-
-        .legend {
-            justify-content: center;
-        }
-
-        .floating-add-btn {
-            bottom: 1rem;
-            right: 1rem;
-            width: 50px;
-            height: 50px;
-            font-size: 1.25rem;
-        }
-
-        .days-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .day-column {
-            border-right: none;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-            .day-column:last-child {
-                border-bottom: none;
+<div class="schedule-page">
+    <div class="container-fluid calendar-page">
+        <div class="calendar-container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule Template</h1>
+                <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
+            </div>
+
+            <!-- User Context Banner or Error Message -->
+            @if (ViewBag.Error != null)
+            {
+                <div class="error-banner">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>@ViewBag.Error</strong>
+                </div>
+            }
+            else if (ViewBag.CurrentUserRootCode != null)
+            {
+                <div class="user-context-banner @(ViewBag.IsCenter ? "center-banner" : "teacher-banner")">
+                    <h6>
+                        <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
+                        Your schedules for: <strong>@ViewBag.UserRootName</strong>
+                        <span class="badge ms-2">
+                            @(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode
+                        </span>
+                    </h6>
+                    <small>You can view and manage schedules for your assigned @(ViewBag.IsCenter ? "center" : "teaching account") only</small>
+                </div>
             }
 
-        .day-content {
-            min-height: 150px;
-        }
-    }
-</style>
+            @if (ViewBag.Error == null)
+            {
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <i class="fas fa-layer-group text-info me-2"></i>
+                        <span>Multiple classes can run simultaneously</span>
+                    </div>
+                    <div class="legend-item">
+                        <i class="fas fa-mouse-pointer text-primary me-2"></i>
+                        <span>Click any schedule to view/edit/delete</span>
+                    </div>
+                </div>
 
-<div class="container-fluid calendar-page">
-    <div class="calendar-container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule Template</h1>
-            <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
+                <!-- Controls -->
+                <div class="controls-section">
+                    <button type="button" class="btn-modern btn-success" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                        <i class="fas fa-plus"></i> Add Schedule
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn-modern btn-info">
+                        <i class="fas fa-list"></i> List View
+                    </a>
+                    <button type="button" class="btn-modern" onclick="refreshSchedules()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Week Template Info -->
+                <div class="week-template-info">
+                    <h5><i class="fas fa-repeat me-2"></i>Weekly Schedule Template</h5>
+                    <p>
+                        This template shows your recurring weekly schedule pattern for <strong>@ViewBag.UserRootName</strong>.
+                        These schedules automatically repeat every week.
+                    </p>
+                </div>
+
+                <!-- Custom Weekly Template Grid -->
+                <div class="weekly-template-grid" style="position: relative;">
+                    <div class="loading-overlay" id="initialLoader">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <div class="week-header">
+                        Weekly Schedule Template
+                        @if (ViewBag.UserRootName != null)
+                        {
+                            <small class="ms-3 opacity-75">(@ViewBag.UserRootName)</small>
+                        }
+                    </div>
+
+                    <div class="days-grid">
+                        <div class="day-column" data-day="Sunday">
+                            <div class="day-header">Sunday</div>
+                            <div class="day-content" id="day-Sunday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Sunday')" title="Add schedule for Sunday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Monday">
+                            <div class="day-header">Monday</div>
+                            <div class="day-content" id="day-Monday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Monday')" title="Add schedule for Monday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Tuesday">
+                            <div class="day-header">Tuesday</div>
+                            <div class="day-content" id="day-Tuesday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Tuesday')" title="Add schedule for Tuesday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Wednesday">
+                            <div class="day-header">Wednesday</div>
+                            <div class="day-content" id="day-Wednesday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Wednesday')" title="Add schedule for Wednesday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Thursday">
+                            <div class="day-header">Thursday</div>
+                            <div class="day-content" id="day-Thursday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Thursday')" title="Add schedule for Thursday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Friday">
+                            <div class="day-header">Friday</div>
+                            <div class="day-content" id="day-Friday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Friday')" title="Add schedule for Friday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Saturday">
+                            <div class="day-header">Saturday</div>
+                            <div class="day-content" id="day-Saturday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Saturday')" title="Add schedule for Saturday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
-
-        <!-- User Context Banner or Error Message -->
-        @if (ViewBag.Error != null)
-        {
-            <div class="error-banner">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>@ViewBag.Error</strong>
-            </div>
-        }
-        else if (ViewBag.CurrentUserRootCode != null)
-        {
-            <div class="user-context-banner @(ViewBag.IsCenter ? "center-banner" : "teacher-banner")">
-                <h6>
-                    <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
-                    Your schedules for: <strong>@ViewBag.UserRootName</strong>
-                    <span class="badge ms-2">
-                        @(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode
-                    </span>
-                    @if (ViewBag.BranchName != null)
-                    {
-                        <span class="badge ms-1">
-                            <i class="fas fa-map-marker-alt me-1"></i>@ViewBag.BranchName
-                        </span>
-                    }
-                </h6>
-                <small>You can view and manage schedules for your assigned @(ViewBag.IsCenter ? "center" : "teaching account") only</small>
-            </div>
-        }
-
-        @if (ViewBag.Error == null)
-        {
-            <!-- Legend -->
-            <div class="legend">
-                <div class="legend-item">
-                    <i class="fas fa-layer-group text-info me-2"></i>
-                    <span>Multiple classes can run simultaneously</span>
-                </div>
-                <div class="legend-item">
-                    <i class="fas fa-mouse-pointer text-primary me-2"></i>
-                    <span>Click any schedule to view/edit/delete</span>
-                </div>
-            </div>
-
-            <!-- Controls -->
-            <div class="controls-section">
-                <button type="button" class="btn-modern btn-success" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                    <i class="fas fa-plus"></i> Add Schedule
-                </button>
-                <a href="@Url.Action("Index")" class="btn-modern btn-info">
-                    <i class="fas fa-list"></i> List View
-                </a>
-                <button type="button" class="btn-modern" onclick="refreshSchedules()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
-
-            <!-- Week Template Info -->
-            <div class="week-template-info">
-                <h5><i class="fas fa-repeat me-2"></i>Weekly Schedule Template</h5>
-                <p>
-                    This template shows your recurring weekly schedule pattern for <strong>@ViewBag.UserRootName</strong>
-                    @if (ViewBag.BranchName != null)
-                    {
-                        <span> at <strong>@ViewBag.BranchName</strong></span>
-                    }.
-                    These schedules automatically repeat every week.
-                </p>
-            </div>
-
-            <!-- Custom Weekly Template Grid -->
-            <div class="weekly-template-grid" style="position: relative;">
-                <div class="loading-overlay" id="initialLoader">
-                    <div class="spinner"></div>
-                </div>
-
-                <div class="week-header">
-                    Weekly Schedule Template
-                    @if (ViewBag.UserRootName != null && ViewBag.BranchName != null)
-                    {
-                        <small class="ms-3 opacity-75">(@ViewBag.UserRootName - @ViewBag.BranchName)</small>
-                    }
-                </div>
-
-                <div class="days-grid">
-                    <div class="day-column" data-day="Sunday">
-                        <div class="day-header">Sunday</div>
-                        <div class="day-content" id="day-Sunday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Sunday')" title="Add schedule for Sunday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="day-column" data-day="Monday">
-                        <div class="day-header">Monday</div>
-                        <div class="day-content" id="day-Monday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Monday')" title="Add schedule for Monday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="day-column" data-day="Tuesday">
-                        <div class="day-header">Tuesday</div>
-                        <div class="day-content" id="day-Tuesday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Tuesday')" title="Add schedule for Tuesday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="day-column" data-day="Wednesday">
-                        <div class="day-header">Wednesday</div>
-                        <div class="day-content" id="day-Wednesday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Wednesday')" title="Add schedule for Wednesday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="day-column" data-day="Thursday">
-                        <div class="day-header">Thursday</div>
-                        <div class="day-content" id="day-Thursday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Thursday')" title="Add schedule for Thursday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="day-column" data-day="Friday">
-                        <div class="day-header">Friday</div>
-                        <div class="day-content" id="day-Friday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Friday')" title="Add schedule for Friday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="day-column" data-day="Saturday">
-                        <div class="day-header">Saturday</div>
-                        <div class="day-content" id="day-Saturday">
-                            <div class="empty-day">No schedules</div>
-                            <button class="add-schedule-btn" onclick="addScheduleForDay('Saturday')" title="Add schedule for Saturday">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
     </div>
 </div>
 
@@ -756,15 +172,15 @@
     </button>
 
     <!-- Main Schedule Modal (Create/Edit) -->
-    <div class="modal fade" id="scheduleModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade schedule-modal" id="scheduleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header" id="scheduleModalHeader">
                     <h5 class="modal-title" id="scheduleModalTitle">
                         <i class="fas fa-calendar-plus me-2"></i>Add New Schedule
-                        @if (ViewBag.UserRootName != null && ViewBag.BranchName != null)
+                        @if (ViewBag.UserRootName != null)
                         {
-                            <small class="text-muted">for @ViewBag.UserRootName - @ViewBag.BranchName</small>
+                            <small class="text-muted">for @ViewBag.UserRootName</small>
                         }
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -784,7 +200,13 @@
                                 }
                                 @if (ViewBag.IsTeacher)
                                 {
-                                    <br><small class="text-muted">Teacher will be automatically assigned to your account.</small>
+                                    <br>
+                                    <small class="text-muted">Teacher will be automatically assigned to your account.</small>
+                                }
+                                else
+                                {
+                                    <br>
+                                    <small class="text-muted">Center will be automatically assigned. Select branch and teacher for this schedule.</small>
                                 }
                             </div>
                         }
@@ -823,69 +245,109 @@
                         <!-- Root is hidden and auto-set -->
                         <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
 
-                        <!-- Center and Branch dropdowns -->
+                        <!-- Center and Branch dropdowns - Updated for both user types -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Center</label>
-                                <select class="form-select" id="centerCode">
-                                    <option value="">Select Center (Optional)</option>
-                                    @if (ViewData["CenterCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                            @if (ViewBag.IsCenter == true)
+                            {
+                                <!-- For CENTER USERS: NO CENTER FIELD, just hidden input -->
+                                <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
+                                
+                                <!-- Only show Branch and Educational Year for center users -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Branch</label>
+                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                        <option value="">Select Branch (Optional)</option>
+                                        <!-- Branches will be loaded via JavaScript -->
+                                    </select>
+                                    <small class="text-muted">Select branch for this schedule</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Educational Year</label>
+                                    <select class="form-select" id="eduYearCode">
+                                        <option value="">Select Year (Optional)</option>
+                                        @if (ViewData["EduYearCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Branch</label>
-                                <select class="form-select" id="branchCode">
-                                    <option value="">Select Branch (Optional)</option>
-                                    @if (ViewData["BranchCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["BranchCode"])
+                                    </select>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- For TEACHER USERS: Show center and branch fields -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Center</label>
+                                    <select class="form-select" id="centerCode" onchange="loadBranchesForCenter()">
+                                        <option value="">Select Center (Optional)</option>
+                                        @if (ViewData["CenterCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Branch</label>
+                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                        <option value="">Select Center First</option>
+                                    </select>
+                                </div>
+                            }
                         </div>
 
+                        <!-- Halls row - separate for both user types -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Hall</label>
-                                <select class="form-select" id="hallCode">
-                                    <option value="">Select Hall (Optional)</option>
-                                    @if (ViewData["HallCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["HallCode"])
+                            @if (ViewBag.IsCenter == true)
+                            {
+                                <!-- For CENTER USERS: Hall -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hall</label>
+                                    <select class="form-select" id="hallCode">
+                                        <option value="">Select Branch First</option>
+                                    </select>
+                                    <small class="text-muted">Select branch first to see available halls</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <!-- Empty space for center users -->
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- For TEACHER USERS: Hall and Educational Year -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hall</label>
+                                    <select class="form-select" id="hallCode">
+                                        <option value="">Select Branch First</option>
+                                    </select>
+                                    <small class="text-muted">Select branch first to see available halls</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Educational Year</label>
+                                    <select class="form-select" id="eduYearCode">
+                                        <option value="">Select Year (Optional)</option>
+                                        @if (ViewData["EduYearCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Educational Year</label>
-                                <select class="form-select" id="eduYearCode">
-                                    <option value="">Select Year (Optional)</option>
-                                    @if (ViewData["EduYearCode"] != null)
-                                    {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
+                                    </select>
+                                </div>
+                            }
                         </div>
 
+                        <!-- Teacher and Year section -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Year *</label>
-                                <select class="form-select" id="yearCode" required>
+                                <select class="form-select" id="yearCode" required onchange="loadSubjectsForTeacher()">
                                     <option value="">Select Year</option>
                                     @if (ViewData["YearCode"] != null)
                                     {
@@ -896,9 +358,10 @@
                                     }
                                 </select>
                             </div>
-                            <!-- Conditionally show teacher dropdown only for center users -->
-                            @if (!ViewBag.IsTeacher)
+                            
+                            @if (ViewBag.IsCenter == true)
                             {
+                                <!-- For CENTER USERS: Show teacher dropdown (required) -->
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Teacher *</label>
                                     <select class="form-select" id="teacherCode" required onchange="loadSubjectsForTeacher()">
@@ -910,18 +373,21 @@
                                                 <option value="@item.Value">@item.Text</option>
                                             }
                                         }
+                                        else
+                                        {
+                                            <option value="">No teachers data available</option>
+                                        }
                                     </select>
-                                    <small class="text-muted">Select teacher first to see available subjects</small>
                                 </div>
                             }
                             else
                             {
-                                <!-- Hidden teacher field for teacher users -->
+                                <!-- For TEACHER USERS: Hide teacher dropdown, auto-assign -->
                                 <input type="hidden" id="teacherCode" value="">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Your Assignment</label>
                                     <input type="text" class="form-control" value="@ViewBag.UserRootName - @ViewBag.BranchName" readonly>
-                                    <small class="text-muted">Your schedule will be assigned to this center/branch</small>
+                                    <small class="text-muted">Your schedule will be assigned to this teacher account</small>
                                 </div>
                             }
                         </div>
@@ -945,7 +411,7 @@
                                 }
                                 else
                                 {
-                                    <small class="text-muted">Subjects will be filtered by your center and selected teacher</small>
+                                    <small class="text-muted">Available subjects will appear after selecting a teacher</small>
                                 }
                             </div>
                             <div class="col-md-6 mb-3">
@@ -966,7 +432,7 @@
     </div>
 
     <!-- Event Details Modal -->
-    <div class="modal fade" id="eventDetailsModal" tabindex="-1">
+    <div class="modal fade schedule-modal" id="eventDetailsModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -992,7 +458,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal fade schedule-modal" id="deleteConfirmModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger">
@@ -1029,835 +495,152 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    let isEditMode = false;
-    let editingScheduleId = null;
-    let schedules = [];
-    let scheduleToDelete = null;
+<!-- Include the common schedule management JavaScript -->
+<script src="~/js/schedule-common.js"></script>
 
-    // Store user context from server
-    const userContext = {
+<script>
+    // Set up user context for the common script
+    window.userContext = {
         currentUserRootCode: @Json.Serialize(ViewBag.CurrentUserRootCode),
         userRootName: @Json.Serialize(ViewBag.UserRootName ?? ""),
         isCenter: @Json.Serialize(ViewBag.IsCenter ?? false),
         isTeacher: @Json.Serialize(ViewBag.IsTeacher ?? false),
         branchName: @Json.Serialize(ViewBag.BranchName ?? ""),
+        singleCenterCode: @Json.Serialize(ViewBag.SingleCenterCode ?? null),
         hasError: @Json.Serialize(ViewBag.Error != null)
     };
 
-    console.log('User Context:', userContext);
+    // Calendar-specific functionality
+    class CalendarScheduleManager {
+        constructor() {
+            this.schedules = [];
+            this.setupCalendarSpecific();
+        }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        if (!userContext.hasError) {
-            loadSchedules();
-            setTimeout(() => {
-                hideInitialLoader();
-                showWelcomeMessage();
-            }, 1000);
-
-            // Reset modal when closed
-            document.getElementById('scheduleModal').addEventListener('hidden.bs.modal', function() {
-                resetModalForCreate();
-            });
-
-            // Setup save button click handler
-            const saveBtn = document.getElementById('saveScheduleBtn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', function() {
-                    console.log('Save button clicked!');
-                    saveSchedule();
-                });
+        setupCalendarSpecific() {
+            // Override the common manager's callbacks
+            scheduleManager.onScheduleSaved = () => this.refreshSchedules();
+            scheduleManager.onScheduleDeleted = () => this.refreshSchedules();
+            
+            // Initialize calendar
+            if (!window.userContext.hasError) {
+                this.loadSchedules();
+                setTimeout(() => {
+                    this.hideInitialLoader();
+                    this.showWelcomeMessage();
+                }, 1000);
             }
+        }
 
-            // Setup delete confirmation handler
-            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-            if (confirmDeleteBtn) {
-                confirmDeleteBtn.addEventListener('click', function() {
-                    if (scheduleToDelete) {
-                        performDelete(scheduleToDelete);
-                    }
-                });
+        async loadSchedules() {
+            try {
+                const response = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
+                const events = await response.json();
+                
+                this.schedules = events;
+                
+                // Transform events to schedule format for the common manager
+                scheduleManager.allSchedules = events.map(event => ({
+                    scheduleCode: event.extendedProps.scheduleCode,
+                    scheduleName: event.title,
+                    dayOfWeek: event.extendedProps.dayOfWeek,
+                    startTime: event.extendedProps.startTime,
+                    endTime: event.extendedProps.endTime,
+                    hallName: event.extendedProps.hallName,
+                    hallCode: event.extendedProps.hallCode,
+                    teacherName: event.extendedProps.teacherName,
+                    teacherCode: event.extendedProps.teacherCode,
+                    subjectName: event.extendedProps.subjectName,
+                    subjectCode: event.extendedProps.subjectCode,
+                    centerName: event.extendedProps.centerName,
+                    centerCode: event.extendedProps.centerCode,
+                    branchName: event.extendedProps.branchName,
+                    branchCode: event.extendedProps.branchCode,
+                    eduYearCode: event.extendedProps.eduYearCode,
+                    yearCode: event.extendedProps.yearCode,
+                    scheduleAmount: event.extendedProps.scheduleAmount,
+                    isCenter: event.extendedProps.isCenter
+                }));
+                
+                this.renderWeeklyGrid();
+                console.log('✅ Schedules loaded for Calendar view:', this.schedules.length);
+            } catch (error) {
+                console.error('❌ Error loading schedules:', error);
+                scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
             }
-        } else {
-            hideInitialLoader();
-        }
-    });
-
-    // Load subjects for selected teacher (for center users only)
-    // Subjects are filtered by user's root code + selected teacher from Teach table
-    function loadSubjectsForTeacher() {
-        if (userContext.isTeacher) return; // Not applicable for teacher users - they have pre-filtered subjects
-
-        const teacherSelect = document.getElementById('teacherCode');
-        const subjectSelect = document.getElementById('subjectCode');
-        const yearSelect = document.getElementById('yearCode');
-
-        if (!teacherSelect.value) {
-            subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
-            subjectSelect.disabled = true;
-            return;
         }
 
-        const teacherCode = parseInt(teacherSelect.value);
-        const yearCode = parseInt(yearSelect.value) || null;
-
-        // Show loading state
-        subjectSelect.innerHTML = '<option value="">Loading subjects...</option>';
-        subjectSelect.disabled = true;
-
-        fetch(`/Schedule/GetSubjectsForTeacher?teacherCode=${teacherCode}&yearCode=${yearCode}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
-                    data.subjects.forEach(subject => {
-                        const option = document.createElement('option');
-                        option.value = subject.value;
-                        option.textContent = subject.text;
-                        subjectSelect.appendChild(option);
-                    });
-                    subjectSelect.disabled = false;
-                } else {
-                    subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
-                    showErrorToast('Error loading subjects: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error loading subjects:', error);
-                subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
-                showErrorToast('Network error while loading subjects');
-            });
-    }
-
-    function loadSchedules() {
-        if (userContext.hasError) {
-            console.log('User has no root assignment - skipping schedule load');
-            return;
-        }
-
-        showLoadingOverlay();
-
-        fetch('/Schedule/GetCalendarEvents?start=2024-01-01&end=2024-12-31')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch schedules');
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoadingOverlay();
-
-                if (data.error) {
-                    console.error('Server error:', data.error);
-                    showErrorToast('Error loading schedules: ' + data.error);
-                    return;
-                }
-
-                schedules = Array.isArray(data) ? data : [];
-                console.log(`Loaded ${schedules.length} schedules for user context:`, userContext);
-                renderWeeklyTemplate();
-            })
-            .catch(error => {
-                hideLoadingOverlay();
-                console.error('Error fetching schedules:', error);
-                showErrorToast('Failed to load schedules. Please try again.');
-            });
-    }
-
-    function renderWeeklyTemplate() {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-        days.forEach(day => {
-            const dayContent = document.getElementById('day-' + day);
-            if (!dayContent) return;
-
-            const daySchedules = schedules.filter(s => s.extendedProps?.dayOfWeek === day);
-
-            if (daySchedules.length === 0) {
-                dayContent.innerHTML = `
-                    <div class="empty-day">No schedules</div>
-                    <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                `;
-            } else {
-                let eventsHtml = '';
-
-                // Sort schedules by start time
-                daySchedules.sort((a, b) => {
-                    const timeA = a.extendedProps?.startTime || '00:00';
-                    const timeB = b.extendedProps?.startTime || '00:00';
-                    return timeA.localeCompare(timeB);
-                });
-
-                daySchedules.forEach(schedule => {
-                    const props = schedule.extendedProps;
-                    const isCenter = props?.isCenter || false;
-                    const eventClass = isCenter ? 'center-event' : 'teacher-event';
-                    const icon = isCenter ? 'fa-building' : 'fa-chalkboard-teacher';
-
-                    const startTime12 = formatTime12Hour(props.startTime);
-                    const endTime12 = formatTime12Hour(props.endTime);
-
-                    // Display logic based on user type
-                    let detailsText = '';
-                    if (userContext.isTeacher) {
-                        // For teacher users, show center/branch info instead of teacher info
-                        const parts = [];
-                        if (props.centerName) parts.push('Center: ' + props.centerName);
-                        if (props.branchName) parts.push('Branch: ' + props.branchName);
-                        if (props.hallName) parts.push('Hall: ' + props.hallName);
-                        detailsText = parts.join(' • ');
-                    } else {
-                        // For center users, show teacher name and subject
-                        const parts = [];
-                        if (props.teacherName) parts.push('Teacher: ' + props.teacherName);
-                        if (props.subjectName) parts.push('Subject: ' + props.subjectName);
-                        if (props.hallName) parts.push('Hall: ' + props.hallName);
-                        detailsText = parts.join(' • ');
-                    }
-
-                    eventsHtml += `
-                        <div class="schedule-event ${eventClass}" onclick="showEventDetails(${props.scheduleCode})" data-schedule-id="${props.scheduleCode}">
-                            <div class="event-title">
-                                <i class="fas ${icon}"></i>
-                                ${schedule.title}
-                            </div>
-                            ${props.startTime && props.endTime ? `<div class="event-time">${startTime12} - ${endTime12}</div>` : ''}
-                            ${detailsText ? `<div class="event-details">${detailsText}</div>` : ''}
-                        </div>
+        renderWeeklyGrid() {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            
+            days.forEach(day => {
+                const dayContainer = document.getElementById(`day-${day}`);
+                if (!dayContainer) return;
+                
+                const daySchedules = this.schedules.filter(s => s.extendedProps.dayOfWeek === day);
+                
+                if (daySchedules.length === 0) {
+                    dayContainer.innerHTML = `
+                        <div class="empty-day">No schedules</div>
+                        <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     `;
-                });
-
-                dayContent.innerHTML = `
-                    ${eventsHtml}
-                    <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                `;
-            }
-        });
-    }
-
-    function addScheduleForDay(day) {
-        if (userContext.hasError) {
-            showErrorToast('Unable to add schedule. Please contact administrator.');
-            return;
-        }
-
-        resetModalForCreate();
-        document.getElementById('dayOfWeek').value = day;
-
-        // Auto-set root code
-        if (userContext.currentUserRootCode) {
-            const rootCodeInput = document.getElementById('rootCode');
-            if (rootCodeInput) {
-                rootCodeInput.value = userContext.currentUserRootCode;
-            }
-        }
-
-        new bootstrap.Modal(document.getElementById('scheduleModal')).show();
-    }
-
-    function saveSchedule() {
-        console.log('Save schedule function called');
-
-        if (userContext.hasError) {
-            showErrorToast('Unable to save schedule. Please contact administrator.');
-            return;
-        }
-
-        const submitBtn = document.getElementById('saveScheduleBtn');
-        const originalText = submitBtn.innerHTML;
-
-        // Manual validation
-        const requiredFields = [
-            { id: 'scheduleName', name: 'Schedule Name' },
-            { id: 'dayOfWeek', name: 'Day of Week' },
-            { id: 'startTime', name: 'Start Time' },
-            { id: 'endTime', name: 'End Time' },
-            { id: 'yearCode', name: 'Year' }
-        ];
-
-        // For center users, teacher is required
-        if (!userContext.isTeacher) {
-            requiredFields.push({ id: 'teacherCode', name: 'Teacher' });
-        }
-
-        // Check required fields
-        for (const field of requiredFields) {
-            const element = document.getElementById(field.id);
-            if (!element.value || element.value.trim() === '') {
-                console.log(`Validation failed: ${field.name} is empty`);
-                showErrorToast(`${field.name} is required`);
-                element.focus();
-                return;
-            }
-        }
-
-        const startTime = document.getElementById('startTime').value;
-        const endTime = document.getElementById('endTime').value;
-
-        if (startTime >= endTime) {
-            console.log('Validation failed: End time must be after start time');
-            showErrorToast('End time must be after start time');
-            return;
-        }
-
-        console.log('Validation passed, preparing data...');
-
-        // Show loading state
-        const loadingText = isEditMode ? 'Updating...' : 'Saving...';
-        submitBtn.innerHTML = `<div class="spinner-border spinner-border-sm me-2"></div>${loadingText}`;
-        submitBtn.disabled = true;
-
-        // Get root code - always auto-set for users
-        const rootCodeInput = document.getElementById('rootCode');
-        const rootCodeValue = rootCodeInput ? parseInt(rootCodeInput.value) || null : userContext.currentUserRootCode;
-
-        const formData = {
-            title: document.getElementById('scheduleName').value,
-            dayOfWeek: document.getElementById('dayOfWeek').value,
-            startTime: startTime,
-            endTime: endTime,
-            hallCode: parseInt(document.getElementById('hallCode').value) || null,
-            rootCode: rootCodeValue,
-            centerCode: parseInt(document.getElementById('centerCode').value) || null,
-            branchCode: parseInt(document.getElementById('branchCode').value) || null,
-            eduYearCode: parseInt(document.getElementById('eduYearCode').value) || null,
-            teacherCode: parseInt(document.getElementById('teacherCode').value) || null,
-            subjectCode: parseInt(document.getElementById('subjectCode').value) || null,
-            scheduleAmount: parseFloat(document.getElementById('scheduleAmount').value) || null,
-            yearCode: parseInt(document.getElementById('yearCode').value) || null
-        };
-
-        console.log('Form data prepared:', formData);
-
-        const url = isEditMode ? `/Schedule/EditScheduleEvent/${editingScheduleId}` : '/Schedule/CreateScheduleEvent';
-        const method = 'POST';
-
-        console.log(`Making ${method} request to:`, url);
-
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            console.log('Response received:', response);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-
-            if (data.success) {
-                const successMessage = isEditMode ? 'Schedule updated successfully!' : 'Schedule created successfully!';
-                console.log('Success:', successMessage);
-                showSuccessToast(successMessage);
-                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
-                resetFormFields();
-                resetModalForCreate();
-                loadSchedules(); // Reload and re-render
-            } else {
-                const errorMessage = isEditMode ? 'Error updating schedule: ' : 'Error creating schedule: ';
-                console.error('Server error:', data.error);
-                showErrorToast(errorMessage + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            showErrorToast('Network error occurred: ' + error.message);
-        })
-        .finally(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    }
-
-    function showWelcomeMessage() {
-        let message = 'Welcome to Weekly Schedule Template!';
-
-        if (userContext.userRootName && userContext.branchName) {
-            const userType = userContext.isTeacher ? 'teacher' : 'center admin';
-            message = `Welcome! Manage your ${userType} schedules for ${userContext.userRootName} - ${userContext.branchName}.`;
-        }
-
-        showToast(message, 'bg-info');
-    }
-
-    function editScheduleInModal(scheduleId) {
-        const schedule = schedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
-        if (!schedule) return;
-
-        const props = schedule.extendedProps;
-
-        // Set edit mode
-        isEditMode = true;
-        editingScheduleId = scheduleId;
-
-        // Update modal title and header
-        const header = document.getElementById('scheduleModalHeader');
-        header.className = 'modal-header bg-warning';
-        document.querySelector('#scheduleModal .modal-title').innerHTML =
-            '<i class="fas fa-edit me-2"></i>Edit Schedule' +
-            (userContext.userRootName && userContext.branchName ? `<small class="text-muted">for ${userContext.userRootName} - ${userContext.branchName}</small>` : '');
-
-        // Populate form with existing data
-        document.getElementById('scheduleName').value = schedule.title;
-        document.getElementById('dayOfWeek').value = props.dayOfWeek;
-        document.getElementById('startTime').value = convertTo24Hour(props.startTime);
-        document.getElementById('endTime').value = convertTo24Hour(props.endTime);
-
-        // Set optional fields
-        document.getElementById('hallCode').value = props.hallCode || '';
-        document.getElementById('centerCode').value = props.centerCode || '';
-        document.getElementById('branchCode').value = props.branchCode || '';
-        document.getElementById('eduYearCode').value = props.eduYearCode || '';
-        document.getElementById('subjectCode').value = props.subjectCode || '';
-        document.getElementById('scheduleAmount').value = props.scheduleAmount || '';
-        document.getElementById('yearCode').value = props.yearCode || '';
-
-        // Handle teacher field based on user type
-        const teacherCodeElement = document.getElementById('teacherCode');
-        if (teacherCodeElement && !userContext.isTeacher) {
-            teacherCodeElement.value = props.teacherCode || '';
-            // Load subjects for the selected teacher
-            if (props.teacherCode) {
-                setTimeout(() => loadSubjectsForTeacher(), 100);
-            }
-        }
-
-        // Root code is always auto-set
-        const rootCodeInput = document.getElementById('rootCode');
-        if (rootCodeInput) {
-            rootCodeInput.value = userContext.currentUserRootCode;
-        }
-
-        // Hide the event details modal and show the edit modal
-        bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal')).hide();
-        new bootstrap.Modal(document.getElementById('scheduleModal')).show();
-    }
-
-    function resetModalForCreate() {
-        isEditMode = false;
-        editingScheduleId = null;
-
-        // Reset modal header and title
-        const header = document.getElementById('scheduleModalHeader');
-        header.className = 'modal-header';
-        document.querySelector('#scheduleModal .modal-title').innerHTML =
-            '<i class="fas fa-calendar-plus me-2"></i>Add New Schedule' +
-            (userContext.userRootName && userContext.branchName ? `<small class="text-muted">for ${userContext.userRootName} - ${userContext.branchName}</small>` : '');
-
-        // Clear form fields
-        resetFormFields();
-    }
-
-    function resetFormFields() {
-        const fieldIds = ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'hallCode', 'centerCode', 'branchCode', 'eduYearCode', 'scheduleAmount', 'yearCode'];
-        
-        // Only include teacherCode if user is not a teacher
-        if (!userContext.isTeacher) {
-            fieldIds.push('teacherCode');
-        }
-
-        // Add subjectCode for both user types
-        fieldIds.push('subjectCode');
-
-        fieldIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (element.type === 'select-one') {
-                    element.selectedIndex = 0;
                 } else {
-                    element.value = '';
+                    let html = '';
+                    daySchedules.forEach(schedule => {
+                        const eventClass = schedule.extendedProps.isCenter ? 'center-event' : 'teacher-event';
+                        html += `
+                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${schedule.extendedProps.scheduleCode})">
+                                <div class="event-title">
+                                    <i class="fas fa-${schedule.extendedProps.isCenter ? 'building' : 'user'}"></i>
+                                    ${schedule.title}
+                                </div>
+                                <div class="event-time">${schedule.extendedProps.startTime} - ${schedule.extendedProps.endTime}</div>
+                                ${schedule.extendedProps.hallName ? `<div class="event-details">📍 ${schedule.extendedProps.hallName}</div>` : ''}
+                                ${schedule.extendedProps.teacherName ? `<div class="event-details">👨‍🏫 ${schedule.extendedProps.teacherName}</div>` : ''}
+                                ${schedule.extendedProps.subjectName ? `<div class="event-details">📚 ${schedule.extendedProps.subjectName}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                        <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    `;
+                    
+                    dayContainer.innerHTML = html;
                 }
-            }
-        });
-
-        // Reset subject dropdown based on user type
-        const subjectSelect = document.getElementById('subjectCode');
-        if (subjectSelect && !userContext.isTeacher) {
-            // For center users, reset to disabled state
-            subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
-            subjectSelect.disabled = true;
+            });
         }
-        // For teacher users, keep subjects enabled (they're pre-filtered by server)
 
-        // Auto-set root code
-        if (userContext.currentUserRootCode) {
-            const rootCodeInput = document.getElementById('rootCode');
-            if (rootCodeInput) {
-                rootCodeInput.value = userContext.currentUserRootCode;
+        refreshSchedules() {
+            console.log('🔄 Refreshing calendar schedules...');
+            this.loadSchedules();
+        }
+
+        hideInitialLoader() {
+            const loader = document.getElementById('initialLoader');
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }
+
+        showWelcomeMessage() {
+            if (window.userContext.currentUserRootCode) {
+                scheduleManager.showToast(
+                    'Welcome!', 
+                    `Calendar loaded for ${window.userContext.userRootName}`, 
+                    'success'
+                );
             }
         }
     }
 
-    function convertTo24Hour(time12h) {
-        if (!time12h) return '';
+    // Initialize Calendar-specific manager
+    const calendarManager = new CalendarScheduleManager();
 
-        // If already in 24-hour format, return as is
-        if (!time12h.includes('AM') && !time12h.includes('PM')) {
-            return time12h;
-        }
-
-        try {
-            const [time, modifier] = time12h.split(' ');
-            let [hours, minutes] = time.split(':');
-
-            if (hours === '12') {
-                hours = '00';
-            }
-
-            if (modifier === 'PM') {
-                hours = parseInt(hours, 10) + 12;
-            }
-
-            return `${hours.toString().padStart(2, '0')}:${minutes}`;
-        } catch (e) {
-            return time12h;
-        }
-    }
-
-    function showEventDetails(scheduleId) {
-        const schedule = schedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
-        if (!schedule) return;
-
-        const props = schedule.extendedProps;
-
-        let detailsHtml = '';
-        
-        // Always show time
-        if (props.startTime && props.endTime) {
-            detailsHtml += `
-                <div class="detail-item">
-                    <span class="detail-label">Time</span>
-                    <span class="detail-value">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</span>
-                </div>
-            `;
-        }
-
-        // For teacher users, show center/branch info; for center users, show teacher info
-        if (userContext.isTeacher) {
-            // Show center/branch information for teacher users
-            if (props.centerName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Center</span>
-                        <span class="detail-value">${props.centerName}</span>
-                    </div>
-                `;
-            }
-            if (props.branchName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Branch</span>
-                        <span class="detail-value">${props.branchName}</span>
-                    </div>
-                `;
-            }
-        } else {
-            // Show teacher information for center users
-            if (props.teacherName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Teacher</span>
-                        <span class="detail-value">${props.teacherName}</span>
-                    </div>
-                `;
-            }
-            if (props.subjectName) {
-                detailsHtml += `
-                    <div class="detail-item">
-                        <span class="detail-label">Subject</span>
-                        <span class="detail-value">${props.subjectName}</span>
-                    </div>
-                `;
-            }
-        }
-
-        // Common details
-        if (props.hallName) {
-            detailsHtml += `
-                <div class="detail-item">
-                    <span class="detail-label">Hall</span>
-                    <span class="detail-value">${props.hallName}</span>
-                </div>
-            `;
-        }
-
-        if (props.amount) {
-            detailsHtml += `
-                <div class="detail-item">
-                    <span class="detail-label">Amount</span>
-                    <span class="detail-value">$${props.amount}</span>
-                </div>
-            `;
-        }
-
-        const content = `
-            <div class="event-details-header">
-                <div class="event-icon">
-                    <i class="fas ${props.isCenter ? 'fa-building' : 'fa-chalkboard-teacher'}"></i>
-                </div>
-                <h4>${schedule.title}</h4>
-                <div class="d-flex justify-content-center gap-2 flex-wrap">
-                    <span class="badge ${props.isCenter ? 'bg-success' : 'bg-danger'}">
-                        ${props.isCenter ? 'Center Schedule' : 'Teacher Schedule'}
-                    </span>
-                    ${props.dayOfWeek ? `<span class="badge bg-info">${props.dayOfWeek}</span>` : ''}
-                    <span class="badge bg-secondary">${userContext.userRootName} - ${userContext.branchName}</span>
-                </div>
-            </div>
-
-            <div class="event-details-body">
-                ${detailsHtml}
-            </div>
-        `;
-
-        document.getElementById('eventDetailsContent').innerHTML = content;
-
-        // Setup modal buttons
-        document.getElementById('editEventBtn').onclick = () => {
-            editScheduleInModal(props.scheduleCode);
-        };
-
-        document.getElementById('deleteEventBtn').onclick = () => {
-            showDeleteConfirmation(props.scheduleCode);
-        };
-
-        new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
-    }
-
-    function showDeleteConfirmation(scheduleId) {
-        const schedule = schedules.find(s => s.extendedProps?.scheduleCode === scheduleId);
-        if (!schedule) return;
-
-        scheduleToDelete = scheduleId;
-        const props = schedule.extendedProps;
-
-        // Populate delete confirmation modal
-        let summaryContent = `
-            <h5 class="text-danger mb-3">
-                <i class="fas fa-calendar-times me-2"></i>
-                ${schedule.title}
-            </h5>
-            <div class="row">
-                <div class="col-6"><strong>Day:</strong></div>
-                <div class="col-6">${props.dayOfWeek}</div>
-            </div>
-        `;
-
-        if (props.startTime && props.endTime) {
-            summaryContent += `
-                <div class="row">
-                    <div class="col-6"><strong>Time:</strong></div>
-                    <div class="col-6">${formatTime12Hour(props.startTime)} - ${formatTime12Hour(props.endTime)}</div>
-                </div>
-            `;
-        }
-
-        // Show appropriate details based on user type
-        if (userContext.isTeacher) {
-            if (props.centerName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Center:</strong></div>
-                        <div class="col-6">${props.centerName}</div>
-                    </div>
-                `;
-            }
-            if (props.branchName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Branch:</strong></div>
-                        <div class="col-6">${props.branchName}</div>
-                    </div>
-                `;
-            }
-        } else {
-            if (props.teacherName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Teacher:</strong></div>
-                        <div class="col-6">${props.teacherName}</div>
-                    </div>
-                `;
-            }
-            if (props.subjectName) {
-                summaryContent += `
-                    <div class="row">
-                        <div class="col-6"><strong>Subject:</strong></div>
-                        <div class="col-6">${props.subjectName}</div>
-                    </div>
-                `;
-            }
-        }
-
-        if (props.hallName) {
-            summaryContent += `
-                <div class="row">
-                    <div class="col-6"><strong>Hall:</strong></div>
-                    <div class="col-6">${props.hallName}</div>
-                </div>
-            `;
-        }
-
-        document.getElementById('deleteScheduleSummary').innerHTML = summaryContent;
-
-        // Hide details modal and show delete confirmation
-        bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal')).hide();
-        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    }
-
-    function performDelete(scheduleId) {
-        console.log('Performing delete for schedule:', scheduleId);
-
-        const submitBtn = document.getElementById('confirmDeleteBtn');
-        const originalText = submitBtn.innerHTML;
-
-        // Show loading state
-        submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Deleting...';
-        submitBtn.disabled = true;
-
-        // Call the correct DELETE API endpoint
-        fetch(`/Schedule/DeleteScheduleEvent/${scheduleId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
-        })
-        .then(response => {
-            console.log('Delete response received:', response);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            return response.json();
-        })
-        .then(data => {
-            console.log('Delete response data:', data);
-
-            if (data.success) {
-                showSuccessToast(data.message || 'Schedule deleted successfully!');
-                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-                loadSchedules(); // Reload and re-render
-                scheduleToDelete = null;
-            } else {
-                console.error('Delete failed:', data.error);
-                showErrorToast('Error deleting schedule: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Delete error:', error);
-            showErrorToast('Network error occurred while deleting: ' + error.message);
-        })
-        .finally(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    }
-
-    function refreshSchedules() {
-        loadSchedules();
-        showSuccessToast('Schedules refreshed!');
-    }
-
-    function showLoadingOverlay() {
-        const existing = document.getElementById('loadingOverlay');
-        if (existing) return;
-
-        const overlay = document.createElement('div');
-        overlay.id = 'loadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = '<div class="spinner"></div>';
-
-        const grid = document.querySelector('.weekly-template-grid');
-        if (grid) {
-            grid.appendChild(overlay);
-        }
-    }
-
-    function hideLoadingOverlay() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.remove();
-        }
-    }
-
-    function hideInitialLoader() {
-        const loader = document.getElementById('initialLoader');
-        if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => loader.remove(), 300);
-        }
-    }
-
-    function showSuccessToast(message) {
-        showToast(message, 'bg-success');
-    }
-
-    function showErrorToast(message) {
-        showToast(message, 'bg-danger');
-    }
-
-    function showToast(message, bgClass) {
-        const toastContainer = document.querySelector('.toast-container');
-        const toastId = 'toast-' + Date.now();
-
-        const toastHtml = `
-            <div class="toast ${bgClass} text-white" role="alert" id="${toastId}">
-                <div class="toast-body d-flex align-items-center">
-                    <i class="fas ${bgClass === 'bg-success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-                    <span class="flex-grow-1">${message}</span>
-                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
-    }
-
-    // Utility function to format time in 12-hour format
-    function formatTime12Hour(timeString) {
-        if (!timeString) return '';
-
-        // If already in 12-hour format (contains AM/PM), return as is
-        if (timeString.includes('AM') || timeString.includes('PM')) {
-            return timeString;
-        }
-
-        // Convert 24-hour format to 12-hour format
-        try {
-            const [hours, minutes] = timeString.split(':');
-            const hour24 = parseInt(hours);
-            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-            const ampm = hour24 < 12 ? 'AM' : 'PM';
-            return `${hour12}:${minutes} ${ampm}`;
-        } catch (e) {
-            return timeString; // Return original if parsing fails
-        }
-    }
-
-    // Helper function to get anti-forgery token
-    function getAntiForgeryToken() {
-        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-    }
+    // Calendar-specific global functions (for backward compatibility)
+    window.refreshSchedules = () => calendarManager.refreshSchedules();
 </script>
