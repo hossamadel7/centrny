@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace centrny.Controllers
 {
@@ -24,12 +22,11 @@ namespace centrny.Controllers
         [AllowAnonymous]
         public IActionResult Index()
         {
-            // If already logged in, redirect to home
+            // If already logged in, redirect to Root
             if (User.Identity.IsAuthenticated)
             {
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Root");
             }
-            
             return View();
         }
 
@@ -49,7 +46,7 @@ namespace centrny.Controllers
                 _logger.LogInformation("Login attempt for username: '{Username}'", username);
 
                 // Find user with all necessary navigation properties
-                var user = await _context.Users  // or _context.User - use whatever worked above
+                var user = await _context.Users
                     .Include(u => u.GroupCodeNavigation)
                     .ThenInclude(g => g.RootCodeNavigation)
                     .Include(u => u.GroupCodeNavigation.GroupPages)
@@ -85,12 +82,12 @@ namespace centrny.Controllers
 
                 // Create authentication claims
                 var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserCode.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim("FullName", user.Name),
-            new Claim("GroupCode", user.GroupCode.ToString())
-        };
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.UserCode.ToString()),
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim("FullName", user.Name),
+                    new Claim("GroupCode", user.GroupCode.ToString())
+                };
 
                 // Add group and root information if available
                 if (user.GroupCodeNavigation != null)
@@ -136,13 +133,13 @@ namespace centrny.Controllers
 
                 _logger.LogInformation("Successful login for user: {Username}", username);
 
-                // Redirect to return URL or home
+                // Redirect to return URL or Root
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
                     return Redirect(returnUrl);
                 }
 
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Root");
             }
             catch (Exception ex)
             {
@@ -168,8 +165,6 @@ namespace centrny.Controllers
             _logger.LogInformation("User logged out: {Username}", User.Identity.Name);
             return RedirectToAction("Index");
         }
-
-      
 
         // MD5 password verification to match your database trigger
         private bool VerifyPlainTextPassword(string plainPassword, string storedPassword)

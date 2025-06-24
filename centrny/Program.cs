@@ -38,9 +38,9 @@ app.UseRouting();
 
 app.UseAuthentication(); // IMPORTANT: Before UseAuthorization
 app.UseAuthorization();
-
+app.MapControllers(); // enables attribute routing
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Root}/{action=Index}/{id?}");
 
 app.Run();
