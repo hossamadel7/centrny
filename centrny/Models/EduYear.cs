@@ -11,8 +11,6 @@ public partial class EduYear
 
     public bool IsActive { get; set; }
 
-    public int YearCode { get; set; }
-
     public int RootCode { get; set; }
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
@@ -33,5 +31,5 @@ public partial class EduYear
 
     public virtual ICollection<Teach> Teaches { get; set; } = new List<Teach>();
 
-    public virtual Year YearCodeNavigation { get; set; } = null!;
+    public virtual ICollection<Year> Years { get; set; } = new List<Year>();
 }

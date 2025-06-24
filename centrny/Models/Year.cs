@@ -13,6 +13,8 @@ public partial class Year
 
     public int LevelCode { get; set; }
 
+    public int? EduYearCode { get; set; }
+
     public int InsertUser { get; set; }
 
     public DateTime InsertTime { get; set; }
@@ -23,7 +25,7 @@ public partial class Year
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
-    public virtual ICollection<EduYear> EduYears { get; set; } = new List<EduYear>();
+    public virtual EduYear? EduYearCodeNavigation { get; set; }
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 
