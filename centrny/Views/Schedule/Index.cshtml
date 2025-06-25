@@ -223,27 +223,19 @@
                 </div>
                 <div class="modal-body">
                     <div id="scheduleForm">
-                        <!-- User context info in form -->
-                        @if (ViewBag.CurrentUserRootCode != null)
+                        <!-- User context info in form - Only for Center Users -->
+                        @if (ViewBag.CurrentUserRootCode != null && ViewBag.IsCenter == true)
                         {
                             <div class="alert alert-info mb-3">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Note:</strong> This schedule will be created for <strong>@ViewBag.UserRootName</strong>
-                                (@(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode)
+                                (Center - Root Code: @ViewBag.CurrentUserRootCode)
                                 @if (ViewBag.BranchName != null)
                                 {
                                     <span> at <strong>@ViewBag.BranchName</strong></span>
                                 }
-                                @if (ViewBag.IsTeacher)
-                                {
-                                    <br>
-                                    <small class="text-muted">Teacher will be automatically assigned to your account.</small>
-                                }
-                                else
-                                {
-                                    <br>
-                                    <small class="text-muted">Center will be automatically assigned. Select branch and teacher for this schedule.</small>
-                                }
+                                <br>
+                                <small class="text-muted">Center will be automatically assigned. Select branch and teacher for this schedule.</small>
                             </div>
                         }
 
@@ -355,14 +347,8 @@
                             }
                             else
                             {
-                                <!-- For TEACHER USERS: Hall and Educational Year -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Hall</label>
-                                    <select class="form-select" id="hallCode">
-                                        <option value="">Select Branch First</option>
-                                    </select>
-                                    <small class="text-muted">Select branch first to see available halls</small>
-                                </div>
+                                <!-- For TEACHER USERS: Hide hall field completely, Educational Year only -->
+                                <input type="hidden" id="hallCode" value="">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Educational Year</label>
                                     <select class="form-select" id="eduYearCode">
@@ -376,22 +362,30 @@
                                         }
                                     </select>
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <!-- Empty space for teacher users -->
+                                </div>
                             }
                         </div>
 
-                        <!-- Teacher and Year section - UPDATED LOGIC -->
+                        <!-- Teacher and Year section - UPDATED LOGIC FOR TEACHER USERS -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Year *</label>
-                                <select class="form-select" id="yearCode" required onchange="loadSubjectsForTeacher()">
+                                <select class="form-select" id="yearCode" required>
                                     <option value="">Select Year</option>
-                                    @if (ViewData["YearCode"] != null)
+                                    @if (ViewBag.IsTeacher != true)
                                     {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["YearCode"])
+                                        <!-- For CENTER USERS: Show all years normally -->
+                                        @if (ViewData["YearCode"] != null)
                                         {
-                                            <option value="@item.Value">@item.Text</option>
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["YearCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
                                         }
                                     }
+                                    <!-- For TEACHER USERS: Years will be loaded via AJAX -->
                                 </select>
                             </div>
                             
@@ -418,12 +412,10 @@
                             }
                             else
                             {
-                                <!-- For TEACHER USERS: Hide teacher dropdown, auto-assign -->
+                                <!-- For TEACHER USERS: Hide teacher dropdown completely, auto-assign via backend -->
                                 <input type="hidden" id="teacherCode" value="">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Your Assignment</label>
-                                    <input type="text" class="form-control" value="@ViewBag.UserRootName - @ViewBag.BranchName" readonly>
-                                    <small class="text-muted">Your schedule will be assigned to this teacher account</small>
+                                    <!-- Empty space for teacher users - no assignment field shown -->
                                 </div>
                             }
                         </div>
@@ -433,17 +425,18 @@
                                 <label class="form-label">Subject</label>
                                 <select class="form-select" id="subjectCode">
                                     <option value="">Select Subject (Optional)</option>
-                                    @if (ViewData["SubjectCode"] != null)
+                                    @if (ViewBag.IsCenter == true)
                                     {
-                                        @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["SubjectCode"])
-                                        {
-                                            <option value="@item.Value">@item.Text</option>
-                                        }
+                                        <!-- For CENTER USERS: Will be loaded after selecting teacher -->
+                                    }
+                                    else
+                                    {
+                                        <!-- For TEACHER USERS: Will be loaded after selecting year -->
                                     }
                                 </select>
-                                @if (ViewBag.IsTeacher)
+                                @if (ViewBag.IsTeacher == true)
                                 {
-                                    <small class="text-muted">Subjects available in your center/branch</small>
+                                    <small class="text-muted">Select year first to see your subjects</small>
                                 }
                                 else
                                 {
