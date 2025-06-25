@@ -43,8 +43,6 @@ public partial class Lesson
 
     public virtual User? LastUpdateUserNavigation { get; set; }
 
-    public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
-
     public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
 
     public virtual Root RootCodeNavigation { get; set; } = null!;

@@ -13,7 +13,7 @@ public partial class Center
 
     public string CenterPhone { get; set; } = null!;
 
-    public string? CenterAddress { get; set; }
+    public string CenterAddress { get; set; } = null!;
 
     public string? OwnerName { get; set; }
 

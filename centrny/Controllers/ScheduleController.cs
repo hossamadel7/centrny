@@ -1228,6 +1228,24 @@ namespace centrny.Controllers
                 ViewBag.DropdownError = $"Error loading dropdown data: {ex.Message}";
             }
         }
+        // EduYear
+        [HttpGet]
+        public IActionResult GetByRootCode(int rootCode) =>
+            Ok(_context.EduYears.Where(e => e.RootCode == rootCode && e.IsActive).Select(e => new { e.EduCode, e.EduName }).ToList());
+
+        // Year
+        [HttpGet]
+        public IActionResult GetByEduYearCode(int eduYearCode) =>
+            Ok(_context.Years.Where(y => y.EduYearCode == eduYearCode).Select(y => new { y.YearCode, y.YearName }).ToList());
+
+        // Teach/Year
+        [HttpGet]
+        public IActionResult GetYearsForSubjectTeacher(int teacherCode, int subjectCode) =>
+            Ok(_context.Teaches
+                .Where(t => t.TeacherCode == teacherCode && t.SubjectCode == subjectCode)
+                .Join(_context.Years, t => t.YearCode, y => y.YearCode, (t, y) => new { y.YearCode, y.YearName })
+                .Distinct()
+                .ToList());
 
         private string GetEventColor(bool? isCenter)
         {

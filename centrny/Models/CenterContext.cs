@@ -421,17 +421,11 @@ public partial class CenterContext : DbContext
                 .HasDefaultValue(true)
                 .HasColumnName("isActive");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
-            entity.Property(e => e.YearCode).HasColumnName("Year_Code");
 
             entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.EduYears)
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Edu_Year_Root");
-
-            entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.EduYears)
-                .HasForeignKey(d => d.YearCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Edu_Year_Year");
         });
 
         modelBuilder.Entity<Employee>(entity =>
@@ -909,10 +903,6 @@ public partial class CenterContext : DbContext
             entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.Learns)
                 .HasForeignKey(d => d.YearCode)
                 .HasConstraintName("FK_Learn_Lesson");
-
-            entity.HasOne(d => d.YearCode1).WithMany(p => p.Learns)
-                .HasForeignKey(d => d.YearCode)
-                .HasConstraintName("FK_Learn_Year");
         });
 
         modelBuilder.Entity<Lesson>(entity =>
@@ -1898,6 +1888,7 @@ public partial class CenterContext : DbContext
             entity.ToTable("Year");
 
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
+            entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -1912,6 +1903,10 @@ public partial class CenterContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("Year_Name");
             entity.Property(e => e.YearSort).HasColumnName("Year_Sort");
+
+            entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Years)
+                .HasForeignKey(d => d.EduYearCode)
+                .HasConstraintName("FK_Year_Edu_Year");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.YearInsertUserNavigations)
                 .HasForeignKey(d => d.InsertUser)

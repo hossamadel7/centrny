@@ -1,4 +1,4 @@
-﻿﻿@@model List<centrny.Models.Schedule>
+﻿@model List<centrny.Models.Schedule>
 
 @{
     ViewData["Title"] = "Schedule List";
@@ -85,10 +85,14 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @if (item.StartTime.HasValue && item.EndTime.HasValue)
+                                                    @{
+                                                        var startTime = item.StartTime;
+                                                        var endTime = item.EndTime;
+                                                    }
+                                                    @if (startTime.HasValue && endTime.HasValue)
                                                     {
                                                         <small class="text-muted">
-                                                            @item.StartTime.Value.ToString("hh:mm tt") - @item.EndTime.Value.ToString("hh:mm tt")
+                                                            @startTime.Value.ToString("hh:mm tt") - @endTime.Value.ToString("hh:mm tt")
                                                         </small>
                                                     }
                                                 </td>
@@ -456,7 +460,10 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn-modern" id="saveScheduleBtn">
-                        <i class="fas fa-save me-2"></i>Save Schedule
+                        <i class="fas fa-save me-2"></i><span class="btn-text">Save Schedule</span>
+                        <div class="spinner-border spinner-border-sm d-none" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -546,15 +553,81 @@
     class IndexScheduleManager {
         constructor() {
             this.setupIndexSpecific();
+            this.setupDoubleClickPrevention();
         }
 
         setupIndexSpecific() {
             // Override the common manager's callbacks
-            scheduleManager.onScheduleSaved = () => this.refreshList();
-            scheduleManager.onScheduleDeleted = () => this.refreshList();
+            if (typeof scheduleManager !== 'undefined') {
+                scheduleManager.onScheduleSaved = () => this.refreshList();
+                scheduleManager.onScheduleDeleted = () => this.refreshList();
+            }
             
             // Load initial data
             this.loadAllSchedules();
+        }
+
+        setupDoubleClickPrevention() {
+            const saveButton = document.getElementById('saveScheduleBtn');
+            if (saveButton) {
+                let isSubmitting = false;
+                
+                saveButton.addEventListener('click', (e) => {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                    
+                    isSubmitting = true;
+                    
+                    // Disable button and show loading state
+                    saveButton.disabled = true;
+                    const btnText = saveButton.querySelector('.btn-text');
+                    const spinner = saveButton.querySelector('.spinner-border');
+                    
+                    if (btnText) btnText.textContent = 'Saving...';
+                    if (spinner) spinner.classList.remove('d-none');
+                    
+                    // Re-enable after operation completes (or fails)
+                    if (typeof scheduleManager !== 'undefined') {
+                        const originalCallback = scheduleManager.onScheduleSaved;
+                        scheduleManager.onScheduleSaved = () => {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                            if (originalCallback) originalCallback();
+                        };
+                        
+                        // Also handle errors
+                        const originalError = scheduleManager.onScheduleError || (() => {});
+                        scheduleManager.onScheduleError = (error) => {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                            originalError(error);
+                        };
+                    }
+                    
+                    // Reset after 10 seconds as failsafe
+                    setTimeout(() => {
+                        if (isSubmitting) {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                        }
+                    }, 10000);
+                });
+            }
+        }
+
+        resetSaveButton() {
+            const saveButton = document.getElementById('saveScheduleBtn');
+            if (saveButton) {
+                saveButton.disabled = false;
+                const btnText = saveButton.querySelector('.btn-text');
+                const spinner = saveButton.querySelector('.spinner-border');
+                
+                if (btnText) btnText.textContent = 'Save Schedule';
+                if (spinner) spinner.classList.add('d-none');
+            }
         }
 
         async loadAllSchedules() {
@@ -563,32 +636,36 @@
                 const events = await response.json();
                 
                 // Transform events to schedule format for the common manager
-                scheduleManager.allSchedules = events.map(event => ({
-                    scheduleCode: event.extendedProps.scheduleCode,
-                    scheduleName: event.title,
-                    dayOfWeek: event.extendedProps.dayOfWeek,
-                    startTime: event.extendedProps.startTime,
-                    endTime: event.extendedProps.endTime,
-                    hallName: event.extendedProps.hallName,
-                    hallCode: event.extendedProps.hallCode,
-                    teacherName: event.extendedProps.teacherName,
-                    teacherCode: event.extendedProps.teacherCode,
-                    subjectName: event.extendedProps.subjectName,
-                    subjectCode: event.extendedProps.subjectCode,
-                    centerName: event.extendedProps.centerName,
-                    centerCode: event.extendedProps.centerCode,
-                    branchName: event.extendedProps.branchName,
-                    branchCode: event.extendedProps.branchCode,
-                    eduYearCode: event.extendedProps.eduYearCode,
-                    yearCode: event.extendedProps.yearCode,
-                    scheduleAmount: event.extendedProps.scheduleAmount,
-                    isCenter: event.extendedProps.isCenter
-                }));
+                if (typeof scheduleManager !== 'undefined') {
+                    scheduleManager.allSchedules = events.map(event => ({
+                        scheduleCode: event.extendedProps?.scheduleCode || 0,
+                        scheduleName: event.title || 'Untitled',
+                        dayOfWeek: event.extendedProps?.dayOfWeek || '',
+                        startTime: event.extendedProps?.startTime || '',
+                        endTime: event.extendedProps?.endTime || '',
+                        hallName: event.extendedProps?.hallName || '',
+                        hallCode: event.extendedProps?.hallCode || null,
+                        teacherName: event.extendedProps?.teacherName || '',
+                        teacherCode: event.extendedProps?.teacherCode || null,
+                        subjectName: event.extendedProps?.subjectName || '',
+                        subjectCode: event.extendedProps?.subjectCode || null,
+                        centerName: event.extendedProps?.centerName || '',
+                        centerCode: event.extendedProps?.centerCode || null,
+                        branchName: event.extendedProps?.branchName || '',
+                        branchCode: event.extendedProps?.branchCode || null,
+                        eduYearCode: event.extendedProps?.eduYearCode || null,
+                        yearCode: event.extendedProps?.yearCode || null,
+                        scheduleAmount: event.extendedProps?.scheduleAmount || null,
+                        isCenter: event.extendedProps?.isCenter || false
+                    }));
+                }
                 
-                console.log('✅ Schedules loaded for Index view:', scheduleManager.allSchedules.length);
+                console.log('✅ Schedules loaded for Index view:', events.length);
             } catch (error) {
                 console.error('❌ Error loading schedules:', error);
-                scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
+                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
+                    scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
+                }
             }
         }
 
@@ -599,9 +676,27 @@
         }
     }
 
-    // Initialize Index-specific manager
-    const indexManager = new IndexScheduleManager();
-
-    // Index-specific global functions (for backward compatibility)
-    window.refreshList = () => indexManager.refreshList();
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Index-specific manager
+        const indexManager = new IndexScheduleManager();
+        
+        // Index-specific global functions (for backward compatibility)
+        window.refreshList = () => indexManager.refreshList();
+        window.showScheduleDetails = (scheduleCode) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.showScheduleDetails) {
+                scheduleManager.showScheduleDetails(scheduleCode);
+            }
+        };
+        window.editSchedule = (scheduleCode) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.editSchedule) {
+                scheduleManager.editSchedule(scheduleCode);
+            }
+        };
+        window.deleteSchedule = (scheduleCode) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.deleteSchedule) {
+                scheduleManager.deleteSchedule(scheduleCode);
+            }
+        };
+    });
 </script>

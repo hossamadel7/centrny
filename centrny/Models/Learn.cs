@@ -49,7 +49,5 @@ public partial class Learn
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
 
-    public virtual Year? YearCode1 { get; set; }
-
-    public virtual Lesson? YearCodeNavigation { get; set; }
+    public virtual Year? YearCodeNavigation { get; set; }
 }
