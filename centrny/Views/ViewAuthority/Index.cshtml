@@ -1,0 +1,62 @@
+﻿@model IEnumerable<centrny.Models.Root>
+@{
+    ViewBag.Title = "Group-Page Permissions";
+    Layout = "_Layout";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Group-Page Permissions</title>
+    <link rel="stylesheet" href="~/css/student-profile-enhanced.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
+</head>
+<body>
+    <div class="container" style="margin-top:2rem;">
+        <div class="user-info mb-4">Select a root to manage group-page permissions in a modern UI.</div>
+        <div class="form-group mb-4">
+            <label for="rootSelect" class="form-label">Select Root:</label>
+            <select id="rootSelect" class="form-control" style="max-width: 320px;">
+                <option value="">-- Choose Root --</option>
+                @foreach (var root in Model)
+                {
+                    <option value="@root.RootCode">@root.RootName</option>
+                }
+            </select>
+        </div>
+        <div id="infoForms" style="display:none;">
+            <div class="side-by-side mb-3" id="authority-side-by-side">
+                <form id="groupsForm" class="modern-card">
+                    <h4>Groups</h4>
+                    <ul class="list-group-modern" id="groupsList">
+                        <!-- Groups will appear here -->
+                    </ul>
+                </form>
+                <form id="pagesForm" class="modern-card">
+                    <h4>Pages</h4>
+                    <ul class="list-group-modern" id="pagesList">
+                        <!-- Pages will appear here -->
+                    </ul>
+                </form>
+            </div>
+        </div>
+        <div id="permissionForm" style="display:none;">
+            <form id="permForm" autocomplete="off">
+                <h4>
+                    Set Permissions for
+                    <span id="permGroupName" class="text-primary"></span> /
+                    <span id="permPageName" class="text-primary"></span>
+                </h4>
+                <div class="perm-flags">
+                    <label><input type="checkbox" id="canInsert" style="margin-right:5px;"> Insert</label>
+                    <label><input type="checkbox" id="canUpdate" style="margin-right:5px;"> Update</label>
+                    <label><input type="checkbox" id="canDelete" style="margin-right:5px;"> Delete</label>
+                </div>
+                <button type="submit" class="btn-save-perm">Save Permission</button>
+            </form>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/js/ViewAuthority.js"></script>
+</body>
+</html>

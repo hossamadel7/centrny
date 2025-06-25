@@ -1,4 +1,26 @@
-﻿/* Enhanced Student Profile Styles */
+﻿:root {
+    --primary-color: #6c5ce7;
+    --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #00b894 100%);
+    --info-color: #0984e3;
+    --info-gradient: linear-gradient(135deg, #0984e3 0%, #00b894 100%);
+    --success-color: #00b894;
+    --success-gradient: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+    --danger-color: #d63031;
+    --danger-gradient: linear-gradient(135deg, #d63031 0%, #fdcb6e 100%);
+    --warning-color: #fdcb6e;
+    --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+    --bg-white: #fff;
+    --bg-light: #f8f9fa;
+    --text-dark: #353b48;
+    --text-muted: #636e72;
+    --border-radius: 18px;
+    --border-color: #e1e8ed;
+    --shadow: 0 2px 13px 0 rgba(34, 49, 63, 0.07);
+    --shadow-lg: 0 8px 30px 0 rgba(34, 49, 63, 0.13);
+    --transition: all 0.2s cubic-bezier(.4,0,.2,1);
+}
+
+/* Enhanced Student Profile Styles */
 /* Additional styles for interactive features and animations */
 
 /* Enhanced Subject Cards */
@@ -706,6 +728,16 @@
     animation: spin 1s linear infinite;
 }
 
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 /* Pagination Enhancements */
 .pagination-controls {
     background: var(--bg-light);
@@ -850,3 +882,293 @@
         color: #000 !important;
     }
 }
+
+/* --------- MODERN MANAGEMENT VIEW ENHANCEMENTS --------- */
+
+#management-content > div {
+    background: linear-gradient(135deg, #ffffff 60%, #f8f9fa 100%);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 1.5rem;
+    padding: 2rem 1.5rem;
+    border: none;
+    position: relative;
+    transition: var(--transition);
+}
+
+    #management-content > div:not(:last-child) {
+        border-bottom: 0.5rem solid var(--primary-color);
+    }
+
+#management-content .d-flex.align-items-center {
+    margin-bottom: 1rem;
+}
+
+#management-content h5 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: 0.5px;
+    margin-right: 1rem;
+    margin-bottom: 0;
+}
+
+#management-content .btn {
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: .45rem 1.2rem;
+    box-shadow: 0 2px 8px 0 rgba(34,49,63,.07);
+    border: none;
+    transition: var(--transition);
+    margin-left: 0.4rem;
+}
+
+    #management-content .btn:hover {
+        filter: brightness(1.07);
+        transform: translateY(-2px) scale(1.06);
+        box-shadow: var(--shadow-lg);
+    }
+
+#management-content .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+#management-content .plan-card, #branches-list > div, #branches-list > .mb-3, #centers-list > .mb-3, #teachers-list > div {
+    background: linear-gradient(120deg, #f8faff 80%, #f2f7fa 100%);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 24px 0 rgba(34,49,63,.08);
+    border: 1.5px solid var(--border-color);
+    padding: 1.3rem 1rem;
+    margin-bottom: 1.1rem;
+    position: relative;
+    transition: var(--transition);
+}
+
+    #branches-list > div:hover,
+    #centers-list > .mb-3:hover,
+    #teachers-list > div:hover {
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+        transform: translateY(-3px) scale(1.015);
+    }
+
+#management-content ul {
+    padding-left: 0;
+    margin-bottom: 0.7rem;
+}
+
+    #management-content ul li {
+        list-style: none;
+        background: #f4f9fd;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 1px 4px 0 rgba(108,92,231,.04);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        font-size: 0.98rem;
+    }
+
+        #management-content ul li b {
+            color: var(--primary-color);
+        }
+
+        #management-content ul li > span {
+            margin-left: .65rem;
+            font-size: 0.97rem;
+            color: var(--text-muted);
+        }
+
+        #management-content ul li button {
+            margin-left: auto;
+        }
+
+.subject-card, .plan-card, .exam-card,
+#branches-list > div, #teachers-list > div, #centers-list > .mb-3 {
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+#branches-list .btn,
+#centers-list .btn,
+#teachers-list .btn {
+    font-size: 0.92rem;
+    padding: .35rem 0.9rem;
+    border-radius: 9px;
+    margin-left: 0.2rem;
+}
+
+/* Highlighted action colors for context */
+#management-content .btn-success {
+    background: linear-gradient(135deg, #00b894 0%, #00cec9 100%) !important;
+    color: #fff !important;
+}
+
+#management-content .btn-info {
+    background: linear-gradient(135deg, #0984e3 0%, #00b894 100%) !important;
+    color: #fff !important;
+}
+
+#management-content .btn-warning {
+    background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%) !important;
+    color: #212529 !important;
+}
+
+#management-content .btn-danger {
+    background: linear-gradient(135deg, #d63031 0%, #fdcb6e 100%) !important;
+    color: #fff !important;
+}
+
+#management-content .btn-primary {
+    background: linear-gradient(135deg, #6c5ce7 0%, #00b894 100%) !important;
+    color: #fff !important;
+}
+
+/* Section border and light effect */
+#management-content > .section-border {
+    box-shadow: 0 8px 30px 0 rgba(34,49,63,.10);
+    border-left: 6px solid var(--success-color);
+}
+
+/* Section headers */
+#management-content .section-title {
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.3rem;
+    gap: 0.7rem;
+    letter-spacing: .4px;
+}
+
+    #management-content .section-title i {
+        font-size: 1.4rem;
+        margin-right: 0.6rem;
+    }
+
+/* User Info Box */
+.user-info {
+    margin-bottom: 1.2rem;
+    padding: 0.7rem 1.5rem;
+    background: linear-gradient(135deg, #e8f0ff 0%, #f8faff 100%);
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    color: var(--primary-color);
+    box-shadow: 0 1px 7px 0 rgba(34,49,63,.04);
+    border-left: 4px solid var(--info-color);
+    font-size: 1rem;
+}
+
+/* Accordion modern look for sections */
+.accordion,
+.accordion-item,
+.accordion-button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.accordion-button {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    transition: var(--transition);
+}
+
+    .accordion-button:not(.collapsed) {
+        background: var(--bg-light) !important;
+        color: var(--success-color);
+        box-shadow: 0 2px 8px 0 rgba(0,184,148,.06);
+    }
+
+/* Modal styling */
+.modal-content {
+    border-radius: var(--border-radius) !important;
+    box-shadow: 0 12px 42px 0 rgba(108,92,231,0.13) !important;
+    border: none !important;
+    background: linear-gradient(120deg, #f8faff 80%, #f2f7fa 100%);
+}
+
+.modal-header {
+    border-bottom: none !important;
+    padding-bottom: 0;
+}
+
+.modal-footer {
+    border-top: none !important;
+    padding-top: 0;
+}
+
+.modal-title {
+    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.form-label {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Input fields */
+input.form-control, select.form-select {
+    border-radius: 12px !important;
+    border: 2px solid var(--border-color) !important;
+    transition: var(--transition);
+    font-size: 1rem;
+}
+
+    input.form-control:focus, select.form-select:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 2px rgba(108,92,231,0.10);
+    }
+
+/* Responsive for sections */
+@media (max-width: 900px) {
+    #management-content .plans-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #management-content > div {
+        padding: 1.2rem 0.6rem;
+    }
+}
+
+@media (max-width: 600px) {
+    #management-content > div {
+        padding: 0.7rem 0.2rem;
+    }
+
+    #management-content .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .user-info {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.98rem;
+    }
+
+    #branches-list > div, #centers-list > .mb-3, #teachers-list > div {
+        padding: 0.7rem 0.4rem;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: #f2f7fa;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #dfe6e9;
+    border-radius: 8px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #b2bec3;
+    }
