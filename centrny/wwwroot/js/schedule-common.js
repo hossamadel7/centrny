@@ -1,5 +1,5 @@
 ﻿/**
- * Schedule Management - Common JavaScript
+ * Schedule Management - Common JavaScript (Updated for Teacher Users)
  * Shared functionality for Index and Calendar views
  */
 
@@ -10,6 +10,7 @@ class ScheduleManager {
         this.scheduleToDelete = null;
         this.allSchedules = [];
         this.userContext = {};
+        this.currentTeacherCode = null; // Store current teacher code for teacher users
 
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
@@ -77,6 +78,18 @@ class ScheduleManager {
                 }
             });
         }
+
+        // Year change handler for teacher users
+        const yearSelect = document.getElementById('yearCode');
+        if (yearSelect) {
+            yearSelect.addEventListener('change', () => {
+                if (this.userContext.isTeacher) {
+                    this.loadSubjectsForTeacherByYear();
+                } else {
+                    this.loadSubjectsForTeacher();
+                }
+            });
+        }
     }
 
     setupModalHandlers() {
@@ -96,6 +109,9 @@ class ScheduleManager {
                 console.log('🔍 Center user detected - loading branches and teachers via AJAX...');
                 this.loadBranchesForCenterUser();
                 this.loadTeachersForCenterUser();
+            } else if (this.userContext.isTeacher && !this.isEditMode) {
+                console.log('🔍 Teacher user detected - loading years via AJAX...');
+                this.loadYearsForTeacherUser();
             }
         });
     }
@@ -111,7 +127,114 @@ class ScheduleManager {
         };
     }
 
-    // ==================== AJAX OPERATIONS ====================
+    // ==================== AJAX OPERATIONS FOR TEACHER USERS ====================
+
+    async loadYearsForTeacherUser() {
+        console.log('🔍 === LOADING YEARS FOR TEACHER USER VIA AJAX ===');
+
+        if (!this.userContext.isTeacher) {
+            console.log('❌ Not a teacher user, skipping year loading');
+            return;
+        }
+
+        const yearSelect = document.getElementById('yearCode');
+        if (!yearSelect) {
+            console.log('❌ Year dropdown not found');
+            return;
+        }
+
+        try {
+            yearSelect.innerHTML = '<option value="">Loading years...</option>';
+            yearSelect.disabled = true;
+
+            const response = await fetch('/Schedule/GetYearsForTeacherRoot');
+            const data = await response.json();
+
+            console.log('🔍 Years API Response:', data);
+
+            if (data.success && data.years) {
+                yearSelect.innerHTML = '<option value="">Select Year</option>';
+                data.years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year.value;
+                    option.textContent = year.text;
+                    yearSelect.appendChild(option);
+                });
+
+                // Store teacher code for later use
+                if (data.teacherCode) {
+                    this.currentTeacherCode = data.teacherCode;
+                    // Set hidden teacher field
+                    const teacherCodeInput = document.getElementById('teacherCode');
+                    if (teacherCodeInput) {
+                        teacherCodeInput.value = data.teacherCode;
+                    }
+                }
+
+                console.log('✅ Years loaded successfully for teacher user');
+            } else {
+                yearSelect.innerHTML = '<option value="">No years available</option>';
+                console.log('❌ Failed to load years:', data.error);
+            }
+        } catch (error) {
+            console.error('❌ Error loading years:', error);
+            yearSelect.innerHTML = '<option value="">Error loading years</option>';
+        } finally {
+            yearSelect.disabled = false;
+        }
+    }
+
+    async loadSubjectsForTeacherByYear() {
+        console.log('🔍 === LOADING SUBJECTS BY YEAR FOR TEACHER USER ===');
+
+        const yearSelect = document.getElementById('yearCode');
+        const subjectSelect = document.getElementById('subjectCode');
+
+        if (!yearSelect || !subjectSelect) {
+            console.log('❌ Required dropdowns not found');
+            return;
+        }
+
+        const yearCode = yearSelect.value;
+        const teacherCode = this.currentTeacherCode || document.getElementById('teacherCode')?.value;
+
+        if (!yearCode || !teacherCode) {
+            subjectSelect.innerHTML = '<option value="">Select Year First</option>';
+            console.log('❌ Year or teacher not selected');
+            return;
+        }
+
+        try {
+            subjectSelect.innerHTML = '<option value="">Loading subjects...</option>';
+            subjectSelect.disabled = true;
+
+            const response = await fetch(`/Schedule/GetSubjectsForTeacherByYear?teacherCode=${teacherCode}&yearCode=${yearCode}`);
+            const data = await response.json();
+
+            console.log('🔍 Subjects by Year API Response:', data);
+
+            if (data.success && data.subjects) {
+                subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
+                data.subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject.value;
+                    option.textContent = subject.text;
+                    subjectSelect.appendChild(option);
+                });
+                console.log('✅ Subjects loaded successfully by year');
+            } else {
+                subjectSelect.innerHTML = '<option value="">No subjects available</option>';
+                console.log('❌ Failed to load subjects:', data.error);
+            }
+        } catch (error) {
+            console.error('❌ Error loading subjects by year:', error);
+            subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
+        } finally {
+            subjectSelect.disabled = false;
+        }
+    }
+
+    // ==================== EXISTING AJAX OPERATIONS ====================
 
     async loadBranchesForCenterUser() {
         console.log('🔍 === LOADING BRANCHES VIA AJAX ===');
@@ -394,7 +517,7 @@ class ScheduleManager {
             { id: 'yearCode', name: 'Year' }
         ];
 
-        // Add teacher requirement for center users
+        // Add teacher requirement for center users only
         if (this.userContext.isCenter) {
             requiredFields.push({ id: 'teacherCode', name: 'Teacher' });
         }
@@ -427,7 +550,6 @@ class ScheduleManager {
             startTime: document.getElementById('startTime')?.value,
             endTime: document.getElementById('endTime')?.value,
             yearCode: parseInt(document.getElementById('yearCode')?.value) || null,
-            hallCode: parseInt(document.getElementById('hallCode')?.value) || null,
             eduYearCode: parseInt(document.getElementById('eduYearCode')?.value) || null,
             centerCode: parseInt(document.getElementById('centerCode')?.value) || null,
             branchCode: parseInt(document.getElementById('branchCode')?.value) || null,
@@ -435,6 +557,13 @@ class ScheduleManager {
             subjectCode: parseInt(document.getElementById('subjectCode')?.value) || null,
             scheduleAmount: parseFloat(document.getElementById('scheduleAmount')?.value) || null
         };
+
+        // Only include hall code for center users
+        if (this.userContext.isCenter) {
+            data.hallCode = parseInt(document.getElementById('hallCode')?.value) || null;
+        } else {
+            data.hallCode = null; // Explicitly set to null for teacher users
+        }
 
         return data;
     }
@@ -522,7 +651,7 @@ class ScheduleManager {
                 ${schedule.scheduleAmount ? `
                 <div class="detail-item">
                     <span class="detail-label">Amount</span>
-                    <span class="detail-value text-success fw-bold">$${parseFloat(schedule.scheduleAmount).toFixed(2)}</span>
+                    <span class="detail-value text-success fw-bold">${parseFloat(schedule.scheduleAmount).toFixed(2)}</span>
                 </div>` : ''}
             </div>
         `;
@@ -587,6 +716,11 @@ class ScheduleManager {
                 element.value = value;
             }
         });
+
+        // For teacher users in edit mode, ensure teacher code is set
+        if (this.userContext.isTeacher && schedule.teacherCode) {
+            this.currentTeacherCode = schedule.teacherCode;
+        }
     }
 
     deleteSchedule(scheduleId) {
@@ -683,6 +817,11 @@ class ScheduleManager {
                     // Keep center code for center users
                     return;
                 }
+                if (input.id === 'teacherCode' && this.userContext.isTeacher) {
+                    // Keep teacher code for teacher users but clear the stored value
+                    this.currentTeacherCode = null;
+                    return;
+                }
                 input.value = '';
             });
         }
@@ -694,9 +833,18 @@ class ScheduleManager {
     resetDependentDropdowns() {
         const dropdownsToReset = [
             { id: 'branchCode', defaultText: this.userContext.isCenter ? 'Select Branch (Optional)' : 'Select Center First' },
-            { id: 'hallCode', defaultText: 'Select Branch First' },
-            { id: 'subjectCode', defaultText: 'Select Subject (Optional)' }
+            { id: 'subjectCode', defaultText: this.userContext.isTeacher ? 'Select Year First' : 'Select Subject (Optional)' }
         ];
+
+        // Only reset hall dropdown for center users
+        if (this.userContext.isCenter) {
+            dropdownsToReset.push({ id: 'hallCode', defaultText: 'Select Branch First' });
+        }
+
+        // For teacher users, also reset year dropdown
+        if (this.userContext.isTeacher) {
+            dropdownsToReset.push({ id: 'yearCode', defaultText: 'Loading...' });
+        }
 
         dropdownsToReset.forEach(dropdown => {
             const element = document.getElementById(dropdown.id);
@@ -808,41 +956,4 @@ ScheduleManager.createGlobalFunctions(scheduleManager);
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ScheduleManager;
-}
-
-// On modal open
-function loadEduYears() {
-    var rootCode = $('#rootCode').val();
-    $.getJSON('/api/EduYear/GetByRootCode', { rootCode }, function (data) {
-        fillDropdown('#eduYearCode', data, 'EduCode', 'EduName');
-    });
-}
-
-// On EduYear change
-$('#eduYearCode').on('change', function () {
-    var eduYearCode = $(this).val();
-    $.getJSON('/api/Year/GetByEduYearCode', { eduYearCode }, function (data) {
-        fillDropdown('#yearCode', data, 'YearCode', 'YearName');
-    });
-});
-
-// On Subject or Teacher change
-$('#subjectCode, #teacherCode').on('change', function () {
-    var teacherCode = $('#teacherCode').val();
-    var subjectCode = $('#subjectCode').val();
-    if (teacherCode && subjectCode) {
-        $.getJSON('/api/Teach/GetYearsForSubjectTeacher', { teacherCode, subjectCode }, function (data) {
-            fillDropdown('#yearNamesByTeach', data, 'YearCode', 'YearName'); // You can adapt for your UI
-        });
-    }
-});
-
-// Helper
-function fillDropdown(selector, data, valueField, textField) {
-    var $dropdown = $(selector);
-    $dropdown.empty();
-    $dropdown.append($('<option>').val('').text('Select...'));
-    $.each(data, function (i, item) {
-        $dropdown.append($('<option>').val(item[valueField]).text(item[textField]));
-    });
 }
