@@ -16,7 +16,7 @@ namespace centrny1.Controllers
             _context = context;
         }
 
-        public IActionResult Security()
+        public IActionResult Index()
         {
             return View();
         }
