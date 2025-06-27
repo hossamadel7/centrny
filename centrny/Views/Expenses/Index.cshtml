@@ -1,0 +1,63 @@
+﻿@{
+    ViewBag.Title = "Expenses";
+    var isRootAdmin = ViewBag.IsRootAdmin ?? false;
+    var roots = ViewBag.Roots as IEnumerable<dynamic>;
+    var expenses = ViewBag.Expenses as IEnumerable<centrny.Models.Expense>;
+    int? userRootCode = ViewBag.UserRootCode as int?;
+}
+
+<h2>Expenses</h2>
+
+@if (isRootAdmin)
+{
+    <label for="rootDropdown">Select Root:</label>
+    <select id="rootDropdown" class="form-control" style="width: 300px; display: inline;">
+        <option value="">-- Select Root --</option>
+        @if (roots != null)
+        {
+            foreach (var root in roots)
+            {
+                <option value="@root.RootCode">@root.RootName (@root.RootCode)</option>
+            }
+        }
+    </select>
+    <div id="expensesTableContainer"></div>
+}
+else
+{
+    <h4>Expenses for Root Code: @userRootCode</h4>
+    <div id="expensesTableContainer">
+        @if (expenses != null && expenses.Any())
+        {
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        @foreach (var prop in typeof(centrny.Models.Expense).GetProperties())
+                        {
+                            <th>@prop.Name</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var exp in expenses)
+                    {
+                        <tr>
+                            @foreach (var prop in typeof(centrny.Models.Expense).GetProperties())
+                            {
+                                <td>@(prop.GetValue(exp) ?? "")</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-info">No expenses found for this root.</div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/Expenses.js"></script>
+}

@@ -1,4 +1,4 @@
-﻿﻿@{
+﻿@{
     ViewData["Title"] = "Schedule Calendar";
 }
 
@@ -424,7 +424,10 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn-modern btn-success" id="saveScheduleBtn">
-                        <i class="fas fa-save me-2"></i>Save Schedule
+                        <i class="fas fa-save me-2"></i><span class="btn-text">Save Schedule</span>
+                        <div class="spinner-border spinner-border-sm d-none" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -515,12 +518,15 @@
         constructor() {
             this.schedules = [];
             this.setupCalendarSpecific();
+            this.setupDoubleClickPrevention();
         }
 
         setupCalendarSpecific() {
             // Override the common manager's callbacks
-            scheduleManager.onScheduleSaved = () => this.refreshSchedules();
-            scheduleManager.onScheduleDeleted = () => this.refreshSchedules();
+            if (typeof scheduleManager !== 'undefined') {
+                scheduleManager.onScheduleSaved = () => this.refreshSchedules();
+                scheduleManager.onScheduleDeleted = () => this.refreshSchedules();
+            }
             
             // Initialize calendar
             if (!window.userContext.hasError) {
@@ -532,6 +538,69 @@
             }
         }
 
+        setupDoubleClickPrevention() {
+            const saveButton = document.getElementById('saveScheduleBtn');
+            if (saveButton) {
+                let isSubmitting = false;
+                
+                saveButton.addEventListener('click', (e) => {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                    
+                    isSubmitting = true;
+                    
+                    // Disable button and show loading state
+                    saveButton.disabled = true;
+                    const btnText = saveButton.querySelector('.btn-text');
+                    const spinner = saveButton.querySelector('.spinner-border');
+                    
+                    if (btnText) btnText.textContent = 'Saving...';
+                    if (spinner) spinner.classList.remove('d-none');
+                    
+                    // Re-enable after operation completes (or fails)
+                    if (typeof scheduleManager !== 'undefined') {
+                        const originalCallback = scheduleManager.onScheduleSaved;
+                        scheduleManager.onScheduleSaved = () => {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                            if (originalCallback) originalCallback();
+                        };
+                        
+                        // Also handle errors
+                        const originalError = scheduleManager.onScheduleError || (() => {});
+                        scheduleManager.onScheduleError = (error) => {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                            originalError(error);
+                        };
+                    }
+                    
+                    // Reset after 10 seconds as failsafe
+                    setTimeout(() => {
+                        if (isSubmitting) {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                        }
+                    }, 10000);
+                });
+            }
+        }
+
+        resetSaveButton() {
+            const saveButton = document.getElementById('saveScheduleBtn');
+            if (saveButton) {
+                saveButton.disabled = false;
+                const btnText = saveButton.querySelector('.btn-text');
+                const spinner = saveButton.querySelector('.spinner-border');
+                
+                if (btnText) btnText.textContent = 'Save Schedule';
+                if (spinner) spinner.classList.add('d-none');
+            }
+        }
+
         async loadSchedules() {
             try {
                 const response = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
@@ -540,33 +609,37 @@
                 this.schedules = events;
                 
                 // Transform events to schedule format for the common manager
-                scheduleManager.allSchedules = events.map(event => ({
-                    scheduleCode: event.extendedProps.scheduleCode,
-                    scheduleName: event.title,
-                    dayOfWeek: event.extendedProps.dayOfWeek,
-                    startTime: event.extendedProps.startTime,
-                    endTime: event.extendedProps.endTime,
-                    hallName: event.extendedProps.hallName,
-                    hallCode: event.extendedProps.hallCode,
-                    teacherName: event.extendedProps.teacherName,
-                    teacherCode: event.extendedProps.teacherCode,
-                    subjectName: event.extendedProps.subjectName,
-                    subjectCode: event.extendedProps.subjectCode,
-                    centerName: event.extendedProps.centerName,
-                    centerCode: event.extendedProps.centerCode,
-                    branchName: event.extendedProps.branchName,
-                    branchCode: event.extendedProps.branchCode,
-                    eduYearCode: event.extendedProps.eduYearCode,
-                    yearCode: event.extendedProps.yearCode,
-                    scheduleAmount: event.extendedProps.scheduleAmount,
-                    isCenter: event.extendedProps.isCenter
-                }));
+                if (typeof scheduleManager !== 'undefined') {
+                    scheduleManager.allSchedules = events.map(event => ({
+                        scheduleCode: event.extendedProps?.scheduleCode || 0,
+                        scheduleName: event.title || 'Untitled',
+                        dayOfWeek: event.extendedProps?.dayOfWeek || '',
+                        startTime: event.extendedProps?.startTime || '',
+                        endTime: event.extendedProps?.endTime || '',
+                        hallName: event.extendedProps?.hallName || '',
+                        hallCode: event.extendedProps?.hallCode || null,
+                        teacherName: event.extendedProps?.teacherName || '',
+                        teacherCode: event.extendedProps?.teacherCode || null,
+                        subjectName: event.extendedProps?.subjectName || '',
+                        subjectCode: event.extendedProps?.subjectCode || null,
+                        centerName: event.extendedProps?.centerName || '',
+                        centerCode: event.extendedProps?.centerCode || null,
+                        branchName: event.extendedProps?.branchName || '',
+                        branchCode: event.extendedProps?.branchCode || null,
+                        eduYearCode: event.extendedProps?.eduYearCode || null,
+                        yearCode: event.extendedProps?.yearCode || null,
+                        scheduleAmount: event.extendedProps?.scheduleAmount || null,
+                        isCenter: event.extendedProps?.isCenter || false
+                    }));
+                }
                 
                 this.renderWeeklyGrid();
                 console.log('✅ Schedules loaded for Calendar view:', this.schedules.length);
             } catch (error) {
                 console.error('❌ Error loading schedules:', error);
-                scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
+                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
+                    scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
+                }
             }
         }
 
@@ -577,7 +650,7 @@
                 const dayContainer = document.getElementById(`day-${day}`);
                 if (!dayContainer) return;
                 
-                const daySchedules = this.schedules.filter(s => s.extendedProps.dayOfWeek === day);
+                const daySchedules = this.schedules.filter(s => s.extendedProps?.dayOfWeek === day);
                 
                 if (daySchedules.length === 0) {
                     dayContainer.innerHTML = `
@@ -589,17 +662,17 @@
                 } else {
                     let html = '';
                     daySchedules.forEach(schedule => {
-                        const eventClass = schedule.extendedProps.isCenter ? 'center-event' : 'teacher-event';
+                        const eventClass = schedule.extendedProps?.isCenter ? 'center-event' : 'teacher-event';
                         html += `
-                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${schedule.extendedProps.scheduleCode})">
+                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${schedule.extendedProps?.scheduleCode || 0})">
                                 <div class="event-title">
-                                    <i class="fas fa-${schedule.extendedProps.isCenter ? 'building' : 'user'}"></i>
-                                    ${schedule.title}
+                                    <i class="fas fa-${schedule.extendedProps?.isCenter ? 'building' : 'user'}"></i>
+                                    ${schedule.title || 'Untitled'}
                                 </div>
-                                <div class="event-time">${schedule.extendedProps.startTime} - ${schedule.extendedProps.endTime}</div>
-                                ${schedule.extendedProps.hallName ? `<div class="event-details">📍 ${schedule.extendedProps.hallName}</div>` : ''}
-                                ${schedule.extendedProps.teacherName ? `<div class="event-details">👨‍🏫 ${schedule.extendedProps.teacherName}</div>` : ''}
-                                ${schedule.extendedProps.subjectName ? `<div class="event-details">📚 ${schedule.extendedProps.subjectName}</div>` : ''}
+                                <div class="event-time">${schedule.extendedProps?.startTime || ''} - ${schedule.extendedProps?.endTime || ''}</div>
+                                ${schedule.extendedProps?.hallName ? `<div class="event-details">📍 ${schedule.extendedProps.hallName}</div>` : ''}
+                                ${schedule.extendedProps?.teacherName ? `<div class="event-details">👨‍🏫 ${schedule.extendedProps.teacherName}</div>` : ''}
+                                ${schedule.extendedProps?.subjectName ? `<div class="event-details">📚 ${schedule.extendedProps.subjectName}</div>` : ''}
                             </div>
                         `;
                     });
@@ -629,18 +702,41 @@
 
         showWelcomeMessage() {
             if (window.userContext.currentUserRootCode) {
-                scheduleManager.showToast(
-                    'Welcome!', 
-                    `Calendar loaded for ${window.userContext.userRootName}`, 
-                    'success'
-                );
+                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
+                    scheduleManager.showToast(
+                        'Welcome!', 
+                        `Calendar loaded for ${window.userContext.userRootName}`, 
+                        'success'
+                    );
+                }
             }
         }
     }
 
-    // Initialize Calendar-specific manager
-    const calendarManager = new CalendarScheduleManager();
-
-    // Calendar-specific global functions (for backward compatibility)
-    window.refreshSchedules = () => calendarManager.refreshSchedules();
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Calendar-specific manager
+        const calendarManager = new CalendarScheduleManager();
+        
+        // Calendar-specific global functions (for backward compatibility)
+        window.refreshSchedules = () => calendarManager.refreshSchedules();
+        window.addScheduleForDay = (day) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.addScheduleForDay) {
+                scheduleManager.addScheduleForDay(day);
+            } else {
+                // Fallback implementation
+                const daySelect = document.getElementById('dayOfWeek');
+                if (daySelect) {
+                    daySelect.value = day;
+                }
+                const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+                modal.show();
+            }
+        };
+        window.showScheduleDetails = (scheduleCode) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.showScheduleDetails) {
+                scheduleManager.showScheduleDetails(scheduleCode);
+            }
+        };
+    });
 </script>

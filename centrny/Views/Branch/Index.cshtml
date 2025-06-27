@@ -1,112 +1,110 @@
-﻿@model IEnumerable<centrny.Models.Branch>
-
-@{
+﻿@{
     ViewData["Title"] = "Manage Branches";
+    var userRootCode = (int)ViewBag.UserRootCode;
+    var userName = (string)ViewBag.CurrentUserName;
+    var centerName = (string)ViewBag.CenterName;
 }
 
 <h2 class="mb-4">Manage Branches</h2>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row g-3 align-items-center">
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Select Type:</label>
-                <div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="typeSelect" id="radioCenter" value="true" checked>
-                        <label class="form-check-label" for="radioCenter">Centers</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="typeSelect" id="radioTeacher" value="false">
-                        <label class="form-check-label" for="radioTeacher">Teachers</label>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <label for="centerOrTeacherDropdown" class="form-label fw-bold">Select Name:</label>
-                <select class="form-select" id="centerOrTeacherDropdown">
-                    <option value="">-- Select --</option>
-                </select>
-            </div>
-            <div class="col-md-3 d-grid">
-                <button id="btnAddBranch" class="btn btn-success mt-4">+ Add New Branch</button>
+@if (userRootCode == 1)
+{
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label for="rootDropdown" class="form-label fw-bold">Select Root (Centers Only):</label>
+            <select class="form-select" id="rootDropdown">
+                <option value="">-- Select Root --</option>
+            </select>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <strong>Center:</strong> <span id="centerName">@centerName</span><br />
+                <strong>User:</strong> <span id="userName">@userName</span>
             </div>
         </div>
     </div>
+    <input type="hidden" id="fixedRootCode" value="@userRootCode" />
+}
+
+<div id="centerBranchSection" style="display:none;">
+    <h4>Centers</h4>
+    <ul class="list-group mb-4" id="centerList"></ul>
+
+    <h4>Branches</h4>
+    <ul class="list-group" id="branchList">
+        <!-- Dynamically populated -->
+    </ul>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-bordered table-striped align-middle" id="branchesTable">
-        <thead class="table-light">
-            <tr>
-                <th>Branch Name</th>
-                <th>Address</th>
-                <th>Phone</th>
-                <th>Start Time</th>
-                <th>Center</th>
-                <th>Is Active</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Populated dynamically via JS -->
-        </tbody>
-    </table>
-</div>
-
-<!-- Branch Modal -->
-<div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="branchModalLabel" aria-hidden="true">
+<!-- Add Hall Modal -->
+<div class="modal fade" id="addHallModal" tabindex="-1" aria-labelledby="addHallModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="branchForm">
+            <form id="addHallForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="branchModalLabel">Add / Edit Branch</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="addHallModalLabel">Add Hall</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
-                    <input type="hidden" id="BranchCode" name="BranchCode" />
-
+                    <input type="hidden" id="hallRootCode" name="RootCode" />
+                    <input type="hidden" id="hallBranchCode" name="BranchCode" />
                     <div class="mb-3">
-                        <label for="BranchName" class="form-label">Branch Name</label>
-                        <input type="text" class="form-control" id="BranchName" name="BranchName" required />
+                        <label for="HallName" class="form-label">Hall Name</label>
+                        <input type="text" class="form-control" id="HallName" name="HallName" required />
                     </div>
-
                     <div class="mb-3">
-                        <label for="Address" class="form-label">Address</label>
-                        <input type="text" class="form-control" id="Address" name="Address" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="Phone" class="form-label">Phone</label>
-                        <input type="text" class="form-control" id="Phone" name="Phone" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="StartTime" class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="StartTime" name="StartTime" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="CenterCode" class="form-label">Center Code</label>
-                        <input type="number" class="form-control" id="CenterCode" name="CenterCode" required />
-                    </div>
-
-                    <div class="form-check mb-3">
-                        <input type="checkbox" class="form-check-input" id="IsActive" name="IsActive" />
-                        <label class="form-check-label" for="IsActive">Is Active</label>
+                        <label for="HallCapacity" class="form-label">Hall Capacity</label>
+                        <input type="number" class="form-control" id="HallCapacity" name="HallCapacity" required min="1" />
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Branch</button>
+                    <button type="submit" class="btn btn-primary">Add Hall</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Edit Hall Modal -->
+<div class="modal fade" id="editHallModal" tabindex="-1" aria-labelledby="editHallModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editHallForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editHallModalLabel">Edit Hall</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editHallCode" name="HallCode" />
+                    <div class="mb-3">
+                        <label for="editHallName" class="form-label">Hall Name</label>
+                        <input type="text" class="form-control" id="editHallName" name="HallName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editHallCapacity" class="form-label">Hall Capacity</label>
+                        <input type="number" class="form-control" id="editHallCapacity" name="HallCapacity" required min="1" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="/css/site.css" />
+
 @section Scripts {
+    <script>
+        const userRootCode = @userRootCode;
+        const userName = '@userName';
+    </script>
     <script src="~/js/branch.js"></script>
 }

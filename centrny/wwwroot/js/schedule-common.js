@@ -809,3 +809,40 @@ ScheduleManager.createGlobalFunctions(scheduleManager);
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ScheduleManager;
 }
+
+// On modal open
+function loadEduYears() {
+    var rootCode = $('#rootCode').val();
+    $.getJSON('/api/EduYear/GetByRootCode', { rootCode }, function (data) {
+        fillDropdown('#eduYearCode', data, 'EduCode', 'EduName');
+    });
+}
+
+// On EduYear change
+$('#eduYearCode').on('change', function () {
+    var eduYearCode = $(this).val();
+    $.getJSON('/api/Year/GetByEduYearCode', { eduYearCode }, function (data) {
+        fillDropdown('#yearCode', data, 'YearCode', 'YearName');
+    });
+});
+
+// On Subject or Teacher change
+$('#subjectCode, #teacherCode').on('change', function () {
+    var teacherCode = $('#teacherCode').val();
+    var subjectCode = $('#subjectCode').val();
+    if (teacherCode && subjectCode) {
+        $.getJSON('/api/Teach/GetYearsForSubjectTeacher', { teacherCode, subjectCode }, function (data) {
+            fillDropdown('#yearNamesByTeach', data, 'YearCode', 'YearName'); // You can adapt for your UI
+        });
+    }
+});
+
+// Helper
+function fillDropdown(selector, data, valueField, textField) {
+    var $dropdown = $(selector);
+    $dropdown.empty();
+    $dropdown.append($('<option>').val('').text('Select...'));
+    $.each(data, function (i, item) {
+        $dropdown.append($('<option>').val(item[valueField]).text(item[textField]));
+    });
+}
