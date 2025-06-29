@@ -1832,6 +1832,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.UserCode)
                 .ValueGeneratedNever()
                 .HasColumnName("User_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.GroupCode).HasColumnName("Group_Code");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
@@ -1848,6 +1849,10 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Password).HasMaxLength(32);
             entity.Property(e => e.Username).HasMaxLength(50);
+
+            entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Users)
+                .HasForeignKey(d => d.BranchCode)
+                .HasConstraintName("FK_User_Branch");
 
             entity.HasOne(d => d.GroupCodeNavigation).WithMany(p => p.Users)
                 .HasForeignKey(d => d.GroupCode)

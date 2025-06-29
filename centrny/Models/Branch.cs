@@ -54,4 +54,6 @@ public partial class Branch
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
     public virtual ICollection<Teach> Teaches { get; set; } = new List<Teach>();
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

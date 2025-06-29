@@ -1,0 +1,1349 @@
+﻿@using centrny.Controllers
+@model StudentRegistrationViewModel
+
+@{
+    ViewData["Title"] = "Student Registration";
+    Layout = null; // No layout for clean registration experience
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @Model.RootName</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #00b894 100%);
+            --success-gradient: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 15px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .registration-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .registration-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .registration-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+            .registration-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+            }
+
+            .registration-header h1 {
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                position: relative;
+                z-index: 2;
+            }
+
+            .registration-header p {
+                opacity: 0.9;
+                margin: 0;
+                position: relative;
+                z-index: 2;
+            }
+
+        .item-key-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-family: monospace;
+            font-weight: 600;
+            margin-top: 1rem;
+            display: inline-block;
+            position: relative;
+            z-index: 2;
+        }
+
+        .registration-body {
+            padding: 2rem;
+        }
+
+        .form-step {
+            display: none;
+        }
+
+            .form-step.active {
+                display: block;
+                animation: slideIn 0.3s ease-out;
+            }
+
+        @@keyframes slideIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.5rem;
+            font-weight: 600;
+            color: #6c757d;
+            transition: var(--transition);
+            position: relative;
+        }
+
+            .step.active {
+                background: var(--primary-gradient);
+                color: white;
+                transform: scale(1.1);
+            }
+
+            .step.completed {
+                background: var(--success-gradient);
+                color: white;
+            }
+
+            .step::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 100%;
+                width: 40px;
+                height: 2px;
+                background: #e9ecef;
+                transform: translateY(-50%);
+                z-index: -1;
+            }
+
+            .step:last-child::after {
+                display: none;
+            }
+
+            .step.completed::after {
+                background: var(--success-gradient);
+            }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+            .form-control:focus, .form-select:focus {
+                border-color: #6c5ce7;
+                box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+                outline: none;
+            }
+
+            .form-control.is-invalid {
+                border-color: #dc3545;
+            }
+
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .btn-navigation {
+            padding: 0.75rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+            }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .subject-selection {
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+            .subject-selection:hover {
+                border-color: #6c5ce7;
+                background: rgba(108, 92, 231, 0.05);
+            }
+
+            .subject-selection.selected {
+                border-color: #6c5ce7;
+                background: rgba(108, 92, 231, 0.1);
+            }
+
+        .teacher-option {
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 0.25rem 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+            .teacher-option:hover {
+                background: #f8f9fa;
+            }
+
+            .teacher-option.selected {
+                background: #e3f2fd;
+                border-color: #2196f3;
+            }
+
+        .schedule-subject-card {
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: #f8f9fa;
+        }
+
+        .schedule-option {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: white;
+        }
+
+            .schedule-option:hover {
+                border-color: #6c5ce7;
+                background: rgba(108, 92, 231, 0.05);
+            }
+
+            .schedule-option input[type="radio"]:checked + label {
+                color: #6c5ce7;
+            }
+
+            .schedule-option:has(input[type="radio"]:checked) {
+                border-color: #6c5ce7;
+                background: rgba(108, 92, 231, 0.1);
+            }
+
+        .schedule-details {
+            padding: 0.5rem 0;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--card-shadow);
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: #6c5ce7;
+        }
+
+        .alert {
+            border-radius: var(--border-radius);
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(85, 239, 196, 0.1) 100%);
+            color: #00b894;
+            border-left: 4px solid #00b894;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(225, 112, 85, 0.1) 0%, rgba(253, 121, 168, 0.1) 100%);
+            color: #e17055;
+            border-left: 4px solid #e17055;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(116, 185, 255, 0.1) 100%);
+            color: #6c5ce7;
+            border-left: 4px solid #6c5ce7;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 235, 59, 0.1) 100%);
+            color: #ffc107;
+            border-left: 4px solid #ffc107;
+        }
+
+        @@media (max-width: 768px) {
+            .registration-container
+
+        {
+            padding: 1rem;
+        }
+
+        .registration-card {
+            margin: 0;
+        }
+
+        .registration-body {
+            padding: 1.5rem;
+        }
+
+        .step-indicator {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .navigation-buttons {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn-navigation {
+            width: 100%;
+        }
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="registration-container">
+        <div class="registration-card">
+            <!-- Header -->
+            <div class="registration-header">
+                <i class="fas fa-graduation-cap fa-3x mb-3"></i>
+                <h1>Welcome to @Model.RootName</h1>
+                <p>Create your student profile to get started</p>
+                <div class="item-key-display">
+                    Item Key: @Model.ItemKey
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="registration-body">
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1">1</div>
+                    <div class="step" id="step2">2</div>
+                    <div class="step" id="step3">3</div>
+                    <div class="step" id="step4">4</div>
+                    <div class="step" id="step5">5</div>
+                </div>
+
+                <!-- Registration Form -->
+                <form id="registrationForm">
+                    <input type="hidden" id="itemKey" value="@Model.ItemKey" />
+
+                    <!-- Step 1: Personal Information -->
+                    <div class="form-step active" id="step1Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-user text-primary me-2"></i>
+                            Personal Information
+                        </h3>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentName">
+                                        Full Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="studentName" required
+                                           placeholder="Enter your full name">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="birthDate">
+                                        Date of Birth <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="birthDate" required>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentPhone">
+                                        Your Phone Number <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="studentPhone" required
+                                           placeholder="Your phone number">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="parentPhone">
+                                        Parent/Guardian Phone <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="parentPhone" required
+                                           placeholder="Parent/Guardian phone">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderMale" value="true">
+                                    <label class="form-check-label" for="genderMale">
+                                        <i class="fas fa-mars me-1"></i> Male
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="false">
+                                    <label class="form-check-label" for="genderFemale">
+                                        <i class="fas fa-venus me-1"></i> Female
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Academic Information -->
+                    <div class="form-step" id="step2Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-school text-primary me-2"></i>
+                            Academic Information
+                        </h3>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="branchCode">
+                                        Select Branch <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="branchCode" required>
+                                        <option value="">Choose your branch...</option>
+                                        @foreach (var branch in Model.AvailableBranches)
+                                        {
+                                            <option value="@branch.Value">@branch.Text</option>
+                                        }
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="yearCode">
+                                        Academic Year/Level
+                                    </label>
+                                    <select class="form-select" id="yearCode">
+                                        <option value="">Choose your year/level...</option>
+                                        @foreach (var year in Model.AvailableYears)
+                                        {
+                                            <option value="@year.Value">@year.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="eduYearCode">
+                                Education Year
+                            </label>
+                            <select class="form-select" id="eduYearCode">
+                                <option value="">Choose education year...</option>
+                                @foreach (var eduYear in Model.AvailableEduYears)
+                                {
+                                    <option value="@eduYear.Value">@eduYear.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Subject Selection -->
+                    <div class="form-step" id="step3Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-books text-primary me-2"></i>
+                            Select Your Subjects
+                        </h3>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Select the subjects you want to study and choose your preferred teachers.
+                        </div>
+
+                        <div id="availableSubjects">
+                            <div class="text-center py-4">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Please complete the previous steps to see available subjects
+                            </div>
+                        </div>
+
+                        <div id="selectedSubjectsSummary" class="mt-4" style="display: none;">
+                            <h5>Selected Subjects:</h5>
+                            <div id="selectedSubjectsList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Schedule Selection -->
+                    <div class="form-step" id="step4Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>
+                            Select Class Schedules
+                        </h3>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Choose your preferred class schedule for each subject. Check available time slots and capacity.
+                        </div>
+
+                        <div id="scheduleSelection">
+                            <div class="text-center py-4">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Please complete the previous steps to see available schedules
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Confirmation -->
+                    <div class="form-step" id="step5Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Confirm Your Registration
+                        </h3>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Please review your information before submitting your registration.
+                        </div>
+
+                        <div id="registrationSummary">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="termsAccepted" required>
+                            <label class="form-check-label" for="termsAccepted">
+                                I agree to the terms and conditions and confirm that all information provided is accurate.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="navigation-buttons">
+                        <button type="button" class="btn-navigation btn-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                            <i class="fas fa-arrow-left me-2"></i>Previous
+                        </button>
+                        <div></div> <!-- Spacer -->
+                        <button type="button" class="btn-navigation btn-primary" id="nextBtn" onclick="changeStep(1)">
+                            Next<i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                        <button type="button" class="btn-navigation btn-success" id="submitBtn" onclick="submitRegistration()" style="display: none;">
+                            <i class="fas fa-check me-2"></i>Complete Registration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-3 mb-0">Processing your registration...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentStep = 1;
+        let selectedSubjects = [];
+        let availableSubjects = [];
+        let availableTeachers = [];
+        let availableSchedules = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepButtons();
+            setupEventListeners();
+        });
+
+        // Event listeners
+        function setupEventListeners() {
+            // Branch change - reload subjects
+            document.getElementById('branchCode').addEventListener('change', function() {
+                if (this.value && document.getElementById('yearCode').value) {
+                    loadAvailableSubjects();
+                }
+            });
+
+            // Year change - reload subjects
+            document.getElementById('yearCode').addEventListener('change', function() {
+                if (this.value && document.getElementById('branchCode').value) {
+                    loadAvailableSubjects();
+                }
+            });
+
+            // Form validation on input
+            document.querySelectorAll('input[required], select[required]').forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('input', clearValidation);
+            });
+        }
+
+        // Step navigation
+        function changeStep(direction) {
+            if (direction === 1 && !validateCurrentStep()) {
+                return;
+            }
+
+            // Hide current step
+            document.getElementById(`step${currentStep}Content`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+
+            // Update step number
+            currentStep += direction;
+
+            // Show new step
+            document.getElementById(`step${currentStep}Content`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.add('active');
+
+            // Update completed steps
+            for (let i = 1; i < currentStep; i++) {
+                document.getElementById(`step${i}`).classList.add('completed');
+            }
+
+            // Load step-specific data
+            if (currentStep === 3) {
+                loadAvailableSubjects();
+            } else if (currentStep === 4) {
+                loadAvailableSchedules();
+            } else if (currentStep === 5) {
+                showRegistrationSummary();
+            }
+
+            updateStepButtons();
+        }
+
+        function updateStepButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+            nextBtn.style.display = currentStep < 5 ? 'block' : 'none';
+            submitBtn.style.display = currentStep === 5 ? 'block' : 'none';
+        }
+
+        // Validation
+        function validateCurrentStep() {
+            const currentStepContent = document.getElementById(`step${currentStep}Content`);
+            const requiredFields = currentStepContent.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!validateField({ target: field })) {
+                    isValid = false;
+                }
+            });
+
+            if (currentStep === 3 && selectedSubjects.length === 0) {
+                showAlert('Please select at least one subject.', 'danger');
+                isValid = false;
+            }
+
+            if (currentStep === 4) {
+                // Validate that all subjects have schedules selected
+                const missingSchedules = selectedSubjects.filter(s => !s.scheduleCode);
+                if (missingSchedules.length > 0) {
+                    showAlert('Please select a schedule for all subjects.', 'danger');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+        function validateField(event) {
+            const field = event.target;
+            const value = field.value.trim();
+            let isValid = true;
+            let message = '';
+
+            // Clear previous validation
+            field.classList.remove('is-invalid');
+            const feedback = field.parentNode.querySelector('.invalid-feedback');
+            if (feedback) feedback.textContent = '';
+
+            // Required field validation
+            if (field.hasAttribute('required') && !value) {
+                isValid = false;
+                message = 'This field is required.';
+            }
+
+            // Specific field validations
+            if (value && field.type === 'tel') {
+                if (!/^[\+]?[0-9\s\-\(\)]{10,}$/.test(value)) {
+                    isValid = false;
+                    message = 'Please enter a valid phone number.';
+                }
+            }
+
+            if (value && field.type === 'date') {
+                const birthDate = new Date(value);
+                const today = new Date();
+                const age = today.getFullYear() - birthDate.getFullYear();
+                if (age < 5 || age > 100) {
+                    isValid = false;
+                    message = 'Please enter a valid birth date.';
+                }
+            }
+
+            // Show validation feedback
+            if (!isValid) {
+                field.classList.add('is-invalid');
+                if (feedback) feedback.textContent = message;
+            }
+
+            return isValid;
+        }
+
+        function clearValidation(event) {
+            const field = event.target;
+            field.classList.remove('is-invalid');
+            const feedback = field.parentNode.querySelector('.invalid-feedback');
+            if (feedback) feedback.textContent = '';
+        }
+
+        // Load available subjects
+        async function loadAvailableSubjects() {
+            const branchCode = document.getElementById('branchCode').value;
+            const yearCode = document.getElementById('yearCode').value;
+            const itemKey = document.getElementById('itemKey').value;
+
+            if (!branchCode || !itemKey) return;
+
+            try {
+                showLoading();
+                const response = await fetch(`/Student/GetAvailableSubjects/${itemKey}?branchCode=${branchCode}&yearCode=${yearCode || ''}`);
+                const subjects = await response.json();
+
+                if (subjects.error) {
+                    showAlert(subjects.error, 'danger');
+                    return;
+                }
+
+                availableSubjects = subjects;
+                renderSubjects();
+                await loadAvailableTeachers();
+            } catch (error) {
+                showAlert('Failed to load subjects. Please try again.', 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Load available teachers
+        async function loadAvailableTeachers() {
+            const branchCode = document.getElementById('branchCode').value;
+            const itemKey = document.getElementById('itemKey').value;
+            const subjectCodes = availableSubjects.map(s => s.subjectCode).join(',');
+
+            if (!subjectCodes) return;
+
+            try {
+                const response = await fetch(`/Student/GetAvailableTeachers/${itemKey}?subjectCodes=${subjectCodes}&branchCode=${branchCode}`);
+                const teachers = await response.json();
+
+                if (teachers.error) {
+                    console.error('Error loading teachers:', teachers.error);
+                    return;
+                }
+
+                availableTeachers = teachers;
+                renderSubjects(); // Re-render with teacher options
+            } catch (error) {
+                console.error('Failed to load teachers:', error);
+            }
+        }
+
+        // Load available schedules
+        async function loadAvailableSchedules() {
+            const branchCode = document.getElementById('branchCode').value;
+            const yearCode = document.getElementById('yearCode').value;
+            const itemKey = document.getElementById('itemKey').value;
+
+            if (selectedSubjects.length === 0) {
+                document.getElementById('scheduleSelection').innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <p>No subjects selected. Please go back and select subjects first.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                showLoading();
+
+                // Create query parameters for all selected subjects
+                const subjectCodes = selectedSubjects.map(s => s.subjectCode).join(',');
+                const teacherCodes = selectedSubjects.map(s => s.teacherCode).join(',');
+
+                const response = await fetch(`/Student/GetAvailableSchedules/${itemKey}?` +
+                    `subjectCodes=${subjectCodes}&teacherCodes=${teacherCodes}&` +
+                    `branchCode=${branchCode}&yearCode=${yearCode || ''}`);
+
+                const schedules = await response.json();
+
+                if (schedules.error) {
+                    showAlert(schedules.error, 'danger');
+                    return;
+                }
+
+                availableSchedules = schedules;
+                renderScheduleSelection();
+            } catch (error) {
+                showAlert('Failed to load schedules. Please try again.', 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Render subjects
+        function renderSubjects() {
+            const container = document.getElementById('availableSubjects');
+
+            if (availableSubjects.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-book fa-3x mb-3"></i>
+                        <p>No subjects available for the selected branch and year.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = availableSubjects.map(subject => {
+                const subjectTeachers = availableTeachers.filter(t => t.subjectCode === subject.subjectCode);
+                const isSelected = selectedSubjects.some(s => s.subjectCode === subject.subjectCode);
+
+                return `
+                    <div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${subject.subjectCode}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">
+                                <i class="fas fa-book me-2"></i>
+                                ${subject.subjectName}
+                            </h5>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       id="subject_${subject.subjectCode}"
+                                       ${isSelected ? 'checked' : ''}
+                                       onchange="toggleSubject(${subject.subjectCode})">
+                            </div>
+                        </div>
+
+                        ${subjectTeachers.length > 0 ? `
+                            <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
+                                <label class="form-label small">Select Teacher:</label>
+                                ${subjectTeachers.map(teacher => `
+                                    <div class="teacher-option" onclick="selectTeacher(${subject.subjectCode}, ${teacher.teacherCode})">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                   name="teacher_${subject.subjectCode}"
+                                                   value="${teacher.teacherCode}"
+                                                   id="teacher_${subject.subjectCode}_${teacher.teacherCode}">
+                                            <label class="form-check-label">
+                                                <strong>${teacher.teacherName}</strong>
+                                                <br><small class="text-muted">${teacher.teacherPhone || ''}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                No teachers available for this subject at the selected branch.
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render schedule selection
+        function renderScheduleSelection() {
+            const container = document.getElementById('scheduleSelection');
+
+            if (selectedSubjects.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <p>No subjects selected.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = selectedSubjects.map(subject => {
+                const subjectSchedules = availableSchedules.filter(s =>
+                    s.subjectCode === subject.subjectCode && s.teacherCode === subject.teacherCode);
+
+                return `
+                    <div class="schedule-subject-card">
+                        <h5 class="mb-3">
+                            <i class="fas fa-book me-2"></i>
+                            ${subject.subjectName} - ${subject.teacherName}
+                        </h5>
+
+                        ${subjectSchedules.length > 0 ? `
+                            <div class="row">
+                                ${subjectSchedules.map(schedule => `
+                                    <div class="col-md-6 mb-3">
+                                        <div class="schedule-option" onclick="selectSchedule(${subject.subjectCode}, ${subject.teacherCode}, ${schedule.scheduleCode})">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                       name="schedule_${subject.subjectCode}_${subject.teacherCode}"
+                                                       value="${schedule.scheduleCode}"
+                                                       id="schedule_${subject.subjectCode}_${subject.teacherCode}_${schedule.scheduleCode}">
+                                                <label class="form-check-label" for="schedule_${subject.subjectCode}_${subject.teacherCode}_${schedule.scheduleCode}">
+                                                    <div class="schedule-details">
+                                                        <strong>${schedule.dayName}</strong>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-clock me-1"></i>
+                                                            ${schedule.startTime} - ${schedule.endTime}
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-info">
+                                                            <i class="fas fa-users me-1"></i>
+                                                            ${schedule.capacity - schedule.currentStudents}/${schedule.capacity} available
+                                                        </small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                No schedules available for this subject and teacher combination.
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle subject selection
+        function toggleSubject(subjectCode) {
+            const checkbox = document.getElementById(`subject_${subjectCode}`);
+            const subjectCard = document.querySelector(`[data-subject-code="${subjectCode}"]`);
+            const teachersDiv = document.getElementById(`teachers_${subjectCode}`);
+
+            if (checkbox.checked) {
+                // Add subject
+                const subject = availableSubjects.find(s => s.subjectCode === subjectCode);
+                const selection = {
+                    subjectCode: subjectCode,
+                    subjectName: subject.subjectName,
+                    teacherCode: null,
+                    teacherName: null,
+                    scheduleCode: null,
+                    scheduleName: null,
+                    eduYearCode: parseInt(document.getElementById('eduYearCode').value) || subject.yearCode,
+                    isOnline: false,
+                    studentFee: null
+                };
+
+                selectedSubjects.push(selection);
+                subjectCard.classList.add('selected');
+                if (teachersDiv) teachersDiv.classList.remove('d-none');
+            } else {
+                // Remove subject
+                selectedSubjects = selectedSubjects.filter(s => s.subjectCode !== subjectCode);
+                subjectCard.classList.remove('selected');
+                if (teachersDiv) teachersDiv.classList.add('d-none');
+
+                // Clear teacher selection
+                const teacherRadios = document.querySelectorAll(`input[name="teacher_${subjectCode}"]`);
+                teacherRadios.forEach(radio => radio.checked = false);
+            }
+
+            updateSelectedSubjectsSummary();
+        }
+
+        // Select teacher
+        function selectTeacher(subjectCode, teacherCode) {
+            const radio = document.getElementById(`teacher_${subjectCode}_${teacherCode}`);
+            radio.checked = true;
+
+            // Update selection
+            const selection = selectedSubjects.find(s => s.subjectCode === subjectCode);
+            if (selection) {
+                const teacher = availableTeachers.find(t => t.teacherCode === teacherCode);
+                selection.teacherCode = teacherCode;
+                selection.teacherName = teacher?.teacherName || '';
+            }
+
+            updateSelectedSubjectsSummary();
+        }
+
+        // Select schedule
+        function selectSchedule(subjectCode, teacherCode, scheduleCode) {
+            const radio = document.getElementById(`schedule_${subjectCode}_${teacherCode}_${scheduleCode}`);
+            radio.checked = true;
+
+            // Update the selected subject with schedule information
+            const subject = selectedSubjects.find(s => s.subjectCode === subjectCode && s.teacherCode === teacherCode);
+            if (subject) {
+                const schedule = availableSchedules.find(s => s.scheduleCode === scheduleCode);
+                subject.scheduleCode = scheduleCode;
+                subject.scheduleName = `${schedule.dayName} ${schedule.startTime}-${schedule.endTime}`;
+            }
+        }
+
+        // Update selected subjects summary
+        function updateSelectedSubjectsSummary() {
+            const container = document.getElementById('selectedSubjectsSummary');
+            const list = document.getElementById('selectedSubjectsList');
+
+            if (selectedSubjects.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            list.innerHTML = selectedSubjects.map(subject => `
+                <div class="d-flex justify-content-between align-items-center p-2 border rounded mb-2">
+                    <div>
+                        <strong>${subject.subjectName}</strong>
+                        ${subject.teacherName ? `<br><small class="text-muted">Teacher: ${subject.teacherName}</small>` : ''}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSubject(${subject.subjectCode})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            container.style.display = 'block';
+        }
+
+        // Remove subject
+        function removeSubject(subjectCode) {
+            const checkbox = document.getElementById(`subject_${subjectCode}`);
+            checkbox.checked = false;
+            toggleSubject(subjectCode);
+        }
+
+        // Show registration summary
+        function showRegistrationSummary() {
+            const summary = document.getElementById('registrationSummary');
+            const formData = getFormData();
+
+            summary.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> ${formData.StudentName}</li>
+                            <li><strong>Birth Date:</strong> ${formData.BirthDate}</li>
+                            <li><strong>Phone:</strong> ${formData.StudentPhone}</li>
+                            <li><strong>Parent Phone:</strong> ${formData.StudentParentPhone}</li>
+                            <li><strong>Gender:</strong> ${formData.Gender === true ? 'Male' : formData.Gender === false ? 'Female' : 'Not specified'}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-school me-2"></i>Academic Information</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Branch:</strong> ${document.getElementById('branchCode').selectedOptions[0]?.text || 'Not selected'}</li>
+                            <li><strong>Year/Level:</strong> ${document.getElementById('yearCode').selectedOptions[0]?.text || 'Not selected'}</li>
+                            <li><strong>Education Year:</strong> ${document.getElementById('eduYearCode').selectedOptions[0]?.text || 'Not selected'}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h5><i class="fas fa-books me-2"></i>Selected Subjects (${selectedSubjects.length})</h5>
+                <div class="row">
+                    ${selectedSubjects.map(subject => `
+                        <div class="col-md-12 mb-2">
+                            <div class="border rounded p-2">
+                                <strong>${subject.subjectName}</strong>
+                                ${subject.teacherName ? `<br><small class="text-muted">Teacher: ${subject.teacherName}</small>` : ''}
+                                ${subject.scheduleName ? `<br><small class="text-info">Schedule: ${subject.scheduleName}</small>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Get form data
+        function getFormData() {
+            // Fix gender handling to properly convert radio button values to boolean
+            const genderRadio = document.querySelector('input[name="gender"]:checked');
+            let genderValue = null;
+
+            if (genderRadio) {
+                if (genderRadio.value === 'true') {
+                    genderValue = true;
+                } else if (genderRadio.value === 'false') {
+                    genderValue = false;
+                }
+            }
+
+            // Ensure all numeric fields are properly converted
+            const branchCodeValue = document.getElementById('branchCode').value;
+            const yearCodeValue = document.getElementById('yearCode').value;
+
+            return {
+                ItemKey: document.getElementById('itemKey').value,
+                StudentName: document.getElementById('studentName').value.trim(),
+                StudentPhone: document.getElementById('studentPhone').value.trim(),
+                StudentParentPhone: document.getElementById('parentPhone').value.trim(),
+                BirthDate: document.getElementById('birthDate').value,
+                Gender: genderValue,
+                BranchCode: branchCodeValue ? parseInt(branchCodeValue) : 0,
+                YearCode: yearCodeValue ? parseInt(yearCodeValue) : null,
+                SelectedSubjects: selectedSubjects.filter(s => s.teacherCode && s.scheduleCode)
+            };
+        }
+
+        // Submit registration
+        async function submitRegistration() {
+            if (!document.getElementById('termsAccepted').checked) {
+                showAlert('Please accept the terms and conditions.', 'danger');
+                return;
+            }
+
+            const formData = getFormData();
+
+            // Additional client-side validation
+            if (!formData.StudentName) {
+                showAlert('Please enter your name.', 'danger');
+                return;
+            }
+
+            if (!formData.StudentPhone) {
+                showAlert('Please enter your phone number.', 'danger');
+                return;
+            }
+
+            if (!formData.StudentParentPhone) {
+                showAlert('Please enter your parent/guardian phone number.', 'danger');
+                return;
+            }
+
+            if (!formData.BirthDate) {
+                showAlert('Please select your birth date.', 'danger');
+                return;
+            }
+
+            if (!formData.BranchCode || formData.BranchCode === 0) {
+                showAlert('Please select a branch.', 'danger');
+                return;
+            }
+
+            if (selectedSubjects.length === 0) {
+                showAlert('Please select at least one subject.', 'danger');
+                return;
+            }
+
+            // Check if all subjects have schedules
+            const missingSchedules = selectedSubjects.filter(s => !s.scheduleCode);
+            if (missingSchedules.length > 0) {
+                showAlert('Please select schedules for all subjects.', 'danger');
+                return;
+            }
+
+            try {
+                showLoading();
+
+                console.log('Sending registration data:', formData);
+
+                const response = await fetch('/Student/Register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = result.redirectUrl;
+                    }, 2000);
+                } else {
+                    if (result.errors && Array.isArray(result.errors)) {
+                        showAlert(result.errors.join('<br>'), 'danger');
+                    } else {
+                        showAlert(result.error || 'Registration failed.', 'danger');
+                    }
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showAlert('Registration failed. Please check your internet connection and try again.', 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function showAlert(message, type = 'info') {
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => {
+                if (!alert.innerHTML.includes('Please review your information') &&
+                    !alert.innerHTML.includes('Choose your preferred class schedule') &&
+                    !alert.innerHTML.includes('Select the subjects you want')) {
+                    alert.remove();
+                }
+            });
+
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>
+                ${message}
+            `;
+
+            // Insert at the top of the current step
+            const currentStepContent = document.getElementById(`step${currentStep}Content`);
+            currentStepContent.insertBefore(alertDiv, currentStepContent.firstChild);
+
+            // Auto-remove after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+
+            // Scroll to top of step to show alert
+            currentStepContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>
