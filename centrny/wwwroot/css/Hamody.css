@@ -663,20 +663,23 @@ body {
     background: var(--bg-primary);
     margin-top: 1.5rem;
 }
-
     .root-index-table thead {
-        background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+        /* Add a solid background color fallback for the gradient */
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%), #2d3748;
+        background-color: #2d3748; /* fallback for old browsers */
     }
 
         .root-index-table thead th {
-            color: white;
-            font-weight: 600;
-            font-size: 0.95rem;
+            color: #fff !important; /* Force solid white text */
+            font-weight: 700;
+            font-size: 1rem;
             padding: 1.25rem 1rem;
             border: none;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             position: relative;
+            opacity: 1 !important; /* Ensure full opacity */
+            background: transparent; /* Prevent unwanted background */
         }
 
             .root-index-table thead th::after {
