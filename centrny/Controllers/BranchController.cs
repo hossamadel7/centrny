@@ -1,12 +1,15 @@
-using System;
-using centrny.Attributes;
 using centrny.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Security.Claims;
 
 namespace centrny.Controllers
 {
-    [RequirePageAccess("Branch")]
+    [Authorize]
     public class BranchController : Controller
     {
         private readonly CenterContext _context;
@@ -16,115 +19,150 @@ namespace centrny.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+
+            if (user == null)
+                return Unauthorized();
+
+            int groupCode = user.GroupCode;
+
+            // Now fetch the group using groupCode to get the root code
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+            if (group == null)
+                return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            // For rootCode != 1, get center name for this root
+            string centerName = null;
+            if (rootCode != 1)
+            {
+                var center = await _context.Centers.FirstOrDefaultAsync(c => c.RootCode == rootCode);
+                centerName = center?.CenterName ?? "Unknown Center";
+            }
+
+            ViewBag.UserRootCode = rootCode;
+            ViewBag.UserGroupCode = groupCode;
+            ViewBag.CurrentUserName = user.Username; // adjust as per your user model
+            ViewBag.CenterName = centerName;
+
             return View();
         }
 
-        // Get branches by center/teacher (based on RootCode)
+        [HttpGet]
+        public async Task<IActionResult> GetRootsIsCenterTrue()
+        {
+            var roots = await _context.Roots
+                .Where(r => r.IsCenter)
+                .Select(r => new { r.RootCode, r.RootName })
+                .ToListAsync();
+
+            return Json(roots);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCentersByRoot(int rootCode)
+        {
+            var centers = await _context.Centers
+                .Where(c => c.RootCode == rootCode)
+                .Select(c => new { c.CenterCode, c.CenterName })
+                .ToListAsync();
+
+            return Json(centers);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetBranchesByRootCode(int rootCode)
         {
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode)
-                .Include(b => b.CenterCodeNavigation)
-                .Select(b => new
-                {
-                    b.BranchCode,
-                    b.BranchName,
-                    b.Address,
-                    b.Phone,
-                    StartTime = b.StartTime.ToString("yyyy-MM-dd"),
-                    CenterName = b.CenterCodeNavigation.CenterName,
-                    b.CenterCode,
-                    b.IsActive
-                })
+                .Select(b => new { b.BranchCode, b.BranchName, b.RootCode })
                 .ToListAsync();
 
             return Json(branches);
         }
 
-        
         [HttpGet]
-        public async Task<IActionResult> GetBranch(int id)
+        public async Task<IActionResult> GetHallsByBranch(int branchCode)
         {
-            var branch = await _context.Branches.FindAsync(id);
-            if (branch == null) return NotFound();
+            var halls = await _context.Halls
+                .Where(h => h.BranchCode == branchCode)
+                .Select(h => new { h.HallCode, h.HallName, h.HallCapacity })
+                .ToListAsync();
 
-            return Json(new
+            return Json(halls);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddHall([FromBody] HallCreateDto dto)
+        {
+            if (dto == null)
+                return BadRequest();
+
+            var hall = new Hall
             {
-                branch.BranchCode,
-                branch.BranchName,
-                branch.Address,
-                branch.Phone,
-                StartTime = branch.StartTime.ToString("yyyy-MM-dd"),
-                branch.CenterCode,
-                branch.IsActive
-            });
-        }
+                HallName = dto.HallName,
+                HallCapacity = dto.HallCapacity,
+                RootCode = dto.RootCode,
+                BranchCode = dto.BranchCode,
+                InsertUser = GetCurrentUserId(),
+                InsertTime = DateTime.Now
+            };
 
-        [RequirePageAccess("Branch", "insert")]
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Branch branch)
-        {
-            ModelState.Remove("RootCodeNavigation");
-            ModelState.Remove("CenterCodeNavigation");
-            ModelState.Remove("InsertUserNavigation");
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            branch.InsertTime = DateTime.Now;
-            branch.InsertUser = 1;
-            branch.RootCode = 1;
-
-            _context.Branches.Add(branch);
+            _context.Halls.Add(hall);
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true });
+            return Ok();
         }
 
-        [RequirePageAccess("Branch", "update")] // Only users with UPDATE permission
-        [HttpPost]
-        public async Task<IActionResult> Edit([FromBody] Branch branch)
+        [HttpPut]
+        public async Task<IActionResult> EditHall([FromBody] EditHallDto dto)
         {
-            ModelState.Remove("RootCodeNavigation");
-            ModelState.Remove("CenterCodeNavigation");
-            ModelState.Remove("InsertUserNavigation");
+            if (dto == null)
+                return BadRequest();
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var hall = await _context.Halls.FindAsync(dto.HallCode);
+            if (hall == null) return NotFound();
 
-            var existing = await _context.Branches.FindAsync(branch.BranchCode);
-            if (existing == null)
-                return NotFound();
-
-            existing.BranchName = branch.BranchName;
-            existing.Address = branch.Address;
-            existing.Phone = branch.Phone;
-            existing.StartTime = branch.StartTime;
-            existing.CenterCode = branch.CenterCode;
-            existing.IsActive = branch.IsActive;
-            existing.LastUpdateTime = DateTime.Now;
-            existing.LastUpdateUser = 1;
-
+            hall.HallName = dto.HallName;
+            hall.HallCapacity = dto.HallCapacity;
             await _context.SaveChangesAsync();
-
-            return Json(new { success = true });
+            return Ok();
         }
 
-        [RequirePageAccess("Branch", "delete")] // Only users with DELETE permission
-        [HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteHall(int hallCode)
         {
-            var branch = await _context.Branches.FindAsync(id);
-            if (branch == null)
-                return Json(new { success = false });
+            var hall = await _context.Halls.FindAsync(hallCode);
+            if (hall == null) return NotFound();
 
-            _context.Branches.Remove(branch);
+            _context.Halls.Remove(hall);
             await _context.SaveChangesAsync();
-
-            return Json(new { success = true });
+            return Ok();
         }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+        }
+    }
+
+    public class HallCreateDto
+    {
+        public string HallName { get; set; }
+        public int HallCapacity { get; set; }
+        public int RootCode { get; set; }
+        public int BranchCode { get; set; }
+    }
+
+    public class EditHallDto
+    {
+        public int HallCode { get; set; }
+        public string HallName { get; set; }
+        public int HallCapacity { get; set; }
     }
 }

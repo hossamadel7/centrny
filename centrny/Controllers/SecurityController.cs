@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace centrny.Controllers
+namespace centrny1.Controllers
 {
     public class SecurityController : Controller
     {
@@ -75,7 +75,6 @@ namespace centrny.Controllers
 
             return Json(new { success = true });
         }
-
         [HttpPost]
         public JsonResult ResetUserPassword(int userCode)
         {
@@ -85,13 +84,13 @@ namespace centrny.Controllers
 
             using (MD5 md5 = MD5.Create())
             {
-                byte[] inputBytes = Encoding.UTF8.GetBytes("123456789");
+                // Use Encoding.Unicode to match SQL Server NVARCHAR hashing
+                byte[] inputBytes = Encoding.Unicode.GetBytes("123456789");
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
 
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < hashBytes.Length; i++)
-                    sb.Append(hashBytes[i].ToString("x2"));
-
+                    sb.Append(hashBytes[i].ToString("X2")); // UPPERCASE HEX
                 user.Password = sb.ToString();
             }
             _context.SaveChanges();

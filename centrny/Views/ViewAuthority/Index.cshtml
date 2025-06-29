@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Group-Page Permissions</title>
-    <link rel="stylesheet" href="~/css/student-profile-enhanced.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
 </head>
 <body>
@@ -35,8 +35,9 @@
                 <form id="pagesForm" class="modern-card">
                     <h4>Pages</h4>
                     <ul class="list-group-modern" id="pagesList">
-                        <!-- Pages will appear here -->
+                        <!-- Pages will appear here as checkboxes -->
                     </ul>
+                    <button type="button" id="addSelectedPagesBtn" style="display:none; margin-top:10px;">Add Selected Pages</button>
                 </form>
             </div>
         </div>
@@ -54,6 +55,23 @@
                 </div>
                 <button type="submit" class="btn-save-perm">Save Permission</button>
             </form>
+        </div>
+        <div id="existingGroupPagesSection" style="display:none; margin-top:2rem;">
+            <h4>Existing Group-Page Permissions for Selected Group</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Page</th>
+                        <th>Insert</th>
+                        <th>Update</th>
+                        <th>Delete</th>
+                        <th>Delete Page</th>
+                    </tr>
+                </thead>
+                <tbody id="existingGroupPagesBody">
+                    <!-- Rows will be populated by JS -->
+                </tbody>
+            </table>
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
