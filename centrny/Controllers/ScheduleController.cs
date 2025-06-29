@@ -1334,7 +1334,131 @@ namespace centrny.Controllers
                 .Join(_context.Years, t => t.YearCode, y => y.YearCode, (t, y) => new { y.YearCode, y.YearName })
                 .Distinct()
                 .ToList());
+        // Add these new API endpoints to your ScheduleController.cs
 
+        // Update the existing GetSubjectsForTeacherByYear method to include branch filtering
+        [HttpGet]
+        public async Task<IActionResult> GetSubjectsForTeacherByYear(int teacherCode, int yearCode, int? branchCode = null)
+        {
+            try
+            {
+                var userRootCode = GetCurrentUserRootCode();
+                if (!userRootCode.HasValue)
+                {
+                    return Json(new { success = false, error = "Unable to determine your root assignment." });
+                }
+
+                // Get subjects from Teach table where teacher, year, and root match
+                var query = _context.Teaches
+                    .Where(t => t.TeacherCode == teacherCode &&
+                               t.YearCode == yearCode &&
+                               t.RootCode == userRootCode.Value &&
+                               t.IsActive);
+
+                // If branch is specified, filter by branch
+                if (branchCode.HasValue && branchCode > 0)
+                {
+                    query = query.Where(t => t.BranchCode == branchCode.Value);
+                }
+
+                var subjects = await query
+                    .Include(t => t.SubjectCodeNavigation)
+                    .Select(t => new {
+                        value = t.SubjectCode,
+                        text = t.SubjectCodeNavigation.SubjectName
+                    })
+                    .Distinct()
+                    .OrderBy(s => s.text)
+                    .ToListAsync();
+
+                return Json(new { success = true, subjects = subjects });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting subjects for teacher {TeacherCode} and year {YearCode}", teacherCode, yearCode);
+                return Json(new { success = false, error = "Error retrieving subjects." });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetYearsByEduYear(int eduYearCode)
+        {
+            try
+            {
+                var userRootCode = GetCurrentUserRootCode();
+                if (!userRootCode.HasValue)
+                {
+                    return Json(new { success = false, error = "Unable to determine your root assignment." });
+                }
+
+                // Get years that belong to the specified educational year
+                var years = await _context.Years
+                    .Where(y => y.EduYearCode == eduYearCode)
+                    .OrderBy(y => y.YearSort)
+                    .Select(y => new {
+                        value = y.YearCode,
+                        text = y.YearName,
+                        yearSort = y.YearSort
+                    })
+                    .ToListAsync();
+
+                return Json(new { success = true, years = years });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting years for educational year {EduYearCode}", eduYearCode);
+                return Json(new { success = false, error = "Error retrieving years." });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSubjectsForTeacherByYearAndBranch(int teacherCode, int yearCode, int? branchCode = null)
+        {
+            try
+            {
+                var userRootCode = GetCurrentUserRootCode();
+                if (!userRootCode.HasValue)
+                {
+                    return Json(new { success = false, error = "Unable to determine your root assignment." });
+                }
+
+                if (!IsCurrentUserTeacher())
+                {
+                    return Json(new { success = false, error = "This endpoint is only available for teacher users." });
+                }
+
+                // Build the query to get subjects from Teach table
+                var query = _context.Teaches
+                    .Where(t => t.TeacherCode == teacherCode &&
+                               t.YearCode == yearCode &&
+                               t.RootCode == userRootCode.Value &&
+                               t.IsActive);
+
+                // If branch is specified, filter by branch
+                if (branchCode.HasValue && branchCode > 0)
+                {
+                    query = query.Where(t => t.BranchCode == branchCode.Value);
+                }
+
+                var subjects = await query
+                    .Include(t => t.SubjectCodeNavigation)
+                    .Select(t => new {
+                        value = t.SubjectCode,
+                        text = t.SubjectCodeNavigation.SubjectName
+                    })
+                    .Distinct()
+                    .OrderBy(s => s.text)
+                    .ToListAsync();
+
+                return Json(new { success = true, subjects = subjects });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting subjects for teacher {TeacherCode}, year {YearCode}, branch {BranchCode}",
+                    teacherCode, yearCode, branchCode);
+                return Json(new { success = false, error = "Error retrieving subjects." });
+            }
+        }
         private string GetEventColor(bool? isCenter)
         {
             return isCenter == true ? "#00b894" : "#e17055";
