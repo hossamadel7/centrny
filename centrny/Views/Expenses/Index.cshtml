@@ -4,6 +4,7 @@
     var roots = ViewBag.Roots as IEnumerable<dynamic>;
     var expenses = ViewBag.Expenses as IEnumerable<centrny.Models.Expense>;
     int? userRootCode = ViewBag.UserRootCode as int?;
+    Layout = "_Layout";
 }
 
 <h2>Expenses</h2>
