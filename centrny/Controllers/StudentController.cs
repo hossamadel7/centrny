@@ -576,9 +576,14 @@ namespace centrny.Controllers
                     .Where(i => i.ItemKey == item_key && i.IsActive)
                     .FirstOrDefaultAsync();
 
-                if (item == null || item.StudentCodeNavigation == null)
+                if (item == null)
                 {
                     return NotFound("Student profile not found or access denied.");
+                }
+                if(item.StudentCodeNavigation == null)
+                {
+                    // Item exists but no student is linked - redirect to registration
+                    return RedirectToAction("Register", new { item_key = item_key });
                 }
 
                 var student = item.StudentCodeNavigation;
