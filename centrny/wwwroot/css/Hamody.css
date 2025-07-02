@@ -2330,3 +2330,454 @@ h2 {
 /* ===============================================
    SECURITY VIEW - MODERN UI CSS END
    =============================================== */
+
+/* ========================================== */
+/* 🎨 MODERN QUESTIONS VIEW UI DESIGN START */
+/* ========================================== */
+
+/* Main Container Styling */
+#chapter-lesson-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 30px;
+    margin: 20px 0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+    #chapter-lesson-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        pointer-events: none;
+    }
+
+/* Title Styling */
+#chapter-lesson-title {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+    #chapter-lesson-title i {
+        background: linear-gradient(45deg, #ffd700, #ffed4e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-right: 15px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+/* Search Bar Modern Design */
+#question-search-bar {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 25px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+#questionSearchInput {
+    flex: 1;
+    min-width: 260px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+    #questionSearchInput:focus {
+        background: white;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    #questionSearchInput::placeholder {
+        color: #888;
+        font-style: italic;
+    }
+
+/* Modern Button Styles */
+.modern-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 25px;
+    color: white;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+    .modern-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .modern-btn:hover::before {
+        left: 100%;
+    }
+
+    .modern-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .modern-btn:active {
+        transform: translateY(-1px);
+    }
+
+.btn-cancel {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+    .btn-cancel:hover {
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+    }
+
+/* Add Chapter Button Special Styling */
+#add-chapter-btn {
+    background: linear-gradient(45deg, #4ecdc4, #44a08d);
+    font-size: 16px;
+    padding: 15px 30px;
+    margin: 20px 0;
+    box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+    #add-chapter-btn:hover {
+        box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+    }
+
+/* Chapters Container */
+#chapters-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    min-height: 200px;
+}
+
+/* Search Results Styling */
+#question-search-results {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #667eea;
+    position: relative;
+    z-index: 1;
+}
+
+/* Modal Backgrounds */
+.modal-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Content */
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    transform: translateY(30px);
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    to {
+        transform: translateY(0);
+    }
+}
+
+.modal-content h3 {
+    color: #333;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    text-align: center;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+        .form-group label span[style*="color:red"] {
+            color: #ff6b6b !important;
+            margin-left: 3px;
+        }
+
+/* Modern Input Styling */
+.modern-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    color: #333;
+}
+
+    .modern-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .modern-input:hover {
+        border-color: #c1c7cd;
+    }
+
+/* Textarea Specific */
+textarea.modern-input {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Select Styling */
+select.modern-input {
+    cursor: pointer;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+/* Checkbox Styling */
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    accent-color: #667eea;
+    cursor: pointer;
+}
+
+/* Message Styling */
+#chapter-message,
+#lesson-message,
+#question-message,
+#answers-message,
+#edit-answer-message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Pagination Container */
+#pagination-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 25px 0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
+}
+
+/* User Root Info Box */
+#user-root-info-box {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #chapter-lesson-container {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    #chapter-lesson-title {
+        font-size: 2rem;
+    }
+
+    #question-search-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #questionSearchInput {
+        min-width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .modal-content {
+        margin: 20px;
+        padding: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modern-btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+/* Additional Button for Add More Answer */
+#add-more-answer-btn {
+    background: linear-gradient(45deg, #ffa726, #ff7043);
+    box-shadow: 0 4px 15px rgba(255, 167, 38, 0.3);
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+    #add-more-answer-btn:hover {
+        box-shadow: 0 8px 25px rgba(255, 167, 38, 0.4);
+    }
+
+/* Dynamic Answer Fields */
+#answers-fields {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #667eea;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success/Error Message Colors */
+.success-message {
+    background: linear-gradient(45deg, #4caf50, #45a049);
+    color: white;
+}
+
+.error-message {
+    background: linear-gradient(45deg, #f44336, #da190b);
+    color: white;
+}
+
+/* ======================================== */
+/* 🎨 MODERN QUESTIONS VIEW UI DESIGN END */
+/* ======================================== */
