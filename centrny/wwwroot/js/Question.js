@@ -3,6 +3,17 @@
 $(document).ready(function () {
     console.log("=== jQuery ready function executed ===");
 
+    // --- Helper functions for button processing state ---
+    function setButtonProcessing($btn, processingText) {
+        if (!$btn.data('original-text')) {
+            $btn.data('original-text', $btn.text());
+        }
+        $btn.text(processingText).prop('disabled', true);
+    }
+    function resetButton($btn) {
+        $btn.text($btn.data('original-text') || 'Save').prop('disabled', false);
+    }
+
     // ---- USER/ROOT/TEACHER INFO BOX ----
     $.get('/Question/GetUserRootTeacherInfo', function (data) {
         if (data.isCenter === false) {
@@ -19,18 +30,94 @@ $(document).ready(function () {
         }
     });
 
+    // === Subject-Year Filter Setup ===
+    let isCenter = false;
+    let userTeacherCode = 0;
+    let subjectYearPairs = [];
+    let currentSubjectCode = null;
+    let currentYearCode = null;
+    let stickyKey = "subjectYearFilter";
     let currentPage = 1;
     let pageSize = 5;
 
-    loadChapters();
+    // On page load, determine if user is center and setup subject-year filter if not
+    $.get('/Question/IsUserCenter', function (res) {
+        isCenter = res.isCenter;
+        if (!isCenter) {
+            $.get('/Question/GetTeachersByRoot', function (teachers) {
+                if (teachers.length > 0) {
+                    userTeacherCode = teachers[0].teacherCode;
+                    $.get('/Question/GetSubjectYearPairsByTeacher', { teacherCode: userTeacherCode }, function (pairs) {
+                        subjectYearPairs = pairs;
+                        setupSubjectYearFilter();
+                    });
+                }
+            });
+        } else {
+            $('#subject-year-filter-bar').hide();
+            loadChapters();
+        }
+    });
+
+    function setupSubjectYearFilter() {
+        if (subjectYearPairs.length === 1) {
+            $('#subject-year-filter-bar').hide();
+            currentSubjectCode = subjectYearPairs[0].subjectCode;
+            currentYearCode = subjectYearPairs[0].yearCode;
+            setStickyFilter(currentSubjectCode, currentYearCode);
+            loadChapters();
+        } else if (subjectYearPairs.length > 1) {
+            $('#subject-year-filter-bar').show();
+            let html = '<option value="">Select...</option>';
+            subjectYearPairs.forEach(p => {
+                html += `<option value="${p.subjectCode}|${p.yearCode}">${p.subjectName} (${p.yearName})</option>`;
+            });
+            $('#subjectYearFilter').html(html);
+
+            let sticky = getStickyFilter();
+            if (sticky && sticky.subjectCode && sticky.yearCode) {
+                $('#subjectYearFilter').val(`${sticky.subjectCode}|${sticky.yearCode}`);
+                currentSubjectCode = sticky.subjectCode;
+                currentYearCode = sticky.yearCode;
+            } else {
+                $('#subjectYearFilter').val('');
+                currentSubjectCode = null;
+                currentYearCode = null;
+            }
+
+            if (currentSubjectCode && currentYearCode) loadChapters();
+
+            $('#subjectYearFilter').off().on('change', function () {
+                let val = $(this).val();
+                if (val) {
+                    let [sub, year] = val.split('|');
+                    currentSubjectCode = sub;
+                    currentYearCode = year;
+                    setStickyFilter(currentSubjectCode, currentYearCode);
+                    loadChapters();
+                } else {
+                    currentSubjectCode = null;
+                    currentYearCode = null;
+                    setStickyFilter(null, null);
+                    $('#chapters-container').html('');
+                }
+            });
+        } else {
+            $('#subject-year-filter-bar').hide();
+            $('#chapters-container').html('<div style="padding:20px;">No teaching subjects found.</div>');
+        }
+    }
+    function setStickyFilter(subjectCode, yearCode) {
+        window.sessionStorage.setItem(stickyKey, JSON.stringify({ subjectCode, yearCode }));
+    }
+    function getStickyFilter() {
+        let raw = window.sessionStorage.getItem(stickyKey);
+        if (raw) return JSON.parse(raw);
+        return null;
+    }
 
     // ------ ADD CHAPTER LOGIC ------
-    let isCenter = false;
-    let userTeacherCode = 0;
-
-    // Show Add Chapter modal
     $('#add-chapter-btn').on('click', function () {
-        // Reset form
         $('#chapter-lessonname').val('');
         $('#chapter-message').text('');
         $('#chapter-eduyearcode').html('');
@@ -38,8 +125,9 @@ $(document).ready(function () {
         $('#chapter-teachercode').html('');
         $('#chapter-teachercode-hidden').val('');
         $('#teacher-group').hide();
+        $('#chapter-yearcode').val('');
+        $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
 
-        // Determine if user is center
         $.get('/Question/IsUserCenter', function (res) {
             isCenter = res.isCenter;
             loadChapterYears();
@@ -49,20 +137,46 @@ $(document).ready(function () {
                 loadChapterTeachers();
             } else {
                 $('#teacher-group').hide();
-                // Get teacher code for this root (the only teacher)
-                $.get('/Question/GetTeachersByRoot', function (teachers) {
-                    if (teachers.length > 0) {
-                        userTeacherCode = teachers[0].teacherCode;
-                        $('#chapter-teachercode-hidden').val(userTeacherCode);
+                if (subjectYearPairs.length > 1) {
+                    $('#chapter-subjectcode').html('<option value="">Select</option>');
+                    subjectYearPairs.forEach(p => {
+                        $('#chapter-subjectcode').append(
+                            `<option value="${p.subjectCode}|${p.yearCode}">${p.subjectName} (${p.yearName})</option>`
+                        );
+                    });
+                    $('#chapter-subjectcode').off().on('change', function () {
+                        if ($(this).val()) {
+                            let [subject, year] = $(this).val().split('|');
+                            $('#chapter-subjectcode').val(subject);
+                            $('#chapter-yearcode').val(year);
+                        } else {
+                            $('#chapter-subjectcode').val('');
+                            $('#chapter-yearcode').val('');
+                        }
+                    });
+                    // --- Autofill from Teaching Subjects filter ---
+                    var selected = $('#subjectYearFilter').val();
+                    if (selected) {
+                        $('#chapter-subjectcode').val(selected);
+                        $('#chapter-subjectcode').trigger('change');
                     }
-                });
+                } else if (subjectYearPairs.length === 1) {
+                    $('#chapter-subjectcode').html(
+                        `<option value="${subjectYearPairs[0].subjectCode}|${subjectYearPairs[0].yearCode}" selected>
+                            ${subjectYearPairs[0].subjectName} (${subjectYearPairs[0].yearName})
+                        </option>`
+                    ).prop('disabled', true);
+                    $('#chapter-subjectcode').val(subjectYearPairs[0].subjectCode);
+                    $('#chapter-yearcode').val(subjectYearPairs[0].yearCode);
+                } else {
+                    $('#chapter-subjectcode').html('<option value="">No subjects</option>').prop('disabled', true);
+                    $('#chapter-yearcode').val('');
+                }
             }
-
             $('#chapter-modal').fadeIn(180);
         });
     });
 
-    // Load years for chapter modal
     function loadChapterYears() {
         $.get('/Question/GetEduYearsByRoot', function (years) {
             let html = '<option value="">Select</option>';
@@ -72,8 +186,6 @@ $(document).ready(function () {
             $('#chapter-eduyearcode').html(html);
         });
     }
-
-    // Load teachers for chapter modal (if center)
     function loadChapterTeachers() {
         $.get('/Question/GetTeachersByRoot', function (teachers) {
             let html = '<option value="">Select</option>';
@@ -83,8 +195,6 @@ $(document).ready(function () {
             $('#chapter-teachercode').html(html);
         });
     }
-
-    // Load subjects for chapter modal
     function loadChapterSubjects(teacherCode, eduYearCode) {
         if (!teacherCode || !eduYearCode) {
             $('#chapter-subjectcode').html('<option value="">Select</option>');
@@ -98,11 +208,8 @@ $(document).ready(function () {
             $('#chapter-subjectcode').html(html);
         });
     }
-
-    // On EduYear change, reload subjects and (if center) teachers
     $('#chapter-eduyearcode').on('change', function () {
         let eduYearCode = $(this).val();
-
         if (isCenter) {
             let teacherCode = $('#chapter-teachercode').val();
             loadChapterSubjects(teacherCode, eduYearCode);
@@ -110,56 +217,73 @@ $(document).ready(function () {
             loadChapterSubjects(userTeacherCode, eduYearCode);
         }
     });
-
-    // On Teacher change, reload subjects
     $('#chapter-teachercode').on('change', function () {
         let eduYearCode = $('#chapter-eduyearcode').val();
         let teacherCode = $(this).val();
         loadChapterSubjects(teacherCode, eduYearCode);
     });
-
-    // Cancel Add Chapter
     $('#cancel-chapter-btn').on('click', function () {
         $('#chapter-modal').fadeOut(120);
+        $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
     });
-
     $('#chapter-modal').on('click', function (e) {
         if (e.target === this) {
             $('#chapter-modal').fadeOut(120);
+            $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
         }
     });
-
-    // Add Chapter Submit
     $('#chapter-form').on('submit', function (e) {
         e.preventDefault();
         $('#chapter-message').text('');
-
+        let $saveBtn = $('#save-chapter-btn');
+        setButtonProcessing($saveBtn, 'Processing...');
         let data = {
             LessonName: $('#chapter-lessonname').val(),
-            EduYearCode: $('#chapter-eduyearcode').val(),
-            TeacherCode: isCenter ? $('#chapter-teachercode').val() : $('#chapter-teachercode-hidden').val(),
-            SubjectCode: $('#chapter-subjectcode').val()
         };
-
-        if (!data.LessonName || !data.EduYearCode || !data.TeacherCode || !data.SubjectCode) {
+        if (isCenter) {
+            data.EduYearCode = $('#chapter-eduyearcode').val();
+            data.TeacherCode = $('#chapter-teachercode').val();
+            data.SubjectCode = $('#chapter-subjectcode').val();
+        } else {
+            let val = $('#chapter-subjectcode').val();
+            if (val && val.indexOf('|') !== -1) {
+                let [subjectCode, yearCode] = val.split('|');
+                data.SubjectCode = subjectCode;
+                data.YearCode = yearCode;
+            } else {
+                data.SubjectCode = '';
+                data.YearCode = '';
+            }
+        }
+        if (!data.LessonName || !data.SubjectCode || (!isCenter && !data.YearCode)) {
             $('#chapter-message').css('color', '#e74c3c').text('Please fill all fields.');
+            resetButton($saveBtn);
             return;
         }
-
-        $.post('/Question/AddChapter', data, function (result) {
-            if (result.success) {
-                $('#chapter-message').css('color', '#27ae60').text('Saved!');
-                setTimeout(() => {
-                    $('#chapter-modal').fadeOut(120);
-                    loadChapters();
-                }, 700);
-            } else {
-                $('#chapter-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+        $.ajax({
+            url: '/Question/AddChapter',
+            method: 'POST',
+            data: data,
+            success: function (result) {
+                if (result.success) {
+                    $('#chapter-message').css('color', '#27ae60').text('Saved!');
+                    setTimeout(() => {
+                        $('#chapter-modal').fadeOut(120);
+                        $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
+                        loadChapters();
+                    }, 700);
+                } else {
+                    $('#chapter-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                }
+            },
+            error: function () {
+                $('#chapter-message').css('color', '#e74c3c').text('An error occurred.');
+            },
+            complete: function () {
+                resetButton($saveBtn);
             }
         });
     });
-
-    // ------ END ADD CHAPTER LOGIC ------
 
     // ------ ADD LESSON LOGIC ------
     $(document).on('click', '.add-lesson-btn', function () {
@@ -167,23 +291,33 @@ $(document).ready(function () {
         $('#lesson-message').text('');
         $('#lesson-rootcode').val($(this).data('rootcode'));
         $('#lesson-teachercode').val($(this).data('teachercode'));
-        $('#lesson-subjectcode').val($(this).data('subjectcode'));
+        if (isCenter) {
+            $('#lesson-subjectcode').val($(this).data('subjectcode'));
+            $('#lesson-yearcode').val($(this).data('yearcode'));
+        } else {
+            $('#lesson-subjectcode').val(currentSubjectCode);
+            $('#lesson-yearcode').val(currentYearCode);
+        }
         $('#lesson-eduyearcode').val($(this).data('eduyearcode'));
         $('#lesson-chaptercode').val($(this).data('chaptercode'));
-        $('#lesson-yearcode').val($(this).data('yearcode'));
+        $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
         $('#lesson-modal').fadeIn(180);
     });
-
     $('#cancel-lesson-btn').on('click', function () {
         $('#lesson-modal').fadeOut(120);
+        $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
     });
     $('#lesson-modal').on('click', function (e) {
-        if (e.target === this) $('#lesson-modal').fadeOut(120);
+        if (e.target === this) {
+            $('#lesson-modal').fadeOut(120);
+            $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
+        }
     });
-
     $('#lesson-form').on('submit', function (e) {
         e.preventDefault();
         $('#lesson-message').text('');
+        let $saveBtn = $('#save-lesson-btn');
+        setButtonProcessing($saveBtn, 'Processing...');
         var formData = {
             LessonName: $('#lesson-name').val(),
             RootCode: $('#lesson-rootcode').val(),
@@ -193,15 +327,32 @@ $(document).ready(function () {
             ChapterCode: $('#lesson-chaptercode').val(),
             YearCode: $('#lesson-yearcode').val()
         };
-        $.post('/Question/AddLesson', formData, function (result) {
-            if (result.success) {
-                $('#lesson-message').css('color', '#27ae60').text('Saved!');
-                setTimeout(() => {
-                    $('#lesson-modal').fadeOut(100);
-                    loadChapters(currentPage);
-                }, 700);
-            } else {
-                $('#lesson-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+        if (!formData.LessonName || !formData.RootCode || !formData.TeacherCode || !formData.SubjectCode || (!isCenter && !formData.YearCode)) {
+            $('#lesson-message').css('color', '#e74c3c').text('Please fill all fields.');
+            resetButton($saveBtn);
+            return;
+        }
+        $.ajax({
+            url: '/Question/AddLesson',
+            method: 'POST',
+            data: formData,
+            success: function (result) {
+                if (result.success) {
+                    $('#lesson-message').css('color', '#27ae60').text('Saved!');
+                    setTimeout(() => {
+                        $('#lesson-modal').fadeOut(100);
+                        $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
+                        loadChapters(currentPage);
+                    }, 700);
+                } else {
+                    $('#lesson-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                }
+            },
+            error: function () {
+                $('#lesson-message').css('color', '#e74c3c').text('An error occurred.');
+            },
+            complete: function () {
+                resetButton($saveBtn);
             }
         });
     });
@@ -212,13 +363,11 @@ $(document).ready(function () {
         if (term.length === 0) return;
         doQuestionSearch(term);
     });
-
     $('#questionSearchInput').on('keypress', function (e) {
         if (e.which === 13) {
             $('#questionSearchBtn').click();
         }
     });
-
     $('#questionSearchClearBtn').on('click', function () {
         $('#questionSearchInput').val('');
         $('#question-search-results').hide().html('');
@@ -226,14 +375,17 @@ $(document).ready(function () {
         $('#pagination-container').show();
         $('#questionSearchClearBtn').hide();
     });
-
     function doQuestionSearch(term) {
+        let req = { term: term };
+        if (!isCenter && currentSubjectCode && currentYearCode) {
+            req.subjectCode = currentSubjectCode;
+            req.yearCode = currentYearCode;
+        }
         $('#question-search-results').html('<div style="padding:18px;">Searching...</div>').show();
         $('#chapters-container').hide();
         $('#pagination-container').hide();
         $('#questionSearchClearBtn').show();
-
-        $.get('/Question/SearchQuestions', { term }, function (data) {
+        $.get('/Question/SearchQuestions', req, function (data) {
             let html = '';
             if (!data || data.length === 0) {
                 html = '<div style="padding:18px; color:#888;">No questions found for "<b>' + $('<div/>').text(term).html() + '</b>".</div>';
@@ -251,8 +403,6 @@ $(document).ready(function () {
             $('#question-search-results').html(html).show();
         });
     }
-
-    // Back/clear from search results
     $(document).on('click', '#questionSearchBackBtn', function () {
         $('#question-search-results').hide().html('');
         $('#chapters-container').show();
@@ -261,15 +411,19 @@ $(document).ready(function () {
         $('#questionSearchClearBtn').hide();
     });
 
-    // ========== EXISTING QUESTION/ANSWER UI LOGIC BELOW ==========
-
+    // ========== LOAD CHAPTERS ==========
     function loadChapters(page = 1) {
         currentPage = page;
+        let req = { page: currentPage, pageSize: pageSize };
+        if (!isCenter && currentSubjectCode && currentYearCode) {
+            req.subjectCode = currentSubjectCode;
+            req.yearCode = currentYearCode;
+        }
         $.ajax({
             url: '/Question/GetChaptersWithLessonsAndQuestions',
             method: 'GET',
             dataType: 'json',
-            data: { page: currentPage, pageSize: pageSize },
+            data: req,
             success: function (result) {
                 let data = result.chapters;
                 let totalCount = result.totalCount;
@@ -343,7 +497,6 @@ $(document).ready(function () {
             }
         });
     }
-
     function renderPagination(totalCount, currentPage, pageSize) {
         let totalPages = Math.ceil(totalCount / pageSize);
         if (totalPages <= 1) {
@@ -359,7 +512,6 @@ $(document).ready(function () {
             html += `<button class="modern-btn" id="next-page-btn">Next</button>`;
         }
         $('#pagination-container').html(html);
-
         $('#prev-page-btn').off().on('click', function () {
             if (currentPage > 1) loadChapters(currentPage - 1);
         });
@@ -367,6 +519,8 @@ $(document).ready(function () {
             if (currentPage < totalPages) loadChapters(currentPage + 1);
         });
     }
+
+    // ========== ALL OTHER QUESTION/ANSWER LOGIC REMAINS UNCHANGED ==========
 
     // Toggle lessons dropdown
     $(document).on('click', '.chapter-header', function () {
@@ -388,6 +542,7 @@ $(document).ready(function () {
         $('#question-examcode').val('');
         $('#question-modal-title').text('Add Question to "' + lessonName + '"');
         $('#question-message').text('');
+        $('#save-question-btn').text('Add Question').prop('disabled', false);
         $('#question-modal').fadeIn(180);
     });
 
@@ -395,24 +550,25 @@ $(document).ready(function () {
     $(document).on('click', '.edit-question-btn', function (e) {
         e.stopPropagation();
         const q = $(this).data('question');
-
         $('#question-id').val(q.questionCode);
         $('#question-lessoncode').val(q.lessonCode);
         $('#question-content').val(q.questionContent);
         $('#question-examcode').val(q.examCode || '');
         $('#question-modal-title').text('Edit Question');
         $('#question-message').text('');
+        $('#save-question-btn').text('Save').prop('disabled', false);
         $('#question-modal').fadeIn(180);
     });
 
     // Hide question modal
     $('#cancel-question-btn').on('click', function () {
         $('#question-modal').fadeOut(150);
+        $('#save-question-btn').text('Add Question').prop('disabled', false);
     });
-
     $('#question-modal').on('click', function (e) {
         if (e.target === this) {
             $('#question-modal').fadeOut(150);
+            $('#save-question-btn').text('Add Question').prop('disabled', false);
         }
     });
 
@@ -420,6 +576,8 @@ $(document).ready(function () {
     $('#question-form').on('submit', function (e) {
         e.preventDefault();
         $('#question-message').text('');
+        let $saveBtn = $('#save-question-btn');
+        setButtonProcessing($saveBtn, 'Processing...');
 
         let formData = {
             QuestionCode: $('#question-id').val(),
@@ -428,7 +586,14 @@ $(document).ready(function () {
             ExamCode: $('#question-examcode').val() || null
         };
 
-        let url = formData.QuestionCode ? '/Question/EditQuestion' : '/Question/AddQuestion';
+        let isEdit = !!formData.QuestionCode;
+        let url = isEdit ? '/Question/EditQuestion' : '/Question/AddQuestion';
+
+        if (!formData.QuestionContent || !formData.LessonCode) {
+            $('#question-message').css('color', '#e74c3c').text('Please fill all required fields.');
+            resetButton($saveBtn);
+            return;
+        }
 
         $.ajax({
             url: url,
@@ -439,14 +604,18 @@ $(document).ready(function () {
                     $('#question-message').css('color', '#27ae60').text('Saved!');
                     setTimeout(() => {
                         $('#question-modal').fadeOut(100);
+                        $('#save-question-btn').text(isEdit ? 'Save' : 'Add Question').prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
                 } else {
                     $('#question-message').css('color', '#e74c3c').text(result.message || 'Failed.');
                 }
             },
-            error: function (xhr, status, error) {
+            error: function () {
                 $('#question-message').css('color', '#e74c3c').text('An error occurred.');
+            },
+            complete: function () {
+                resetButton($saveBtn);
             }
         });
     });
@@ -530,17 +699,19 @@ $(document).ready(function () {
         addAnswerField();
         $('#answers-modal-title').text('Add Answers to: "' + questionContent + '"');
         $('#answers-message').text('');
+        $('#save-answers-btn').text('Add Answers').prop('disabled', false);
         $('#answers-modal').fadeIn(180);
     });
 
     // Hide answers modal
     $('#cancel-answers-btn').on('click', function () {
         $('#answers-modal').fadeOut(150);
+        $('#save-answers-btn').text('Add Answers').prop('disabled', false);
     });
-
     $('#answers-modal').on('click', function (e) {
         if (e.target === this) {
             $('#answers-modal').fadeOut(150);
+            $('#save-answers-btn').text('Add Answers').prop('disabled', false);
         }
     });
 
@@ -573,10 +744,13 @@ $(document).ready(function () {
     $('#answers-form').on('submit', function (e) {
         e.preventDefault();
         $('#answers-message').text('');
+        let $saveBtn = $('#save-answers-btn');
+        setButtonProcessing($saveBtn, 'Processing...');
 
         let $blocks = $('#answers-fields .answer-field-block');
         if ($blocks.length === 0) {
             $('#answers-message').css('color', '#e74c3c').text('Add at least one answer.');
+            resetButton($saveBtn);
             return;
         }
 
@@ -588,6 +762,7 @@ $(document).ready(function () {
         });
         if (correctCount > 1) {
             $('#answers-message').css('color', '#e74c3c').text('Only one correct answer is allowed per question.');
+            resetButton($saveBtn);
             return;
         }
 
@@ -613,6 +788,7 @@ $(document).ready(function () {
                     $('#answers-message').css('color', '#27ae60').text('Saved!');
                     setTimeout(() => {
                         $('#answers-modal').fadeOut(100);
+                        $('#save-answers-btn').text('Add Answers').prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
                 } else {
@@ -621,6 +797,9 @@ $(document).ready(function () {
             },
             error: function () {
                 $('#answers-message').css('color', '#e74c3c').text('An error occurred.');
+            },
+            complete: function () {
+                resetButton($saveBtn);
             }
         });
     });
@@ -635,17 +814,19 @@ $(document).ready(function () {
         $('#edit-answer-content').val(ans.answerContent);
         $('#edit-answer-istrue').prop('checked', ans.isTrue);
         $('#edit-answer-message').text('');
+        $('#save-edit-answer-btn').text('Save').prop('disabled', false);
         $('#edit-answer-modal').fadeIn(180);
     });
 
     // Hide edit answer modal
     $('#cancel-edit-answer-btn').on('click', function () {
         $('#edit-answer-modal').fadeOut(150);
+        $('#save-edit-answer-btn').text('Save').prop('disabled', false);
     });
-
     $('#edit-answer-modal').on('click', function (e) {
         if (e.target === this) {
             $('#edit-answer-modal').fadeOut(150);
+            $('#save-edit-answer-btn').text('Save').prop('disabled', false);
         }
     });
 
@@ -653,6 +834,8 @@ $(document).ready(function () {
     $('#edit-answer-form').on('submit', function (e) {
         e.preventDefault();
         $('#edit-answer-message').text('');
+        let $saveBtn = $('#save-edit-answer-btn');
+        setButtonProcessing($saveBtn, 'Processing...');
 
         let formData = {
             AnswerCode: $('#edit-answer-code').val(),
@@ -660,6 +843,12 @@ $(document).ready(function () {
             AnswerContent: $('#edit-answer-content').val(),
             IsTrue: $('#edit-answer-istrue').is(':checked')
         };
+
+        if (!formData.AnswerContent) {
+            $('#edit-answer-message').css('color', '#e74c3c').text('Please fill in the answer content.');
+            resetButton($saveBtn);
+            return;
+        }
 
         $.ajax({
             url: '/Question/EditAnswer',
@@ -670,6 +859,7 @@ $(document).ready(function () {
                     $('#edit-answer-message').css('color', '#27ae60').text('Saved!');
                     setTimeout(() => {
                         $('#edit-answer-modal').fadeOut(100);
+                        $('#save-edit-answer-btn').text('Save').prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
                 } else {
@@ -678,6 +868,9 @@ $(document).ready(function () {
             },
             error: function () {
                 $('#edit-answer-message').css('color', '#e74c3c').text('An error occurred.');
+            },
+            complete: function () {
+                resetButton($saveBtn);
             }
         });
     });

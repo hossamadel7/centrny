@@ -3,9 +3,6 @@
     Layout = "_Layout";
 }
 
-
-
-
 <!-- User/Root/Teacher Info Box (AJAX loaded) -->
 <div id="user-root-info-box" style="display:none;"></div>
 
@@ -14,7 +11,6 @@
         <i class="fa-solid fa-book-open-reader" style="color:#4f8cff;margin-right:12px;"></i>
         Questions
     </h2>
-
 
     <!-- ===== SEARCH BAR START ===== -->
     <div id="question-search-bar" style="margin: 24px 0 16px 0; text-align: left;">
@@ -29,6 +25,12 @@
     <!-- 🟩 ADD CHAPTER BUTTON -->
     <button class="modern-btn" id="add-chapter-btn" style="margin:16px 0;">Add Chapter</button>
 
+    <!-- 🟩 Subject-Year Filter Bar (inserted by JS) -->
+    <div id="subject-year-filter-bar" style="margin: 12px 0 16px 0; text-align: left; display:none;">
+        <label for="subjectYearFilter" style="margin-right: 6px;"><b>Teaching:</b></label>
+        <select id="subjectYearFilter" class="modern-input" style="width:280px;max-width:100%;"></select>
+    </div>
+
     <div id="chapters-container">
         <!-- Dynamic content loaded here by JS -->
     </div>
@@ -41,7 +43,7 @@
 <div id="chapter-modal" class="modal-background" style="display:none;">
     <div class="modal-content">
         <h3>Add Chapter</h3>
-        <form id="chapter-form">
+        <form id="chapter-form" autocomplete="off">
             <div class="form-group">
                 <label for="chapter-lessonname">Chapter Name<span style="color:red;">*</span></label>
                 <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input" />
@@ -59,8 +61,10 @@
                 <label for="chapter-subjectcode">Subject<span style="color:red;">*</span></label>
                 <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input"></select>
             </div>
+            <!-- Hidden for yearcode when relevant -->
+            <input type="hidden" id="chapter-yearcode" name="YearCode" />
             <div class="modal-actions">
-                <button type="submit" class="modern-btn">Save</button>
+                <button type="submit" class="modern-btn" id="save-chapter-btn">Add Chapter</button>
                 <button type="button" id="cancel-chapter-btn" class="modern-btn btn-cancel">Cancel</button>
             </div>
             <div id="chapter-message"></div>
@@ -74,7 +78,7 @@
 <div id="lesson-modal" class="modal-background" style="display:none;">
     <div class="modal-content">
         <h3>Add Lesson</h3>
-        <form id="lesson-form">
+        <form id="lesson-form" autocomplete="off">
             <div class="form-group">
                 <label for="lesson-name">Lesson Name<span style="color:red;">*</span></label>
                 <input type="text" id="lesson-name" name="LessonName" required class="modern-input" />
@@ -86,7 +90,7 @@
             <input type="hidden" id="lesson-chaptercode" name="ChapterCode" />
             <input type="hidden" id="lesson-yearcode" name="YearCode" />
             <div class="modal-actions">
-                <button type="submit" class="modern-btn">Save</button>
+                <button type="submit" class="modern-btn" id="save-lesson-btn">Add Lesson</button>
                 <button type="button" id="cancel-lesson-btn" class="modern-btn btn-cancel">Cancel</button>
             </div>
             <div id="lesson-message"></div>
@@ -98,7 +102,7 @@
 <div id="question-modal" class="modal-background" style="display:none;">
     <div class="modal-content">
         <h3 id="question-modal-title">Question</h3>
-        <form id="question-form">
+        <form id="question-form" autocomplete="off">
             <input type="hidden" id="question-id" name="QuestionCode" />
             <input type="hidden" id="question-lessoncode" name="LessonCode" />
             <div class="form-group">
@@ -110,7 +114,7 @@
                 <input type="number" id="question-examcode" name="ExamCode" class="modern-input" />
             </div>
             <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-question-btn">Save</button>
+                <button type="submit" class="modern-btn" id="save-question-btn">Add Question</button>
                 <button type="button" id="cancel-question-btn" class="modern-btn btn-cancel">Cancel</button>
             </div>
             <div id="question-message"></div>
@@ -121,14 +125,14 @@
 <div id="answers-modal" class="modal-background" style="display:none;">
     <div class="modal-content">
         <h3 id="answers-modal-title">Add Answers</h3>
-        <form id="answers-form">
+        <form id="answers-form" autocomplete="off">
             <input type="hidden" id="answers-questioncode" name="QuestionCode" />
             <div id="answers-fields">
                 <!-- Dynamic answer fields here -->
             </div>
             <button type="button" id="add-more-answer-btn" class="modern-btn" style="margin-bottom:8px;">Add another answer</button>
             <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-answers-btn">Save</button>
+                <button type="submit" class="modern-btn" id="save-answers-btn">Add Answers</button>
                 <button type="button" id="cancel-answers-btn" class="modern-btn btn-cancel">Cancel</button>
             </div>
             <div id="answers-message"></div>
@@ -139,7 +143,7 @@
 <div id="edit-answer-modal" class="modal-background" style="display:none;">
     <div class="modal-content">
         <h3>Edit Answer</h3>
-        <form id="edit-answer-form">
+        <form id="edit-answer-form" autocomplete="off">
             <input type="hidden" id="edit-answer-code" name="AnswerCode" />
             <input type="hidden" id="edit-answer-questioncode" name="QuestionCode" />
             <div class="form-group">
@@ -153,7 +157,7 @@
                 </label>
             </div>
             <div class="modal-actions">
-                <button type="submit" class="modern-btn">Save</button>
+                <button type="submit" class="modern-btn" id="save-edit-answer-btn">Save</button>
                 <button type="button" id="cancel-edit-answer-btn" class="modern-btn btn-cancel">Cancel</button>
             </div>
             <div id="edit-answer-message"></div>

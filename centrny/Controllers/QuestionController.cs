@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using centrny.Models;  // Changed from centrny1
+using centrny.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.Json;
 using centrny.Attributes; // Add this for RequirePageAccess
 
-namespace centrny.Controllers  // Changed from centrny1
+namespace centrny.Controllers
 {
     [RequirePageAccess("Question")] // Add page access requirement
     public class QuestionController : Controller
@@ -77,11 +77,37 @@ namespace centrny.Controllers  // Changed from centrny1
         }
 
         // =========================
+        // SUBJECT-YEAR PAIRS FOR FILTER
+        // =========================
+
+        [HttpGet]
+        public JsonResult GetSubjectYearPairsByTeacher(int teacherCode)
+        {
+            int? rootCode = GetCurrentUserRootCode();
+            if (!rootCode.HasValue)
+                return Json(new List<object>());
+
+            var pairs = (from t in _context.Teaches
+                         where t.TeacherCode == teacherCode && t.RootCode == rootCode.Value
+                         join s in _context.Subjects on t.SubjectCode equals s.SubjectCode
+                         join y in _context.Years on t.YearCode equals y.YearCode
+                         select new
+                         {
+                             subjectCode = t.SubjectCode,
+                             yearCode = t.YearCode,
+                             subjectName = s.SubjectName,
+                             yearName = y.YearName
+                         }).Distinct().ToList();
+
+            return Json(pairs);
+        }
+
+        // =========================
         // CHAPTERS, LESSONS, QUESTIONS
         // =========================
 
         [HttpGet]
-        public JsonResult GetChaptersWithLessonsAndQuestions(int page = 1, int pageSize = 5)
+        public JsonResult GetChaptersWithLessonsAndQuestions(int page = 1, int pageSize = 5, int? subjectCode = null, int? yearCode = null)
         {
             var rootCode = GetCurrentUserRootCode();
             if (!rootCode.HasValue)
@@ -89,6 +115,11 @@ namespace centrny.Controllers  // Changed from centrny1
 
             var query = _context.Lessons
                 .Where(l => l.ChapterCode == null && l.RootCode == rootCode.Value);
+
+            if (subjectCode.HasValue)
+                query = query.Where(l => l.SubjectCode == subjectCode.Value);
+            if (yearCode.HasValue)
+                query = query.Where(l => l.YearCode == yearCode.Value);
 
             int totalCount = query.Count();
 
@@ -369,9 +400,10 @@ namespace centrny.Controllers  // Changed from centrny1
             return Json(new { isCenter = isCenter });
         }
 
+        // FIXED: Explicit conversion for value types when assigning to non-nullable fields
         [HttpPost]
         [RequirePageAccess("Question", "insert")]
-        public JsonResult AddChapter(string LessonName, int EduYearCode, int TeacherCode, int SubjectCode)
+        public JsonResult AddChapter(string LessonName, int? EduYearCode, int? TeacherCode, int SubjectCode, int? YearCode)
         {
             try
             {
@@ -379,25 +411,37 @@ namespace centrny.Controllers  // Changed from centrny1
                 if (!userRootCode.HasValue)
                     return Json(new { success = false, message = "Unable to determine root assignment." });
 
-                var teach = _context.Teaches.FirstOrDefault(t =>
-                    t.TeacherCode == TeacherCode &&
-                    t.EduYearCode == EduYearCode &&
-                    t.SubjectCode == SubjectCode &&
-                    t.RootCode == userRootCode.Value
-                );
+                int? yearCode = YearCode;
+                int? eduYearCode = EduYearCode;
 
-                if (teach == null)
-                    return Json(new { success = false, message = "Matching Teach record not found." });
+                // For center users, yearCode might be inferred via Teach
+                if (!yearCode.HasValue && TeacherCode.HasValue && EduYearCode.HasValue)
+                {
+                    var teach = _context.Teaches.FirstOrDefault(t =>
+                        t.TeacherCode == TeacherCode &&
+                        t.EduYearCode == EduYearCode &&
+                        t.SubjectCode == SubjectCode &&
+                        t.RootCode == userRootCode.Value
+                    );
+                    if (teach != null)
+                        yearCode = teach.YearCode;
+                    else
+                        return Json(new { success = false, message = "Matching Teach record not found." });
+                }
+
+                // Defensive: If any required value is missing, return error
+                if (!eduYearCode.HasValue || !TeacherCode.HasValue || !yearCode.HasValue)
+                    return Json(new { success = false, message = "Missing required field(s)" });
 
                 var lesson = new Lesson
                 {
                     LessonName = LessonName,
                     RootCode = userRootCode.Value,
-                    EduYearCode = EduYearCode,
-                    TeacherCode = TeacherCode,
+                    EduYearCode = eduYearCode.Value,
+                    TeacherCode = TeacherCode.Value,
                     SubjectCode = SubjectCode,
                     ChapterCode = null,
-                    YearCode = teach.YearCode,
+                    YearCode = yearCode.Value,
                     IsActive = true,
                     InsertUser = GetCurrentUserId(),
                     InsertTime = DateTime.Now
@@ -415,18 +459,22 @@ namespace centrny.Controllers  // Changed from centrny1
             }
         }
 
+        // FIXED: Defensive conversion for value types
         [HttpPost]
         [RequirePageAccess("Question", "insert")]
-        public JsonResult AddLesson(string LessonName, int RootCode, int TeacherCode, int SubjectCode, int EduYearCode, int? ChapterCode, int? YearCode)
+        public JsonResult AddLesson(string LessonName, int? RootCode, int? TeacherCode, int? SubjectCode, int EduYearCode, int? ChapterCode, int? YearCode)
         {
             try
             {
+                if (!RootCode.HasValue || !TeacherCode.HasValue || !SubjectCode.HasValue)
+                    return Json(new { success = false, message = "Missing required field(s)" });
+
                 var lesson = new Lesson
                 {
                     LessonName = LessonName,
-                    RootCode = RootCode,
-                    TeacherCode = TeacherCode,
-                    SubjectCode = SubjectCode,
+                    RootCode = RootCode.Value,
+                    TeacherCode = TeacherCode.Value,
+                    SubjectCode = SubjectCode.Value,
                     EduYearCode = EduYearCode,
                     ChapterCode = ChapterCode,
                     YearCode = YearCode,
@@ -446,7 +494,7 @@ namespace centrny.Controllers  // Changed from centrny1
         }
 
         [HttpGet]
-        public JsonResult SearchQuestions(string term)
+        public JsonResult SearchQuestions(string term, int? subjectCode = null, int? yearCode = null)
         {
             int? rootCode = GetCurrentUserRootCode();
             if (!rootCode.HasValue || string.IsNullOrWhiteSpace(term))
@@ -455,6 +503,8 @@ namespace centrny.Controllers  // Changed from centrny1
             var questions = (from q in _context.Questions
                              join l in _context.Lessons on q.LessonCode equals l.LessonCode
                              where q.QuestionContent.Contains(term) && l.RootCode == rootCode.Value
+                             && (!subjectCode.HasValue || l.SubjectCode == subjectCode.Value)
+                             && (!yearCode.HasValue || l.YearCode == yearCode.Value)
                              select new
                              {
                                  questionCode = q.QuestionCode,
