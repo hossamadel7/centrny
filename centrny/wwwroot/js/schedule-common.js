@@ -1,1207 +1,796 @@
-﻿// Complete schedule-common.js - Enhanced with Teacher Filtering Logic
-// This file handles all schedule management functionality for both Calendar and Index views
+﻿// schedule-common.js - Complete updated version with teacher/center display logic
+// Updated: 2025-07-05 18:19:03 UTC by Hamodyyy123
 
 class ScheduleManager {
     constructor() {
+        this.schedules = [];
+        this.editMode = false;
         this.currentScheduleId = null;
-        this.isEditMode = false;
-        this.allSchedules = [];
-        this.isInitialized = false;
-
-        // Initialize the manager
-        this.initialize();
+        this.lastViewedScheduleCode = null;
+        this.codeToDelete = null;
+        this.dom = {};
+        this.debounceTimeouts = {};
+        document.addEventListener('DOMContentLoaded', () => this.init());
     }
 
-    async initialize() {
+    init() {
+        this.cacheDom();
+        this.loadSchedules();
+        this.setupFormListeners();
+        this.setupDropdownListeners();
+        this.setupModalEditButton();
+        this.setupModalDeleteButton();
+        this.setupGlobalActions();
+    }
+
+    cacheDom() {
+        this.dom = {
+            loader: document.getElementById('initialLoader'),
+            scheduleForm: document.getElementById('scheduleForm'),
+            scheduleModal: document.getElementById('scheduleModal'),
+            modalTitle: document.getElementById('scheduleModalTitle'),
+            scheduleName: document.getElementById('scheduleName'),
+            dayOfWeek: document.getElementById('dayOfWeek'),
+            startTime: document.getElementById('startTime'),
+            endTime: document.getElementById('endTime'),
+            rootCode: document.getElementById('rootCode'),
+            centerCode: document.getElementById('centerCode'),
+            branchCode: document.getElementById('branchCode'),
+            hallCode: document.getElementById('hallCode'),
+            eduYearCode: document.getElementById('eduYearCode'),
+            teacherCode: document.getElementById('teacherCode'),
+            subjectCode: document.getElementById('subjectCode'),
+            yearCode: document.getElementById('yearCode'),
+            scheduleAmount: document.getElementById('scheduleAmount'),
+            floatingAddBtn: document.querySelector('.floating-add-btn'),
+            eventDetailsContent: document.getElementById('eventDetailsContent'),
+            saveScheduleBtn: document.getElementById('saveScheduleBtn'),
+            editEventBtn: document.getElementById('editEventBtn'),
+            deleteEventBtn: document.getElementById('deleteEventBtn'),
+            deleteConfirmBtn: document.getElementById('confirmDeleteBtn'),
+            deleteConfirmModal: document.getElementById('deleteConfirmModal'),
+            deleteScheduleSummary: document.getElementById('deleteScheduleSummary')
+        };
+    }
+
+    // Main Schedules Loader
+    async loadSchedules() {
+        this.showLoader();
         try {
-            console.log('🚀 Initializing Schedule Manager...', {
-                userType: window.userContext?.isCenter ? 'Center' : 'Teacher',
-                rootCode: window.userContext?.currentUserRootCode,
-                hasError: window.userContext?.hasError
-            });
-
-            this.setupCommonEventListeners();
-            this.setupFormHandlers();
-
-            // Initialize based on user type
-            if (window.userContext && !window.userContext.hasError) {
-                await this.initializeForUserType();
-            }
-
-            this.isInitialized = true;
-            console.log('✅ Schedule Manager initialized successfully');
-
-        } catch (error) {
-            console.error('❌ Error initializing Schedule Manager:', error);
-            this.showToast('Error', 'Failed to initialize schedule manager', 'error');
+            const res = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
+            const data = await res.json();
+            this.schedules = Array.isArray(data) ? data : [];
+            this.renderWeeklyGrid();
+        } catch (e) {
+            this.showToast('Failed to load schedules', 'error');
+        } finally {
+            this.hideLoader();
         }
     }
 
-    async initializeForUserType() {
+    // Save (Create/Edit) Schedule
+    async saveSchedule(formData) {
+        this.showModalLoader(true);
         try {
-            if (window.userContext.isTeacher) {
-                console.log('🎓 Setting up Teacher-specific functionality...');
-                this.setupTeacherSpecificHandlers();
-                // Don't auto-load years for teachers - they need to select edu year first
-            } else if (window.userContext.isCenter) {
-                console.log('🏢 Setting up Center-specific functionality...');
-                await this.loadBranchesForCenterUser();
-                await this.loadTeachersForCenterUser();
-            }
-        } catch (error) {
-            console.error('❌ Error in initializeForUserType:', error);
-        }
-    }
-
-    setupTeacherSpecificHandlers() {
-        // Set up change handlers for teacher users
-        const eduYearSelect = document.getElementById('eduYearCode');
-        const yearSelect = document.getElementById('yearCode');
-        const branchSelect = document.getElementById('branchCode');
-        const centerSelect = document.getElementById('centerCode');
-
-        if (eduYearSelect) {
-            eduYearSelect.addEventListener('change', () => {
-                console.log('📅 Educational year changed:', eduYearSelect.value);
-                this.onEduYearChange();
-            });
-        }
-
-        if (yearSelect) {
-            yearSelect.addEventListener('change', () => {
-                console.log('📚 Academic year changed:', yearSelect.value);
-                this.onYearChange();
-            });
-        }
-
-        if (branchSelect) {
-            branchSelect.addEventListener('change', () => {
-                console.log('🏪 Branch changed:', branchSelect.value);
-                this.onBranchChange();
-            });
-        }
-
-        if (centerSelect) {
-            centerSelect.addEventListener('change', () => {
-                console.log('🏢 Center changed:', centerSelect.value);
-                this.loadBranchesForCenter();
-            });
-        }
-
-        console.log('✅ Teacher-specific handlers set up');
-    }
-
-    async onEduYearChange() {
-        const eduYearCode = document.getElementById('eduYearCode')?.value;
-        const yearSelect = document.getElementById('yearCode');
-        const subjectSelect = document.getElementById('subjectCode');
-
-        console.log('🔄 Processing educational year change:', eduYearCode);
-
-        // Reset dependent dropdowns
-        if (yearSelect) {
-            yearSelect.innerHTML = '<option value="">Select Year</option>';
-        }
-        if (subjectSelect) {
-            subjectSelect.innerHTML = '<option value="">Select Year First</option>';
-        }
-
-        if (!eduYearCode || eduYearCode === '') {
-            console.log('⚠️ No educational year selected');
-            return;
-        }
-
-        try {
-            console.log('📡 Fetching years for educational year:', eduYearCode);
-            const response = await fetch(`/Schedule/GetYearsByEduYear?eduYearCode=${eduYearCode}`);
-            const data = await response.json();
-
-            console.log('📊 Years response:', data);
-
-            if (data.success && yearSelect) {
-                yearSelect.innerHTML = '<option value="">Select Year</option>';
-                data.years.forEach(year => {
-                    const option = document.createElement('option');
-                    option.value = year.value;
-                    option.textContent = year.text;
-                    yearSelect.appendChild(option);
-                });
-                console.log(`✅ Loaded ${data.years.length} years`);
-            } else {
-                console.error('❌ Failed to load years:', data.error);
-                this.showToast('Error', data.error || 'Failed to load years', 'error');
-            }
-        } catch (error) {
-            console.error('❌ Error loading years:', error);
-            this.showToast('Error', 'Failed to load years', 'error');
-        }
-    }
-
-    async onYearChange() {
-        const yearCode = document.getElementById('yearCode')?.value;
-        const subjectSelect = document.getElementById('subjectCode');
-
-        console.log('🔄 Processing year change:', yearCode);
-
-        // Reset subject dropdown
-        if (subjectSelect) {
-            subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
-        }
-
-        if (!yearCode || yearCode === '') {
-            console.log('⚠️ No year selected');
-            return;
-        }
-
-        // For teacher users, load subjects based on year and branch
-        if (window.userContext.isTeacher) {
-            await this.loadSubjectsForTeacherByYearAndBranch();
-        }
-    }
-
-    async onBranchChange() {
-        console.log('🔄 Processing branch change');
-
-        // For teacher users, reload subjects when branch changes
-        if (window.userContext.isTeacher) {
-            const yearCode = document.getElementById('yearCode')?.value;
-            if (yearCode) {
-                await this.loadSubjectsForTeacherByYearAndBranch();
-            }
-        }
-
-        // Load halls for the selected branch
-        await this.loadHallsForBranch();
-    }
-
-    async loadSubjectsForTeacherByYearAndBranch() {
-        if (!window.userContext.isTeacher) {
-            console.log('⚠️ Not a teacher user, skipping subject loading');
-            return;
-        }
-
-        const yearCode = document.getElementById('yearCode')?.value;
-        const branchCode = document.getElementById('branchCode')?.value;
-        const subjectSelect = document.getElementById('subjectCode');
-
-        console.log('📡 Loading subjects for teacher:', { yearCode, branchCode });
-
-        if (!yearCode || !subjectSelect) {
-            console.log('⚠️ Missing year code or subject select element');
-            return;
-        }
-
-        try {
-            // Get current teacher code (will be auto-assigned by backend)
-            const response = await fetch('/Schedule/GetYearsForTeacherRoot');
-            const teacherData = await response.json();
-
-            if (!teacherData.success || !teacherData.teacherCode) {
-                console.error('❌ Failed to get teacher code:', teacherData.error);
-                this.showToast('Error', 'Failed to get teacher information', 'error');
-                return;
-            }
-
-            const teacherCode = teacherData.teacherCode;
-            console.log('👨‍🏫 Teacher code:', teacherCode);
-
-            // Build URL with optional branch parameter
-            let url = `/Schedule/GetSubjectsForTeacherByYearAndBranch?teacherCode=${teacherCode}&yearCode=${yearCode}`;
-            if (branchCode && branchCode !== '') {
-                url += `&branchCode=${branchCode}`;
-            }
-
-            console.log('📡 Fetching subjects from:', url);
-            const subjectResponse = await fetch(url);
-            const subjectData = await subjectResponse.json();
-
-            console.log('📊 Subjects response:', subjectData);
-
-            if (subjectData.success) {
-                subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
-                subjectData.subjects.forEach(subject => {
-                    const option = document.createElement('option');
-                    option.value = subject.value;
-                    option.textContent = subject.text;
-                    subjectSelect.appendChild(option);
-                });
-                console.log(`✅ Loaded ${subjectData.subjects.length} subjects`);
-            } else {
-                console.error('❌ Failed to load subjects:', subjectData.error);
-                subjectSelect.innerHTML = '<option value="">No subjects available</option>';
-            }
-        } catch (error) {
-            console.error('❌ Error loading subjects:', error);
-            if (subjectSelect) {
-                subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
-            }
-            this.showToast('Error', 'Failed to load subjects', 'error');
-        }
-    }
-
-    async loadTeacherYears() {
-        if (!window.userContext.isTeacher) {
-            console.log('⚠️ Not a teacher user, skipping year loading');
-            return;
-        }
-
-        console.log('📡 Loading years for teacher...');
-
-        try {
-            const response = await fetch('/Schedule/GetYearsForTeacherRoot');
-            const data = await response.json();
-
-            console.log('📊 Teacher years response:', data);
-
-            if (data.success) {
-                const yearSelect = document.getElementById('yearCode');
-                if (yearSelect && data.years) {
-                    yearSelect.innerHTML = '<option value="">Select Year</option>';
-                    data.years.forEach(year => {
-                        const option = document.createElement('option');
-                        option.value = year.value;
-                        option.textContent = year.text;
-                        yearSelect.appendChild(option);
-                    });
-                    console.log(`✅ Loaded ${data.years.length} years for teacher`);
-                }
-            } else {
-                console.error('❌ Failed to load teacher years:', data.error);
-                this.showToast('Error', data.error || 'Failed to load years', 'error');
-            }
-        } catch (error) {
-            console.error('❌ Error loading teacher years:', error);
-            this.showToast('Error', 'Failed to load years', 'error');
-        }
-    }
-
-    async loadBranchesForCenterUser() {
-        if (!window.userContext.isCenter) {
-            console.log('⚠️ Not a center user, skipping branch loading');
-            return;
-        }
-
-        console.log('📡 Loading branches for center user...');
-
-        try {
-            const response = await fetch('/Schedule/GetBranchesForCenterUser');
-            const data = await response.json();
-
-            console.log('📊 Center branches response:', data);
-
-            if (data.success) {
-                const branchSelect = document.getElementById('branchCode');
-                if (branchSelect && data.branches) {
-                    branchSelect.innerHTML = '<option value="">Select Branch (Optional)</option>';
-                    data.branches.forEach(branch => {
-                        const option = document.createElement('option');
-                        option.value = branch.value;
-                        option.textContent = branch.text;
-                        branchSelect.appendChild(option);
-                    });
-                    console.log(`✅ Loaded ${data.branches.length} branches for center`);
-                }
-            } else {
-                console.error('❌ Failed to load branches:', data.error);
-                this.showToast('Error', data.error || 'Failed to load branches', 'error');
-            }
-        } catch (error) {
-            console.error('❌ Error loading branches:', error);
-            this.showToast('Error', 'Failed to load branches', 'error');
-        }
-    }
-
-    async loadTeachersForCenterUser() {
-        if (!window.userContext.isCenter) {
-            console.log('⚠️ Not a center user, skipping teacher loading');
-            return;
-        }
-
-        console.log('📡 Loading teachers for center user...');
-
-        try {
-            const response = await fetch('/Schedule/GetTeachersForCenterUser');
-            const data = await response.json();
-
-            console.log('📊 Center teachers response:', data);
-
-            if (data.success) {
-                const teacherSelect = document.getElementById('teacherCode');
-                if (teacherSelect && data.teachers) {
-                    teacherSelect.innerHTML = '<option value="">Select Teacher</option>';
-                    data.teachers.forEach(teacher => {
-                        const option = document.createElement('option');
-                        option.value = teacher.value;
-                        option.textContent = teacher.text;
-                        teacherSelect.appendChild(option);
-                    });
-                    console.log(`✅ Loaded ${data.teachers.length} teachers for center`);
-                }
-            } else {
-                console.error('❌ Failed to load teachers:', data.error);
-                this.showToast('Error', data.error || 'Failed to load teachers', 'error');
-            }
-        } catch (error) {
-            console.error('❌ Error loading teachers:', error);
-            this.showToast('Error', 'Failed to load teachers', 'error');
-        }
-    }
-
-    setupCommonEventListeners() {
-        console.log('🔧 Setting up common event listeners...');
-
-        // Save button
-        const saveBtn = document.getElementById('saveScheduleBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.saveSchedule();
-            });
-        }
-
-        // Edit and Delete buttons in details modal
-        const editBtn = document.getElementById('editEventBtn');
-        const deleteBtn = document.getElementById('deleteEventBtn');
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
-        if (editBtn) {
-            editBtn.addEventListener('click', () => this.editCurrentSchedule());
-        }
-
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => this.showDeleteConfirmation());
-        }
-
-        if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', () => this.confirmDelete());
-        }
-
-        // Modal reset handlers
-        const scheduleModal = document.getElementById('scheduleModal');
-        if (scheduleModal) {
-            scheduleModal.addEventListener('hidden.bs.modal', () => this.resetForm());
-        }
-
-        console.log('✅ Common event listeners set up');
-    }
-
-    setupFormHandlers() {
-        console.log('🔧 Setting up form handlers...');
-
-        // For center users only - teacher change handler
-        if (window.userContext.isCenter) {
-            const teacherSelect = document.getElementById('teacherCode');
-            if (teacherSelect) {
-                teacherSelect.addEventListener('change', () => {
-                    console.log('👨‍🏫 Teacher changed for center user:', teacherSelect.value);
-                    this.loadSubjectsForTeacher();
-                });
-            }
-
-            // Branch change handler for center users
-            const branchSelect = document.getElementById('branchCode');
-            if (branchSelect) {
-                branchSelect.addEventListener('change', () => {
-                    console.log('🏪 Branch changed for center user:', branchSelect.value);
-                    this.loadHallsForBranch();
-                });
-            }
-        }
-
-        console.log('✅ Form handlers set up');
-    }
-
-    // For center users - load subjects based on selected teacher
-    async loadSubjectsForTeacher() {
-        if (!window.userContext.isCenter) {
-            console.log('⚠️ Not a center user, skipping subject loading');
-            return;
-        }
-
-        const teacherCode = document.getElementById('teacherCode')?.value;
-        const yearCode = document.getElementById('yearCode')?.value;
-        const subjectSelect = document.getElementById('subjectCode');
-
-        console.log('📡 Loading subjects for center user:', { teacherCode, yearCode });
-
-        if (!teacherCode || !subjectSelect) {
-            if (subjectSelect) {
-                subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
-            }
-            console.log('⚠️ No teacher selected or subject select not found');
-            return;
-        }
-
-        try {
-            let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${teacherCode}`;
-            if (yearCode) {
-                url += `&yearCode=${yearCode}`;
-            }
-
-            console.log('📡 Fetching subjects from:', url);
-            const response = await fetch(url);
-            const data = await response.json();
-
-            console.log('📊 Subjects response for center:', data);
-
-            if (data.success) {
-                subjectSelect.innerHTML = '<option value="">Select Subject (Optional)</option>';
-                data.subjects.forEach(subject => {
-                    const option = document.createElement('option');
-                    option.value = subject.value;
-                    option.textContent = subject.text;
-                    subjectSelect.appendChild(option);
-                });
-                console.log(`✅ Loaded ${data.subjects.length} subjects for center user`);
-            } else {
-                console.error('❌ Failed to load subjects:', data.error);
-                subjectSelect.innerHTML = '<option value="">No subjects available</option>';
-            }
-        } catch (error) {
-            console.error('❌ Error loading subjects:', error);
-            if (subjectSelect) {
-                subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
-            }
-            this.showToast('Error', 'Failed to load subjects', 'error');
-        }
-    }
-
-    async loadBranchesForCenter() {
-        const centerCode = document.getElementById('centerCode')?.value;
-        const branchSelect = document.getElementById('branchCode');
-        const hallSelect = document.getElementById('hallCode');
-
-        console.log('📡 Loading branches for center:', centerCode);
-
-        // Reset dependent dropdowns
-        if (branchSelect) {
-            branchSelect.innerHTML = '<option value="">Select Center First</option>';
-        }
-        if (hallSelect) {
-            hallSelect.innerHTML = '<option value="">Select Branch First</option>';
-        }
-
-        if (!centerCode) {
-            console.log('⚠️ No center selected');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/Schedule/GetBranchesForCenter?centerCode=${centerCode}`);
-            const data = await response.json();
-
-            console.log('📊 Branches for center response:', data);
-
-            if (data.success && branchSelect) {
-                branchSelect.innerHTML = '<option value="">Select Branch (Optional)</option>';
-                data.branches.forEach(branch => {
-                    const option = document.createElement('option');
-                    option.value = branch.value;
-                    option.textContent = branch.text;
-                    branchSelect.appendChild(option);
-                });
-                console.log(`✅ Loaded ${data.branches.length} branches for center`);
-            }
-        } catch (error) {
-            console.error('❌ Error loading branches:', error);
-            this.showToast('Error', 'Failed to load branches', 'error');
-        }
-    }
-
-    async loadHallsForBranch() {
-        const branchCode = document.getElementById('branchCode')?.value;
-        const hallSelect = document.getElementById('hallCode');
-
-        console.log('📡 Loading halls for branch:', branchCode);
-
-        if (hallSelect) {
-            hallSelect.innerHTML = '<option value="">Select Branch First</option>';
-        }
-
-        if (!branchCode) {
-            console.log('⚠️ No branch selected');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/Schedule/GetHallsForBranch?branchCode=${branchCode}`);
-            const data = await response.json();
-
-            console.log('📊 Halls for branch response:', data);
-
-            if (data.success && hallSelect) {
-                hallSelect.innerHTML = '<option value="">Select Hall (Optional)</option>';
-                data.halls.forEach(hall => {
-                    const option = document.createElement('option');
-                    option.value = hall.value;
-                    option.textContent = `${hall.text} (${hall.capacity || 'N/A'})`;
-                    hallSelect.appendChild(option);
-                });
-                console.log(`✅ Loaded ${data.halls.length} halls for branch`);
-            }
-        } catch (error) {
-            console.error('❌ Error loading halls:', error);
-            this.showToast('Error', 'Failed to load halls', 'error');
-        }
-    }
-
-    async saveSchedule() {
-        console.log('💾 Saving schedule...', { isEditMode: this.isEditMode, scheduleId: this.currentScheduleId });
-
-        try {
-            const formData = this.collectFormData();
-            console.log('📝 Form data collected:', formData);
-
-            if (!this.validateFormData(formData)) {
-                console.log('❌ Form validation failed');
-                return;
-            }
-
-            const url = this.isEditMode ?
-                `/Schedule/EditScheduleEvent/${this.currentScheduleId}` :
-                '/Schedule/CreateScheduleEvent';
-
-            const method = 'POST';
-
-            console.log('📡 Sending request to:', url);
-
-            const response = await fetch(url, {
-                method: method,
+            const url = this.editMode && this.currentScheduleId
+                ? `/Schedule/EditScheduleEvent/${this.currentScheduleId}`
+                : '/Schedule/CreateScheduleEvent';
+            const res = await fetch(url, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                 },
                 body: JSON.stringify(formData)
             });
-
-            const result = await response.json();
-            console.log('📊 Save response:', result);
-
+            const result = await res.json();
             if (result.success) {
-                this.showToast('Success',
-                    this.isEditMode ? 'Schedule updated successfully!' : 'Schedule created successfully!',
-                    'success');
-
                 this.closeModal('scheduleModal');
                 this.resetForm();
-
-                // Call the appropriate callback
-                if (this.onScheduleSaved) {
-                    this.onScheduleSaved();
-                }
+                await this.loadSchedules();
+                this.showToast(this.editMode ? 'Schedule updated!' : 'Schedule created!', 'success');
             } else {
-                console.error('❌ Save failed:', result.error);
-                this.showToast('Error', result.error || 'Failed to save schedule', 'error');
-                if (this.onScheduleError) {
-                    this.onScheduleError(result.error);
-                }
+                this.showToast(result.error, 'error');
             }
-        } catch (error) {
-            console.error('❌ Error saving schedule:', error);
-            this.showToast('Error', 'An unexpected error occurred', 'error');
-            if (this.onScheduleError) {
-                this.onScheduleError(error.message);
-            }
+        } catch (e) {
+            this.showToast('Error saving schedule', 'error');
+        } finally {
+            this.showModalLoader(false);
         }
     }
 
-    collectFormData() {
-        const data = {
-            title: document.getElementById('scheduleName')?.value?.trim() || '',
-            dayOfWeek: document.getElementById('dayOfWeek')?.value || '',
-            startTime: document.getElementById('startTime')?.value || '',
-            endTime: document.getElementById('endTime')?.value || '',
-            rootCode: parseInt(document.getElementById('rootCode')?.value) || null,
-            centerCode: parseInt(document.getElementById('centerCode')?.value) || null,
-            branchCode: parseInt(document.getElementById('branchCode')?.value) || null,
-            hallCode: parseInt(document.getElementById('hallCode')?.value) || null,
-            eduYearCode: parseInt(document.getElementById('eduYearCode')?.value) || null,
-            teacherCode: parseInt(document.getElementById('teacherCode')?.value) || null,
-            subjectCode: parseInt(document.getElementById('subjectCode')?.value) || null,
-            yearCode: parseInt(document.getElementById('yearCode')?.value) || null,
-            scheduleAmount: parseFloat(document.getElementById('scheduleAmount')?.value) || null
-        };
-
-        console.log('📝 Collected form data:', data);
-        return data;
-    }
-
-    validateFormData(data) {
-        console.log('✅ Validating form data...');
-
-        if (!data.title) {
-            this.showToast('Validation Error', 'Schedule name is required', 'error');
-            return false;
-        }
-
-        if (!data.dayOfWeek) {
-            this.showToast('Validation Error', 'Day of week is required', 'error');
-            return false;
-        }
-
-        if (!data.startTime || !data.endTime) {
-            this.showToast('Validation Error', 'Start and end times are required', 'error');
-            return false;
-        }
-
-        if (!data.yearCode) {
-            this.showToast('Validation Error', 'Year is required', 'error');
-            return false;
-        }
-
-        // For center users, teacher is required
-        if (window.userContext.isCenter && !data.teacherCode) {
-            this.showToast('Validation Error', 'Teacher selection is required', 'error');
-            return false;
-        }
-
-        // For teacher users, educational year is required
-        if (window.userContext.isTeacher && !data.eduYearCode) {
-            this.showToast('Validation Error', 'Educational year is required', 'error');
-            return false;
-        }
-
-        console.log('✅ Form validation passed');
-        return true;
-    }
-
-    addScheduleForDay(day) {
-        console.log('➕ Adding schedule for day:', day);
-
-        const daySelect = document.getElementById('dayOfWeek');
-        if (daySelect) {
-            daySelect.value = day;
-        }
-
-        this.isEditMode = false;
-        this.currentScheduleId = null;
-
-        const modalTitle = document.getElementById('scheduleModalTitle');
-        if (modalTitle) {
-            modalTitle.innerHTML = `<i class="fas fa-calendar-plus me-2"></i>Add New Schedule for ${day}`;
-        }
-
-        const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
-        modal.show();
-    }
-
-    showScheduleDetails(scheduleCode) {
-        console.log('👁️ Showing schedule details for:', scheduleCode);
-
-        const schedule = this.allSchedules.find(s => s.scheduleCode === scheduleCode);
-        if (!schedule) {
-            console.error('❌ Schedule not found:', scheduleCode);
-            this.showToast('Error', 'Schedule not found', 'error');
-            return;
-        }
-
-        this.currentScheduleId = scheduleCode;
-
-        const content = document.getElementById('eventDetailsContent');
-        if (content) {
-            content.innerHTML = this.generateScheduleDetailsHTML(schedule);
-        }
-
-        const modal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
-        modal.show();
-    }
-
-    generateScheduleDetailsHTML(schedule) {
-        return `
-            <div class="schedule-details">
-                <h5><i class="fas fa-calendar me-2"></i>${schedule.scheduleName}</h5>
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <strong>Day:</strong> ${schedule.dayOfWeek}
-                    </div>
-                    <div class="detail-item">
-                        <strong>Time:</strong> ${schedule.startTime} - ${schedule.endTime}
-                    </div>
-                    ${schedule.hallName ? `<div class="detail-item"><strong>Hall:</strong> ${schedule.hallName}</div>` : ''}
-                    ${schedule.teacherName ? `<div class="detail-item"><strong>Teacher:</strong> ${schedule.teacherName}</div>` : ''}
-                    ${schedule.subjectName ? `<div class="detail-item"><strong>Subject:</strong> ${schedule.subjectName}</div>` : ''}
-                    ${schedule.centerName ? `<div class="detail-item"><strong>Center:</strong> ${schedule.centerName}</div>` : ''}
-                    ${schedule.branchName ? `<div class="detail-item"><strong>Branch:</strong> ${schedule.branchName}</div>` : ''}
-                    ${schedule.scheduleAmount ? `<div class="detail-item"><strong>Amount:</strong> $${schedule.scheduleAmount.toFixed(2)}</div>` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    editSchedule(scheduleCode) {
-        console.log('✏️ Editing schedule:', scheduleCode);
-        this.editCurrentSchedule(scheduleCode);
-    }
-
-    editCurrentSchedule(scheduleCode = null) {
-        const id = scheduleCode || this.currentScheduleId;
-        const schedule = this.allSchedules.find(s => s.scheduleCode === id);
-
-        console.log('✏️ Editing current schedule:', id, schedule);
-
-        if (!schedule) {
-            console.error('❌ Schedule not found for edit:', id);
-            this.showToast('Error', 'Schedule not found', 'error');
-            return;
-        }
-
-        this.isEditMode = true;
-        this.currentScheduleId = id;
-
-        // Populate form with existing data
-        this.populateFormWithSchedule(schedule);
-
-        // Update modal title
-        const modalTitle = document.getElementById('scheduleModalTitle');
-        if (modalTitle) {
-            modalTitle.innerHTML = `<i class="fas fa-edit me-2"></i>Edit Schedule: ${schedule.scheduleName}`;
-        }
-
-        // Close details modal and open edit modal
-        this.closeModal('eventDetailsModal');
-
-        const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
-        modal.show();
-    }
-
-    async populateFormWithSchedule(schedule) {
-        console.log('📝 Populating form with schedule:', schedule);
-
+    // Delete Schedule (from modal confirm only)
+    async deleteSchedule(id) {
+        this.showModalDeleteSpinner(true);
         try {
-            // Set basic fields
-            document.getElementById('scheduleName').value = schedule.scheduleName || '';
-            document.getElementById('dayOfWeek').value = schedule.dayOfWeek || '';
-
-            // Convert time format if needed
-            if (schedule.startTime && schedule.endTime) {
-                const startTime = this.convertTo24Hour(schedule.startTime);
-                const endTime = this.convertTo24Hour(schedule.endTime);
-                document.getElementById('startTime').value = startTime;
-                document.getElementById('endTime').value = endTime;
-            }
-
-            // Set other fields
-            if (schedule.scheduleAmount) {
-                document.getElementById('scheduleAmount').value = schedule.scheduleAmount;
-            }
-
-            // For teacher users, need to handle the cascading selects
-            if (window.userContext.isTeacher) {
-                console.log('👨‍🏫 Populating form for teacher user');
-
-                // Set edu year first
-                if (schedule.eduYearCode) {
-                    document.getElementById('eduYearCode').value = schedule.eduYearCode;
-                    // Load years for this edu year
-                    await this.onEduYearChange();
-                }
-
-                // Set year
-                if (schedule.yearCode) {
-                    document.getElementById('yearCode').value = schedule.yearCode;
-                    // Load subjects for this year
-                    await this.onYearChange();
-                }
-
-                // Set center and branch
-                if (schedule.centerCode) {
-                    document.getElementById('centerCode').value = schedule.centerCode;
-                    await this.loadBranchesForCenter();
-                }
-
-                if (schedule.branchCode) {
-                    document.getElementById('branchCode').value = schedule.branchCode;
-                    await this.loadHallsForBranch();
-                }
-
-                // Set hall and subject
-                if (schedule.hallCode) {
-                    document.getElementById('hallCode').value = schedule.hallCode;
-                }
-
-                if (schedule.subjectCode) {
-                    document.getElementById('subjectCode').value = schedule.subjectCode;
-                }
-            } else {
-                // For center users - simpler logic
-                console.log('🏢 Populating form for center user');
-
-                if (schedule.branchCode) {
-                    document.getElementById('branchCode').value = schedule.branchCode;
-                    await this.loadHallsForBranch();
-                }
-
-                if (schedule.hallCode) {
-                    document.getElementById('hallCode').value = schedule.hallCode;
-                }
-
-                if (schedule.teacherCode) {
-                    document.getElementById('teacherCode').value = schedule.teacherCode;
-                    await this.loadSubjectsForTeacher();
-                }
-
-                if (schedule.subjectCode) {
-                    document.getElementById('subjectCode').value = schedule.subjectCode;
-                }
-
-                if (schedule.yearCode) {
-                    document.getElementById('yearCode').value = schedule.yearCode;
-                }
-
-                if (schedule.eduYearCode) {
-                    document.getElementById('eduYearCode').value = schedule.eduYearCode;
-                }
-            }
-
-            console.log('✅ Form populated successfully');
-
-        } catch (error) {
-            console.error('❌ Error populating form:', error);
-            this.showToast('Error', 'Error loading schedule data', 'error');
-        }
-    }
-
-    convertTo24Hour(time12h) {
-        if (!time12h || typeof time12h !== 'string') {
-            console.warn('⚠️ Invalid time format:', time12h);
-            return '';
-        }
-
-        try {
-            const [time, modifier] = time12h.split(' ');
-            let [hours, minutes] = time.split(':');
-
-            if (hours === '12') {
-                hours = '00';
-            }
-
-            if (modifier && modifier.toUpperCase() === 'PM') {
-                hours = parseInt(hours, 10) + 12;
-            }
-
-            return `${hours.toString().padStart(2, '0')}:${minutes}`;
-        } catch (error) {
-            console.error('❌ Error converting time:', error, time12h);
-            return '';
-        }
-    }
-
-    deleteSchedule(scheduleCode) {
-        console.log('🗑️ Deleting schedule:', scheduleCode);
-        this.currentScheduleId = scheduleCode;
-        this.showDeleteConfirmation();
-    }
-
-    showDeleteConfirmation() {
-        const schedule = this.allSchedules.find(s => s.scheduleCode === this.currentScheduleId);
-        if (!schedule) {
-            console.error('❌ Schedule not found for delete:', this.currentScheduleId);
-            this.showToast('Error', 'Schedule not found', 'error');
-            return;
-        }
-
-        console.log('⚠️ Showing delete confirmation for:', schedule.scheduleName);
-
-        const summary = document.getElementById('deleteScheduleSummary');
-        if (summary) {
-            summary.innerHTML = `
-                <div class="mt-3">
-                    <strong>${schedule.scheduleName}</strong><br>
-                    <small class="text-muted">${schedule.dayOfWeek} at ${schedule.startTime} - ${schedule.endTime}</small>
-                </div>
-            `;
-        }
-
-        this.closeModal('eventDetailsModal');
-        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
-        modal.show();
-    }
-
-    async confirmDelete() {
-        console.log('🗑️ Confirming delete for schedule:', this.currentScheduleId);
-
-        try {
-            const response = await fetch(`/Schedule/DeleteScheduleEvent/${this.currentScheduleId}`, {
+            const res = await fetch(`/Schedule/DeleteScheduleEvent/${id}`, {
                 method: 'POST',
                 headers: {
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                 }
             });
-
-            const result = await response.json();
-            console.log('📊 Delete response:', result);
-
+            const result = await res.json();
             if (result.success) {
-                console.log('✅ Schedule deleted successfully');
-                this.showToast('Success', 'Schedule deleted successfully!', 'success');
+                await this.loadSchedules();
+                this.showToast('Schedule deleted!', 'success');
                 this.closeModal('deleteConfirmModal');
-
-                if (this.onScheduleDeleted) {
-                    this.onScheduleDeleted();
-                }
+                this.closeModal('eventDetailsModal');
+                this.codeToDelete = null;
             } else {
-                console.error('❌ Delete failed:', result.error);
-                this.showToast('Error', result.error || 'Failed to delete schedule', 'error');
+                this.showToast(result.error, 'error');
             }
-        } catch (error) {
-            console.error('❌ Error deleting schedule:', error);
-            this.showToast('Error', 'An unexpected error occurred', 'error');
+        } catch (e) {
+            this.showToast('Error deleting schedule', 'error');
+        } finally {
+            this.showModalDeleteSpinner(false);
         }
     }
 
-    resetForm() {
-        console.log('🔄 Resetting form...');
+    // Dropdowns AJAX
+    async loadDropdown(url, selectId, placeholder = 'Select...', selectedValue = null) {
+        console.log(`[DEBUG] Loading dropdown ${selectId} from ${url}`);
+        const select = document.getElementById(selectId);
+        if (!select) {
+            console.log(`[ERROR] Select element ${selectId} not found`);
+            return;
+        }
 
-        this.isEditMode = false;
-        this.currentScheduleId = null;
+        select.innerHTML = `<option value="">${placeholder}</option>`;
 
-        // Reset all form fields
-        const form = document.getElementById('scheduleForm');
-        if (form) {
-            const inputs = form.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                if (input.type === 'hidden' && input.id === 'rootCode') {
-                    // Keep root code
-                    return;
+        try {
+            console.log(`[DEBUG] Fetching: ${url}`);
+            const res = await fetch(url);
+            const data = await res.json();
+            console.log(`[DEBUG] Response for ${selectId}:`, data);
+
+            if (data.success) {
+                const arr = data.centers || data.branches || data.teachers || data.subjects || data.years || data.halls || [];
+                console.log(`[DEBUG] Found ${arr.length} items for ${selectId}`);
+
+                arr.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.value;
+                    option.textContent = item.text;
+                    if (selectedValue && String(selectedValue) === String(item.value)) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                console.log(`[SUCCESS] Populated ${selectId} with ${arr.length} options`);
+            } else {
+                console.log(`[ERROR] API returned success=false for ${selectId}:`, data.error);
+                this.showToast(data.error || `Error loading ${selectId}`, 'error');
+            }
+        } catch (e) {
+            console.log(`[ERROR] Exception loading ${selectId}:`, e);
+            this.showToast(`Error loading ${selectId}`, 'error');
+        }
+    }
+
+    // FIXED: Parallel & dependent dropdown loads for center users
+    async preloadDropdownsForModal(schedule = null) {
+        console.log('[DEBUG] preloadDropdownsForModal called with schedule:', schedule);
+        console.log('[DEBUG] window.userContext:', window.userContext);
+
+        // Check if user is center or teacher
+        const isCenter = window.userContext?.isCenter === true;
+        const isTeacher = window.userContext?.isTeacher === true;
+
+        console.log('[DEBUG] User type - isCenter:', isCenter, 'isTeacher:', isTeacher);
+
+        let promises = [];
+
+        if (isCenter) {
+            // For CENTER USERS: Load branches directly using the correct endpoint
+            console.log('[DEBUG] Loading dropdowns for CENTER user...');
+
+            // Load branches for center user
+            promises.push(
+                this.loadDropdown('/Schedule/GetBranchesForCenterUser', 'branchCode', 'Select Branch (Optional)', schedule?.extendedProps?.branchCode)
+            );
+
+            // Load teachers for center user
+            promises.push(
+                this.loadDropdown('/Schedule/GetTeachersForCenterUser', 'teacherCode', 'Select Teacher', schedule?.extendedProps?.teacherCode)
+            );
+
+        } else {
+            // For TEACHER USERS: Load centers first
+            console.log('[DEBUG] Loading dropdowns for TEACHER user...');
+            promises.push(
+                this.loadDropdown('/Schedule/GetCentersForUserRoot', 'centerCode', 'Select Center', schedule?.extendedProps?.centerCode)
+            );
+        }
+
+        // Load years based on user type
+        if (isTeacher) {
+            // For teachers, load years from their teaching assignments
+            promises.push(
+                this.loadDropdown('/Schedule/GetYearsForTeacherRoot', 'yearCode', 'Select Year', schedule?.extendedProps?.yearCode)
+            );
+        } else if (isCenter) {
+            // For centers, load years by educational year if available
+            const eduYearCode = schedule?.extendedProps?.eduYearCode;
+            if (eduYearCode) {
+                promises.push(
+                    this.loadDropdown(`/Schedule/GetYearsByEduYear?eduYearCode=${eduYearCode}`, 'yearCode', 'Select Year', schedule?.extendedProps?.yearCode)
+                );
+            }
+        }
+
+        // Wait for initial loads
+        console.log('[DEBUG] Waiting for initial dropdown loads...');
+        await Promise.all(promises);
+        console.log('[DEBUG] Initial dropdown loads completed');
+
+        // Now load dependent dropdowns
+        if (isCenter) {
+            // For center users, if we have a branch selected, load halls
+            if (schedule?.extendedProps?.branchCode) {
+                console.log('[DEBUG] Loading halls for selected branch:', schedule.extendedProps.branchCode);
+                await this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${schedule.extendedProps.branchCode}`, 'hallCode', 'Select Hall', schedule.extendedProps.hallCode);
+            } else {
+                if (this.dom.hallCode) {
+                    this.dom.hallCode.innerHTML = '<option value="">Select Branch First</option>';
                 }
-                if (input.type === 'hidden' && input.id === 'centerCode' && window.userContext.isCenter) {
-                    // Keep center code for center users
-                    return;
+            }
+        } else {
+            // For teacher users, if we have a center selected, load branches
+            if (schedule?.extendedProps?.centerCode) {
+                await this.loadDropdown(`/Schedule/GetBranchesForCenter?centerCode=${schedule.extendedProps.centerCode}`, 'branchCode', 'Select Branch', schedule?.extendedProps?.branchCode);
+
+                // Then load halls if branch is selected
+                if (schedule?.extendedProps?.branchCode) {
+                    await this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${schedule.extendedProps.branchCode}`, 'hallCode', 'Select Hall', schedule.extendedProps.hallCode);
                 }
-                if (input.type === 'hidden' && (input.id === 'teacherCode' || input.id === 'hallCode') && window.userContext.isTeacher) {
-                    // Keep hidden fields for teacher users
-                    return;
+            } else {
+                if (this.dom.branchCode) this.dom.branchCode.innerHTML = '<option value="">Select Center First</option>';
+                if (this.dom.hallCode) this.dom.hallCode.innerHTML = '<option value="">Select Branch First</option>';
+            }
+        }
+
+        // Load subjects based on user type
+        if (isCenter && schedule?.extendedProps?.teacherCode && schedule?.extendedProps?.yearCode) {
+            let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${schedule.extendedProps.teacherCode}&yearCode=${schedule.extendedProps.yearCode}`;
+            await this.loadDropdown(url, 'subjectCode', 'Select Subject', schedule.extendedProps.subjectCode);
+        } else if (isTeacher && schedule?.extendedProps?.yearCode) {
+            await this.loadSubjectsForTeacherByYearAndBranch(schedule.extendedProps.subjectCode);
+        } else {
+            if (this.dom.subjectCode) this.dom.subjectCode.innerHTML = '<option value="">Select Subject</option>';
+        }
+
+        console.log('[DEBUG] preloadDropdownsForModal completed');
+    }
+
+    setupDropdownListeners() {
+        // For teacher users: center change loads branches
+        this.dom.centerCode?.addEventListener('change', async (e) => {
+            const val = e.target.value;
+            if (val) {
+                await this.loadDropdown(`/Schedule/GetBranchesForCenter?centerCode=${val}`, 'branchCode', 'Select Branch');
+                if (this.dom.hallCode) this.dom.hallCode.innerHTML = '<option value="">Select Branch First</option>';
+            } else {
+                if (this.dom.branchCode) this.dom.branchCode.innerHTML = '<option value="">Select Center First</option>';
+                if (this.dom.hallCode) this.dom.hallCode.innerHTML = '<option value="">Select Branch First</option>';
+            }
+        });
+
+        // For both user types: branch change loads halls
+        this.dom.branchCode?.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val) {
+                this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${val}`, 'hallCode', 'Select Hall');
+            } else {
+                if (this.dom.hallCode) this.dom.hallCode.innerHTML = '<option value="">Select Branch First</option>';
+            }
+        });
+
+        // For center users: teacher change loads subjects
+        this.dom.teacherCode?.addEventListener('change', (e) => {
+            const teacherId = e.target.value;
+            const yearId = this.dom.yearCode?.value;
+            if (teacherId && yearId) {
+                let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${teacherId}&yearCode=${yearId}`;
+                this.loadDropdown(url, 'subjectCode', 'Select Subject');
+            } else {
+                if (this.dom.subjectCode) this.dom.subjectCode.innerHTML = '<option value="">Select Subject</option>';
+            }
+        });
+
+        // For teacher users: year change loads subjects
+        this.dom.yearCode?.addEventListener('change', (e) => {
+            if (window.userContext?.isTeacher) {
+                this.loadSubjectsForTeacherByYearAndBranch();
+            } else if (window.userContext?.isCenter) {
+                // For center users, reload subjects if teacher is selected
+                const teacherId = this.dom.teacherCode?.value;
+                const yearId = e.target.value;
+                if (teacherId && yearId) {
+                    let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${teacherId}&yearCode=${yearId}`;
+                    this.loadDropdown(url, 'subjectCode', 'Select Subject');
+                } else {
+                    if (this.dom.subjectCode) this.dom.subjectCode.innerHTML = '<option value="">Select Subject</option>';
                 }
-                input.value = '';
+            }
+        });
+
+        // For teacher users: branch change might affect subjects
+        this.dom.branchCode?.addEventListener('change', (e) => {
+            if (window.userContext?.isTeacher) {
+                this.loadSubjectsForTeacherByYearAndBranch();
+            }
+        });
+
+        // Educational year change loads years
+        this.dom.eduYearCode?.addEventListener('change', (e) => {
+            const eduYearId = e.target.value;
+            if (eduYearId) {
+                this.loadDropdown(`/Schedule/GetYearsByEduYear?eduYearCode=${eduYearId}`, 'yearCode', 'Select Year');
+            } else {
+                if (this.dom.yearCode) this.dom.yearCode.innerHTML = '<option value="">Select Educational Year First</option>';
+            }
+        });
+    }
+
+    async loadSubjectsForTeacherByYearAndBranch(selectedValue = null) {
+        const yearCode = this.dom.yearCode?.value;
+        const branchCode = this.dom.branchCode?.value;
+        const subjectSelect = this.dom.subjectCode;
+        if (!yearCode || !subjectSelect) return;
+        try {
+            const tRes = await fetch('/Schedule/GetYearsForTeacherRoot');
+            const tData = await tRes.json();
+            if (!tData.success || !tData.teacherCode) return;
+            let url = `/Schedule/GetSubjectsForTeacherByYearAndBranch?teacherCode=${tData.teacherCode}&yearCode=${yearCode}`;
+            if (branchCode) url += `&branchCode=${branchCode}`;
+            await this.loadDropdown(url, 'subjectCode', 'Select Subject', selectedValue);
+        } catch (e) {
+            this.showToast('Failed to load teacher info', 'error');
+        }
+    }
+
+    setupFormListeners() {
+        if (this.dom.saveScheduleBtn) {
+            this.dom.saveScheduleBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                this.dom.saveScheduleBtn.disabled = true;
+                this.showModalLoader(true);
+                const formData = this.collectFormData();
+                await this.saveSchedule(formData);
+                this.dom.saveScheduleBtn.disabled = false;
             });
         }
 
-        // Reset modal title
-        const modalTitle = document.getElementById('scheduleModalTitle');
-        if (modalTitle) {
-            modalTitle.innerHTML = '<i class="fas fa-calendar-plus me-2"></i>Add New Schedule';
+        if (this.dom.floatingAddBtn) {
+            this.dom.floatingAddBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                console.log('[DEBUG] Floating add button clicked');
+                this.editMode = false;
+                this.currentScheduleId = null;
+                this.resetForm();
+                this.showModalLoader(true);
+                this.openModal('scheduleModal');
+                await this.preloadDropdownsForModal();
+                this.populateFormWithSchedule();
+                this.showModalLoader(false);
+                if (this.dom.modalTitle) {
+                    this.dom.modalTitle.innerHTML = `<i class="fas fa-calendar-plus me-2"></i>Add New Schedule`;
+                }
+            });
         }
 
-        // Reset dependent dropdowns
-        this.resetDependentDropdowns();
-
-        console.log('✅ Form reset complete');
-    }
-
-    resetDependentDropdowns() {
-        console.log('🔄 Resetting dependent dropdowns...');
-
-        const yearSelect = document.getElementById('yearCode');
-        const subjectSelect = document.getElementById('subjectCode');
-        const branchSelect = document.getElementById('branchCode');
-        const hallSelect = document.getElementById('hallCode');
-
-        if (window.userContext.isTeacher) {
-            if (yearSelect) {
-                yearSelect.innerHTML = '<option value="">Select Educational Year First</option>';
-            }
-            if (subjectSelect) {
-                subjectSelect.innerHTML = '<option value="">Select Year First</option>';
-            }
-            if (branchSelect) {
-                branchSelect.innerHTML = '<option value="">Select Center First</option>';
-            }
-        } else {
-            // For center users
-            if (branchSelect) {
-                branchSelect.innerHTML = '<option value="">Select Branch (Optional)</option>';
-            }
-            if (subjectSelect) {
-                subjectSelect.innerHTML = '<option value="">Select Teacher First</option>';
-            }
-        }
-
-        if (hallSelect) {
-            hallSelect.innerHTML = '<option value="">Select Branch First</option>';
-        }
-
-        console.log('✅ Dependent dropdowns reset');
-    }
-
-    closeModal(modalId) {
-        console.log('❌ Closing modal:', modalId);
-        const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
-        if (modal) {
-            modal.hide();
+        // ALSO LISTEN TO THE BUTTON IN THE MODAL HEADER
+        const addScheduleBtn = document.querySelector('[data-bs-target="#scheduleModal"]');
+        if (addScheduleBtn) {
+            addScheduleBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                console.log('[DEBUG] Add schedule button clicked');
+                this.editMode = false;
+                this.currentScheduleId = null;
+                this.resetForm();
+                this.showModalLoader(true);
+                setTimeout(async () => {
+                    await this.preloadDropdownsForModal();
+                    this.populateFormWithSchedule();
+                    this.showModalLoader(false);
+                }, 100);
+                if (this.dom.modalTitle) {
+                    this.dom.modalTitle.innerHTML = `<i class="fas fa-calendar-plus me-2"></i>Add New Schedule`;
+                }
+            });
         }
     }
 
-    showToast(title, message, type = 'info') {
-        console.log('🍞 Showing toast:', { title, message, type });
+    setupModalEditButton() {
+        const editEventBtn = this.dom.editEventBtn || document.getElementById('editEventBtn');
+        if (editEventBtn) {
+            editEventBtn.addEventListener('click', async () => {
+                if (this.lastViewedScheduleCode) {
+                    this.showModalLoader(true);
+                    this.editMode = true;
+                    this.currentScheduleId = this.lastViewedScheduleCode;
+                    const schedule = this.schedules.find(s => s.extendedProps?.scheduleCode === this.lastViewedScheduleCode);
+                    this.resetForm();
+                    this.openModal('scheduleModal');
+                    await this.preloadDropdownsForModal(schedule);
+                    this.populateFormWithSchedule(schedule);
+                    this.showModalLoader(false);
+                    if (this.dom.modalTitle) {
+                        this.dom.modalTitle.innerHTML = `<i class="fas fa-edit me-2"></i>Edit Schedule: ${schedule.title}`;
+                    }
+                    this.closeModal('eventDetailsModal');
+                }
+            });
+        }
+    }
 
-        const toastContainer = document.querySelector('.toast-container') || this.createToastContainer();
+    setupModalDeleteButton() {
+        const deleteEventBtn = this.dom.deleteEventBtn || document.getElementById('deleteEventBtn');
+        if (deleteEventBtn) {
+            deleteEventBtn.addEventListener('click', () => {
+                if (this.lastViewedScheduleCode) {
+                    this.codeToDelete = this.lastViewedScheduleCode;
+                    if (this.dom.deleteScheduleSummary) {
+                        const schedule = this.schedules.find(s => s.extendedProps?.scheduleCode === this.codeToDelete);
+                        this.dom.deleteScheduleSummary.innerHTML = schedule ? this.generateScheduleDetailsHTML(schedule) : "";
+                    }
+                    this.openModal('deleteConfirmModal');
+                }
+            });
+        }
+        const confirmDeleteBtn = this.dom.deleteConfirmBtn || document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async () => {
+                if (this.codeToDelete) {
+                    await this.deleteSchedule(this.codeToDelete);
+                }
+            });
+        }
+    }
 
-        const toastId = 'toast-' + Date.now();
-        const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+    collectFormData() {
+        return {
+            title: this.dom.scheduleName?.value?.trim(),
+            dayOfWeek: this.dom.dayOfWeek?.value,
+            startTime: this.dom.startTime?.value,
+            endTime: this.dom.endTime?.value,
+            rootCode: parseInt(this.dom.rootCode?.value) || null,
+            centerCode: parseInt(this.dom.centerCode?.value) || null,
+            branchCode: parseInt(this.dom.branchCode?.value) || null,
+            hallCode: parseInt(this.dom.hallCode?.value) || null,
+            eduYearCode: parseInt(this.dom.eduYearCode?.value) || null,
+            teacherCode: parseInt(this.dom.teacherCode?.value) || null,
+            subjectCode: parseInt(this.dom.subjectCode?.value) || null,
+            yearCode: parseInt(this.dom.yearCode?.value) || null,
+            scheduleAmount: parseFloat(this.dom.scheduleAmount?.value) || null
+        };
+    }
 
-        const toastHTML = `
-            <div id="${toastId}" class="toast ${bgClass} text-white" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header ${bgClass} text-white border-0">
-                    <strong class="me-auto">${title}</strong>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-                </div>
-                <div class="toast-body">
-                    ${message}
+    // UPDATED: Weekly grid rendering with teacher/center display logic
+    renderWeeklyGrid() {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        for (const day of days) {
+            const dayContainer = document.getElementById(`day-${day}`);
+            if (!dayContainer) continue;
+            const daySchedules = this.schedules.filter(s => s.extendedProps?.dayOfWeek === day);
+            if (daySchedules.length === 0) {
+                dayContainer.innerHTML = `
+                    <div class="empty-day">No schedules</div>
+                    <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                `;
+            } else {
+                let html = '';
+                for (const schedule of daySchedules) {
+                    const eventClass = schedule.extendedProps?.isCenter ? 'center-event' : 'teacher-event';
+                    const s = schedule.extendedProps;
+
+                    // Determine what to show based on user context
+                    const isCurrentUserCenter = window.userContext?.isCenter === true;
+                    const isCurrentUserTeacher = window.userContext?.isTeacher === true;
+
+                    html += `
+                        <div class="schedule-event ${eventClass}" onclick="scheduleManager.showScheduleDetails(${s?.scheduleCode || 0})">
+                            <div class="event-title">
+                                <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
+                                ${schedule.title || 'Untitled'}
+                            </div>
+                            <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
+                            ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
+                    `;
+
+                    // Show different information based on current user type
+                    if (isCurrentUserTeacher) {
+                        // For TEACHER users: Show Center + Branch instead of teacher name
+                        if (s?.centerName && s?.branchName) {
+                            html += `<div class="event-details">🏢 ${s.centerName} - ${s.branchName}</div>`;
+                        } else if (s?.centerName) {
+                            html += `<div class="event-details">🏢 ${s.centerName}</div>`;
+                        } else if (s?.branchName) {
+                            html += `<div class="event-details">🏢 ${s.branchName}</div>`;
+                        }
+                    } else if (isCurrentUserCenter) {
+                        // For CENTER users: Show Teacher name as before
+                        if (s?.teacherName) {
+                            html += `<div class="event-details">👨‍🏫 ${s.teacherName}</div>`;
+                        }
+                    }
+
+                    // Always show subject if available
+                    if (s?.subjectName) {
+                        html += `<div class="event-details">📚 ${s.subjectName}</div>`;
+                    }
+
+                    html += `
+                                <div style="margin-top:6px">
+                                    <button class="btn btn-sm btn-light" onclick="event.stopPropagation();scheduleManager.editSchedule(${s?.scheduleCode})" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();scheduleManager.handleDeleteRequest(${s?.scheduleCode})" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `;
+                }
+
+                html += `
+                    <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                `;
+
+                dayContainer.innerHTML = html;
+            }
+        }
+    }
+
+    addScheduleForDay(day) {
+        console.log('[DEBUG] addScheduleForDay called for:', day);
+        this.editMode = false;
+        this.currentScheduleId = null;
+        this.resetForm();
+        this.showModalLoader(true);
+        this.openModal('scheduleModal');
+        if (this.dom.dayOfWeek) this.dom.dayOfWeek.value = day;
+        this.preloadDropdownsForModal().then(() => {
+            this.populateFormWithSchedule();
+            this.showModalLoader(false);
+        });
+        if (this.dom.modalTitle) {
+            this.dom.modalTitle.innerHTML = `<i class="fas fa-calendar-plus me-2"></i>Add New Schedule for ${day}`;
+        }
+    }
+
+    showScheduleDetails(scheduleCode) {
+        const schedule = this.schedules.find(s => s.extendedProps?.scheduleCode === scheduleCode);
+        if (!schedule) {
+            this.showToast('Schedule not found', 'error');
+            return;
+        }
+        this.lastViewedScheduleCode = scheduleCode;
+        if (this.dom.eventDetailsContent) {
+            this.dom.eventDetailsContent.innerHTML = this.generateScheduleDetailsHTML(schedule);
+        }
+        this.openModal('eventDetailsModal');
+    }
+
+    // UPDATED: Schedule details with teacher/center display logic
+    generateScheduleDetailsHTML(schedule) {
+        const s = schedule.extendedProps;
+        const isCurrentUserTeacher = window.userContext?.isTeacher === true;
+        const isCurrentUserCenter = window.userContext?.isCenter === true;
+
+        let html = `
+            <div class="schedule-details">
+                <h5><i class="fas fa-calendar me-2"></i>${schedule.title}</h5>
+                <div class="detail-grid">
+                    <div class="detail-item"><strong>Day:</strong> ${s.dayOfWeek}</div>
+                    <div class="detail-item"><strong>Time:</strong> ${s.startTime} - ${s.endTime}</div>
+                    ${s.hallName ? `<div class="detail-item"><strong>Hall:</strong> ${s.hallName}</div>` : ''}
+        `;
+
+        // Show different details based on user type
+        if (isCurrentUserTeacher) {
+            // For TEACHER users: Show center and branch details
+            if (s.centerName) {
+                html += `<div class="detail-item"><strong>Center:</strong> ${s.centerName}</div>`;
+            }
+            if (s.branchName) {
+                html += `<div class="detail-item"><strong>Branch:</strong> ${s.branchName}</div>`;
+            }
+        } else if (isCurrentUserCenter) {
+            // For CENTER users: Show teacher details
+            if (s.teacherName) {
+                html += `<div class="detail-item"><strong>Teacher:</strong> ${s.teacherName}</div>`;
+            }
+            if (s.branchName) {
+                html += `<div class="detail-item"><strong>Branch:</strong> ${s.branchName}</div>`;
+            }
+        }
+
+        // Always show subject and amount if available
+        if (s.subjectName) {
+            html += `<div class="detail-item"><strong>Subject:</strong> ${s.subjectName}</div>`;
+        }
+        if (s.scheduleAmount) {
+            html += `<div class="detail-item"><strong>Amount:</strong> $${parseFloat(s.scheduleAmount).toFixed(2)}</div>`;
+        }
+
+        html += `
                 </div>
             </div>
         `;
 
-        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
-
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
-
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
-
-        toast.show();
+        return html;
     }
 
-    createToastContainer() {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '9999';
-            document.body.appendChild(container);
-        }
-        return container;
-    }
-
-    // Utility method to wait for element to be available
-    async waitForElement(selector, timeout = 5000) {
-        return new Promise((resolve, reject) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                resolve(element);
-                return;
+    handleDeleteRequest(scheduleCode) {
+        const code = scheduleCode || this.lastViewedScheduleCode;
+        if (code) {
+            this.codeToDelete = code;
+            if (this.dom.deleteScheduleSummary) {
+                const schedule = this.schedules.find(s => s.extendedProps?.scheduleCode === code);
+                this.dom.deleteScheduleSummary.innerHTML = schedule ? this.generateScheduleDetailsHTML(schedule) : "";
             }
+            this.openModal('deleteConfirmModal');
+        }
+    }
 
-            const observer = new MutationObserver((mutations) => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    observer.disconnect();
-                    resolve(element);
+    async editSchedule(scheduleCode) {
+        const schedule = this.schedules.find(s => s.extendedProps?.scheduleCode === scheduleCode);
+        if (!schedule) {
+            this.showToast('Schedule not found', 'error');
+            return;
+        }
+        this.editMode = true;
+        this.currentScheduleId = scheduleCode;
+        this.resetForm();
+        this.showModalLoader(true);
+        this.openModal('scheduleModal');
+        await this.preloadDropdownsForModal(schedule);
+        this.populateFormWithSchedule(schedule);
+        this.showModalLoader(false);
+        if (this.dom.modalTitle) {
+            this.dom.modalTitle.innerHTML = `<i class="fas fa-edit me-2"></i>Edit Schedule: ${schedule.title}`;
+        }
+    }
+
+    populateFormWithSchedule(schedule) {
+        if (!schedule) return;
+        const s = schedule.extendedProps;
+        if (this.dom.scheduleName) this.dom.scheduleName.value = schedule.title || '';
+        if (this.dom.dayOfWeek) this.dom.dayOfWeek.value = s.dayOfWeek || '';
+        if (this.dom.startTime) this.dom.startTime.value = this.convertTo24Hour(s.startTime);
+        if (this.dom.endTime) this.dom.endTime.value = this.convertTo24Hour(s.endTime);
+        if (this.dom.scheduleAmount) this.dom.scheduleAmount.value = s.scheduleAmount || '';
+    }
+
+    resetForm() {
+        if (this.dom.scheduleForm) {
+            ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'rootCode', 'centerCode', 'branchCode', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'yearCode', 'scheduleAmount'].forEach(id => {
+                if (this.dom[id]) {
+                    if (this.dom[id].tagName === 'SELECT') this.dom[id].selectedIndex = 0;
+                    else this.dom[id].value = '';
                 }
             });
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-
-            setTimeout(() => {
-                observer.disconnect();
-                reject(new Error(`Element ${selector} not found within ${timeout}ms`));
-            }, timeout);
-        });
+        }
+        this.removeStuckBackdrop();
     }
 
-    // Utility method to debug current state
-    debugState() {
-        console.log('🐛 Current Schedule Manager State:', {
-            isInitialized: this.isInitialized,
-            currentScheduleId: this.currentScheduleId,
-            isEditMode: this.isEditMode,
-            allSchedulesCount: this.allSchedules.length,
-            userContext: window.userContext,
-            formElements: {
-                scheduleName: !!document.getElementById('scheduleName'),
-                dayOfWeek: !!document.getElementById('dayOfWeek'),
-                startTime: !!document.getElementById('startTime'),
-                endTime: !!document.getElementById('endTime'),
-                rootCode: !!document.getElementById('rootCode'),
-                centerCode: !!document.getElementById('centerCode'),
-                branchCode: !!document.getElementById('branchCode'),
-                hallCode: !!document.getElementById('hallCode'),
-                eduYearCode: !!document.getElementById('eduYearCode'),
-                teacherCode: !!document.getElementById('teacherCode'),
-                subjectCode: !!document.getElementById('subjectCode'),
-                yearCode: !!document.getElementById('yearCode'),
-                scheduleAmount: !!document.getElementById('scheduleAmount')
+    convertTo24Hour(time12h) {
+        if (!time12h || typeof time12h !== 'string') return '';
+        try {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes] = time.split(':');
+            if (hours === '12') hours = '00';
+            if (modifier && modifier.toUpperCase() === 'PM') {
+                hours = parseInt(hours, 10) + 12;
             }
-        });
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        } catch (error) {
+            return '';
+        }
     }
 
-    // Callback methods that can be overridden by page-specific managers
-    onScheduleSaved() {
-        console.log('💾 Schedule saved callback - override in page-specific manager');
+    // Loader, Modal, Toast
+
+    showLoader() {
+        if (this.dom.loader) this.dom.loader.style.display = 'block';
+    }
+    hideLoader() {
+        if (this.dom.loader) this.dom.loader.style.display = 'none';
     }
 
-    onScheduleDeleted() {
-        console.log('🗑️ Schedule deleted callback - override in page-specific manager');
+    showModalLoader(isLoading) {
+        const modalBody = this.dom.scheduleModal?.querySelector('.modal-body');
+        if (!modalBody) return;
+        let spinner = modalBody.querySelector('.modal-spinner-loader');
+        if (isLoading) {
+            if (!spinner) {
+                spinner = document.createElement('div');
+                spinner.className = 'modal-spinner-loader d-flex justify-content-center align-items-center';
+                spinner.innerHTML = `<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>`;
+                spinner.style.position = 'absolute';
+                spinner.style.top = '0'; spinner.style.left = '0'; spinner.style.width = '100%'; spinner.style.height = '100%';
+                spinner.style.background = 'rgba(255,255,255,0.65)';
+                spinner.style.zIndex = '1050';
+                modalBody.appendChild(spinner);
+            }
+        } else if (spinner) {
+            spinner.remove();
+        }
     }
 
-    onScheduleError(error) {
-        console.log('❌ Schedule error callback - override in page-specific manager:', error);
+    showModalDeleteSpinner(isLoading) {
+        const modalFooter = this.dom.deleteConfirmModal?.querySelector('.modal-footer');
+        const confirmBtn = this.dom.deleteConfirmBtn;
+        if (!modalFooter || !confirmBtn) return;
+        let spinner = confirmBtn.querySelector('.spinner-border');
+        if (isLoading) {
+            confirmBtn.disabled = true;
+            if (!spinner) {
+                spinner = document.createElement('span');
+                spinner.className = 'spinner-border spinner-border-sm ms-2';
+                spinner.role = 'status';
+                spinner.ariaHidden = 'true';
+                confirmBtn.appendChild(spinner);
+            }
+        } else if (spinner) {
+            confirmBtn.disabled = false;
+            spinner.remove();
+        }
+    }
+
+    openModal(modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement && typeof bootstrap !== 'undefined') {
+            const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+        this.removeStuckBackdrop();
+    }
+    closeModal(modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement && typeof bootstrap !== 'undefined') {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+        }
+        this.removeStuckBackdrop();
+    }
+    showToast(msg, type = 'info') {
+        // Good UX: Use a toast/snackbar if available, else fallback to alert
+        if (window.bootstrap && window.bootstrap.Toast && document.querySelector('.toast-container')) {
+            const toastDiv = document.createElement('div');
+            toastDiv.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'info')} border-0`;
+            toastDiv.setAttribute('role', 'alert');
+            toastDiv.setAttribute('aria-live', 'assertive');
+            toastDiv.setAttribute('aria-atomic', 'true');
+            toastDiv.innerHTML = `
+                <div class="d-flex">
+                  <div class="toast-body">${msg}</div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            document.querySelector('.toast-container').appendChild(toastDiv);
+            const toast = new bootstrap.Toast(toastDiv, { delay: 3500 });
+            toast.show();
+            toastDiv.addEventListener('hidden.bs.toast', () => toastDiv.remove());
+        } else {
+            alert(msg);
+        }
+    }
+
+    removeStuckBackdrop() {
+        document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+        document.body.classList.remove('modal-open');
+    }
+
+    setupGlobalActions() {
+        window.scheduleManager = this;
+        window.addScheduleForDay = (day) => this.addScheduleForDay(day);
+        window.showScheduleDetails = (id) => this.showScheduleDetails(id);
+        window.editSchedule = (id) => this.editSchedule(id);
+        window.deleteSchedule = (id) => this.handleDeleteRequest(id);
     }
 }
 
-// Global functions for backward compatibility
-window.loadBranchesForCenter = function () {
-    console.log('🔗 Global loadBranchesForCenter called');
-    if (window.scheduleManager && window.scheduleManager.loadBranchesForCenter) {
-        window.scheduleManager.loadBranchesForCenter();
-    } else {
-        console.warn('⚠️ Schedule manager not available');
-    }
-};
-
-window.loadHallsForBranch = function () {
-    console.log('🔗 Global loadHallsForBranch called');
-    if (window.scheduleManager && window.scheduleManager.loadHallsForBranch) {
-        window.scheduleManager.loadHallsForBranch();
-    } else {
-        console.warn('⚠️ Schedule manager not available');
-    }
-};
-
-window.loadSubjectsForTeacher = function () {
-    console.log('🔗 Global loadSubjectsForTeacher called');
-    if (window.scheduleManager && window.scheduleManager.loadSubjectsForTeacher) {
-        window.scheduleManager.loadSubjectsForTeacher();
-    } else {
-        console.warn('⚠️ Schedule manager not available');
-    }
-};
-
-// Debug function
-window.debugScheduleManager = function () {
-    if (window.scheduleManager) {
-        window.scheduleManager.debugState();
-    } else {
-        console.log('❌ Schedule manager not initialized');
-    }
-};
-
-// Initialize the schedule manager when DOM is ready
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 DOM Content Loaded - Initializing Schedule Manager...');
-
-    if (typeof window.userContext !== 'undefined' && !window.userContext.hasError) {
-        window.scheduleManager = new ScheduleManager();
-        console.log('✅ Schedule Manager initialized for', window.userContext.isCenter ? 'Center' : 'Teacher', 'user');
-
-        // Expose debug function globally
-        window.debugScheduleManager = () => window.scheduleManager.debugState();
-
-    } else {
-        console.warn('⚠️ User context not available or has errors, skipping Schedule Manager initialization');
-        console.log('User context:', window.userContext);
-    }
-});
-
-// Handle page unload
-window.addEventListener('beforeunload', function () {
-    console.log('📄 Page unloading - cleaning up Schedule Manager');
-    if (window.scheduleManager) {
-        // Cleanup if needed
-        window.scheduleManager = null;
-    }
-});
+window.scheduleManager = new ScheduleManager();
