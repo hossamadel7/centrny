@@ -20,8 +20,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="@Url.Content("~/css/site.css")" />
-      <link rel="stylesheet" href="@Url.Content("~/css/Hamody.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/css/Hamody.css")" />
 
     <!-- Custom JS -->
     <script src="@Url.Content("~/js/item.js")"></script>
@@ -61,7 +60,7 @@
 
     <!-- Add Item Modal -->
     <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form id="insertItemsForm">
                     <div class="modal-header">
@@ -69,24 +68,28 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <!-- Dropdown for Root Code -->
                         <div class="mb-3">
-                            <label for="rootCode" class="form-label">Root Code</label>
-                            <input type="number" id="rootCode" class="form-control" required />
+                            <label for="rootCode" class="form-label">Root</label>
+                            <select id="rootCode" class="form-select" required>
+                                <option value="">Select Root...</option>
+                                <!-- Populated by JS -->
+                            </select>
                         </div>
-                        <div class="mb-3">
-                            <label for="InsertUser" class="form-label">Insert User Code</label>
-                            <input type="number" id="InsertUser" class="form-control" required />
-                        </div>
+
+                        <!-- Item Type -->
                         <div class="mb-3">
                             <label for="itemTypeCode" class="form-label">Item Type</label>
                             <select id="itemTypeCode" class="form-select" required>
                                 <option value="">Select Item Type...</option>
-                                <!-- JS will fill options here -->
+                                <!-- Filled via JS -->
                             </select>
                         </div>
+
+                        <!-- Input for Record Count -->
                         <div class="mb-3">
                             <label for="RecordCount" class="form-label">Number of Items</label>
-                            <input type="number" id="RecordCount" class="form-control" required />
+                            <input type="number" id="RecordCount" class="form-control" required placeholder="Enter number of items" />
                         </div>
                     </div>
                     <div class="modal-footer">

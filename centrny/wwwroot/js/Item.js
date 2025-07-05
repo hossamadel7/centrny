@@ -1,8 +1,58 @@
 ﻿$(document).ready(function () {
     let itemTypeMap = {};
+    let rootMap = {};
     let currentPage = 1;
     const pageSize = 10;
     let totalRecords = 0;
+    let loggedInUserCode = null;
+
+    // Fetch logged-in user code on load
+    function fetchLoggedInUserCode(callback) {
+        $.ajax({
+            url: '/Item/GetLoggedInUserCode',
+            method: 'GET',
+            success: function (data) {
+                loggedInUserCode = data.userCode;
+                if (callback) callback();
+            },
+            error: function () {
+                alert('Failed to get logged in user.');
+                if (callback) callback();
+            }
+        });
+    }
+
+    // Fetch all roots for dropdown
+    function fetchRootCodes(callback) {
+        $.ajax({
+            url: '/Item/GetRootCodes',
+            method: 'GET',
+            success: function (roots) {
+                rootMap = {};
+                const $select = $('#rootCode');
+                $select.empty();
+                $select.append('<option value="">Select Root...</option>');
+                if (roots && roots.length > 0) {
+                    roots.forEach(function (root) {
+                        rootMap[root.code] = root.name;
+                        $select.append(
+                            `<option value="${root.code}">${root.name} (${root.code})</option>`
+                        );
+                    });
+                }
+                // Always show the select
+                $select.closest('.mb-3').show();
+                if (callback) callback();
+            },
+            error: function (xhr) {
+                console.error("Failed to load roots. Status:", xhr.status, xhr.responseText);
+                alert('Failed to load roots.');
+                $('#rootCode').empty().append('<option value="">No roots found</option>');
+                $('#rootCode').closest('.mb-3').show();
+                if (callback) callback();
+            }
+        });
+    }
 
     function fetchItemTypesMap(callback) {
         $.ajax({
@@ -22,14 +72,6 @@
         });
     }
 
-    // No longer used: free count is now global, remove this function if no longer needed
-    // function countFreeItems(items) {
-    //     return items.filter(item => {
-    //         const studentName = (item.studentName ?? '').toString().trim();
-    //         return studentName === '';
-    //     }).length;
-    // }
-
     function loadItems(page) {
         $.ajax({
             url: `/Item/GetAllItems?page=${page}&pageSize=${pageSize}`,
@@ -42,7 +84,6 @@
                 items.forEach(item => {
                     const studentName = item.studentName ?? '';
                     const itemTypeName = itemTypeMap[item.itemTypeKey] || item.itemTypeKey;
-                    // Unique ID for QR codes
                     const qrId = `qr-${item.itemCode}`;
                     rows += `<tr>
                         <td>${item.itemCode}</td>
@@ -83,7 +124,6 @@
         });
     }
 
-    // Global free item count function
     function loadGlobalFreeItemCount() {
         $.ajax({
             url: '/Item/GetFreeItemCount',
@@ -158,7 +198,9 @@
     }
 
     $('#addItemModal').on('show.bs.modal', function () {
+        fetchRootCodes();
         loadItemTypes();
+        $('#rootCode').closest('.mb-3').show();
     });
 
     $('#insertItemsForm').submit(function (e) {
@@ -166,10 +208,15 @@
 
         const dataToSend = {
             rootCode: parseInt($('#rootCode').val()),
-            insertUserCode: parseInt($('#InsertUser').val()),
+            insertUserCode: loggedInUserCode,
             itemTypeCode: parseInt($('#itemTypeCode').val()),
             recordCount: parseInt($('#RecordCount').val())
         };
+
+        if (!dataToSend.rootCode || !dataToSend.insertUserCode || !dataToSend.itemTypeCode || !dataToSend.recordCount) {
+            alert('Please fill all required fields.');
+            return;
+        }
 
         $.ajax({
             url: '/Item/InsertItems',
@@ -248,7 +295,6 @@
         });
     });
 
-    // Download QR Code as image for the corresponding row
     $('#itemsTable').on('click', '.download-qr-btn', function () {
         const qrId = $(this).data('qrid');
         const itemKey = $(this).data('itemkey');
@@ -271,9 +317,11 @@
         }
     });
 
-    // Initial load
-    fetchItemTypesMap(function () {
-        loadItems(currentPage);
-        loadGlobalFreeItemCount();
+    // Initial load: get user code, then get items
+    fetchLoggedInUserCode(function () {
+        fetchItemTypesMap(function () {
+            loadItems(currentPage);
+            loadGlobalFreeItemCount();
+        });
     });
 });
