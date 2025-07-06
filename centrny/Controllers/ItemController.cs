@@ -3,6 +3,7 @@ using centrny.Models;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 
 namespace centrny1.Controllers
 {
@@ -67,11 +68,42 @@ namespace centrny1.Controllers
         [HttpGet]
         public IActionResult GetFreeItemCount()
         {
-            // Free items: IsActive, and StudentCode is null or 0
             var count = _context.Items
                 .Where(i => i.IsActive && (i.StudentCode == null || i.StudentCode == 0))
                 .Count();
             return Json(new { freeCount = count });
+        }
+
+        [HttpGet]
+        public IActionResult GetRootCodes()
+        {
+            var roots = _context.Roots
+                .Select(r => new { code = r.RootCode, name = r.RootName })
+                .ToList();
+            return Json(roots);
+        }
+
+        [HttpGet]
+        public IActionResult GetLoggedInUserCode()
+        {
+            int? userCode = null;
+
+            // Use claim "UserCode" if available
+            var claim = User.Claims.FirstOrDefault(c => c.Type == "UserCode");
+            if (claim != null && int.TryParse(claim.Value, out var codeFromClaim))
+                userCode = codeFromClaim;
+            // Fallback to username mapping
+            else if (!string.IsNullOrEmpty(User.Identity.Name))
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
+                if (user != null)
+                    userCode = user.UserCode;
+            }
+
+            if (userCode == null)
+                return Unauthorized(new { error = "User not found." });
+
+            return Json(new { userCode });
         }
 
         [HttpPost]

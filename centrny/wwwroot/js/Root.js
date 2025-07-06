@@ -4,6 +4,15 @@
     let totalRecords = 0;
     let centerFilter = "";
 
+    // Check Bootstrap availability immediately
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap 5 is not loaded!');
+        alert('Error: Bootstrap 5 is required but not loaded. Please check your includes.');
+        return;
+    }
+
+    console.log('Bootstrap version detected:', bootstrap);
+
     // Initial load
     loadRootData(currentPage, centerFilter);
 
@@ -52,13 +61,13 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-column gap-1">
-                                    <button class="btn root-index-btn-edit editBtn">
+                                    <button class="btn root-index-btn-edit editBtn" type="button">
                                         <i class="fas fa-edit me-1"></i>Edit
                                     </button>
-                                    <button class="btn root-index-btn-delete deleteBtn">
+                                    <button class="btn btn-danger deleteBtn" type="button">
                                         <i class="fas fa-trash me-1"></i>Delete
                                     </button>
-                                    <button class="btn root-index-btn-questions assign-modules-btn"
+                                    <button class="btn btn-info assign-modules-btn" type="button"
                                         data-rootcode="${root.rootCode}" 
                                         data-rootname="${root.rootName}">
                                         <i class="fas fa-puzzle-piece me-1"></i>Modules
@@ -124,25 +133,160 @@
         }
     });
 
-    // Show modal for Add
-    $('#addRootBtn').click(function () {
+    // Enhanced Root Modal Sizing Function
+    function adjustRootModalSize() {
+        const modal = document.getElementById('rootModal');
+        const modalDialog = modal?.querySelector('.modal-dialog');
+        const modalContent = modal?.querySelector('.modal-content');
+        const modalBody = modal?.querySelector('.modal-body');
+
+        if (modal && modalDialog && modalContent && modalBody) {
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Adjust based on screen size
+            if (viewportWidth >= 1400) {
+                modalDialog.style.maxWidth = '95vw';
+                modalDialog.style.width = '95vw';
+                modalContent.style.minWidth = '800px';
+                modalBody.style.minWidth = '750px';
+            } else if (viewportWidth >= 1200) {
+                modalDialog.style.maxWidth = '90vw';
+                modalDialog.style.width = '90vw';
+                modalContent.style.minWidth = '700px';
+                modalBody.style.minWidth = '650px';
+            } else if (viewportWidth >= 992) {
+                modalDialog.style.maxWidth = '95vw';
+                modalDialog.style.width = '95vw';
+                modalContent.style.minWidth = '600px';
+                modalBody.style.minWidth = '550px';
+            } else if (viewportWidth >= 768) {
+                modalDialog.style.maxWidth = '98vw';
+                modalDialog.style.width = '98vw';
+                modalContent.style.minWidth = '500px';
+                modalBody.style.minWidth = '450px';
+            } else {
+                modalDialog.style.maxWidth = '100vw';
+                modalDialog.style.width = '100vw';
+                modalContent.style.minWidth = '350px';
+                modalBody.style.minWidth = '320px';
+            }
+
+            // Ensure modal doesn't exceed viewport height
+            const maxHeight = Math.min(viewportHeight * 0.95, 900);
+            modalDialog.style.maxHeight = maxHeight + 'px';
+
+            // Center the modal
+            modalDialog.style.margin = '1vh auto';
+
+            console.log('Root modal size adjusted for viewport:', viewportWidth + 'x' + viewportHeight);
+        }
+    }
+
+    // Enhanced modal show function for root modal
+    function showRootModalSafely(mode = 'add', data = null) {
+        const modalElement = document.getElementById('rootModal');
+
+        if (!modalElement) {
+            console.error('Root modal not found');
+            showToast('Modal not found', 'error');
+            return;
+        }
+
+        try {
+            // Set up modal content based on mode
+            if (mode === 'add') {
+                document.getElementById('rootModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>Add Root';
+                document.getElementById('rootCodeContainer').style.display = 'none';
+                document.getElementById('addOnlyFields').style.display = 'block';
+                document.getElementById('rootForm').reset();
+                document.getElementById('rowIndex').value = '';
+            } else if (mode === 'edit' && data) {
+                document.getElementById('rootModalLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Root';
+                document.getElementById('rootCodeContainer').style.display = 'block';
+                document.getElementById('addOnlyFields').style.display = 'none';
+
+                // Populate form with data
+                Object.keys(data).forEach(key => {
+                    const field = document.getElementById(key);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.checked = data[key];
+                        } else {
+                            field.value = data[key];
+                        }
+                    }
+                });
+            }
+
+            // Adjust modal size before showing
+            setTimeout(adjustRootModalSize, 100);
+
+            // Show modal using Bootstrap API
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true,
+                focus: true
+            });
+
+            modal.show();
+
+            // Adjust size again after modal is visible
+            setTimeout(adjustRootModalSize, 300);
+
+        } catch (error) {
+            console.error('Error showing root modal:', error);
+
+            // Fallback: direct DOM manipulation
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            modalElement.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            // Create backdrop if it doesn't exist
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+            }
+
+            setTimeout(adjustRootModalSize, 200);
+        }
+    }
+
+    // ENHANCED: Show modal for Add with better sizing
+    $('#addRootBtn').click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log('Add Root button clicked');
+
+        // Reset form
         $('#rootForm')[0].reset();
         $('#rowIndex').val('');
         $('#rootModalLabel').html('<i class="fas fa-plus me-2"></i>Add Root');
         $('#rootCodeContainer').hide();
         $('#addOnlyFields').show();
-        $('#rootModal').modal('show');
+
+        // Use enhanced modal show function
+        showRootModalSafely('add');
     });
 
-    // Show modal for Edit
-    $('#rootTable').on('click', '.editBtn', function () {
+    // ENHANCED: Show modal for Edit with better sizing
+    $('#rootTable').on('click', '.editBtn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
         const row = $(this).closest('tr');
         const rootCode = row.data('id');
 
-        console.log('Editing root with code:', rootCode);
+        console.log('Edit button clicked for root:', rootCode);
 
         $.get(`/Root/GetRoot?rootCode=${rootCode}`, function (data) {
             console.log('Root data for edit:', data);
+
+            // Populate form fields
             $('#rootCodeDisplay').text(data.rootCode);
             $('#rootOwner').val(data.rootOwner);
             $('#rootName').val(data.rootName);
@@ -153,21 +297,232 @@
             $('#numCenters').val(data.noOfCenter);
             $('#numUsers').val(data.noOfUser);
             $('#isCenter').prop('checked', data.isCenter);
-
             $('#rowIndex').val(data.rootCode);
+
+            // Set up modal for edit mode
             $('#rootModalLabel').html('<i class="fas fa-edit me-2"></i>Edit Root');
             $('#rootCodeContainer').show();
             $('#addOnlyFields').hide();
-            const modal = new bootstrap.Modal(document.getElementById('rootModal'));
-            modal.show();
+
+            // Use enhanced modal show function
+            showRootModalSafely('edit', data);
+
         }).fail(function (xhr, status, error) {
             console.error('Error getting root data:', { xhr, status, error });
             showToast('Failed to load root data for editing', 'error');
         });
     });
 
+    // ENHANCED: Module assignment button with better modal handling
+    $(document).on('click', '.assign-modules-btn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rootCode = $(this).data('rootcode');
+        const rootName = $(this).data('rootname');
+
+        console.log('Module assignment button clicked for:', { rootCode, rootName });
+
+        // Validate data
+        if (!rootCode || !rootName) {
+            showToast('Invalid root data. Please try again.', 'error');
+            return;
+        }
+
+        // Set modal data
+        $('#displayRootCode').text(rootCode);
+        $('#displayRootName').text(rootName);
+
+        // Clear previous data
+        $('#assignedModules, #availableModules').empty();
+
+        // Show modal safely with enhanced handling
+        showModuleModalSafely(rootCode);
+    });
+
+    // Enhanced Module Modal Show Function
+    function showModuleModalSafely(rootCode) {
+        const modalElement = document.getElementById('moduleAssignmentModal');
+
+        if (!modalElement) {
+            console.error('Module assignment modal not found');
+            showToast('Modal not found', 'error');
+            return;
+        }
+
+        try {
+            // Show modal using Bootstrap API
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true,
+                focus: true
+            });
+
+            modal.show();
+
+            // Load data after modal is shown
+            modalElement.addEventListener('shown.bs.modal', function () {
+                loadModuleAssignment(rootCode);
+            }, { once: true });
+
+        } catch (error) {
+            console.error('Error showing module modal:', error);
+
+            // Fallback: direct DOM manipulation
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            modalElement.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            // Create backdrop if it doesn't exist
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+            }
+
+            // Load data after a delay
+            setTimeout(() => {
+                loadModuleAssignment(rootCode);
+            }, 500);
+        }
+    }
+
+    // UNIVERSAL MODAL SHOW FUNCTION WITH MULTIPLE FALLBACKS (Kept for compatibility)
+    function showModalSafely(modalId) {
+        console.log('Attempting to show modal:', modalId);
+
+        const modalElement = document.getElementById(modalId);
+        if (!modalElement) {
+            console.error('Modal element not found:', modalId);
+            showToast('Modal not found', 'error');
+            return;
+        }
+
+        // For root modal, use the enhanced function
+        if (modalId === 'rootModal') {
+            showRootModalSafely('add');
+            return;
+        }
+
+        // Method 1: Bootstrap 5 Modal API
+        try {
+            console.log('Trying Bootstrap 5 Modal API...');
+
+            // Dispose any existing modal instance
+            const existingModal = bootstrap.Modal.getInstance(modalElement);
+            if (existingModal) {
+                existingModal.dispose();
+            }
+
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true,
+                focus: true
+            });
+            modal.show();
+            console.log('Bootstrap 5 Modal API worked');
+            return;
+        } catch (error) {
+            console.error('Bootstrap 5 Modal API failed:', error);
+        }
+
+        // Method 2: jQuery Bootstrap (if available)
+        try {
+            console.log('Trying jQuery Bootstrap modal...');
+            $(`#${modalId}`).modal('show');
+            console.log('jQuery Bootstrap modal worked');
+            return;
+        } catch (error) {
+            console.error('jQuery Bootstrap modal failed:', error);
+        }
+
+        // Method 3: Direct DOM manipulation
+        try {
+            console.log('Trying direct DOM manipulation...');
+
+            // Remove any existing backdrop
+            $('.modal-backdrop').remove();
+
+            // Add backdrop
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.style.zIndex = '1050';
+            document.body.appendChild(backdrop);
+
+            // Show modal
+            modalElement.style.display = 'block';
+            modalElement.style.zIndex = '1055';
+            modalElement.classList.add('show');
+            modalElement.setAttribute('aria-hidden', 'false');
+
+            // Add body class
+            document.body.classList.add('modal-open');
+
+            console.log('Direct DOM manipulation worked');
+
+            // Add close functionality
+            $(modalElement).find('[data-bs-dismiss="modal"], .btn-secondary').off('click.modalClose').on('click.modalClose', function () {
+                hideModalSafely(modalId);
+            });
+
+            // Add backdrop click to close
+            $(backdrop).off('click.modalClose').on('click.modalClose', function () {
+                hideModalSafely(modalId);
+            });
+
+            return;
+        } catch (error) {
+            console.error('Direct DOM manipulation failed:', error);
+        }
+
+        // Method 4: Emergency fallback
+        console.log('All modal methods failed, using emergency fallback');
+        showToast('Modal system error. Refreshing page...', 'error');
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    }
+
+    // ENHANCED MODAL HIDE FUNCTION
+    function hideModalSafely(modalId) {
+        console.log('Hiding modal:', modalId);
+
+        const modalElement = document.getElementById(modalId);
+        if (!modalElement) return;
+
+        try {
+            // Try Bootstrap 5 API first
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+                return;
+            }
+        } catch (error) {
+            console.error('Bootstrap hide failed:', error);
+        }
+
+        try {
+            // Try jQuery
+            $(`#${modalId}`).modal('hide');
+            return;
+        } catch (error) {
+            console.error('jQuery hide failed:', error);
+        }
+
+        // Direct DOM manipulation
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        modalElement.setAttribute('aria-hidden', 'true');
+        $('.modal-backdrop').remove();
+        document.body.classList.remove('modal-open');
+    }
+
     // Delete (Soft Delete)
-    $('#rootTable').on('click', '.deleteBtn', function () {
+    $('#rootTable').on('click', '.deleteBtn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
         const row = $(this).closest('tr');
         const id = row.data('id');
 
@@ -182,21 +537,70 @@
         }
     });
 
-    // Save (Add or Edit)
+    // Enhanced Save (Add or Edit) with better form validation
     $('#rootForm').submit(function (e) {
         e.preventDefault();
 
         const isEdit = $('#rowIndex').val() !== '';
 
+        // Enhanced form validation
+        const requiredFields = ['rootOwner', 'rootName', 'rootPhone', 'rootEmail', 'rootFees', 'rootAddress', 'numCenters', 'numUsers'];
+        let isValid = true;
+        let firstInvalidField = null;
+
+        requiredFields.forEach(fieldId => {
+            const field = $(`#${fieldId}`);
+            const value = field.val().trim();
+
+            if (!value) {
+                field.addClass('is-invalid');
+                if (!firstInvalidField) {
+                    firstInvalidField = field;
+                }
+                isValid = false;
+            } else {
+                field.removeClass('is-invalid');
+            }
+        });
+
+        // Email validation
+        const email = $('#rootEmail').val().trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailRegex.test(email)) {
+            $('#rootEmail').addClass('is-invalid');
+            if (!firstInvalidField) {
+                firstInvalidField = $('#rootEmail');
+            }
+            isValid = false;
+        }
+
+        // Phone validation (basic)
+        const phone = $('#rootPhone').val().trim();
+        if (phone && phone.length < 10) {
+            $('#rootPhone').addClass('is-invalid');
+            if (!firstInvalidField) {
+                firstInvalidField = $('#rootPhone');
+            }
+            isValid = false;
+        }
+
+        if (!isValid) {
+            showToast('Please fill in all required fields correctly', 'error');
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+            }
+            return;
+        }
+
         const rootData = {
-            rootOwner: $('#rootOwner').val(),
-            rootName: $('#rootName').val(),
-            rootPhone: $('#rootPhone').val(),
-            rootEmail: $('#rootEmail').val(),
-            rootFees: parseFloat($('#rootFees').val()),
-            rootAddress: $('#rootAddress').val(),
-            noOfCenter: parseInt($('#numCenters').val()),
-            noOfUser: parseInt($('#numUsers').val()),
+            rootOwner: $('#rootOwner').val().trim(),
+            rootName: $('#rootName').val().trim(),
+            rootPhone: $('#rootPhone').val().trim(),
+            rootEmail: $('#rootEmail').val().trim(),
+            rootFees: parseFloat($('#rootFees').val()) || 0,
+            rootAddress: $('#rootAddress').val().trim(),
+            noOfCenter: parseInt($('#numCenters').val()) || 0,
+            noOfUser: parseInt($('#numUsers').val()) || 0,
             isCenter: $('#isCenter').is(':checked')
         };
 
@@ -211,6 +615,11 @@
 
         console.log('Saving root data:', { url, rootData });
 
+        // Show loading state
+        const $submitBtn = $('#rootForm button[type="submit"]');
+        const originalText = $submitBtn.html();
+        $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+
         $.ajax({
             url: url,
             type: "POST",
@@ -218,34 +627,29 @@
             data: JSON.stringify(rootData),
             success: function (response) {
                 console.log('Save response:', response);
-                $('#rootModal').modal('hide');
+                hideModalSafely('rootModal');
                 loadRootData(currentPage, centerFilter);
                 showToast(`Root ${isEdit ? 'updated' : 'added'} successfully`, 'success');
             },
             error: function (xhr, status, error) {
                 console.error("Save error:", { xhr, status, error, responseText: xhr.responseText });
                 showToast('Failed to save root: ' + (xhr.responseText || error), 'error');
+            },
+            complete: function () {
+                // Reset button state
+                $submitBtn.prop('disabled', false).html(originalText);
             }
         });
     });
 
-    // ========== ENHANCED MODULE ASSIGNMENT FUNCTIONALITY ========== //
-
-    // Open module assignment modal
-    $(document).on('click', '.assign-modules-btn', function () {
-        const rootCode = $(this).data('rootcode');
-        const rootName = $(this).data('rootname');
-
-        console.log('Opening module assignment for:', { rootCode, rootName });
-
-        $('#displayRootCode').text(rootCode);
-        $('#displayRootName').text(rootName);
-        loadModuleAssignment(rootCode);
-        $('#moduleAssignmentModal').modal('show');
-    });
-
+    // Enhanced Module Assignment Loading
     function loadModuleAssignment(rootCode) {
         console.log('Loading module assignment for rootCode:', rootCode);
+
+        if (!rootCode) {
+            showToast('No root code provided for module assignment', 'error');
+            return;
+        }
 
         // Clear containers first
         $('#assignedModules, #availableModules').empty();
@@ -260,6 +664,7 @@
             method: 'GET',
             data: { rootCode: rootCode },
             dataType: 'json',
+            timeout: 15000, // Increased timeout
             success: function (modules) {
                 console.log('Assigned modules received:', modules);
                 $('#assignedModules').empty();
@@ -268,15 +673,17 @@
                     $('#assignedModules').html('<div class="text-center text-muted py-4"><i class="fas fa-info-circle"></i><br>No assigned modules</div>');
                 } else {
                     modules.forEach(m => {
-                        console.log('Adding assigned module:', m);
-                        $('#assignedModules').append(createModuleElement(m));
+                        const moduleElement = createModuleElement(m);
+                        if (moduleElement) {
+                            $('#assignedModules').append(moduleElement);
+                        }
                     });
                 }
                 setupDragAndDrop();
             },
             error: function (xhr, status, error) {
                 console.error('Error loading assigned modules:', { xhr, status, error, responseText: xhr.responseText });
-                $('#assignedModules').html(`<div class="text-danger text-center py-4"><i class="fas fa-exclamation-triangle"></i><br>Error loading assigned modules<br><small>${xhr.responseText || error}</small></div>`);
+                $('#assignedModules').html(`<div class="text-danger text-center py-4"><i class="fas fa-exclamation-triangle"></i><br>Error loading assigned modules<br><small>Please try again</small></div>`);
             }
         });
 
@@ -286,6 +693,7 @@
             method: 'GET',
             data: { rootCode: rootCode },
             dataType: 'json',
+            timeout: 15000, // Increased timeout
             success: function (modules) {
                 console.log('Available modules received:', modules);
                 $('#availableModules').empty();
@@ -294,79 +702,66 @@
                     $('#availableModules').html('<div class="text-center text-muted py-4"><i class="fas fa-info-circle"></i><br>No available modules</div>');
                 } else {
                     modules.forEach(m => {
-                        console.log('Adding available module:', m);
-                        $('#availableModules').append(createModuleElement(m));
+                        const moduleElement = createModuleElement(m);
+                        if (moduleElement) {
+                            $('#availableModules').append(moduleElement);
+                        }
                     });
                 }
                 setupDragAndDrop();
             },
             error: function (xhr, status, error) {
                 console.error('Error loading available modules:', { xhr, status, error, responseText: xhr.responseText });
-                $('#availableModules').html(`<div class="text-danger text-center py-4"><i class="fas fa-exclamation-triangle"></i><br>Error loading available modules<br><small>${xhr.responseText || error}</small></div>`);
+                $('#availableModules').html(`<div class="text-danger text-center py-4"><i class="fas fa-exclamation-triangle"></i><br>Error loading available modules<br><small>Please try again</small></div>`);
             }
         });
     }
 
+    // Enhanced Module Element Creation
     function createModuleElement(module) {
-        console.log('Creating module element for:', module);
+        if (!module) return null;
 
-        // Validate module object
-        if (!module) {
-            console.error('Module is null or undefined');
-            return $('<div class="text-danger">Invalid module data</div>');
-        }
-
-        // Handle different property name cases
         const moduleCode = module.moduleCode || module.ModuleCode;
         const moduleName = module.moduleName || module.ModuleName;
 
-        if (!moduleCode || !moduleName) {
-            console.error('Invalid module object - missing required properties:', module);
-            return $('<div class="text-danger">Invalid module data - missing properties</div>');
-        }
+        if (!moduleCode || !moduleName) return null;
 
-        const element = $(`
-            <div class="module-item" draggable="true" data-modulecode="${moduleCode}">
-                <i class="fas fa-grip-vertical me-2 text-muted"></i>
-                <span>${moduleName}</span>
-                <small class="text-muted ms-auto">(${moduleCode})</small>
+        return $(`
+            <div class="module-item" draggable="true" data-modulecode="${moduleCode}" title="Drag to move between lists">
+                <div class="d-flex align-items-center w-100">
+                    <i class="fas fa-grip-vertical me-2 text-muted"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${moduleName}</div>
+                        <small class="text-muted">Code: ${moduleCode}</small>
+                    </div>
+                </div>
             </div>
         `);
-
-        console.log('Created module element:', element);
-        return element;
     }
 
+    // Enhanced Drag and Drop with better visual feedback
     function setupDragAndDrop() {
-        console.log('Setting up drag and drop...');
+        console.log('Setting up enhanced drag and drop...');
 
-        // Remove existing event listeners to prevent duplicates
         $('.module-item').off('dragstart dragend');
         $('.modules-container').off('dragover dragenter dragleave drop');
 
-        // Drag start
         $('.module-item').on('dragstart', function (e) {
             const moduleCode = $(this).data('modulecode');
-            const moduleName = $(this).find('span').text();
-
-            console.log('Drag started for module:', { moduleCode, moduleName });
-
             e.originalEvent.dataTransfer.setData('text/plain', moduleCode);
-            e.originalEvent.dataTransfer.effectAllowed = 'move';
-            $(this).addClass('dragging');
+            $(this).addClass('dragging').css('opacity', '0.5');
+            console.log('Drag started for module:', moduleCode);
         });
 
-        // Drag end
-        $('.module-item').on('dragend', function (e) {
-            console.log('Drag ended');
-            $(this).removeClass('dragging');
+        $('.module-item').on('dragend', function () {
+            $(this).removeClass('dragging').css('opacity', '1');
             $('.modules-container').removeClass('drag-over');
         });
 
-        // Container events
         $('.modules-container').on('dragover', function (e) {
             e.preventDefault();
             e.originalEvent.dataTransfer.dropEffect = 'move';
+            $(this).addClass('drag-over');
         });
 
         $('.modules-container').on('dragenter', function (e) {
@@ -375,7 +770,6 @@
         });
 
         $('.modules-container').on('dragleave', function (e) {
-            // Only remove if leaving the container entirely
             if (!$(this).has(e.relatedTarget).length) {
                 $(this).removeClass('drag-over');
             }
@@ -397,36 +791,28 @@
                 isAlreadyInTarget: targetContainer.has($draggedElement).length > 0
             });
 
-            // Check if the element exists and is not already in this container
             if ($draggedElement.length && !targetContainer.has($draggedElement).length) {
-                console.log('Moving module from', $draggedElement.parent().attr('id'), 'to', targetContainerId);
+                // Add visual feedback
+                $draggedElement.fadeOut(200, function () {
+                    $(this).appendTo(targetContainer).fadeIn(200);
+                    setupDragAndDrop();
+                });
 
-                // Remove the element from its current location
-                $draggedElement.remove();
-
-                // Add it to the new container
-                targetContainer.append($draggedElement);
-
-                // Re-setup drag and drop for the moved element
-                setupDragAndDrop();
-
+                const targetType = targetContainerId === 'assignedModules' ? 'assigned' : 'available';
+                showToast(`Module moved to ${targetType} list`, 'info');
                 console.log('Module moved successfully');
-                showToast(`Module moved to ${targetContainerId === 'assignedModules' ? 'assigned' : 'available'} list`, 'info');
-            } else {
-                console.log('Drop cancelled - element not found or already in target');
             }
         });
 
-        console.log('Drag and drop setup complete. Found', $('.module-item').length, 'module items');
+        console.log('Enhanced drag and drop setup complete. Found', $('.module-item').length, 'module items');
     }
 
+    // Enhanced Module Assignment Save
     $('#saveModuleAssignments').click(function () {
         const rootCode = parseInt($('#displayRootCode').text(), 10);
 
-        console.log('Saving module assignments for rootCode:', rootCode);
-
         if (isNaN(rootCode)) {
-            showToast('No root selected. Please open the module assignment modal from a valid root.', 'error');
+            showToast('No root selected', 'error');
             return;
         }
 
@@ -438,10 +824,10 @@
             }
         });
 
-        console.log('Assignments to save:', assignments);
+        console.log('Saving module assignments:', { rootCode, assignments });
 
-        // Show saving state
         const $saveBtn = $(this);
+        const originalHtml = $saveBtn.html();
         $saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
 
         $.ajax({
@@ -452,24 +838,24 @@
                 rootCode: rootCode,
                 moduleCodes: assignments
             }),
+            timeout: 15000,
             success: function (response) {
-                console.log('Save response:', response);
-                $('#moduleAssignmentModal').modal('hide');
+                console.log('Module assignments saved successfully:', response);
+                hideModalSafely('moduleAssignmentModal');
                 showToast('Module assignments saved successfully', 'success');
             },
             error: function (xhr, status, error) {
-                console.error('Save error:', { xhr, status, error, responseText: xhr.responseText });
-                showToast('Saving module assignments failed: ' + (xhr.responseText || error), 'error');
+                console.error('Error saving module assignments:', { xhr, status, error });
+                showToast('Failed to save module assignments: ' + (xhr.responseText || error), 'error');
             },
             complete: function () {
-                // Reset button state
-                $saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i>Save Changes');
+                $saveBtn.prop('disabled', false).html(originalHtml);
             }
         });
     });
 
+    // Enhanced Toast Function
     function showToast(message, type = 'info') {
-        // Create toast element
         const toastId = 'toast-' + Date.now();
         const iconMap = {
             'success': 'check-circle',
@@ -486,29 +872,83 @@
         };
 
         const toastHtml = `
-            <div class="toast align-items-center text-bg-${bgMap[type] || 'primary'} border-0" role="alert" aria-live="assertive" aria-atomic="true" id="${toastId}">
+            <div class="toast align-items-center text-bg-${bgMap[type] || 'primary'} border-0" role="alert" id="${toastId}" style="z-index: 9999;">
                 <div class="d-flex">
                     <div class="toast-body">
                         <i class="fas fa-${iconMap[type] || 'info-circle'} me-2"></i>
                         ${message}
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
         `;
 
-        // Add toast container if it doesn't exist
         if (!$('#toast-container').length) {
-            $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>');
+            $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>');
         }
 
         $('#toast-container').append(toastHtml);
-        const toast = new bootstrap.Toast(document.getElementById(toastId));
-        toast.show();
 
-        // Remove toast element after it's hidden
-        $(`#${toastId}`).on('hidden.bs.toast', function () {
-            $(this).remove();
-        });
+        try {
+            const toast = new bootstrap.Toast(document.getElementById(toastId), {
+                delay: type === 'error' ? 6000 : 4000
+            });
+            toast.show();
+            $(`#${toastId}`).on('hidden.bs.toast', function () { $(this).remove(); });
+        } catch (error) {
+            console.error('Toast error:', error);
+            // Fallback to alert
+            alert(message);
+        }
     }
+
+    // Window resize handler for modal sizing
+    $(window).on('resize', function () {
+        if ($('#rootModal').hasClass('show')) {
+            adjustRootModalSize();
+        }
+    });
+
+    // Form field validation on blur
+    $('#rootForm input, #rootForm select').on('blur', function () {
+        $(this).removeClass('is-invalid');
+
+        const value = $(this).val().trim();
+        if ($(this).prop('required') && !value) {
+            $(this).addClass('is-invalid');
+        }
+
+        // Specific validations
+        if ($(this).attr('type') === 'email' && value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                $(this).addClass('is-invalid');
+            }
+        }
+    });
+
+    // Emergency escape hatch
+    $(document).keydown(function (e) {
+        if (e.key === 'Escape') {
+            console.log('Escape pressed, hiding all modals');
+            hideModalSafely('rootModal');
+            hideModalSafely('moduleAssignmentModal');
+        }
+    });
+
+    // Global error handler for AJAX requests
+    $(document).ajaxError(function (event, xhr, settings, thrownError) {
+        if (xhr.status === 404) {
+            console.error('AJAX 404 Error - URL not found:', settings.url);
+            showToast('The requested resource was not found', 'error');
+        } else if (xhr.status === 500) {
+            console.error('AJAX 500 Error - Server error:', settings.url);
+            showToast('A server error occurred. Please try again.', 'error');
+        } else if (xhr.status === 0 && thrownError !== 'abort') {
+            console.error('AJAX Network Error:', settings.url);
+            showToast('Network error. Please check your connection.', 'error');
+        }
+    });
+
+    console.log('Enhanced Root management system initialized successfully');
 });

@@ -120,6 +120,17 @@
         return true;
     }
 
+    // Patch: Helper to set/remove required for select/input in a group
+    function setRequiredInGroup(groupSelector, required) {
+        $(groupSelector).find('select, input').each(function () {
+            if (required) {
+                $(this).attr('required', true);
+            } else {
+                $(this).removeAttr('required');
+            }
+        });
+    }
+
     // =============================
     // API Functions
     // =============================
@@ -388,16 +399,24 @@
         $form[0].reset();
         $form.find('select').val('').empty().append($('<option>').val('').text('-- Select --'));
 
-        // Show/hide sections based on user type
-        $('#teacherDropdownGroup, #teacherDisplayGroup, #centerDropdownGroup, #branchDropdownGroup, #rootBranchDropdownGroup').hide();
+        // Patch: Hide all groups and remove required, then show needed and re-add required
+        ['#teacherDropdownGroup', '#teacherDisplayGroup', '#centerDropdownGroup', '#branchDropdownGroup', '#rootBranchDropdownGroup'].forEach(function (sel) {
+            $(sel).hide();
+            setRequiredInGroup(sel, false);
+        });
 
         if (isCenterUser) {
             $('#teacherDropdownGroup').show();
             $('#branchDropdownGroup').show();
+            setRequiredInGroup('#teacherDropdownGroup', true);
+            setRequiredInGroup('#branchDropdownGroup', true);
         } else {
             $('#teacherDisplayGroup').show();
             $('#centerDropdownGroup').show();
             $('#rootBranchDropdownGroup').show();
+            setRequiredInGroup('#teacherDisplayGroup', true);
+            setRequiredInGroup('#centerDropdownGroup', true);
+            setRequiredInGroup('#rootBranchDropdownGroup', true);
             fetchAndDisplayTeacher($('#teacherDisplayContainer'));
             fetchAndPopulateCenters($('#AddExamCenterCode'));
         }
@@ -414,7 +433,9 @@
     });
 
     // Form submission
-    $('#examForm').on('submit', function (e) {
+    $(document).off('submit', '#examForm');
+    $(document).on('submit', '#examForm', function (e) {
+        console.log('Form submitted!');
         e.preventDefault();
         $('#examError').hide();
 
