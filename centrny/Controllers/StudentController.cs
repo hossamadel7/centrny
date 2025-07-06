@@ -878,8 +878,7 @@ namespace centrny.Controllers
                         Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
                         BranchName = s.BranchCodeNavigation != null ? s.BranchCodeNavigation.BranchName : "N/A",
                         YearName = s.YearCodeNavigation != null ? s.YearCodeNavigation.YearName : "N/A",
-                        SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
-                        Age = CalculateAge(s.StudentBirthdate)
+                        SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd")
                     })
                     .ToListAsync();
 
