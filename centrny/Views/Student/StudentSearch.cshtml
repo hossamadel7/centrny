@@ -335,6 +335,8 @@
             const phoneInput = document.getElementById('studentPhone');
             const phone = phoneInput.value.trim();
             
+            console.log('DEBUG: Starting phone search', { itemKey, phone });
+            
             if (!phone) {
                 showError('Please enter a phone number.');
                 return;
@@ -345,6 +347,11 @@
             hideMessages();
 
             try {
+                console.log('DEBUG: Sending request to /Student/SearchByPhone', {
+                    ItemKey: itemKey,
+                    StudentPhone: phone
+                });
+
                 const response = await fetch('/Student/SearchByPhone', {
                     method: 'POST',
                     headers: {
@@ -356,20 +363,47 @@
                     })
                 });
 
+                console.log('DEBUG: Response status:', response.status);
+                console.log('DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
+
                 const result = await response.json();
+                console.log('DEBUG: Response data:', result);
+
+                // Log debug information if available
+                if (result.debug) {
+                    console.log('DEBUG: Server debug info:', result.debug);
+                }
+
+                if (result.exception) {
+                    console.error('DEBUG: Server exception:', result.exception);
+                }
+
+                if (result.stackTrace) {
+                    console.error('DEBUG: Server stack trace:', result.stackTrace);
+                }
 
                 if (result.success) {
+                    console.log('DEBUG: Search successful, found students:', result.students?.length || 0);
                     if (result.students && result.students.length > 0) {
                         showStudents(result.students);
                     } else {
                         showNoResults();
                     }
                 } else {
-                    showError(result.error || 'Search failed. Please try again.');
+                    console.error('DEBUG: Search failed:', result.error);
+                    let errorMessage = result.error || 'Search failed. Please try again.';
+                    
+                    // Include debug info in error message for debugging
+                    if (result.debug && result.debug.length > 0) {
+                        console.log('DEBUG: Adding debug info to error');
+                        errorMessage += '\n\nDebug Info:\n' + result.debug.join('\n');
+                    }
+                    
+                    showError(errorMessage);
                 }
             } catch (error) {
-                console.error('Search error:', error);
-                showError('An error occurred while searching. Please try again.');
+                console.error('DEBUG: Network or parsing error:', error);
+                showError('An error occurred while searching. Please try again.\n\nTechnical details: ' + error.message);
             } finally {
                 showLoading(false);
             }

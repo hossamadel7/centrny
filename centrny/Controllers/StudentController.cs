@@ -843,27 +843,74 @@ namespace centrny.Controllers
         [Route("Student/SearchByPhone")]
         public async Task<IActionResult> SearchByPhone([FromBody] StudentSearchRequest request)
         {
+            var debugInfo = new List<string>();
+            
             try
             {
+                _logger.LogInformation("DEBUG: Starting SearchByPhone for request {@Request}", request);
+                debugInfo.Add($"Request received: ItemKey={request?.ItemKey}, Phone={request?.StudentPhone}");
+
                 if (!ModelState.IsValid)
                 {
                     var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                    return Json(new { success = false, errors = errors });
+                    _logger.LogWarning("DEBUG: ModelState validation failed: {Errors}", string.Join(", ", errors));
+                    debugInfo.Add($"ModelState errors: {string.Join(", ", errors)}");
+                    return Json(new { success = false, errors = errors, debug = debugInfo });
+                }
+
+                debugInfo.Add("ModelState validation passed");
+
+                // Test database connectivity
+                try
+                {
+                    var dbTest = await _context.Database.CanConnectAsync();
+                    _logger.LogInformation("DEBUG: Database connectivity test result: {CanConnect}", dbTest);
+                    debugInfo.Add($"Database connectivity: {dbTest}");
+                    
+                    if (!dbTest)
+                    {
+                        return Json(new { success = false, error = "Database connection failed.", debug = debugInfo });
+                    }
+                }
+                catch (Exception dbEx)
+                {
+                    _logger.LogError(dbEx, "DEBUG: Database connectivity test failed");
+                    debugInfo.Add($"Database connectivity error: {dbEx.Message}");
+                    return Json(new { success = false, error = "Database connection test failed.", debug = debugInfo });
                 }
 
                 // Validate item exists and has no student linked
+                _logger.LogInformation("DEBUG: Searching for item with key {ItemKey}", request.ItemKey);
+                debugInfo.Add($"Searching for item with key: {request.ItemKey}");
+                
                 var item = await _context.Items
                     .Where(i => i.ItemKey == request.ItemKey && i.IsActive && !i.StudentCode.HasValue)
                     .FirstOrDefaultAsync();
 
+                _logger.LogInformation("DEBUG: Item search result: {Found}", item != null);
+                debugInfo.Add($"Item found: {item != null}");
+                
+                if (item != null)
+                {
+                    debugInfo.Add($"Item details: RootCode={item.RootCode}, IsActive={item.IsActive}, HasStudent={item.StudentCode.HasValue}");
+                    _logger.LogInformation("DEBUG: Item details - RootCode: {RootCode}, IsActive: {IsActive}, HasStudent: {HasStudent}", 
+                        item.RootCode, item.IsActive, item.StudentCode.HasValue);
+                }
+
                 if (item == null)
                 {
-                    return Json(new { success = false, error = "Invalid item key or already linked." });
+                    _logger.LogWarning("DEBUG: Item not found or invalid state for key {ItemKey}", request.ItemKey);
+                    debugInfo.Add("Item validation failed: not found or already linked");
+                    return Json(new { success = false, error = "Invalid item key or already linked.", debug = debugInfo });
                 }
 
                 // Search for students with the same phone number in the same root
+                var phoneToSearch = request.StudentPhone.Trim();
+                _logger.LogInformation("DEBUG: Searching for students with phone {Phone} in root {RootCode}", phoneToSearch, item.RootCode);
+                debugInfo.Add($"Searching students with phone: {phoneToSearch} in root: {item.RootCode}");
+
                 var students = await _context.Students
-                    .Where(s => s.StudentPhone == request.StudentPhone.Trim() && 
+                    .Where(s => s.StudentPhone == phoneToSearch && 
                                s.RootCode == item.RootCode && 
                                s.IsActive)
                     .Include(s => s.BranchCodeNavigation)
@@ -883,15 +930,206 @@ namespace centrny.Controllers
                     })
                     .ToListAsync();
 
-                _logger.LogInformation("Found {Count} students with phone {Phone} in root {RootCode}",
-                    students.Count, request.StudentPhone, item.RootCode);
+                _logger.LogInformation("DEBUG: Found {Count} students with phone {Phone} in root {RootCode}",
+                    students.Count, phoneToSearch, item.RootCode);
+                debugInfo.Add($"Students found: {students.Count}");
 
-                return Json(new { success = true, students = students });
+                if (students.Any())
+                {
+                    debugInfo.Add($"Student names: {string.Join(", ", students.Select(s => s.StudentName))}");
+                }
+
+                _logger.LogInformation("DEBUG: SearchByPhone completed successfully");
+                debugInfo.Add("Search completed successfully");
+
+                return Json(new { success = true, students = students, debug = debugInfo });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error searching students by phone for request {@Request}", request);
-                return Json(new { success = false, error = "An error occurred while searching for students." });
+                _logger.LogError(ex, "DEBUG: Error searching students by phone for request {@Request}. Stack trace: {StackTrace}", 
+                    request, ex.StackTrace);
+                debugInfo.Add($"Exception occurred: {ex.Message}");
+                debugInfo.Add($"Exception type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    debugInfo.Add($"Inner exception: {ex.InnerException.Message}");
+                }
+                
+                return Json(new { 
+                    success = false, 
+                    error = "An error occurred while searching for students.", 
+                    debug = debugInfo,
+                    exception = ex.Message,
+                    stackTrace = ex.StackTrace?.Split('\n')?.Take(5)?.ToArray() // First 5 lines only
+                });
+            }
+        }
+
+        /// <summary>
+        /// GET: Student/Debug/PhoneSearch - Debug endpoint for phone search testing
+        /// </summary>
+        [HttpGet]
+        [Route("Student/Debug/PhoneSearch")]
+        public async Task<IActionResult> DebugPhoneSearch(string itemKey = "", string phone = "")
+        {
+            var debugResult = new
+            {
+                timestamp = DateTime.Now,
+                itemKey = itemKey,
+                phone = phone,
+                databaseConnectivity = false,
+                itemExists = false,
+                itemDetails = (object?)null,
+                studentCount = 0,
+                students = new List<object>(),
+                error = (string?)null,
+                logs = new List<string>()
+            };
+
+            var logs = new List<string>();
+
+            try
+            {
+                logs.Add($"Debug endpoint called at {DateTime.Now}");
+                logs.Add($"Parameters: itemKey='{itemKey}', phone='{phone}'");
+
+                // Test database connectivity
+                var canConnect = await _context.Database.CanConnectAsync();
+                logs.Add($"Database connectivity: {canConnect}");
+                
+                if (!canConnect)
+                {
+                    return Json(new
+                    {
+                        debugResult.timestamp,
+                        debugResult.itemKey,
+                        debugResult.phone,
+                        databaseConnectivity = false,
+                        debugResult.itemExists,
+                        debugResult.itemDetails,
+                        debugResult.studentCount,
+                        debugResult.students,
+                        error = "Database connection failed",
+                        logs = logs
+                    });
+                }
+
+                // If no parameters provided, just return connectivity test
+                if (string.IsNullOrEmpty(itemKey) || string.IsNullOrEmpty(phone))
+                {
+                    logs.Add("No itemKey or phone provided - returning connectivity test only");
+                    return Json(new
+                    {
+                        debugResult.timestamp,
+                        debugResult.itemKey,
+                        debugResult.phone,
+                        databaseConnectivity = true,
+                        debugResult.itemExists,
+                        debugResult.itemDetails,
+                        debugResult.studentCount,
+                        debugResult.students,
+                        error = "Please provide itemKey and phone parameters",
+                        logs = logs
+                    });
+                }
+
+                // Test item lookup
+                var item = await _context.Items
+                    .Where(i => i.ItemKey == itemKey && i.IsActive && !i.StudentCode.HasValue)
+                    .FirstOrDefaultAsync();
+
+                logs.Add($"Item search for key '{itemKey}': {(item != null ? "Found" : "Not found")}");
+
+                object? itemDetails = null;
+                if (item != null)
+                {
+                    itemDetails = new
+                    {
+                        item.ItemKey,
+                        item.RootCode,
+                        item.IsActive,
+                        HasStudent = item.StudentCode.HasValue,
+                        item.StudentCode
+                    };
+                    logs.Add($"Item details: RootCode={item.RootCode}, IsActive={item.IsActive}, HasStudent={item.StudentCode.HasValue}");
+                }
+
+                // Test student search if item found
+                var students = new List<object>();
+                var studentCount = 0;
+
+                if (item != null)
+                {
+                    var phoneToSearch = phone.Trim();
+                    logs.Add($"Searching students with phone '{phoneToSearch}' in root {item.RootCode}");
+
+                    var foundStudents = await _context.Students
+                        .Where(s => s.StudentPhone == phoneToSearch && 
+                                   s.RootCode == item.RootCode && 
+                                   s.IsActive)
+                        .Include(s => s.BranchCodeNavigation)
+                        .Include(s => s.YearCodeNavigation)
+                        .ToListAsync();
+
+                    studentCount = foundStudents.Count;
+                    logs.Add($"Found {studentCount} students");
+
+                    students = foundStudents.Select(s => new
+                    {
+                        s.StudentCode,
+                        s.StudentName,
+                        s.StudentPhone,
+                        s.StudentParentPhone,
+                        BirthDate = s.StudentBirthdate.ToString("yyyy-MM-dd"),
+                        Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
+                        BranchName = s.BranchCodeNavigation?.BranchName ?? "N/A",
+                        YearName = s.YearCodeNavigation?.YearName ?? "N/A",
+                        SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
+                        Age = CalculateAge(s.StudentBirthdate)
+                    }).ToList<object>();
+
+                    if (foundStudents.Any())
+                    {
+                        logs.Add($"Student names: {string.Join(", ", foundStudents.Select(s => s.StudentName))}");
+                    }
+                }
+
+                return Json(new
+                {
+                    debugResult.timestamp,
+                    debugResult.itemKey,
+                    debugResult.phone,
+                    databaseConnectivity = true,
+                    itemExists = item != null,
+                    itemDetails = itemDetails,
+                    studentCount = studentCount,
+                    students = students,
+                    debugResult.error,
+                    logs = logs
+                });
+            }
+            catch (Exception ex)
+            {
+                logs.Add($"Exception: {ex.Message}");
+                logs.Add($"Exception type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    logs.Add($"Inner exception: {ex.InnerException.Message}");
+                }
+
+                return Json(new
+                {
+                    debugResult.timestamp,
+                    debugResult.itemKey,
+                    debugResult.phone,
+                    debugResult.databaseConnectivity,
+                    debugResult.itemExists,
+                    debugResult.itemDetails,
+                    debugResult.studentCount,
+                    debugResult.students,
+                    error = ex.Message,
+                    logs = logs
+                });
             }
         }
 
