@@ -843,27 +843,86 @@ namespace centrny.Controllers
         [Route("Student/SearchByPhone")]
         public async Task<IActionResult> SearchByPhone([FromBody] StudentSearchRequest request)
         {
+            var startTime = DateTime.UtcNow;
+            _logger.LogInformation("Starting phone search for ItemKey: {ItemKey}, Phone: {Phone}", 
+                request?.ItemKey ?? "null", request?.StudentPhone ?? "null");
+
             try
             {
+                // Step 1: Validate request model
                 if (!ModelState.IsValid)
                 {
                     var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                    _logger.LogWarning("Invalid model state for phone search: {Errors}", string.Join(", ", errors));
                     return Json(new { success = false, errors = errors });
                 }
 
-                // Validate item exists and has no student linked
+                if (request == null)
+                {
+                    _logger.LogError("SearchByPhone request is null");
+                    return Json(new { success = false, error = "Invalid request data." });
+                }
+
+                _logger.LogDebug("Step 1 Complete: Model validation passed");
+
+                // Step 2: Normalize and validate phone number
+                var rawPhone = request.StudentPhone?.Trim() ?? string.Empty;
+                var normalizedPhone = NormalizePhoneNumber(rawPhone);
+                
+                if (string.IsNullOrEmpty(normalizedPhone) || normalizedPhone.Length < 7)
+                {
+                    _logger.LogWarning("Invalid phone number format: Raw='{RawPhone}', Normalized='{NormalizedPhone}'", 
+                        rawPhone, normalizedPhone);
+                    return Json(new { success = false, error = "Please enter a valid phone number with at least 7 digits." });
+                }
+
+                _logger.LogDebug("Step 2 Complete: Phone normalization - Raw: '{RawPhone}', Normalized: '{NormalizedPhone}'", 
+                    rawPhone, normalizedPhone);
+
+                // Step 3: Validate item exists and has no student linked
+                _logger.LogDebug("Step 3: Searching for item with key '{ItemKey}'", request.ItemKey);
+                
                 var item = await _context.Items
                     .Where(i => i.ItemKey == request.ItemKey && i.IsActive && !i.StudentCode.HasValue)
                     .FirstOrDefaultAsync();
 
                 if (item == null)
                 {
+                    _logger.LogWarning("Item not found or invalid: ItemKey='{ItemKey}'", request.ItemKey);
+                    
+                    // Check if item exists but is already linked or inactive for better error message
+                    var existingItem = await _context.Items
+                        .Where(i => i.ItemKey == request.ItemKey)
+                        .FirstOrDefaultAsync();
+                    
+                    if (existingItem == null)
+                    {
+                        return Json(new { success = false, error = "Item key not found." });
+                    }
+                    else if (!existingItem.IsActive)
+                    {
+                        return Json(new { success = false, error = "Item is inactive." });
+                    }
+                    else if (existingItem.StudentCode.HasValue)
+                    {
+                        return Json(new { success = false, error = "Item is already linked to a student." });
+                    }
+                    
                     return Json(new { success = false, error = "Invalid item key or already linked." });
                 }
 
-                // Search for students with the same phone number in the same root
-                var students = await _context.Students
-                    .Where(s => s.StudentPhone == request.StudentPhone.Trim() && 
+                _logger.LogInformation("Step 3 Complete: Found valid item - ItemCode: {ItemCode}, RootCode: {RootCode}", 
+                    item.ItemCode, item.RootCode);
+
+                // Step 4: Search for students using multiple strategies
+                List<object> students = new List<object>();
+
+                // Strategy 1: Exact match after trimming
+                _logger.LogDebug("Step 4a: Attempting exact match search with trimmed phone '{Phone}' in root {RootCode}", 
+                    rawPhone, item.RootCode);
+
+                students = await _context.Students
+                    .Where(s => s.StudentPhone == rawPhone && 
                                s.RootCode == item.RootCode && 
                                s.IsActive)
                     .Include(s => s.BranchCodeNavigation)
@@ -879,19 +938,125 @@ namespace centrny.Controllers
                         BranchName = s.BranchCodeNavigation != null ? s.BranchCodeNavigation.BranchName : "N/A",
                         YearName = s.YearCodeNavigation != null ? s.YearCodeNavigation.YearName : "N/A",
                         SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
-                        Age = CalculateAge(s.StudentBirthdate)
+                        Age = CalculateAge(s.StudentBirthdate),
+                        SearchMethod = "Exact Match"
                     })
+                    .Cast<object>()
                     .ToListAsync();
 
-                _logger.LogInformation("Found {Count} students with phone {Phone} in root {RootCode}",
-                    students.Count, request.StudentPhone, item.RootCode);
+                _logger.LogInformation("Step 4a Complete: Exact match found {Count} students", students.Count);
+
+                // Strategy 2: If no exact match, try normalized phone number search
+                if (students.Count == 0)
+                {
+                    _logger.LogDebug("Step 4b: Attempting normalized phone search for '{NormalizedPhone}' in root {RootCode}", 
+                        normalizedPhone, item.RootCode);
+
+                    // Get all students in the root and filter by normalized phone
+                    var allStudents = await _context.Students
+                        .Where(s => s.RootCode == item.RootCode && s.IsActive)
+                        .Include(s => s.BranchCodeNavigation)
+                        .Include(s => s.YearCodeNavigation)
+                        .ToListAsync();
+
+                    _logger.LogDebug("Step 4b: Found {TotalCount} total active students in root {RootCode}", 
+                        allStudents.Count, item.RootCode);
+
+                    var matchingStudents = allStudents
+                        .Where(s => NormalizePhoneNumber(s.StudentPhone) == normalizedPhone)
+                        .Select(s => new
+                        {
+                            StudentCode = s.StudentCode,
+                            StudentName = s.StudentName,
+                            StudentPhone = s.StudentPhone,
+                            StudentParentPhone = s.StudentParentPhone,
+                            BirthDate = s.StudentBirthdate.ToString("yyyy-MM-dd"),
+                            Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
+                            BranchName = s.BranchCodeNavigation?.BranchName ?? "N/A",
+                            YearName = s.YearCodeNavigation?.YearName ?? "N/A",
+                            SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
+                            Age = CalculateAge(s.StudentBirthdate),
+                            SearchMethod = "Normalized Match"
+                        })
+                        .Cast<object>()
+                        .ToList();
+
+                    students = matchingStudents;
+                    _logger.LogInformation("Step 4b Complete: Normalized search found {Count} students", students.Count);
+                }
+
+                // Strategy 3: If still no match, try partial match (last 7 digits)
+                if (students.Count == 0 && normalizedPhone.Length >= 7)
+                {
+                    var lastSevenDigits = normalizedPhone.Substring(normalizedPhone.Length - 7);
+                    _logger.LogDebug("Step 4c: Attempting partial match search for last 7 digits '{LastSeven}' in root {RootCode}", 
+                        lastSevenDigits, item.RootCode);
+
+                    var allStudents = await _context.Students
+                        .Where(s => s.RootCode == item.RootCode && s.IsActive)
+                        .Include(s => s.BranchCodeNavigation)
+                        .Include(s => s.YearCodeNavigation)
+                        .ToListAsync();
+
+                    var partialMatches = allStudents
+                        .Where(s => {
+                            var studentNormalized = NormalizePhoneNumber(s.StudentPhone);
+                            return studentNormalized.Length >= 7 && 
+                                   studentNormalized.Substring(studentNormalized.Length - 7) == lastSevenDigits;
+                        })
+                        .Select(s => new
+                        {
+                            StudentCode = s.StudentCode,
+                            StudentName = s.StudentName,
+                            StudentPhone = s.StudentPhone,
+                            StudentParentPhone = s.StudentParentPhone,
+                            BirthDate = s.StudentBirthdate.ToString("yyyy-MM-dd"),
+                            Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
+                            BranchName = s.BranchCodeNavigation?.BranchName ?? "N/A",
+                            YearName = s.YearCodeNavigation?.YearName ?? "N/A",
+                            SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
+                            Age = CalculateAge(s.StudentBirthdate),
+                            SearchMethod = "Partial Match (Last 7 digits)"
+                        })
+                        .Cast<object>()
+                        .ToList();
+
+                    students = partialMatches;
+                    _logger.LogInformation("Step 4c Complete: Partial match search found {Count} students", students.Count);
+                }
+
+                var elapsed = DateTime.UtcNow - startTime;
+                _logger.LogInformation("Phone search completed in {ElapsedMs}ms: Found {Count} students for phone '{Phone}' in root {RootCode}",
+                    elapsed.TotalMilliseconds, students.Count, rawPhone, item.RootCode);
 
                 return Json(new { success = true, students = students });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error searching students by phone for request {@Request}", request);
-                return Json(new { success = false, error = "An error occurred while searching for students." });
+                var elapsed = DateTime.UtcNow - startTime;
+                _logger.LogError(ex, "Error searching students by phone after {ElapsedMs}ms for request ItemKey: '{ItemKey}', Phone: '{Phone}'", 
+                    elapsed.TotalMilliseconds, request?.ItemKey ?? "null", request?.StudentPhone ?? "null");
+
+                // Return detailed error information in development mode
+                var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                
+                if (isDevelopment)
+                {
+                    return Json(new { 
+                        success = false, 
+                        error = "An error occurred while searching for students.",
+                        details = new {
+                            message = ex.Message,
+                            type = ex.GetType().Name,
+                            stackTrace = ex.StackTrace?.Split('\n').Take(5).ToArray(), // First 5 lines only
+                            innerException = ex.InnerException?.Message
+                        }
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, error = "An error occurred while searching for students." });
+                }
             }
         }
 
@@ -1678,6 +1843,18 @@ namespace centrny.Controllers
             var age = today.Year - birthDate.Year;
             if (birthDate > today.AddYears(-age)) age--;
             return age;
+        }
+
+        /// <summary>
+        /// Normalize phone number for comparison by removing all non-digit characters
+        /// </summary>
+        private string NormalizePhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                return string.Empty;
+
+            // Remove all non-digit characters (spaces, dashes, parentheses, etc.)
+            return new string(phoneNumber.Where(char.IsDigit).ToArray());
         }
 
         // Check if current user is an admin

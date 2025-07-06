@@ -222,6 +222,19 @@
         #loadingSpinner {
             display: none;
         }
+
+        .search-method-indicator {
+            margin-bottom: 10px;
+            padding: 5px 8px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+        }
+
+        .search-method-indicator small {
+            font-size: 0.8rem;
+            color: #155724 !important;
+        }
     </style>
 </head>
 
@@ -365,7 +378,23 @@
                         showNoResults();
                     }
                 } else {
-                    showError(result.error || 'Search failed. Please try again.');
+                    let errorMessage = result.error || 'Search failed. Please try again.';
+                    
+                    // If development details are available, show them
+                    if (result.details) {
+                        console.group('Development Error Details');
+                        console.error('Error Type:', result.details.type);
+                        console.error('Message:', result.details.message);
+                        console.error('Stack Trace:', result.details.stackTrace);
+                        if (result.details.innerException) {
+                            console.error('Inner Exception:', result.details.innerException);
+                        }
+                        console.groupEnd();
+                        
+                        errorMessage += ` (${result.details.type}: ${result.details.message})`;
+                    }
+                    
+                    showError(errorMessage);
                 }
             } catch (error) {
                 console.error('Search error:', error);
@@ -391,43 +420,50 @@
             const card = document.createElement('div');
             card.className = 'student-card';
             
+            // Add search method indicator if available
+            const searchMethodHtml = student.SearchMethod ? 
+                `<div class="search-method-indicator">
+                    <small class="text-muted"><i class="fas fa-search me-1"></i>Found via: ${student.SearchMethod}</small>
+                </div>` : '';
+            
             card.innerHTML = `
                 <div class="student-info">
+                    ${searchMethodHtml}
                     <div class="info-item">
                         <span class="info-label">Name</span>
-                        <span class="info-value">${student.studentName}</span>
+                        <span class="info-value">${student.StudentName}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Phone</span>
-                        <span class="info-value">${student.studentPhone}</span>
+                        <span class="info-value">${student.StudentPhone}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Parent Phone</span>
-                        <span class="info-value">${student.studentParentPhone}</span>
+                        <span class="info-value">${student.StudentParentPhone}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Birth Date</span>
-                        <span class="info-value">${student.birthDate} (Age: ${student.age})</span>
+                        <span class="info-value">${student.BirthDate} (Age: ${student.Age})</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Gender</span>
-                        <span class="info-value">${student.gender}</span>
+                        <span class="info-value">${student.Gender}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Branch</span>
-                        <span class="info-value">${student.branchName}</span>
+                        <span class="info-value">${student.BranchName}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Year/Level</span>
-                        <span class="info-value">${student.yearName}</span>
+                        <span class="info-value">${student.YearName}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Registration Date</span>
-                        <span class="info-value">${student.subscriptionDate}</span>
+                        <span class="info-value">${student.SubscriptionDate}</span>
                     </div>
                 </div>
                 <div class="text-end">
-                    <button type="button" class="btn btn-success" onclick="linkStudent(${student.studentCode}, '${student.studentName}')">
+                    <button type="button" class="btn btn-success" onclick="linkStudent(${student.StudentCode}, '${student.StudentName}')">
                         <i class="fas fa-link me-2"></i>Link This Profile
                     </button>
                 </div>
