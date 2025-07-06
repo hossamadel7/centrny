@@ -42,13 +42,17 @@ namespace centrny.Controllers
                 // Find the item and validate it exists and is active
                 var item = await _context.Items
                     .Include(i => i.RootCodeNavigation)
-                    .Where(i => i.ItemKey == item_key && i.IsActive && !i.StudentCode.HasValue)
+                    .Include(i => i.StudentCodeNavigation) // Include student if linked
+                    .Where(i => i.ItemKey == item_key && i.IsActive)
                     .FirstOrDefaultAsync();
 
                 if (item == null)
                 {
-                    return NotFound("Item not found or already registered.");
+                    return NotFound("Item not found.");
                 }
+
+                // Check if item already has a student but allow proceeding to update academic info
+                var hasExistingStudent = item.StudentCode.HasValue && item.StudentCodeNavigation != null;
 
                 // Get available branches for this root
                 var availableBranches = await _context.Branches
@@ -74,8 +78,22 @@ namespace centrny.Controllers
                     RootName = item.RootCodeNavigation?.RootName ?? "Unknown",
                     AvailableBranches = availableBranches,
                     AvailableYears = availableYears,
-                    AvailableEduYears = availableEduYears
+                    AvailableEduYears = availableEduYears,
+                    HasExistingStudent = hasExistingStudent
                 };
+
+                // If student exists, populate their data
+                if (hasExistingStudent && item.StudentCodeNavigation != null)
+                {
+                    var student = item.StudentCodeNavigation;
+                    viewModel.ExistingStudentName = student.StudentName;
+                    viewModel.ExistingStudentPhone = student.StudentPhone;
+                    viewModel.ExistingStudentParentPhone = student.StudentParentPhone;
+                    viewModel.ExistingBirthDate = student.StudentBirthdate;
+                    viewModel.ExistingGender = student.StudentGender;
+                    viewModel.ExistingBranchCode = student.BranchCode;
+                    viewModel.ExistingYearCode = student.YearCode;
+                }
 
                 return View(viewModel);
             }
@@ -299,38 +317,64 @@ namespace centrny.Controllers
                     return Json(new { success = false, errors = errors });
                 }
 
-                // Validate item key
+                // Validate item key - allow both new and existing students
                 var item = await _context.Items
                     .Include(i => i.RootCodeNavigation)
-                    .Where(i => i.ItemKey == request.ItemKey && i.IsActive && !i.StudentCode.HasValue)
+                    .Include(i => i.StudentCodeNavigation) // Include existing student if any
+                    .Where(i => i.ItemKey == request.ItemKey && i.IsActive)
                     .FirstOrDefaultAsync();
 
                 if (item == null)
                 {
-                    return Json(new { success = false, error = "Invalid item key or already registered." });
+                    return Json(new { success = false, error = "Invalid item key." });
+                }
+
+                Student student;
+                bool isUpdate = item.StudentCode.HasValue && item.StudentCodeNavigation != null;
+
+                if (isUpdate)
+                {
+                    // Update existing student
+                    student = item.StudentCodeNavigation!;
+                    _logger.LogInformation("Updating existing student: {StudentCode}", student.StudentCode);
+                    
+                    // Update basic information
+                    student.StudentName = request.StudentName?.Trim();
+                    student.StudentPhone = request.StudentPhone?.Trim();
+                    student.StudentParentPhone = request.StudentParentPhone?.Trim();
+                    student.StudentBirthdate = request.BirthDate;
+                    student.StudentGender = request.Gender;
+                    student.BranchCode = request.BranchCode;
+                    student.YearCode = request.YearCode;
+                    student.LastInsertUser = 1;
+                    student.LastInsertTime = DateTime.Now;
+                }
+                else
+                {
+                    // Create new student (legacy path)
+                    student = new Student
+                    {
+                        StudentName = request.StudentName?.Trim(),
+                        StudentPhone = request.StudentPhone?.Trim(),
+                        StudentParentPhone = request.StudentParentPhone?.Trim(),
+                        StudentBirthdate = request.BirthDate,
+                        StudentGender = request.Gender,
+                        BranchCode = request.BranchCode,
+                        YearCode = request.YearCode,
+                        RootCode = item.RootCode,
+                        IsActive = true,
+                        InsertUser = 1,
+                        InsertTime = DateTime.Now,
+                        SubscribtionTime = DateOnly.FromDateTime(DateTime.Today)
+                    };
+
+                    _context.Students.Add(student);
                 }
 
                 // Pre-validate all foreign key references
                 await ValidateForeignKeyReferences(request, item);
 
-                // Create student
-                var student = new Student
-                {
-                    StudentName = request.StudentName?.Trim(),
-                    StudentPhone = request.StudentPhone?.Trim(),
-                    StudentParentPhone = request.StudentParentPhone?.Trim(),
-                    StudentBirthdate = request.BirthDate,
-                    StudentGender = request.Gender,
-                    BranchCode = request.BranchCode,
-                    YearCode = request.YearCode,
-                    RootCode = item.RootCode,
-                    IsActive = true,
-                    InsertUser = 1,
-                    InsertTime = DateTime.Now,
-                    SubscribtionTime = DateOnly.FromDateTime(DateTime.Today)
-                };
-
-                _logger.LogInformation("Adding student to context: {@Student}", new
+                _logger.LogInformation("{Action} student: {@Student}", isUpdate ? "Updating" : "Creating", new
                 {
                     student.StudentName,
                     student.BranchCode,
@@ -340,24 +384,26 @@ namespace centrny.Controllers
                     student.StudentGender
                 });
 
-                _context.Students.Add(student);
-
                 try
                 {
-                    await _context.SaveChangesAsync(); // Save to get StudentCode
-                    _logger.LogInformation("Student saved successfully with code: {StudentCode}", student.StudentCode);
+                    await _context.SaveChangesAsync(); // Save to get StudentCode for new students
+                    _logger.LogInformation("Student {Action} successfully with code: {StudentCode}", 
+                        isUpdate ? "updated" : "created", student.StudentCode);
                 }
                 catch (Exception studentSaveEx)
                 {
-                    _logger.LogError(studentSaveEx, "Failed to save student entity");
+                    _logger.LogError(studentSaveEx, "Failed to {Action} student entity", isUpdate ? "update" : "save");
                     var detailedError = GetDetailedEntityError(studentSaveEx);
-                    return Json(new { success = false, error = $"Failed to create student: {detailedError}" });
+                    return Json(new { success = false, error = $"Failed to {(isUpdate ? "update" : "create")} student: {detailedError}" });
                 }
 
-                // Link item to student
-                item.StudentCode = student.StudentCode;
-                item.LastUpdateUser = 1;
-                item.LastUpdateTime = DateTime.Now;
+                // Link item to student if not already linked
+                if (!isUpdate)
+                {
+                    item.StudentCode = student.StudentCode;
+                    item.LastUpdateUser = 1;
+                    item.LastUpdateTime = DateTime.Now;
+                }
 
                 // Create Learn records with selected schedules
                 if (request.SelectedSubjects?.Any() == true)
@@ -370,12 +416,13 @@ namespace centrny.Controllers
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    _logger.LogInformation("Registration completed successfully for student: {StudentCode}", student.StudentCode);
+                    _logger.LogInformation("Registration {Action} successfully for student: {StudentCode}", 
+                        isUpdate ? "update completed" : "completed", student.StudentCode);
 
                     return Json(new
                     {
                         success = true,
-                        message = "Registration successful! Welcome to our system.",
+                        message = isUpdate ? "Academic enrollment updated successfully!" : "Registration successful! Welcome to our system.",
                         redirectUrl = $"/Student/{request.ItemKey}"
                     });
                 }
@@ -548,6 +595,383 @@ namespace centrny.Controllers
             }
         }
 
+        // ==================== PUBLIC REGISTRATION METHODS ====================
+
+        /// <summary>
+        /// GET: Register/{root_code} - Show public registration page
+        /// </summary>
+        [HttpGet]
+        [Route("Register/{root_code:int}")]
+        public async Task<IActionResult> PublicRegister(int root_code)
+        {
+            try
+            {
+                // Validate root exists and is active
+                var root = await _context.Roots
+                    .Where(r => r.RootCode == root_code && r.IsActive)
+                    .FirstOrDefaultAsync();
+
+                if (root == null)
+                {
+                    return NotFound("Registration center not found or inactive.");
+                }
+
+                // Get available branches for this root
+                var availableBranches = await _context.Branches
+                    .Where(b => b.RootCode == root_code && b.IsActive)
+                    .Select(b => new SelectListItem { Value = b.BranchCode.ToString(), Text = b.BranchName })
+                    .ToListAsync();
+
+                // Get available years
+                var availableYears = await _context.Years
+                    .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
+                    .ToListAsync();
+
+                var viewModel = new PublicRegistrationViewModel
+                {
+                    RootCode = root_code,
+                    RootName = root.RootName,
+                    AvailableBranches = availableBranches,
+                    AvailableYears = availableYears
+                };
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading public registration page for root code {RootCode}", root_code);
+                return NotFound("An error occurred while loading the registration page.");
+            }
+        }
+
+        /// <summary>
+        /// POST: Register/{root_code} - Process public registration
+        /// </summary>
+        [HttpPost]
+        [Route("Register/{root_code:int}")]
+        public async Task<IActionResult> PublicRegister(int root_code, [FromForm] PublicRegistrationRequest request)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Starting public registration for root code: {RootCode}", root_code);
+
+                // Ensure root_code matches request
+                request.RootCode = root_code;
+
+                if (!ModelState.IsValid)
+                {
+                    // Reload the view with validation errors
+                    var root = await _context.Roots
+                        .Where(r => r.RootCode == root_code && r.IsActive)
+                        .FirstOrDefaultAsync();
+
+                    if (root == null)
+                    {
+                        return NotFound("Registration center not found.");
+                    }
+
+                    var availableBranches = await _context.Branches
+                        .Where(b => b.RootCode == root_code && b.IsActive)
+                        .Select(b => new SelectListItem { Value = b.BranchCode.ToString(), Text = b.BranchName })
+                        .ToListAsync();
+
+                    var availableYears = await _context.Years
+                        .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
+                        .ToListAsync();
+
+                    var viewModel = new PublicRegistrationViewModel
+                    {
+                        RootCode = root_code,
+                        RootName = root.RootName,
+                        AvailableBranches = availableBranches,
+                        AvailableYears = availableYears
+                    };
+
+                    return View(viewModel);
+                }
+
+                // Validate root exists and is active
+                var rootEntity = await _context.Roots
+                    .Where(r => r.RootCode == root_code && r.IsActive)
+                    .FirstOrDefaultAsync();
+
+                if (rootEntity == null)
+                {
+                    ModelState.AddModelError("", "Registration center not found or inactive.");
+                    return await PublicRegister(root_code); // Reload view with error
+                }
+
+                // Validate branch belongs to this root and is active
+                var branchExists = await _context.Branches
+                    .AnyAsync(b => b.BranchCode == request.BranchCode && b.RootCode == root_code && b.IsActive);
+
+                if (!branchExists)
+                {
+                    ModelState.AddModelError("BranchCode", "Selected branch is not available for this center.");
+                    return await PublicRegister(root_code); // Reload view with error
+                }
+
+                // Validate year if provided
+                if (request.YearCode.HasValue)
+                {
+                    var yearExists = await _context.Years
+                        .AnyAsync(y => y.YearCode == request.YearCode.Value);
+                    if (!yearExists)
+                    {
+                        ModelState.AddModelError("YearCode", "Selected year is not valid.");
+                        return await PublicRegister(root_code); // Reload view with error
+                    }
+                }
+
+                // Get default EduYear for this root
+                var defaultEduYear = await GetDefaultEduYearForRoot(root_code);
+
+                // Create student record immediately
+                var student = new Student
+                {
+                    StudentName = request.StudentName?.Trim(),
+                    StudentPhone = request.StudentPhone?.Trim(),
+                    StudentParentPhone = request.StudentParentPhone?.Trim(),
+                    StudentBirthdate = request.BirthDate,
+                    StudentGender = request.Gender,
+                    BranchCode = request.BranchCode,
+                    YearCode = request.YearCode,
+                    RootCode = root_code,
+                    IsActive = true,
+                    InsertUser = 1, // Default system user for public registration
+                    InsertTime = DateTime.Now,
+                    SubscribtionTime = DateOnly.FromDateTime(DateTime.Today)
+                };
+
+                _context.Students.Add(student);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Public registration completed successfully for student: {StudentCode} in root: {RootCode}",
+                    student.StudentCode, root_code);
+
+                // Redirect to success page with student info
+                TempData["SuccessMessage"] = $"Registration successful! Welcome {student.StudentName}. " +
+                    "You will receive your access key from the center. Use it to complete your academic enrollment.";
+                TempData["StudentCode"] = student.StudentCode;
+                TempData["RootName"] = rootEntity.RootName;
+
+                return RedirectToAction("PublicRegisterSuccess", new { root_code = root_code });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Public registration failed for root code {RootCode}", root_code);
+
+                ModelState.AddModelError("", "Registration failed. Please try again or contact support.");
+                return await PublicRegister(root_code); // Reload view with error
+            }
+        }
+
+        /// <summary>
+        /// GET: Register/{root_code}/Success - Show public registration success page
+        /// </summary>
+        [HttpGet]
+        [Route("Register/{root_code:int}/Success")]
+        public IActionResult PublicRegisterSuccess(int root_code)
+        {
+            var successMessage = TempData["SuccessMessage"] as string;
+            var studentCode = TempData["StudentCode"] as int?;
+            var rootName = TempData["RootName"] as string;
+
+            if (string.IsNullOrEmpty(successMessage))
+            {
+                return RedirectToAction("PublicRegister", new { root_code = root_code });
+            }
+
+            ViewBag.SuccessMessage = successMessage;
+            ViewBag.StudentCode = studentCode;
+            ViewBag.RootName = rootName ?? "Registration Center";
+            ViewBag.RootCode = root_code;
+
+            return View();
+        }
+
+        // ==================== STUDENT SEARCH AND LINKING METHODS ====================
+
+        /// <summary>
+        /// GET: Student/Search/{item_key} - Show student search interface
+        /// </summary>
+        [HttpGet]
+        [Route("Student/Search/{item_key}")]
+        public async Task<IActionResult> SearchStudent(string item_key)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(item_key))
+                {
+                    return NotFound("Item key is required.");
+                }
+
+                // Find the item and validate it exists and is active but has no student linked
+                var item = await _context.Items
+                    .Include(i => i.RootCodeNavigation)
+                    .Where(i => i.ItemKey == item_key && i.IsActive && !i.StudentCode.HasValue)
+                    .FirstOrDefaultAsync();
+
+                if (item == null)
+                {
+                    return NotFound("Item not found, already linked, or access denied.");
+                }
+
+                var viewModel = new StudentSearchViewModel
+                {
+                    ItemKey = item_key,
+                    RootName = item.RootCodeNavigation?.RootName ?? "Unknown",
+                    RootCode = item.RootCode
+                };
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading student search page for item key {ItemKey}", item_key);
+                return NotFound("An error occurred while loading the search page.");
+            }
+        }
+
+        /// <summary>
+        /// POST: Student/SearchByPhone - Search students by phone number
+        /// </summary>
+        [HttpPost]
+        [Route("Student/SearchByPhone")]
+        public async Task<IActionResult> SearchByPhone([FromBody] StudentSearchRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                    return Json(new { success = false, errors = errors });
+                }
+
+                // Validate item exists and has no student linked
+                var item = await _context.Items
+                    .Where(i => i.ItemKey == request.ItemKey && i.IsActive && !i.StudentCode.HasValue)
+                    .FirstOrDefaultAsync();
+
+                if (item == null)
+                {
+                    return Json(new { success = false, error = "Invalid item key or already linked." });
+                }
+
+                // Search for students with the same phone number in the same root
+                var students = await _context.Students
+                    .Where(s => s.StudentPhone == request.StudentPhone.Trim() && 
+                               s.RootCode == item.RootCode && 
+                               s.IsActive)
+                    .Include(s => s.BranchCodeNavigation)
+                    .Include(s => s.YearCodeNavigation)
+                    .Select(s => new
+                    {
+                        StudentCode = s.StudentCode,
+                        StudentName = s.StudentName,
+                        StudentPhone = s.StudentPhone,
+                        StudentParentPhone = s.StudentParentPhone,
+                        BirthDate = s.StudentBirthdate.ToString("yyyy-MM-dd"),
+                        Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
+                        BranchName = s.BranchCodeNavigation != null ? s.BranchCodeNavigation.BranchName : "N/A",
+                        YearName = s.YearCodeNavigation != null ? s.YearCodeNavigation.YearName : "N/A",
+                        SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
+                        Age = CalculateAge(s.StudentBirthdate)
+                    })
+                    .ToListAsync();
+
+                _logger.LogInformation("Found {Count} students with phone {Phone} in root {RootCode}",
+                    students.Count, request.StudentPhone, item.RootCode);
+
+                return Json(new { success = true, students = students });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching students by phone for request {@Request}", request);
+                return Json(new { success = false, error = "An error occurred while searching for students." });
+            }
+        }
+
+        /// <summary>
+        /// POST: Student/LinkStudent - Link found student to item
+        /// </summary>
+        [HttpPost]
+        [Route("Student/LinkStudent")]
+        public async Task<IActionResult> LinkStudent([FromBody] LinkStudentRequest request)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                    return Json(new { success = false, errors = errors });
+                }
+
+                // Validate item exists and has no student linked
+                var item = await _context.Items
+                    .Where(i => i.ItemKey == request.ItemKey && i.IsActive && !i.StudentCode.HasValue)
+                    .FirstOrDefaultAsync();
+
+                if (item == null)
+                {
+                    return Json(new { success = false, error = "Invalid item key or already linked." });
+                }
+
+                // Validate student exists and belongs to the same root
+                var student = await _context.Students
+                    .Where(s => s.StudentCode == request.StudentCode && 
+                               s.RootCode == item.RootCode && 
+                               s.IsActive)
+                    .FirstOrDefaultAsync();
+
+                if (student == null)
+                {
+                    return Json(new { success = false, error = "Student not found or not available for linking." });
+                }
+
+                // Check if student is already linked to another active item
+                var existingItem = await _context.Items
+                    .Where(i => i.StudentCode == student.StudentCode && i.IsActive)
+                    .FirstOrDefaultAsync();
+
+                if (existingItem != null)
+                {
+                    return Json(new { 
+                        success = false, 
+                        error = $"Student is already linked to item key: {existingItem.ItemKey}" 
+                    });
+                }
+
+                // Link student to item
+                item.StudentCode = student.StudentCode;
+                item.LastUpdateUser = 1; // Default system user
+                item.LastUpdateTime = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Successfully linked student {StudentCode} to item {ItemKey}",
+                    student.StudentCode, request.ItemKey);
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Student linked successfully! Redirecting to complete your academic enrollment.",
+                    redirectUrl = $"/Student/Register/{request.ItemKey}"
+                });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error linking student for request {@Request}", request);
+                return Json(new { success = false, error = "An error occurred while linking the student." });
+            }
+        }
+
         // ==================== EXISTING PROFILE METHODS ====================
 
         /// <summary>
@@ -582,8 +1006,8 @@ namespace centrny.Controllers
                 }
                 if(item.StudentCodeNavigation == null)
                 {
-                    // Item exists but no student is linked - redirect to registration
-                    return RedirectToAction("Register", new { item_key = item_key });
+                    // Item exists but no student is linked - redirect to search interface
+                    return RedirectToAction("SearchStudent", new { item_key = item_key });
                 }
 
                 var student = item.StudentCodeNavigation;
@@ -1237,6 +1661,17 @@ namespace centrny.Controllers
             return item?.StudentCodeNavigation;
         }
 
+        private async Task<int> GetDefaultEduYearForRoot(int rootCode)
+        {
+            var firstEduYear = await _context.EduYears
+                .AsNoTracking()
+                .Where(e => e.RootCode == rootCode && e.IsActive)
+                .Select(e => e.EduCode)
+                .FirstOrDefaultAsync();
+
+            return firstEduYear > 0 ? firstEduYear : 1; // Fallback to 1 if no edu year found
+        }
+
         private int CalculateAge(DateOnly birthDate)
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
@@ -1341,6 +1776,16 @@ namespace centrny.Controllers
         public List<SelectListItem> AvailableBranches { get; set; } = new();
         public List<SelectListItem> AvailableYears { get; set; } = new();
         public List<SelectListItem> AvailableEduYears { get; set; } = new();
+        
+        // Properties for pre-existing student
+        public bool HasExistingStudent { get; set; }
+        public string? ExistingStudentName { get; set; }
+        public string? ExistingStudentPhone { get; set; }
+        public string? ExistingStudentParentPhone { get; set; }
+        public DateOnly? ExistingBirthDate { get; set; }
+        public bool? ExistingGender { get; set; }
+        public int? ExistingBranchCode { get; set; }
+        public int? ExistingYearCode { get; set; }
     }
 
     public class StudentRegistrationRequest
@@ -1393,5 +1838,74 @@ namespace centrny.Controllers
         public string ItemKey { get; set; } = string.Empty;
         public int ClassCode { get; set; }
         public int AttendanceType { get; set; }
+    }
+
+    // ==================== PUBLIC REGISTRATION MODELS ====================
+
+    public class PublicRegistrationViewModel
+    {
+        public int RootCode { get; set; }
+        public string RootName { get; set; } = string.Empty;
+        public List<SelectListItem> AvailableBranches { get; set; } = new();
+        public List<SelectListItem> AvailableYears { get; set; } = new();
+    }
+
+    public class PublicRegistrationRequest
+    {
+        [Required]
+        public int RootCode { get; set; }
+
+        [Required]
+        [StringLength(100, MinimumLength = 2)]
+        public string StudentName { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [StringLength(20)]
+        public string StudentPhone { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [StringLength(20)]
+        public string StudentParentPhone { get; set; } = string.Empty;
+
+        [Required]
+        public DateOnly BirthDate { get; set; }
+
+        public bool? Gender { get; set; }
+
+        [Required]
+        public int BranchCode { get; set; }
+
+        public int? YearCode { get; set; }
+    }
+
+    // ==================== STUDENT SEARCH MODELS ====================
+
+    public class StudentSearchViewModel
+    {
+        public string ItemKey { get; set; } = string.Empty;
+        public string RootName { get; set; } = string.Empty;
+        public int RootCode { get; set; }
+    }
+
+    public class StudentSearchRequest
+    {
+        [Required]
+        public string ItemKey { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [StringLength(20)]
+        public string StudentPhone { get; set; } = string.Empty;
+    }
+
+    public class LinkStudentRequest
+    {
+        [Required]
+        public string ItemKey { get; set; } = string.Empty;
+
+        [Required]
+        public int StudentCode { get; set; }
     }
 }
