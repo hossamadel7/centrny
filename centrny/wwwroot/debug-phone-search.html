@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Search Debug Tool</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .debug-output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success { color: #198754; }
+        .error { color: #dc3545; }
+        .warning { color: #fd7e14; }
+        .info { color: #0d6efd; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bug me-2"></i>Phone Search Debug Tool</h3>
+                        <p class="mb-0 text-muted">Use this tool to test the phone search functionality directly</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Test 1: Database Connectivity -->
+                        <div class="mb-4">
+                            <h5><i class="fas fa-database me-2"></i>Test 1: Database Connectivity</h5>
+                            <button type="button" class="btn btn-primary" onclick="testDatabaseConnectivity()">
+                                <i class="fas fa-play me-2"></i>Test Database Connection
+                            </button>
+                            <div id="dbTest" class="debug-output mt-3" style="display: none;"></div>
+                        </div>
+
+                        <!-- Test 2: Direct API Call -->
+                        <div class="mb-4">
+                            <h5><i class="fas fa-phone me-2"></i>Test 2: Direct Phone Search API</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Item Key:</label>
+                                    <input type="text" class="form-control" id="itemKey" placeholder="Enter item key">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number:</label>
+                                    <input type="text" class="form-control" id="phoneNumber" placeholder="Enter phone number">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-success" onclick="testPhoneSearch()">
+                                    <i class="fas fa-search me-2"></i>Test Phone Search
+                                </button>
+                                <button type="button" class="btn btn-info" onclick="testDebugEndpoint()">
+                                    <i class="fas fa-bug me-2"></i>Test Debug Endpoint
+                                </button>
+                            </div>
+                            <div id="phoneTest" class="debug-output mt-3" style="display: none;"></div>
+                        </div>
+
+                        <!-- Test 3: Step by Step Debug -->
+                        <div class="mb-4">
+                            <h5><i class="fas fa-list-ol me-2"></i>Test 3: Step by Step Debug</h5>
+                            <button type="button" class="btn btn-warning" onclick="runStepByStepDebug()">
+                                <i class="fas fa-play-circle me-2"></i>Run Step by Step Debug
+                            </button>
+                            <div id="stepTest" class="debug-output mt-3" style="display: none;"></div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Instructions:</h6>
+                            <ol>
+                                <li><strong>Test Database Connectivity:</strong> Verifies the application can connect to the database</li>
+                                <li><strong>Test Phone Search API:</strong> Tests the actual SearchByPhone endpoint with provided parameters</li>
+                                <li><strong>Test Debug Endpoint:</strong> Uses the debug endpoint to get detailed information about the search process</li>
+                                <li><strong>Step by Step Debug:</strong> Runs through all tests in sequence</li>
+                            </ol>
+                            <p class="mb-0"><strong>Note:</strong> Check the browser's Developer Tools console (F12) for additional debugging information.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logOutput = '';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = `[${timestamp}] `;
+            logOutput += `${prefix}${message}\n`;
+            console.log(`DEBUG ${type.toUpperCase()}: ${message}`);
+        }
+
+        function showOutput(elementId, content, append = false) {
+            const element = document.getElementById(elementId);
+            if (append) {
+                element.textContent += content;
+            } else {
+                element.textContent = content;
+            }
+            element.style.display = 'block';
+        }
+
+        async function testDatabaseConnectivity() {
+            showOutput('dbTest', 'Testing database connectivity...\n');
+            log('Starting database connectivity test');
+
+            try {
+                const response = await fetch('/Student/Debug/PhoneSearch', {
+                    method: 'GET'
+                });
+
+                const result = await response.json();
+                log(`Database connectivity response: ${JSON.stringify(result)}`);
+
+                let output = `Database Connectivity Test Results:\n\n`;
+                output += `Status: ${response.status}\n`;
+                output += `Database Connected: ${result.databaseConnectivity ? 'YES' : 'NO'}\n`;
+                output += `Error: ${result.error || 'None'}\n\n`;
+                output += `Debug Logs:\n${result.logs?.join('\n') || 'No logs available'}\n`;
+
+                showOutput('dbTest', output);
+
+                if (result.databaseConnectivity) {
+                    log('Database connectivity test PASSED', 'success');
+                } else {
+                    log('Database connectivity test FAILED', 'error');
+                }
+            } catch (error) {
+                const output = `Database Connectivity Test FAILED:\n\nError: ${error.message}\n`;
+                showOutput('dbTest', output);
+                log(`Database connectivity test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPhoneSearch() {
+            const itemKey = document.getElementById('itemKey').value.trim();
+            const phone = document.getElementById('phoneNumber').value.trim();
+
+            if (!itemKey || !phone) {
+                showOutput('phoneTest', 'Please enter both Item Key and Phone Number');
+                return;
+            }
+
+            showOutput('phoneTest', 'Testing phone search API...\n');
+            log(`Starting phone search test with itemKey: ${itemKey}, phone: ${phone}`);
+
+            try {
+                const response = await fetch('/Student/SearchByPhone', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ItemKey: itemKey,
+                        StudentPhone: phone
+                    })
+                });
+
+                const result = await response.json();
+                log(`Phone search response: ${JSON.stringify(result)}`);
+
+                let output = `Phone Search API Test Results:\n\n`;
+                output += `Status: ${response.status}\n`;
+                output += `Success: ${result.success ? 'YES' : 'NO'}\n`;
+                output += `Students Found: ${result.students?.length || 0}\n`;
+                output += `Error: ${result.error || 'None'}\n\n`;
+                
+                if (result.debug) {
+                    output += `Debug Information:\n${result.debug.join('\n')}\n\n`;
+                }
+
+                if (result.exception) {
+                    output += `Exception: ${result.exception}\n\n`;
+                }
+
+                if (result.stackTrace) {
+                    output += `Stack Trace:\n${result.stackTrace.join('\n')}\n\n`;
+                }
+
+                if (result.students && result.students.length > 0) {
+                    output += `Students:\n`;
+                    result.students.forEach((student, index) => {
+                        output += `${index + 1}. ${student.studentName} (${student.studentPhone})\n`;
+                    });
+                }
+
+                showOutput('phoneTest', output);
+
+                if (result.success) {
+                    log('Phone search test PASSED', 'success');
+                } else {
+                    log('Phone search test FAILED', 'error');
+                }
+            } catch (error) {
+                const output = `Phone Search API Test FAILED:\n\nError: ${error.message}\n`;
+                showOutput('phoneTest', output);
+                log(`Phone search test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDebugEndpoint() {
+            const itemKey = document.getElementById('itemKey').value.trim();
+            const phone = document.getElementById('phoneNumber').value.trim();
+
+            showOutput('phoneTest', 'Testing debug endpoint...\n');
+            log(`Starting debug endpoint test with itemKey: ${itemKey}, phone: ${phone}`);
+
+            try {
+                const url = `/Student/Debug/PhoneSearch?itemKey=${encodeURIComponent(itemKey)}&phone=${encodeURIComponent(phone)}`;
+                const response = await fetch(url, { method: 'GET' });
+
+                const result = await response.json();
+                log(`Debug endpoint response: ${JSON.stringify(result)}`);
+
+                let output = `Debug Endpoint Test Results:\n\n`;
+                output += `Status: ${response.status}\n`;
+                output += `Database Connected: ${result.databaseConnectivity ? 'YES' : 'NO'}\n`;
+                output += `Item Exists: ${result.itemExists ? 'YES' : 'NO'}\n`;
+                output += `Students Found: ${result.studentCount}\n`;
+                output += `Error: ${result.error || 'None'}\n\n`;
+                
+                if (result.itemDetails) {
+                    output += `Item Details:\n${JSON.stringify(result.itemDetails, null, 2)}\n\n`;
+                }
+
+                if (result.logs) {
+                    output += `Debug Logs:\n${result.logs.join('\n')}\n\n`;
+                }
+
+                if (result.students && result.students.length > 0) {
+                    output += `Students Found:\n`;
+                    result.students.forEach((student, index) => {
+                        output += `${index + 1}. ${student.StudentName} (${student.StudentPhone})\n`;
+                    });
+                }
+
+                showOutput('phoneTest', output);
+                log('Debug endpoint test completed', 'success');
+            } catch (error) {
+                const output = `Debug Endpoint Test FAILED:\n\nError: ${error.message}\n`;
+                showOutput('phoneTest', output);
+                log(`Debug endpoint test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runStepByStepDebug() {
+            showOutput('stepTest', 'Running step-by-step debug...\n\n');
+            log('Starting step-by-step debug');
+
+            // Step 1: Database connectivity
+            log('Step 1: Testing database connectivity');
+            await testDatabaseConnectivity();
+            showOutput('stepTest', 'Step 1: Database connectivity test completed\n\n', true);
+
+            // Step 2: Only proceed if we have parameters
+            const itemKey = document.getElementById('itemKey').value.trim();
+            const phone = document.getElementById('phoneNumber').value.trim();
+
+            if (!itemKey || !phone) {
+                showOutput('stepTest', 'Step 2: Skipped - No ItemKey or Phone provided\n\n', true);
+                showOutput('stepTest', 'To run full debug, please provide ItemKey and Phone Number\n', true);
+                return;
+            }
+
+            // Step 2: Test debug endpoint
+            log('Step 2: Testing debug endpoint');
+            await testDebugEndpoint();
+            showOutput('stepTest', 'Step 2: Debug endpoint test completed\n\n', true);
+
+            // Step 3: Test actual API
+            log('Step 3: Testing actual phone search API');
+            await testPhoneSearch();
+            showOutput('stepTest', 'Step 3: Phone search API test completed\n\n', true);
+
+            showOutput('stepTest', 'All steps completed. Check individual test results above.\n', true);
+            log('Step-by-step debug completed', 'success');
+        }
+
+        // Add general error handling
+        window.addEventListener('error', function(e) {
+            log(`JavaScript error: ${e.message} at ${e.filename}:${e.lineno}`, 'error');
+        });
+
+        // Log when page loads
+        window.addEventListener('load', function() {
+            log('Debug page loaded successfully', 'success');
+        });
+    </script>
+</body>
+</html>

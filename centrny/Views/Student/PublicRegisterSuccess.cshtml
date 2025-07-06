@@ -1,0 +1,274 @@
+@{
+    ViewData["Title"] = "Registration Successful";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @ViewBag.RootName</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .success-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .success-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 40px 30px;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: checkmark 0.6s ease-in-out;
+        }
+
+        @@keyframes checkmark {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .success-body {
+            padding: 40px 30px;
+        }
+
+        .student-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .student-info h5 {
+            color: #28a745;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .info-value {
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .next-steps {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .next-steps h5 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .next-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .next-steps li {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        .contact-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .contact-info h6 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .contact-info p {
+            color: #856404;
+            margin: 0;
+        }
+
+        .success-message {
+            font-size: 1.2rem;
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="success-container">
+        <div class="success-card">
+            <!-- Header -->
+            <div class="success-header">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h1>Registration Successful!</h1>
+                <p>Welcome to @ViewBag.RootName</p>
+            </div>
+
+            <!-- Body -->
+            <div class="success-body">
+                
+                <!-- Success Message -->
+                <div class="success-message">
+                    @ViewBag.SuccessMessage
+                </div>
+
+                <!-- Student Information -->
+                @if (ViewBag.StudentCode != null)
+                {
+                    <div class="student-info">
+                        <h5><i class="fas fa-user-circle me-2"></i>Your Registration Details</h5>
+                        <div class="info-item">
+                            <span class="info-label">Student ID:</span>
+                            <span class="info-value">#@ViewBag.StudentCode</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Registration Date:</span>
+                            <span class="info-value">@DateTime.Today.ToString("MMMM dd, yyyy")</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Center:</span>
+                            <span class="info-value">@ViewBag.RootName</span>
+                        </div>
+                    </div>
+                }
+
+                <!-- Next Steps -->
+                <div class="next-steps">
+                    <h5><i class="fas fa-list-check me-2"></i>What's Next?</h5>
+                    <ol>
+                        <li><strong>Wait for Your Access Key:</strong> The center will provide you with a unique access key</li>
+                        <li><strong>Academic Enrollment:</strong> Use your access key to complete subject and schedule selection</li>
+                        <li><strong>Choose Your Subjects:</strong> Select subjects, teachers, and class schedules</li>
+                        <li><strong>Start Learning:</strong> Begin attending your classes and tracking your progress</li>
+                    </ol>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="/Register/@ViewBag.RootCode" class="btn btn-outline-secondary">
+                        <i class="fas fa-user-plus me-2"></i>Register Another Student
+                    </a>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="contact-info">
+                    <h6><i class="fas fa-phone me-2"></i>Need Help?</h6>
+                    <p>Contact @ViewBag.RootName for assistance with your access key or any questions about the registration process.</p>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Your registration is secure and your academic journey with us begins now!
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-refresh prevention -->
+    <script>
+        // Prevent back button from showing cached form
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
+</body>
+</html>

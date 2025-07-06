@@ -636,6 +636,7 @@
             }
         }
 
+        // UPDATED: Weekly grid rendering with teacher/center display logic for Calendar.cshtml
         renderWeeklyGrid() {
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             
@@ -654,18 +655,48 @@
                     `;
                 } else {
                     let html = '';
+                    
+                    // Determine what to show based on user context
+                    const isCurrentUserCenter = window.userContext?.isCenter === true;
+                    const isCurrentUserTeacher = window.userContext?.isTeacher === true;
+                    
                     daySchedules.forEach(schedule => {
                         const eventClass = schedule.extendedProps?.isCenter ? 'center-event' : 'teacher-event';
+                        const s = schedule.extendedProps;
+                        
                         html += `
-                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${schedule.extendedProps?.scheduleCode || 0})">
+                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${s?.scheduleCode || 0})">
                                 <div class="event-title">
-                                    <i class="fas fa-${schedule.extendedProps?.isCenter ? 'building' : 'user'}"></i>
+                                    <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
                                     ${schedule.title || 'Untitled'}
                                 </div>
-                                <div class="event-time">${schedule.extendedProps?.startTime || ''} - ${schedule.extendedProps?.endTime || ''}</div>
-                                ${schedule.extendedProps?.hallName ? `<div class="event-details">📍 ${schedule.extendedProps.hallName}</div>` : ''}
-                                ${schedule.extendedProps?.teacherName ? `<div class="event-details">👨‍🏫 ${schedule.extendedProps.teacherName}</div>` : ''}
-                                ${schedule.extendedProps?.subjectName ? `<div class="event-details">📚 ${schedule.extendedProps.subjectName}</div>` : ''}
+                                <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
+                                ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
+                        `;
+                        
+                        // Show different information based on current user type
+                        if (isCurrentUserTeacher) {
+                            // For TEACHER users: Show Center + Branch instead of teacher name
+                            if (s?.centerName && s?.branchName) {
+                                html += `<div class="event-details">🏢 ${s.centerName} - ${s.branchName}</div>`;
+                            } else if (s?.centerName) {
+                                html += `<div class="event-details">🏢 ${s.centerName}</div>`;
+                            } else if (s?.branchName) {
+                                html += `<div class="event-details">🏢 ${s.branchName}</div>`;
+                            }
+                        } else if (isCurrentUserCenter) {
+                            // For CENTER users: Show Teacher name as before
+                            if (s?.teacherName) {
+                                html += `<div class="event-details">👨‍🏫 ${s.teacherName}</div>`;
+                            }
+                        }
+                        
+                        // Always show subject if available
+                        if (s?.subjectName) {
+                            html += `<div class="event-details">📚 ${s.subjectName}</div>`;
+                        }
+                        
+                        html += `
                             </div>
                         `;
                     });
