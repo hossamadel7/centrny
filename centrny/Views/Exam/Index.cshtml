@@ -6,6 +6,8 @@
     Layout = "_Layout";
 }
 
+<link rel="stylesheet" href="/css/Hamody.css" />
+
 <div class="container-fluid">
     <!-- Header Section -->
     <div class="d-flex align-items-center justify-content-between mb-3">
@@ -94,7 +96,7 @@
 <!-- Add Exam Modal -->
 <div class="modal fade" id="examModal" tabindex="-1" aria-labelledby="examModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <form id="examForm" class="modal-content">
+        <form id="examForm" class="modal-content" autocomplete="off">
             <div class="modal-header">
                 <h5 class="modal-title" id="examModalLabel">
                     <i class="bi bi-plus-circle me-2"></i>Add Exam
@@ -119,14 +121,14 @@
                         <!-- Teacher Display for Teacher Users -->
                         <div id="teacherDisplayGroup" style="display:none">
                             <div id="teacherDisplayContainer"></div>
-                            <input type="hidden" id="AddExamTeacherCode" />
+                            <input type="hidden" id="AddExamTeacherCode" name="AddExamTeacherCode" />
                         </div>
 
                         <!-- Center Selection for Teacher Users -->
                         <div id="centerDropdownGroup" style="display:none">
                             <div class="mb-3">
                                 <label for="AddExamCenterCode" class="form-label">Center <span class="text-danger">*</span></label>
-                                <select class="form-select" id="AddExamCenterCode" required>
+                                <select class="form-select" id="AddExamCenterCode" name="AddExamCenterCode" required>
                                     <option value="">-- Select Center --</option>
                                 </select>
                             </div>
@@ -145,7 +147,7 @@
                         <div id="rootBranchDropdownGroup" style="display:none">
                             <div class="mb-3">
                                 <label for="AddExamBranchCode" class="form-label">Branch <span class="text-danger">*</span></label>
-                                <select class="form-select" id="AddExamBranchCode" required>
+                                <select class="form-select" id="AddExamBranchCode" name="AddExamBranchCode" required>
                                     <option value="">-- Select Branch --</option>
                                 </select>
                             </div>
@@ -218,7 +220,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-2"></i>Cancel
                 </button>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" id="saveExamBtn">
                     <i class="bi bi-check-circle me-2"></i>Save Exam
                 </button>
             </div>
@@ -367,7 +369,6 @@
 
 @section Scripts {
     <script>
-        // Pass server data to JavaScript
         window.examPageData = {
             isCenterUser: @Json.Serialize(isCenter),
             rootCode: @Json.Serialize(rootCode),
@@ -375,5 +376,7 @@
             userName: '@User.Identity?.Name'
         };
     </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
     <script src="~/js/Exam.js"></script>
 }
