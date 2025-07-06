@@ -28,6 +28,9 @@ namespace centrny.Controllers
         /// <summary>
         /// GET: Student/Register/{item_key} - Show student registration page
         /// </summary>
+        /// <summary>
+        /// GET: Student/Register/{item_key} - Show student registration page
+        /// </summary>
         [HttpGet]
         [Route("Student/Register/{item_key}")]
         public async Task<IActionResult> Register(string item_key)
@@ -51,7 +54,7 @@ namespace centrny.Controllers
                     return NotFound("Item not found.");
                 }
 
-                // Check if item already has a student but allow proceeding to update academic info
+                // Check if item has a student linked and load their data
                 var hasExistingStudent = item.StudentCode.HasValue && item.StudentCodeNavigation != null;
 
                 // Get available branches for this root
@@ -65,8 +68,7 @@ namespace centrny.Controllers
                     .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
                     .ToListAsync();
 
-                // Get available education years - Fixed property name from EduYearCode to EduCode
-                var currentYear = DateTime.Now.Year;
+                // Get available education years
                 var availableEduYears = await _context.EduYears
                     .Where(e => e.IsActive && e.RootCode == item.RootCode)
                     .Select(e => new SelectListItem { Value = e.EduCode.ToString(), Text = e.EduName })
@@ -104,12 +106,8 @@ namespace centrny.Controllers
             }
         }
 
-        /// <summary>
-        /// GET: Student/GetAvailableSubjects/{item_key} - Get available subjects for registration
-        /// </summary>
         [HttpGet]
         [Route("Student/GetAvailableSubjects/{item_key}")]
-        
         public async Task<IActionResult> GetAvailableSubjects(string item_key, int branchCode, int? yearCode = null)
         {
             try
@@ -119,14 +117,14 @@ namespace centrny.Controllers
                     return Json(new { error = "Item key is required." });
                 }
 
-                // Validate item exists
+                // Updated validation - Allow items with existing students
                 var item = await _context.Items
-                    .Where(i => i.ItemKey == item_key && i.IsActive && !i.StudentCode.HasValue)
+                    .Where(i => i.ItemKey == item_key && i.IsActive)  // Removed !i.StudentCode.HasValue
                     .FirstOrDefaultAsync();
 
                 if (item == null)
                 {
-                    return Json(new { error = "Invalid item key or already registered." });
+                    return Json(new { error = "Invalid item key." });
                 }
 
                 // Get available subjects based on branch and year
@@ -170,41 +168,76 @@ namespace centrny.Controllers
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(item_key) || string.IsNullOrWhiteSpace(subjectCodes))
+                if (string.IsNullOrWhiteSpace(item_key))
                 {
-                    return Json(new { error = "Item key and subject codes are required." });
+                    return Json(new { error = "Item key is required." });
                 }
 
                 var subjectCodeList = subjectCodes.Split(',').Select(int.Parse).ToList();
 
-                // Validate item exists
+                // Get the item and root info to determine user type
                 var item = await _context.Items
-                    .Where(i => i.ItemKey == item_key && i.IsActive && !i.StudentCode.HasValue)
+                    .Include(i => i.RootCodeNavigation)
+                    .Where(i => i.ItemKey == item_key && i.IsActive)
                     .FirstOrDefaultAsync();
 
-                if (item == null)
+                if (item == null || item.RootCodeNavigation == null)
                 {
-                    return Json(new { error = "Invalid item key or already registered." });
+                    return Json(new { error = "Invalid item key or root not found." });
                 }
 
-                // Get available teachers for the selected subjects
-                var teachers = await _context.Teaches
-                    .Where(t => subjectCodeList.Contains(t.SubjectCode) &&
-                               t.BranchCode == branchCode &&
-                               t.RootCode == item.RootCode &&
-                               t.IsActive)
-                    .Include(t => t.TeacherCodeNavigation)
-                    .Select(t => new
-                    {
-                        TeacherCode = t.TeacherCode,
-                        TeacherName = t.TeacherCodeNavigation.TeacherName,
-                        TeacherPhone = t.TeacherCodeNavigation.TeacherPhone,
-                        SubjectCode = t.SubjectCode
-                    })
-                    .OrderBy(t => t.TeacherName)
-                    .ToListAsync();
+                // Check if this is a center user or teacher user based on Root.IsCenter
+                bool isCenterUser = item.RootCodeNavigation.IsCenter;
 
-                return Json(teachers);
+                if (!isCenterUser)
+                {
+                    // This is a teacher user - get the single teacher for this root
+                    var teacherAssignments = await _context.Teaches
+        .Include(t => t.TeacherCodeNavigation)
+        .Where(t => t.IsActive &&
+                   t.RootCode == item.RootCode &&
+                   t.BranchCode == branchCode &&
+                   subjectCodeList.Contains(t.SubjectCode))
+        .ToListAsync();
+
+                    if (teacherAssignments.Any())
+                    {
+                        return Json(teacherAssignments.Select(t => new
+                        {
+                            TeacherCode = t.TeacherCode,
+                            TeacherName = t.TeacherCodeNavigation.TeacherName,
+                            TeacherPhone = t.TeacherCodeNavigation.TeacherPhone,
+                            SubjectCode = t.SubjectCode
+                        }));
+                    }
+                }
+                else
+                {
+                    // This is a center user - get all teachers assigned to these subjects
+                    var teachersForSubjects = await _context.Teaches
+                        .Include(t => t.TeacherCodeNavigation)
+                        .Where(t => t.IsActive &&
+                                   t.RootCode == item.RootCode &&
+                                   t.BranchCode == branchCode &&
+                                   subjectCodeList.Contains(t.SubjectCode))
+                        .Select(t => new
+                        {
+                            TeacherCode = t.TeacherCode,
+                            TeacherName = t.TeacherCodeNavigation.TeacherName,
+                            TeacherPhone = t.TeacherCodeNavigation.TeacherPhone,
+                            SubjectCode = t.SubjectCode
+                        })
+                        .Distinct()
+                        .OrderBy(t => t.TeacherName)
+                        .ToListAsync();
+
+                    if (teachersForSubjects.Any())
+                    {
+                        return Json(teachersForSubjects);
+                    }
+                }
+
+                return Json(new { error = "No teachers are currently assigned to teach these subjects at this branch." });
             }
             catch (Exception ex)
             {
@@ -212,38 +245,40 @@ namespace centrny.Controllers
                 return Json(new { error = "Failed to load teachers. Please try again." });
             }
         }
-
-        /// <summary>
-        /// GET: Student/GetAvailableSchedules/{item_key} - Get available schedules for selected subjects
-        /// </summary>
         [HttpGet]
         [Route("Student/GetAvailableSchedules/{item_key}")]
         public async Task<IActionResult> GetAvailableSchedules(
-            string item_key,
-            string subjectCodes,
-            string teacherCodes,
-            int branchCode,
-            int? yearCode = null)
+    string item_key,
+    string subjectCodes,
+    string teacherCodes,
+    int branchCode,
+    int? yearCode = null)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(subjectCodes) || string.IsNullOrWhiteSpace(teacherCodes))
+                _logger.LogInformation(
+                    "GetAvailableSchedules called with parameters: itemKey={ItemKey}, subjectCodes={SubjectCodes}, teacherCodes={TeacherCodes}, branchCode={BranchCode}, yearCode={YearCode}",
+                    item_key, subjectCodes, teacherCodes, branchCode, yearCode);
+
+                if (string.IsNullOrWhiteSpace(subjectCodes))
                 {
-                    return Json(new { error = "Subject codes and teacher codes are required." });
+                    return Json(new { error = "Subject codes are required." });
                 }
 
-                var subjectCodeList = subjectCodes.Split(',').Select(int.Parse).ToList();
-                var teacherCodeList = teacherCodes.Split(',').Select(int.Parse).ToList();
-
-                // Validate item exists
+                // Get the item and root info
                 var item = await _context.Items
-                    .Where(i => i.ItemKey == item_key && i.IsActive && !i.StudentCode.HasValue)
+                    .Include(i => i.RootCodeNavigation)
+                    .Where(i => i.ItemKey == item_key && i.IsActive)
                     .FirstOrDefaultAsync();
 
                 if (item == null)
                 {
-                    return Json(new { error = "Invalid item key or already registered." });
+                    _logger.LogWarning("Item not found or inactive for itemKey: {ItemKey}", item_key);
+                    return Json(new { error = "Invalid item key." });
                 }
+
+                var subjectCodeList = subjectCodes.Split(',').Select(int.Parse).ToList();
+                var teacherCodeList = teacherCodes.Split(',').Select(int.Parse).ToList();
 
                 // Get current education year
                 var currentEduYear = await _context.EduYears
@@ -253,13 +288,15 @@ namespace centrny.Controllers
 
                 if (currentEduYear == null)
                 {
+                    _logger.LogWarning("No active education year found for root: {RootCode}", item.RootCode);
                     return Json(new { error = "No active education year found." });
                 }
 
-                // Find available schedules - Fixed property name from EduYearCode to EduYearCode
+                // Get schedules with detailed includes
                 var schedules = await _context.Schedules
                     .Include(s => s.SubjectCodeNavigation)
                     .Include(s => s.TeacherCodeNavigation)
+                    .Include(s => s.HallCodeNavigation)
                     .Where(s => subjectCodeList.Contains(s.SubjectCode.Value) &&
                                teacherCodeList.Contains(s.TeacherCode.Value) &&
                                s.BranchCode == branchCode &&
@@ -270,34 +307,33 @@ namespace centrny.Controllers
                     {
                         ScheduleCode = s.ScheduleCode,
                         SubjectCode = s.SubjectCode,
+                        SubjectName = s.SubjectCodeNavigation.SubjectName,
                         TeacherCode = s.TeacherCode,
+                        TeacherName = s.TeacherCodeNavigation.TeacherName,
+                        HallCode = s.HallCode,
+                        HallName = s.HallCodeNavigation.HallName,
                         DayName = s.DayOfWeek ?? "N/A",
                         StartTime = s.StartTime.HasValue ? s.StartTime.Value.ToString("HH:mm") : "N/A",
                         EndTime = s.EndTime.HasValue ? s.EndTime.Value.ToString("HH:mm") : "N/A",
-                        Capacity = 30, // Default capacity
-                        CurrentStudents = _context.Learns.Count(l => l.ScheduleCode == s.ScheduleCode && l.IsActive),
                         YearCode = s.YearCode,
-                        BranchCode = s.BranchCode
+                        BranchCode = s.BranchCode,
                     })
                     .ToListAsync();
 
-                // Filter schedules with available spots
-                var availableSchedules = schedules
-                    .Where(s => s.CurrentStudents < s.Capacity)
-                    .OrderBy(s => s.SubjectCode)
-                    .ThenBy(s => s.DayName)
-                    .ThenBy(s => s.StartTime)
-                    .ToList();
+                _logger.LogInformation(
+                    "Found {Count} schedules for itemKey={ItemKey}, subjects={Subjects}, teachers={Teachers}",
+                    schedules.Count, item_key, string.Join(",", subjectCodeList), string.Join(",", teacherCodeList));
 
-                return Json(availableSchedules);
+                return Json(schedules);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting available schedules for item key {ItemKey}", item_key);
-                return Json(new { error = "Failed to load schedules. Please try again." });
+                _logger.LogError(ex,
+                    "Error getting available schedules. ItemKey={ItemKey}, SubjectCodes={SubjectCodes}, TeacherCodes={TeacherCodes}, BranchCode={BranchCode}",
+                    item_key, subjectCodes, teacherCodes, branchCode);
+                return Json(new { error = $"Failed to load schedules: {ex.Message}" });
             }
         }
-
         /// <summary>
         /// POST: Student/Register - Process student registration
         /// </summary>
@@ -926,7 +962,6 @@ namespace centrny.Controllers
                         BranchName = s.BranchCodeNavigation != null ? s.BranchCodeNavigation.BranchName : "N/A",
                         YearName = s.YearCodeNavigation != null ? s.YearCodeNavigation.YearName : "N/A",
                         SubscriptionDate = s.SubscribtionTime.ToString("yyyy-MM-dd"),
-                        Age = CalculateAge(s.StudentBirthdate)
                     })
                     .ToListAsync();
 
