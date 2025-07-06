@@ -827,7 +827,7 @@ namespace centrny.Controllers
                     RootCode = item.RootCode
                 };
 
-                return View(viewModel);
+                return View("StudentSearch", viewModel);
             }
             catch (Exception ex)
             {
