@@ -373,7 +373,7 @@ namespace centrny.Controllers
                     // Update existing student
                     student = item.StudentCodeNavigation!;
                     _logger.LogInformation("Updating existing student: {StudentCode}", student.StudentCode);
-                    
+
                     // Update basic information
                     student.StudentName = request.StudentName?.Trim();
                     student.StudentPhone = request.StudentPhone?.Trim();
@@ -423,7 +423,7 @@ namespace centrny.Controllers
                 try
                 {
                     await _context.SaveChangesAsync(); // Save to get StudentCode for new students
-                    _logger.LogInformation("Student {Action} successfully with code: {StudentCode}", 
+                    _logger.LogInformation("Student {Action} successfully with code: {StudentCode}",
                         isUpdate ? "updated" : "created", student.StudentCode);
                 }
                 catch (Exception studentSaveEx)
@@ -452,7 +452,7 @@ namespace centrny.Controllers
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    _logger.LogInformation("Registration {Action} successfully for student: {StudentCode}", 
+                    _logger.LogInformation("Registration {Action} successfully for student: {StudentCode}",
                         isUpdate ? "update completed" : "completed", student.StudentCode);
 
                     return Json(new
@@ -615,7 +615,7 @@ namespace centrny.Controllers
                     TeacherCode = selection.TeacherCode,
                     ScheduleCode = selection.ScheduleCode,
                     EduYearCode = currentEduYear.EduCode, // Use the correct EduCode
-                    BranchCode = student.BranchCode,
+                    BranchCode =  27,
                     RootCode = student.RootCode,
                     YearCode = student.YearCode,
                     IsOnline = selection.IsOnline,
@@ -740,7 +740,7 @@ namespace centrny.Controllers
 
                 // Validate branch belongs to this root and is active
                 var branchExists = await _context.Branches
-                    .AnyAsync(b => b.BranchCode == request.BranchCode && b.RootCode == root_code && b.IsActive);
+                    .AnyAsync(b => b.BranchCode == 27 && b.RootCode == 1 && b.IsActive);
 
                 if (!branchExists)
                 {
@@ -771,7 +771,7 @@ namespace centrny.Controllers
                     StudentParentPhone = request.StudentParentPhone?.Trim(),
                     StudentBirthdate = request.BirthDate,
                     StudentGender = request.Gender,
-                    BranchCode = request.BranchCode,
+                    BranchCode =27,
                     YearCode = request.YearCode,
                     RootCode = root_code,
                     IsActive = true,
@@ -880,7 +880,7 @@ namespace centrny.Controllers
         public async Task<IActionResult> SearchByPhone([FromBody] StudentSearchRequest request)
         {
             var debugInfo = new List<string>();
-            
+
             try
             {
                 _logger.LogInformation("DEBUG: Starting SearchByPhone for request {@Request}", request);
@@ -902,7 +902,7 @@ namespace centrny.Controllers
                     var dbTest = await _context.Database.CanConnectAsync();
                     _logger.LogInformation("DEBUG: Database connectivity test result: {CanConnect}", dbTest);
                     debugInfo.Add($"Database connectivity: {dbTest}");
-                    
+
                     if (!dbTest)
                     {
                         return Json(new { success = false, error = "Database connection failed.", debug = debugInfo });
@@ -918,18 +918,18 @@ namespace centrny.Controllers
                 // Validate item exists and has no student linked
                 _logger.LogInformation("DEBUG: Searching for item with key {ItemKey}", request.ItemKey);
                 debugInfo.Add($"Searching for item with key: {request.ItemKey}");
-                
+
                 var item = await _context.Items
                     .Where(i => i.ItemKey == request.ItemKey && i.IsActive && !i.StudentCode.HasValue)
                     .FirstOrDefaultAsync();
 
                 _logger.LogInformation("DEBUG: Item search result: {Found}", item != null);
                 debugInfo.Add($"Item found: {item != null}");
-                
+
                 if (item != null)
                 {
                     debugInfo.Add($"Item details: RootCode={item.RootCode}, IsActive={item.IsActive}, HasStudent={item.StudentCode.HasValue}");
-                    _logger.LogInformation("DEBUG: Item details - RootCode: {RootCode}, IsActive: {IsActive}, HasStudent: {HasStudent}", 
+                    _logger.LogInformation("DEBUG: Item details - RootCode: {RootCode}, IsActive: {IsActive}, HasStudent: {HasStudent}",
                         item.RootCode, item.IsActive, item.StudentCode.HasValue);
                 }
 
@@ -946,8 +946,8 @@ namespace centrny.Controllers
                 debugInfo.Add($"Searching students with phone: {phoneToSearch} in root: {item.RootCode}");
 
                 var students = await _context.Students
-                    .Where(s => s.StudentPhone == phoneToSearch && 
-                               s.RootCode == item.RootCode && 
+                    .Where(s => s.StudentPhone == phoneToSearch &&
+                               s.RootCode == item.RootCode &&
                                s.IsActive)
                     .Include(s => s.BranchCodeNavigation)
                     .Include(s => s.YearCodeNavigation)
@@ -981,7 +981,7 @@ namespace centrny.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DEBUG: Error searching students by phone for request {@Request}. Stack trace: {StackTrace}", 
+                _logger.LogError(ex, "DEBUG: Error searching students by phone for request {@Request}. Stack trace: {StackTrace}",
                     request, ex.StackTrace);
                 debugInfo.Add($"Exception occurred: {ex.Message}");
                 debugInfo.Add($"Exception type: {ex.GetType().Name}");
@@ -989,10 +989,11 @@ namespace centrny.Controllers
                 {
                     debugInfo.Add($"Inner exception: {ex.InnerException.Message}");
                 }
-                
-                return Json(new { 
-                    success = false, 
-                    error = "An error occurred while searching for students.", 
+
+                return Json(new
+                {
+                    success = false,
+                    error = "An error occurred while searching for students.",
                     debug = debugInfo,
                     exception = ex.Message,
                     stackTrace = ex.StackTrace?.Split('\n')?.Take(5)?.ToArray() // First 5 lines only
@@ -1031,7 +1032,7 @@ namespace centrny.Controllers
                 // Test database connectivity
                 var canConnect = await _context.Database.CanConnectAsync();
                 logs.Add($"Database connectivity: {canConnect}");
-                
+
                 if (!canConnect)
                 {
                     return Json(new
@@ -1099,8 +1100,8 @@ namespace centrny.Controllers
                     logs.Add($"Searching students with phone '{phoneToSearch}' in root {item.RootCode}");
 
                     var foundStudents = await _context.Students
-                        .Where(s => s.StudentPhone == phoneToSearch && 
-                                   s.RootCode == item.RootCode && 
+                        .Where(s => s.StudentPhone == phoneToSearch &&
+                                   s.RootCode == item.RootCode &&
                                    s.IsActive)
                         .Include(s => s.BranchCodeNavigation)
                         .Include(s => s.YearCodeNavigation)
@@ -1196,8 +1197,8 @@ namespace centrny.Controllers
 
                 // Validate student exists and belongs to the same root
                 var student = await _context.Students
-                    .Where(s => s.StudentCode == request.StudentCode && 
-                               s.RootCode == item.RootCode && 
+                    .Where(s => s.StudentCode == request.StudentCode &&
+                               s.RootCode == item.RootCode &&
                                s.IsActive)
                     .FirstOrDefaultAsync();
 
@@ -1213,9 +1214,10 @@ namespace centrny.Controllers
 
                 if (existingItem != null)
                 {
-                    return Json(new { 
-                        success = false, 
-                        error = $"Student is already linked to item key: {existingItem.ItemKey}" 
+                    return Json(new
+                    {
+                        success = false,
+                        error = $"Student is already linked to item key: {existingItem.ItemKey}"
                     });
                 }
 
@@ -1277,7 +1279,7 @@ namespace centrny.Controllers
                 {
                     return NotFound("Student profile not found or access denied.");
                 }
-                if(item.StudentCodeNavigation == null)
+                if (item.StudentCodeNavigation == null)
                 {
                     // Item exists but no student is linked - redirect to search interface
                     return RedirectToAction("SearchStudent", new { item_key = item_key });
@@ -2049,7 +2051,7 @@ namespace centrny.Controllers
         public List<SelectListItem> AvailableBranches { get; set; } = new();
         public List<SelectListItem> AvailableYears { get; set; } = new();
         public List<SelectListItem> AvailableEduYears { get; set; } = new();
-        
+
         // Properties for pre-existing student
         public bool HasExistingStudent { get; set; }
         public string? ExistingStudentName { get; set; }
