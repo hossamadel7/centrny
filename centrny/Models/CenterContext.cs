@@ -1291,11 +1291,7 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => new { e.RootCode, e.ModuleCode });
 
-            entity.ToTable("Root_Modules", tb =>
-                {
-                    tb.HasTrigger("trg_AfterInsert_RootModules");
-                    tb.HasTrigger("trg_UpdateRootModuleName");
-                });
+            entity.ToTable("Root_Modules", tb => tb.HasTrigger("trg_UpdateRootModuleName"));
 
             entity.HasIndex(e => new { e.RootCode, e.ModuleCode }, "IX_Root_Modules").IsUnique();
 

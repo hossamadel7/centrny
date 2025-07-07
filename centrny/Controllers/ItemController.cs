@@ -4,6 +4,8 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Security.Claims;
+using System.Collections.Generic;
+using Microsoft.Data.SqlClient;
 
 namespace centrny1.Controllers
 {
@@ -29,9 +31,9 @@ namespace centrny1.Controllers
             return View();
         }
 
-        // GET: /Item/GetAllItems?page=1&pageSize=10
+        // GET: /Item/GetAllItems?page=1&pageSize=10&rootCode=123
         [HttpGet]
-        public IActionResult GetAllItems(int page = 1, int pageSize = 10)
+        public IActionResult GetAllItems(int page = 1, int pageSize = 10, int? rootCode = null)
         {
             var query = (from i in _context.Items
                          where i.IsActive
@@ -43,7 +45,13 @@ namespace centrny1.Controllers
                              studentName = s != null ? s.StudentName : "",
                              itemTypeKey = i.ItemTypeKey,
                              itemKey = i.ItemKey,
+                             rootCodeVal = i.RootCode
                          });
+
+            if (rootCode.HasValue && rootCode.Value > 0)
+            {
+                query = query.Where(i => i.rootCodeVal == rootCode.Value);
+            }
 
             var totalCount = query.Count();
 
@@ -66,11 +74,17 @@ namespace centrny1.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetFreeItemCount()
+        public IActionResult GetFreeItemCount(int? rootCode = null)
         {
-            var count = _context.Items
-                .Where(i => i.IsActive && (i.StudentCode == null || i.StudentCode == 0))
-                .Count();
+            var query = _context.Items
+                .Where(i => i.IsActive && (i.StudentCode == null || i.StudentCode == 0));
+
+            if (rootCode.HasValue && rootCode.Value > 0)
+            {
+                query = query.Where(i => i.RootCode == rootCode.Value);
+            }
+
+            var count = query.Count();
             return Json(new { freeCount = count });
         }
 
@@ -135,13 +149,30 @@ namespace centrny1.Controllers
 
                 _context.Database.ExecuteSqlRaw(
                     sql,
-                    new Microsoft.Data.SqlClient.SqlParameter("@RootCode", request.RootCode),
-                    new Microsoft.Data.SqlClient.SqlParameter("@InsertUser", request.InsertUserCode),
-                    new Microsoft.Data.SqlClient.SqlParameter("@RecordCount", request.RecordCount),
-                    new Microsoft.Data.SqlClient.SqlParameter("@ItemTypeCode", request.ItemTypeCode)
+                    new SqlParameter("@RootCode", request.RootCode),
+                    new SqlParameter("@InsertUser", request.InsertUserCode),
+                    new SqlParameter("@RecordCount", request.RecordCount),
+                    new SqlParameter("@ItemTypeCode", request.ItemTypeCode)
                 );
 
-                return Ok(new { message = "Items inserted successfully." });
+                // Immediately fetch the last N items for this root/type (assuming sequential codes).
+                var lastInsertedItems = _context.Items
+                    .Where(i => i.RootCode == request.RootCode
+                             && i.ItemTypeKey == request.ItemTypeCode
+                             && i.IsActive)
+                    .OrderByDescending(i => i.ItemCode)
+                    .Take(request.RecordCount)
+                    .Select(i => new { itemCode = i.ItemCode, itemKey = i.ItemKey })
+                    .ToList();
+
+                // Return in ascending order (oldest to newest)
+                lastInsertedItems.Reverse();
+
+                return Ok(new
+                {
+                    message = "Items inserted successfully.",
+                    lastInsertedItems = lastInsertedItems
+                });
             }
             catch (Exception ex)
             {

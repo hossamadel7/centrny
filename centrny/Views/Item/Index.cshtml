@@ -19,6 +19,10 @@
     <!-- QRCode.js (for QR generation) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+    <!-- JSZip for zipping QR images -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="@Url.Content("~/css/Hamody.css")" />
 
@@ -29,14 +33,30 @@
 
     <div class="container mt-4">
 
+        <!-- Root Filter -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="filterRootCode" class="form-label">Filter by Root</label>
+                <select id="filterRootCode" class="form-select">
+                    <option value="">All Roots</option>
+                    <!-- JS will fill options -->
+                </select>
+            </div>
+        </div>
+
         <!-- Header and Counter Row -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div id="freeItemCounter" class="alert alert-info m-0">
                 Free Items: <span id="freeItemCount">0</span>
             </div>
-            <button type="button" class="btn btn-outline-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                + Add Item
-            </button>
+            <div>
+                <button id="downloadLastGeneratedBtn" type="button" class="btn btn-outline-success px-4 py-2 me-2" disabled>
+                    Download Last Generated Items
+                </button>
+                <button type="button" class="btn btn-outline-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                    + Add Item
+                </button>
+            </div>
         </div>
 
         <!-- Items Table -->
@@ -93,7 +113,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Add</button>
+                        <button type="submit" id="addItemsBtn" class="btn btn-primary">Add</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     </div>
                 </form>

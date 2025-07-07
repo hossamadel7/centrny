@@ -18,9 +18,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
-builder.Services.AddControllersWithViews(); // Clean - no global filters
-
+builder.Services.AddControllersWithViews();
 builder.Services.AddLogging();
+
+// ===== ADD THIS FOR SESSION =====
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // or whatever timeout you want
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+// ===== END SESSION CONFIG =======
 
 var app = builder.Build();
 
@@ -36,11 +44,16 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication(); // IMPORTANT: Before UseAuthorization
+// ===== ADD THIS FOR SESSION =====
+app.UseSession();
+// ===== END SESSION CONFIG =======
+
+app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers(); // enables attribute routing
+
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Root}/{action=Index}/{id?}");
 
-    app.Run();
+app.Run();

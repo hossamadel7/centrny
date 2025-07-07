@@ -183,7 +183,7 @@ a {
 }
 
 /* ========== MODALS ========== */
-.modal, .modal-dialog, .modal.show, .modal.fade.show, .modal-dialog, body.modal-open, #rootModal.show, #moduleAssignmentModal.show, .modal-content {
+.modal, body.modal-open{
     z-index: 1055 !important;
     position: fixed !important;
     top: 0;
@@ -2792,6 +2792,27 @@ input[type="checkbox"] {
     font-weight: 700;
 }
 
+/* Fix for Add Items Modal being cut off and not scrollable */
+#addItemModal .modal-dialog {
+    height: auto !important;
+    min-height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#addItemModal .modal-content {
+    max-height: 90vh !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
+#addItemModal .modal-body {
+    overflow-y: auto !important;
+    max-height: calc(90vh - 120px) !important; /* adjust if needed for header/footer */
+}
+
 /*---------------------------------------------ITEM VIEW END----------------------*/
 
 /* =============================
@@ -3221,3 +3242,257 @@ input[type="checkbox"] {
 /* =============================
    MODERN EXAM UI STYLES - END
    ============================= */
+#addItemModal  {
+    --bs-modal-margin:20.75rem !important;
+}
+
+/* ====== Subject View Modern UI START ====== */
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f7f7f9;
+    color: #222;
+    margin: 0;
+    padding: 20px;
+}
+
+h2 {
+    font-size: 2rem;
+    color: #3a3c4b;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 0 #fff;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    box-shadow: 0 3px 16px rgba(60,72,88,0.07), 0 1.5px 3px rgba(60,72,88,0.04);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+thead th {
+    background: linear-gradient(90deg, #5a7cff 0%, #61e6b6 100%);
+    color: #fff;
+    font-weight: 600;
+    padding: 16px 12px;
+    text-align: left;
+    font-size: 1rem;
+    border-bottom: 2px solid #e9e9ef;
+    letter-spacing: 0.5px;
+}
+
+tbody tr {
+    transition: box-shadow 0.2s;
+    cursor: pointer;
+}
+
+    tbody tr:hover {
+        box-shadow: 0 2px 8px rgba(90,124,255,0.11);
+        z-index: 1;
+        position: relative;
+        background: inherit !important;
+    }
+
+tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e9e9ef;
+    font-size: 1rem;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.subject-row {
+    position: relative;
+}
+
+    .subject-row.highlight-begin td:first-child {
+        background: #ffe699;
+    }
+
+    .subject-row.highlight-end td:last-child {
+        background: #ffe699;
+    }
+
+@media (max-width: 700px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody tr {
+        margin-bottom: 16px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(60,72,88,0.04);
+    }
+
+    tbody td {
+        padding: 10px 14px;
+        border: none;
+        position: relative;
+    }
+
+        tbody td:before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 6px;
+            color: #5a7cff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: capitalize;
+        }
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: #e9e9ef;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #b3c5fd;
+    border-radius: 4px;
+}
+
+/* ====== Modal & Form Enhanced Styling ====== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.35);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+    .modal-overlay[style*="display: flex"] {
+        display: flex !important;
+    }
+
+@keyframes flyup {
+    0% {
+        opacity: 0;
+        transform: translateY(80px) scale(0.96);
+    }
+
+    80% {
+        opacity: 1;
+        transform: translateY(-10px) scale(1.02);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-box {
+    background: #ffffff;
+    padding: 32px 28px 24px 28px;
+    border-radius: 14px;
+    min-width: 340px;
+    min-height: 100px;
+    box-shadow: 0 8px 32px rgba(60,72,88,0.20), 0 1.5px 3px rgba(60,72,88,0.04);
+    animation: flyup 0.5s cubic-bezier(.21,1.02,.73,1) both;
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+}
+
+#closeModal {
+    color: #8c8c8c;
+    transition: color 0.2s;
+}
+
+    #closeModal:hover {
+        color: #ff5a5a;
+    }
+
+#addSubjectForm {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+    .form-group label {
+        font-size: 1rem;
+        color: #4c5a75;
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+
+    .form-group input[type="text"],
+    .form-group select {
+        padding: 10px 12px;
+        border: 1.5px solid #d7e1fa;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: #f8faff;
+        outline: none;
+    }
+
+        .form-group input[type="text"]:focus,
+        .form-group select:focus {
+            border-color: #5a7cff;
+            box-shadow: 0 0 0 2px #e5edff;
+            background: #fff;
+        }
+
+#addSubjectError {
+    font-size: 0.98rem;
+    color: #c00;
+    padding: 4px 0 0 2px;
+}
+
+.modern-btn {
+    background: linear-gradient(90deg, #5a7cff 0%, #61e6b6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 0;
+    font-size: 1.07rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1.5px 6px rgba(60,72,88,0.08);
+    cursor: pointer;
+    transition: background 0.18s, transform 0.12s;
+}
+
+    .modern-btn:hover, .modern-btn:focus {
+        background: linear-gradient(90deg, #4a68d1, #45cfa2);
+        transform: translateY(-1px) scale(1.025);
+        outline: none;
+    }
+
+/* For smaller screens */
+@media (max-width: 600px) {
+    .modal-box {
+        min-width: 90vw;
+        padding: 16px 6vw 16px 6vw;
+    }
+}
+
+/* ====== Subject View Modern UI END ====== */
