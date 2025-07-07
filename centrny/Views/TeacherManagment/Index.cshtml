@@ -1,0 +1,132 @@
+﻿@{
+    ViewBag.Title = "Teacher Management";
+    Layout = "_Layout";
+}
+<link rel="stylesheet" href="~/css/site.css" />
+
+<div class="container mt-4">
+    <div class="d-flex align-items-center mb-4">
+        <i class="fas fa-chalkboard-teacher fa-2x me-2"></i>
+        <h2 class="mb-0">Teacher Management</h2>
+    </div>
+    <div class="user-info mb-3" id="user-info"></div>
+    <div id="teachers-section">
+        <div class="d-flex align-items-center mb-2">
+            <h5 class="mb-0">Teachers</h5>
+            <button class="btn btn-primary btn-sm ms-2" id="openAddTeacher">Add Teacher</button>
+        </div>
+        <div id="teachers-list"></div>
+    </div>
+</div>
+
+<!-- Add Teacher Modal -->
+<div class="modal fade" id="addTeacherModal" tabindex="-1" aria-labelledby="addTeacherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content ">
+            <form id="teacherForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTeacherModalLabel">Add Teacher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label for="teacherName" class="form-label">Teacher Name</label>
+                        <input type="text" class="form-control" id="teacherName" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="teacherPhone" class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="teacherPhone" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="teacherAddress" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="teacherAddress">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-action">Add Teacher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div class="modal fade" id="editTeacherModal" tabindex="-1" aria-labelledby="editTeacherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content ">
+            <form id="editTeacherForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTeacherModalLabel">Edit Teacher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editTeacherCode">
+                    <div class="mb-2">
+                        <label for="editTeacherName" class="form-label">Teacher Name</label>
+                        <input type="text" class="form-control" id="editTeacherName" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="editTeacherPhone" class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="editTeacherPhone" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="editTeacherAddress" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="editTeacherAddress">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning btn-action">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Teaching Subject Modal -->
+<div class="modal fade" id="addTeachSubjectModal" tabindex="-1" aria-labelledby="addTeachSubjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content ">
+            <form id="teachSubjectForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTeachSubjectModalLabel">Add Teaching Subject</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label for="yearSelect" class="form-label">Year</label>
+                        <select id="yearSelect" class="form-select" required></select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Educational Year:</label>
+                        <input type="text" class="form-control" id="activeYearDisplay" readonly>
+                        <input type="hidden" id="activeYearCode">
+                    </div>
+                    <div class="mb-2">
+                        <label for="subjectName" class="form-label">Subject Name</label>
+                        <input type="text" class="form-control" id="subjectName" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="isPrimary" class="form-label">Is Primary</label>
+                        <select id="isPrimary" class="form-select" required>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="branchSelect" class="form-label">Branch</label>
+                        <select id="branchSelect" class="form-select" required></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success btn-action">Add Teaching Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/TeacherManagement.js"></script>
+}

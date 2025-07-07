@@ -1,30 +1,15 @@
-﻿using centrny.Attributes;
-using centrny.Models;
+﻿using centrny.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
 namespace centrny.Controllers
 {
-    [RequirePageAccess("Management")]
-    public class ManagementController : Controller
+    public class TeacherManagementController : Controller
     {
         private readonly CenterContext _db;
-        public ManagementController(CenterContext db)
+        public TeacherManagementController(CenterContext db)
         {
             _db = db;
-        }
-
-        // Helper: True if the logged-in user's group root code == 1 (superuser)
-        private bool IsSuperUser()
-        {
-            string username = User.Identity.Name;
-            var user = _db.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null) return false;
-            var group = _db.Groups.FirstOrDefault(g => g.GroupCode == user.GroupCode);
-            if (group == null) return false;
-            var root = _db.Roots.FirstOrDefault(r => r.RootCode == group.RootCode);
-            if (root == null) return false;
-            return root.RootCode == 1;
         }
 
         private int GetUserRootCode()
@@ -55,87 +40,10 @@ namespace centrny.Controllers
                 user_code = user.UserCode,
                 user_name = user.Username,
                 group_code = group.GroupCode,
-                user_root_code = root.RootCode, // for JS logic
-                root_code = root.RootCode,      // selected root code (for regular users it's always their own)
-                root_name = root.RootName,
-                iscenter = root.IsCenter
+                user_root_code = root.RootCode,
+                root_code = root.RootCode,
+                root_name = root.RootName
             });
-        }
-
-        [HttpGet]
-        public IActionResult GetRoots()
-        {
-            var roots = _db.Roots
-                .Select(r => new { rootCode = r.RootCode, rootName = r.RootName, isCenter = r.IsCenter })
-                .ToList();
-            return Json(roots);
-        }
-
-        [HttpGet]
-        public IActionResult GetCentersByRoot(int rootCode)
-        {
-            var centers = _db.Centers
-                .Where(c => c.RootCode == rootCode)
-                .Select(c => new
-                {
-                    centerCode = c.CenterCode,
-                    centerName = c.CenterName,
-                    centerPhone = c.CenterPhone,
-                    centerAddress = c.CenterAddress,
-                    isActive = c.IsActive
-                })
-                .ToList();
-            return Json(centers);
-        }
-
-        [HttpGet]
-        public IActionResult GetBranchesByRoot(int rootCode)
-        {
-            var branches = _db.Branches
-                .Where(b => b.RootCode == rootCode)
-                .Select(b => new
-                {
-                    branchCode = b.BranchCode,
-                    branchName = b.BranchName,
-                    address = b.Address,
-                    phone = b.Phone,
-                    startTime = b.StartTime,
-                    isActive = b.IsActive
-                })
-                .ToList();
-            return Json(branches);
-        }
-
-        [HttpGet]
-        public IActionResult GetBranchesByCenter(int centerCode)
-        {
-            var branches = _db.Branches
-                .Where(b => b.CenterCode == centerCode)
-                .Select(b => new
-                {
-                    branchCode = b.BranchCode,
-                    branchName = b.BranchName,
-                    address = b.Address,
-                    phone = b.Phone,
-                    startTime = b.StartTime,
-                    isActive = b.IsActive
-                }).ToList();
-            return Json(branches);
-        }
-
-        [HttpGet]
-        public IActionResult GetBranchesForRootWithCenters(int rootCode)
-        {
-            var centers = _db.Centers.Where(c => c.RootCode == rootCode).ToList();
-            var centerCodes = centers.Select(c => c.CenterCode).ToList();
-            var branches = _db.Branches
-                .Where(b => centerCodes.Contains(b.CenterCode))
-                .Select(b => new
-                {
-                    branchCode = b.BranchCode,
-                    branchName = b.BranchName
-                }).ToList();
-            return Json(branches);
         }
 
         [HttpGet]
@@ -153,6 +61,20 @@ namespace centrny.Controllers
                 })
                 .ToList();
             return Json(teachers);
+        }
+
+        [HttpGet]
+        public IActionResult GetTeacherById(int teacherCode)
+        {
+            var t = _db.Teachers.FirstOrDefault(x => x.TeacherCode == teacherCode);
+            if (t == null) return NotFound();
+            return Json(new
+            {
+                teacherCode = t.TeacherCode,
+                teacherName = t.TeacherName,
+                teacherPhone = t.TeacherPhone,
+                teacherAddress = t.TeacherAddress
+            });
         }
 
         [HttpPost]
@@ -184,6 +106,18 @@ namespace centrny.Controllers
         }
 
         [HttpPost]
+        public IActionResult EditTeacher([FromBody] TeacherEditModel model)
+        {
+            var teacher = _db.Teachers.FirstOrDefault(t => t.TeacherCode == model.TeacherCode);
+            if (teacher == null) return BadRequest("Teacher not found.");
+            teacher.TeacherName = model.TeacherName;
+            teacher.TeacherPhone = model.TeacherPhone;
+            teacher.TeacherAddress = model.TeacherAddress;
+            _db.SaveChanges();
+            return Ok(new { success = true, message = "Teacher updated successfully." });
+        }
+
+        [HttpPost]
         public IActionResult DeleteTeacher([FromBody] int teacherCode)
         {
             var teacher = _db.Teachers.FirstOrDefault(t => t.TeacherCode == teacherCode);
@@ -193,138 +127,6 @@ namespace centrny.Controllers
             _db.Teachers.Remove(teacher);
             _db.SaveChanges();
             return Ok(new { success = true, message = "Teacher and associated teaching subjects deleted successfully." });
-        }
-
-        [HttpPost]
-        public IActionResult AddCenter([FromBody] CenterInputModel center)
-        {
-            if (center == null) return BadRequest("Invalid data.");
-            var user = _db.Users.FirstOrDefault(u => u.UserCode == center.InsertUser);
-            if (user == null) return BadRequest("User not found.");
-            var root = _db.Roots.FirstOrDefault(r => r.RootCode == center.RootCode);
-            if (root == null) return BadRequest("Root not found.");
-
-            if (!IsSuperUser())
-            {
-                return Forbid("You do not have permission to add centers.");
-            }
-
-            var newCenter = new Center
-            {
-                CenterName = center.CenterName,
-                IsActive = true,
-                CenterPhone = center.CenterPhone,
-                CenterAddress = center.CenterAddress,
-                OwnerName = root.IsCenter ? root.RootOwner : null,
-                RootCode = center.RootCode,
-                InsertUser = center.InsertUser,
-                InsertTime = DateTime.Now
-            };
-
-            _db.Centers.Add(newCenter);
-            _db.SaveChanges();
-            return Ok(new { success = true, message = "Center added successfully." });
-        }
-
-        [HttpPost]
-        public IActionResult AddBranch([FromBody] BranchInputModel branch)
-        {
-            if (branch == null) return BadRequest("Invalid data.");
-            var user = _db.Users.FirstOrDefault(u => u.UserCode == branch.InsertUser);
-            if (user == null) return BadRequest("User not found.");
-            var center = _db.Centers.FirstOrDefault(c => c.CenterCode == branch.CenterCode && c.RootCode == branch.RootCode);
-            if (center == null) return BadRequest("Center not found for this root.");
-
-            if (!IsSuperUser())
-            {
-                return Forbid("You do not have permission to add branches.");
-            }
-
-            var newBranch = new Branch
-            {
-                BranchName = branch.BranchName,
-                Address = branch.Address,
-                Phone = branch.Phone,
-                StartTime = branch.StartTime,
-                CenterCode = branch.CenterCode,
-                InsertUser = branch.InsertUser,
-                InsertTime = DateTime.Now,
-                IsActive = true,
-                RootCode = branch.RootCode
-            };
-
-            _db.Branches.Add(newBranch);
-            _db.SaveChanges();
-            return Ok(new { success = true, message = "Branch added successfully." });
-        }
-
-        [HttpPost]
-        public IActionResult EditCenter([FromBody] CenterEditModel model)
-        {
-            var center = _db.Centers.FirstOrDefault(c => c.CenterCode == model.CenterCode);
-            if (center == null) return BadRequest("Center not found.");
-
-            if (!IsSuperUser())
-            {
-                return Forbid("You do not have permission to edit centers.");
-            }
-
-            center.CenterName = model.CenterName;
-            center.CenterPhone = model.CenterPhone;
-            center.CenterAddress = model.CenterAddress;
-            _db.SaveChanges();
-            return Ok(new { success = true, message = "Center updated successfully." });
-        }
-
-        [HttpPost]
-        public IActionResult DeleteCenter([FromBody] int centerCode)
-        {
-            var center = _db.Centers.FirstOrDefault(c => c.CenterCode == centerCode);
-            if (center == null) return BadRequest("Center not found.");
-
-            if (!IsSuperUser())
-            {
-                return Forbid("You do not have permission to delete centers.");
-            }
-
-            _db.Centers.Remove(center);
-            _db.SaveChanges();
-            return Ok(new { success = true, message = "Center deleted successfully." });
-        }
-
-        [HttpPost]
-        public IActionResult EditBranch([FromBody] BranchEditModel model)
-        {
-            var branch = _db.Branches.FirstOrDefault(b => b.BranchCode == model.BranchCode);
-            if (branch == null) return BadRequest("Branch not found.");
-
-            if (!IsSuperUser())
-            {
-                return Forbid("You do not have permission to edit branches.");
-            }
-
-            branch.BranchName = model.BranchName;
-            branch.Address = model.Address;
-            branch.Phone = model.Phone;
-            branch.StartTime = model.StartTime;
-            _db.SaveChanges();
-            return Ok(new { success = true, message = "Branch updated successfully." });
-        }
-
-        [HttpPost]
-        public IActionResult DeleteBranch([FromBody] int branchCode)
-        {
-            var branch = _db.Branches.FirstOrDefault(b => b.BranchCode == branchCode);
-            if (branch == null) return BadRequest("Branch not found.");
-
-            if (!IsSuperUser())
-            {
-                return Forbid("You do not have permission to delete branches.");
-            }
-
-            _db.Branches.Remove(branch);
-            _db.SaveChanges();
-            return Ok(new { success = true, message = "Branch deleted successfully." });
         }
 
         // ----------- TEACHING SUBJECTS LOGIC ----------------
@@ -361,6 +163,21 @@ namespace centrny.Controllers
                 yearName = year?.YearName,
                 eduYearName = activeEduYear.EduCode
             });
+        }
+
+        [HttpGet]
+        public IActionResult GetBranchesForRootWithCenters(int rootCode)
+        {
+            var centers = _db.Centers.Where(c => c.RootCode == rootCode).ToList();
+            var centerCodes = centers.Select(c => c.CenterCode).ToList();
+            var branches = _db.Branches
+                .Where(b => centerCodes.Contains(b.CenterCode))
+                .Select(b => new
+                {
+                    branchCode = b.BranchCode,
+                    branchName = b.BranchName
+                }).ToList();
+            return Json(branches);
         }
 
         [HttpGet]
@@ -436,53 +253,21 @@ namespace centrny.Controllers
 
         // ----------- MODELS ---------------
 
-        public class BranchInputModel
-        {
-            public string BranchName { get; set; }
-            public string Address { get; set; }
-            public string Phone { get; set; }
-            public DateOnly StartTime { get; set; }
-            public int CenterCode { get; set; }
-            public int InsertUser { get; set; }
-            public int RootCode { get; set; }
-            public bool IsActive { get; set; } = true;
-        }
-
-        public class BranchEditModel
-        {
-            public int BranchCode { get; set; }
-            public string BranchName { get; set; }
-            public string Address { get; set; }
-            public string Phone { get; set; }
-            public DateOnly StartTime { get; set; }
-        }
-
-        public class CenterInputModel
-        {
-            public string CenterName { get; set; }
-            public string CenterPhone { get; set; }
-            public string? CenterAddress { get; set; }
-            public int InsertUser { get; set; }
-            public int RootCode { get; set; }
-        }
-
-        public class CenterEditModel
-        {
-            public int CenterCode { get; set; }
-            public string CenterName { get; set; }
-            public string CenterPhone { get; set; }
-            public string? CenterAddress { get; set; }
-        }
-
         public class TeacherInputModel
         {
-            public string TeacherName { get; set; } = null!;
-            public string TeacherPhone { get; set; } = null!;
+            public string TeacherName { get; set; }
+            public string TeacherPhone { get; set; }
             public string? TeacherAddress { get; set; }
             public int RootCode { get; set; }
             public int InsertUser { get; set; }
         }
-
+        public class TeacherEditModel
+        {
+            public int TeacherCode { get; set; }
+            public string TeacherName { get; set; }
+            public string TeacherPhone { get; set; }
+            public string? TeacherAddress { get; set; }
+        }
         public class AddTeachingSubjectInputModel
         {
             public string SubjectName { get; set; }
@@ -493,7 +278,6 @@ namespace centrny.Controllers
             public int BranchCode { get; set; }
             public int TeacherCode { get; set; }
         }
-
         public class DeleteTeachInputModel
         {
             public int TeacherCode { get; set; }
