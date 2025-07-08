@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Teacher Management -->
+  <data name="TeacherName" xml:space="preserve">
+    <value>اسم المعلم</value>
+  </data>
+  <data name="TeacherPhone" xml:space="preserve">
+    <value>هاتف المعلم</value>
+  </data>
+  <data name="TeacherEmail" xml:space="preserve">
+    <value>بريد المعلم الإلكتروني</value>
+  </data>
+  <data name="HireDate" xml:space="preserve">
+    <value>تاريخ التوظيف</value>
+  </data>
+  <data name="Salary" xml:space="preserve">
+    <value>الراتب</value>
+  </data>
+  <data name="IsActive" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="AddTeacher" xml:space="preserve">
+    <value>إضافة معلم</value>
+  </data>
+  <data name="EditTeacher" xml:space="preserve">
+    <value>تعديل المعلم</value>
+  </data>
+  <data name="DeleteTeacher" xml:space="preserve">
+    <value>حذف المعلم</value>
+  </data>
+  <data name="TeachingSubjects" xml:space="preserve">
+    <value>مواد التدريس</value>
+  </data>
+  <data name="AddTeachingSubject" xml:space="preserve">
+    <value>إضافة مادة تدريس</value>
+  </data>
+  <data name="SubjectName" xml:space="preserve">
+    <value>اسم المادة</value>
+  </data>
+  <data name="IsPrimary" xml:space="preserve">
+    <value>أساسية</value>
+  </data>
+  <data name="CenterPercentage" xml:space="preserve">
+    <value>نسبة المركز</value>
+  </data>
+  <data name="CenterAmount" xml:space="preserve">
+    <value>مبلغ المركز</value>
+  </data>
+  <data name="TeacherList" xml:space="preserve">
+    <value>قائمة المعلمين</value>
+  </data>
+  <data name="TeacherDetails" xml:space="preserve">
+    <value>تفاصيل المعلم</value>
+  </data>
+</root>
