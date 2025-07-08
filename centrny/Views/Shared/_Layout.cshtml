@@ -1,6 +1,13 @@
-﻿﻿
+@using Microsoft.AspNetCore.Localization
+
+@{
+    var requestCultureFeature = Context.Features.Get<IRequestCultureFeature>();
+    var currentCulture = requestCultureFeature?.RequestCulture?.Culture ?? new System.Globalization.CultureInfo("en-US");
+    var isRTL = currentCulture.Name == "ar-EG";
+}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@currentCulture.Name" dir="@(isRTL ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -550,6 +557,9 @@
                 </button>
                 <span class="page-title">@ViewData["Title"]</span>
             </div>
+            <div class="header-right">
+                @await Html.PartialAsync("_LanguageSwitcher")
+            </div>
         </header>
         <main class="main-content">
             @RenderBody()
@@ -564,6 +574,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/i18n.js" asp-append-version="true"></script>
     <script>
         function toggleSidebar(open) {
             const sidebar = document.getElementById('modernSidebar');

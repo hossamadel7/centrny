@@ -1,13 +1,22 @@
 @using centrny.Controllers
+@using centrny.Resources
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Localization
 @model PublicRegistrationViewModel
+@inject IStringLocalizer<SharedResources> Localizer
+@inject SharedResources SharedLocalizer
 
 @{
-    ViewData["Title"] = "Student Registration";
+    ViewData["Title"] = SharedLocalizer.StudentRegistration;
     Layout = null; // No layout for clean registration experience
+    
+    var requestCultureFeature = Context.Features.Get<IRequestCultureFeature>();
+    var currentCulture = requestCultureFeature?.RequestCulture?.Culture ?? new System.Globalization.CultureInfo("en-US");
+    var isRTL = currentCulture.Name == "ar-EG";
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@currentCulture.Name" dir="@(isRTL ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,6 +28,29 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* RTL Support */
+        html[dir="rtl"] body {
+            font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+        }
+
+        html[dir="rtl"] .text-start {
+            text-align: right !important;
+        }
+
+        html[dir="rtl"] .text-end {
+            text-align: left !important;
+        }
+
+        html[dir="rtl"] .me-1, html[dir="rtl"] .me-2, html[dir="rtl"] .me-3 {
+            margin-right: 0 !important;
+            margin-left: 0.25rem !important;
+        }
+
+        html[dir="rtl"] .btn i {
+            margin-left: 0.5rem;
+            margin-right: 0;
         }
 
         .registration-container {
@@ -146,8 +178,8 @@
             <!-- Header -->
             <div class="registration-header">
                 <i class="fas fa-user-plus fa-3x mb-3"></i>
-                <h1>Join @Model.RootName</h1>
-                <p>Start your learning journey with us</p>
+                <h1>@SharedLocalizer["Join"] @Model.RootName</h1>
+                <p>@SharedLocalizer["Start your learning journey with us"]</p>
             </div>
 
             <!-- Body -->
@@ -280,10 +312,46 @@
                     <div class="text-center mt-4">
                         <small class="text-muted">
                             <i class="fas fa-lock me-1"></i>
-                            Your information is secure and will only be used for educational purposes.
+                            @SharedLocalizer.SecureInformation
                         </small>
                     </div>
                 </form>
+            </div>
+        </div>
+        
+        <!-- Language Switcher for standalone page -->
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+            @{
+                var returnUrl = Context.Request.Path + Context.Request.QueryString;
+            }
+            <div class="language-switcher">
+                <div class="dropdown">
+                    <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe me-1"></i>
+                        @if (currentCulture.Name == "ar-EG")
+                        {
+                            <span>العربية</span>
+                        }
+                        else
+                        {
+                            <span>English</span>
+                        }
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item @(currentCulture.Name == "en-US" ? "active" : "")" 
+                               href="@Url.Action("SetLanguage", "Home", new { culture = "en-US", returnUrl = returnUrl })">
+                                English
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item @(currentCulture.Name == "ar-EG" ? "active" : "")"
+                               href="@Url.Action("SetLanguage", "Home", new { culture = "ar-EG", returnUrl = returnUrl })">
+                                العربية
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

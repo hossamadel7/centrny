@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Common UI Elements -->
+  <data name="Welcome" xml:space="preserve">
+    <value>Welcome</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="Submit" xml:space="preserve">
+    <value>Submit</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  
+  <!-- Student Related -->
+  <data name="StudentRegistration" xml:space="preserve">
+    <value>Student Registration</value>
+  </data>
+  <data name="CompleteRegistration" xml:space="preserve">
+    <value>Complete Registration</value>
+  </data>
+  <data name="StudentProfile" xml:space="preserve">
+    <value>Student Profile</value>
+  </data>
+  <data name="StudentName" xml:space="preserve">
+    <value>Student Name</value>
+  </data>
+  <data name="StudentCode" xml:space="preserve">
+    <value>Student Code</value>
+  </data>
+  <data name="StudentPhone" xml:space="preserve">
+    <value>Phone Number</value>
+  </data>
+  <data name="ParentPhone" xml:space="preserve">
+    <value>Parent Phone</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  
+  <!-- Academic -->
+  <data name="Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="Teacher" xml:space="preserve">
+    <value>Teacher</value>
+  </data>
+  <data name="Class" xml:space="preserve">
+    <value>Class</value>
+  </data>
+  <data name="Classes" xml:space="preserve">
+    <value>Classes</value>
+  </data>
+  <data name="Schedule" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="Chapter" xml:space="preserve">
+    <value>Chapter</value>
+  </data>
+  <data name="Question" xml:space="preserve">
+    <value>Question</value>
+  </data>
+  <data name="Exam" xml:space="preserve">
+    <value>Exam</value>
+  </data>
+  <data name="Year" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="EducationYear" xml:space="preserve">
+    <value>Education Year</value>
+  </data>
+  
+  <!-- Daily Class -->
+  <data name="DailyTimeline" xml:space="preserve">
+    <value>Daily Timeline</value>
+  </data>
+  <data name="GenerateWeeklyClasses" xml:space="preserve">
+    <value>Generate Weekly Classes</value>
+  </data>
+  <data name="AddChapter" xml:space="preserve">
+    <value>Add Chapter</value>
+  </data>
+  <data name="ChapterName" xml:space="preserve">
+    <value>Chapter Name</value>
+  </data>
+  
+  <!-- Security Messages -->
+  <data name="SecureInformation" xml:space="preserve">
+    <value>Your information is secure and will only be used for educational purposes.</value>
+  </data>
+  
+  <!-- Root/Center -->
+  <data name="RootCode" xml:space="preserve">
+    <value>Root Code</value>
+  </data>
+  <data name="RootName" xml:space="preserve">
+    <value>Root Name</value>
+  </data>
+  <data name="RootPhone" xml:space="preserve">
+    <value>Root Phone</value>
+  </data>
+  <data name="RootOwner" xml:space="preserve">
+    <value>Root Owner</value>
+  </data>
+  <data name="IsCenter" xml:space="preserve">
+    <value>Is Center</value>
+  </data>
+  
+  <!-- Common Form Validation -->
+  <data name="Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="FieldRequired" xml:space="preserve">
+    <value>This field is required</value>
+  </data>
+  
+  <!-- Navigation -->
+  <data name="PreviousDay" xml:space="preserve">
+    <value>Previous Day</value>
+  </data>
+  <data name="NextDay" xml:space="preserve">
+    <value>Next Day</value>
+  </data>
+  
+  <!-- Home Page -->
+  <data name="Learn about building Web apps with ASP.NET Core" xml:space="preserve">
+    <value>Learn about building Web apps with ASP.NET Core</value>
+  </data>
+  <data name="Root Modules Table" xml:space="preserve">
+    <value>Root Modules Table</value>
+  </data>
+  
+  <!-- Student Registration -->
+  <data name="Join" xml:space="preserve">
+    <value>Join</value>
+  </data>
+  <data name="Start your learning journey with us" xml:space="preserve">
+    <value>Start your learning journey with us</value>
+  </data>
+</root>

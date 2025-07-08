@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = SharedLocalizer.Home;
 }
 
 <!-- Include jQuery -->
@@ -9,20 +9,20 @@
 <script src="~/js/site.js"></script>
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">@SharedLocalizer.Welcome</h1>
+    <p>@SharedLocalizer["Learn about building Web apps with ASP.NET Core"]</p>
 
-    <h4 class="mt-4">Root Modules Table</h4>
+    <h4 class="mt-4">@SharedLocalizer["Root Modules Table"]</h4>
 
     <!-- Table to display root modules -->
     <table id="rootModulesTable" class="table table-bordered" style="width: 60%; margin: 0 auto;">
         <thead>
             <tr>
-                <th>Root Code</th>
-                <th>Root name</th>
-                <th>Root phone</th>
-                <th>Root owner</th>
-                   <th> Iscenter</th>
+                <th>@SharedLocalizer.RootCode</th>
+                <th>@SharedLocalizer.RootName</th>
+                <th>@SharedLocalizer.RootPhone</th>
+                <th>@SharedLocalizer.RootOwner</th>
+                <th>@SharedLocalizer.IsCenter</th>
             </tr>
         </thead>
         <tbody>
