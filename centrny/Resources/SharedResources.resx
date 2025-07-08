@@ -144,6 +144,9 @@
   <data name="Class" xml:space="preserve">
     <value>Class</value>
   </data>
+  <data name="Classes" xml:space="preserve">
+    <value>Classes</value>
+  </data>
   <data name="Schedule" xml:space="preserve">
     <value>Schedule</value>
   </data>
@@ -213,5 +216,21 @@
   </data>
   <data name="NextDay" xml:space="preserve">
     <value>Next Day</value>
+  </data>
+  
+  <!-- Home Page -->
+  <data name="Learn about building Web apps with ASP.NET Core" xml:space="preserve">
+    <value>Learn about building Web apps with ASP.NET Core</value>
+  </data>
+  <data name="Root Modules Table" xml:space="preserve">
+    <value>Root Modules Table</value>
+  </data>
+  
+  <!-- Student Registration -->
+  <data name="Join" xml:space="preserve">
+    <value>Join</value>
+  </data>
+  <data name="Start your learning journey with us" xml:space="preserve">
+    <value>Start your learning journey with us</value>
   </data>
 </root>

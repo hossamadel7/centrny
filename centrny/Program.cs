@@ -49,7 +49,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 // Register shared resources for dependency injection
-builder.Services.AddSingleton<SharedResources>();
+builder.Services.AddTransient<SharedResources>();
 // ===== END LOCALIZATION CONFIG =====
 
 // ===== ADD THIS FOR SESSION =====

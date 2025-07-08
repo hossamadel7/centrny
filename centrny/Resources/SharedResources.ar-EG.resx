@@ -144,6 +144,9 @@
   <data name="Class" xml:space="preserve">
     <value>الفصل</value>
   </data>
+  <data name="Classes" xml:space="preserve">
+    <value>الفصول</value>
+  </data>
   <data name="Schedule" xml:space="preserve">
     <value>الجدول</value>
   </data>
@@ -213,5 +216,21 @@
   </data>
   <data name="NextDay" xml:space="preserve">
     <value>اليوم التالي</value>
+  </data>
+  
+  <!-- Home Page -->
+  <data name="Learn about building Web apps with ASP.NET Core" xml:space="preserve">
+    <value>تعلم كيفية بناء تطبيقات الويب باستخدام ASP.NET Core</value>
+  </data>
+  <data name="Root Modules Table" xml:space="preserve">
+    <value>جدول وحدات الجذر</value>
+  </data>
+  
+  <!-- Student Registration -->
+  <data name="Join" xml:space="preserve">
+    <value>انضم إلى</value>
+  </data>
+  <data name="Start your learning journey with us" xml:space="preserve">
+    <value>ابدأ رحلتك التعليمية معنا</value>
   </data>
 </root>
