@@ -1,6 +1,16 @@
-﻿﻿
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization  
+@using centrny.Resources
+@inject IStringLocalizer<SharedResource> SharedLocalizer
+@inject IViewLocalizer Localizer
+@{
+    var culture = System.Globalization.CultureInfo.CurrentCulture.Name;
+    var isRtl = culture.StartsWith("ar");
+    var direction = isRtl ? "rtl" : "ltr";
+    var textAlign = isRtl ? "right" : "left";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@culture" dir="@direction">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -274,6 +284,12 @@
             gap: 1rem;
         }
 
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .menu-toggle-btn {
             background: none;
             border: none;
@@ -384,6 +400,96 @@
             background: #c1c8d6;
             border-radius: 5px;
         }
+
+        /* RTL Support for Arabic */
+        [dir="rtl"] .modern-sidebar {
+            left: auto;
+            right: 0;
+            transform: translateX(100%);
+            box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+        }
+
+        [dir="rtl"] .modern-sidebar.open {
+            transform: translateX(0);
+        }
+
+        [dir="rtl"] .sidebar-header {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .sidebar-brand {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .nav-link {
+            text-align: right;
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .nav-icon {
+            margin-left: 0.5rem;
+            margin-right: 0;
+        }
+
+        [dir="rtl"] .main-wrapper {
+            margin-left: 0;
+            margin-right: var(--sidebar-width);
+        }
+
+        [dir="rtl"] .header-left {
+            justify-content: flex-end;
+        }
+
+        [dir="rtl"] .menu-toggle-btn {
+            margin-right: 0;
+            margin-left: 0.75rem;
+        }
+
+        [dir="rtl"] .page-title {
+            text-align: right;
+        }
+
+        /* Language Switcher Styles */
+        .language-switcher {
+            position: relative;
+            display: inline-block;
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 120px;
+            z-index: 1050;
+        }
+
+        [dir="rtl"] .language-dropdown {
+            right: auto;
+            left: 0;
+        }
+
+        .language-dropdown.show {
+            display: block;
+        }
+
+        .language-option {
+            display: block;
+            padding: 8px 12px;
+            color: #333;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .language-option:hover {
+            background: #f5f5f5;
+            color: #333;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -419,107 +525,107 @@
                 <ul class="nav-list">
                     <li>
                         <a class="nav-link" asp-controller="Home" asp-action="Index">
-                            <i class="fas fa-home nav-icon"></i> <span class="nav-text">Dashboard</span>
+                            <i class="fas fa-home nav-icon"></i> <span class="nav-text">@SharedLocalizer["Dashboard"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Root" asp-action="Index">
-                            <i class="fas fa-sitemap nav-icon"></i> <span class="nav-text">Roots</span>
+                            <i class="fas fa-sitemap nav-icon"></i> <span class="nav-text">@SharedLocalizer["Roots"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Group" asp-action="Index">
-                            <i class="fas fa-users nav-icon"></i> <span class="nav-text">Groups</span>
+                            <i class="fas fa-users nav-icon"></i> <span class="nav-text">@SharedLocalizer["Groups"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="User" asp-action="Index">
-                            <i class="fas fa-user nav-icon"></i> <span class="nav-text">Users</span>
+                            <i class="fas fa-user nav-icon"></i> <span class="nav-text">@SharedLocalizer["Users"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="EduYear" asp-action="Index">
-                            <i class="fas fa-calendar-alt nav-icon"></i> <span class="nav-text">Edu Years & Years</span>
+                            <i class="fas fa-calendar-alt nav-icon"></i> <span class="nav-text">@SharedLocalizer["EduYearsAndYears"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Level" asp-action="Index">
-                            <i class="fas fa-layer-group nav-icon"></i> <span class="nav-text">Levels</span>
+                            <i class="fas fa-layer-group nav-icon"></i> <span class="nav-text">@SharedLocalizer["Levels"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Subject" asp-action="Index">
-                            <i class="fas fa-book nav-icon"></i> <span class="nav-text">Subjects</span>
+                            <i class="fas fa-book nav-icon"></i> <span class="nav-text">@SharedLocalizer["Subjects"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Student" asp-action="Index">
-                            <i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Students</span>
+                            <i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">@SharedLocalizer["Students"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Year" asp-action="Index">
-                            <i class="fas fa-calendar nav-icon"></i> <span class="nav-text">Years</span>
+                            <i class="fas fa-calendar nav-icon"></i> <span class="nav-text">@SharedLocalizer["Years"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Teacher" asp-action="Index">
-                            <i class="fas fa-user-tie nav-icon"></i> <span class="nav-text">Teachers</span>
+                            <i class="fas fa-user-tie nav-icon"></i> <span class="nav-text">@SharedLocalizer["Teachers"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Exam" asp-action="Index">
-                            <i class="fas fa-file-alt nav-icon"></i> <span class="nav-text">Exams</span>
+                            <i class="fas fa-file-alt nav-icon"></i> <span class="nav-text">@SharedLocalizer["Exams"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Schedule" asp-action="Index">
-                            <i class="fas fa-clock nav-icon"></i> <span class="nav-text">Schedules</span>
+                            <i class="fas fa-clock nav-icon"></i> <span class="nav-text">@SharedLocalizer["Schedules"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Reservation" asp-action="Index">
-                            <i class="fas fa-calendar-check nav-icon"></i> <span class="nav-text">Reservations</span>
+                            <i class="fas fa-calendar-check nav-icon"></i> <span class="nav-text">@SharedLocalizer["Reservations"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="TeacherManagement" asp-action="Index">
-                            <i class="fas fa-cogs nav-icon"></i> <span class="nav-text">Teacher Management</span>
+                            <i class="fas fa-cogs nav-icon"></i> <span class="nav-text">@SharedLocalizer["TeacherManagement"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Item" asp-action="Index">
-                            <i class="fas fa-boxes nav-icon"></i> <span class="nav-text">Items</span>
+                            <i class="fas fa-boxes nav-icon"></i> <span class="nav-text">@SharedLocalizer["Items"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Security" asp-action="Index">
-                            <i class="fas fa-shield-alt nav-icon"></i> <span class="nav-text">Security</span>
+                            <i class="fas fa-shield-alt nav-icon"></i> <span class="nav-text">@SharedLocalizer["Security"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="DailyClass" asp-action="Index">
-                            <i class="fas fa-chalkboard nav-icon"></i> <span class="nav-text">Classes</span>
+                            <i class="fas fa-chalkboard nav-icon"></i> <span class="nav-text">@SharedLocalizer["Classes"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="TeacherClass" asp-action="Teacher">
-                            <i class="fas fa-user-tie nav-icon"></i> <span class="nav-text">Teacher Schedule</span>
+                            <i class="fas fa-user-tie nav-icon"></i> <span class="nav-text">@SharedLocalizer["TeacherSchedule"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="Question" asp-action="Index">
-                            <i class="fas fa-question-circle nav-icon"></i> <span class="nav-text">Questions</span>
+                            <i class="fas fa-question-circle nav-icon"></i> <span class="nav-text">@SharedLocalizer["Questions"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="StudentExam" asp-action="Index">
-                            <i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Student Exam</span>
+                            <i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">@SharedLocalizer["StudentExam"]</span>
                         </a>
                     </li>
                     <li>
                         <a class="nav-link" asp-controller="ViewAuthority" asp-action="Index">
-                            <i class="fas fa-users-cog nav-icon"></i> <span class="nav-text">Page Permissions</span>
+                            <i class="fas fa-users-cog nav-icon"></i> <span class="nav-text">@SharedLocalizer["PagePermissions"]</span>
                         </a>
                     </li>
                 </ul>
@@ -530,14 +636,14 @@
             {
                 <a class="nav-link logout-link" href="#" onclick="document.getElementById('logoutForm').submit();">
                     <i class="fas fa-sign-out-alt nav-icon"></i>
-                    <span class="nav-text">Logout</span>
+                    <span class="nav-text">@SharedLocalizer["Logout"]</span>
                 </a>
             }
             else
             {
                 <a class="nav-link" asp-controller="Login" asp-action="Index">
                     <i class="fas fa-sign-in-alt nav-icon"></i>
-                    <span class="nav-text">Login</span>
+                    <span class="nav-text">@SharedLocalizer["Login"]</span>
                 </a>
             }
         </div>
@@ -549,6 +655,24 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <span class="page-title">@ViewData["Title"]</span>
+            </div>
+            <div class="header-right">
+                <div class="language-switcher">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLanguageDropdown()">
+                        <i class="fas fa-globe"></i> @SharedLocalizer["Language"]
+                    </button>
+                    <div class="language-dropdown" id="languageDropdown">
+                        <form method="post" asp-controller="Localization" asp-action="SetLanguage" style="margin: 0;">
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                            <a href="#" class="language-option" onclick="setLanguage('en', this)">
+                                <i class="fas fa-flag-usa"></i> @SharedLocalizer["English"]
+                            </a>
+                            <a href="#" class="language-option" onclick="setLanguage('ar', this)">
+                                <i class="fas fa-flag"></i> @SharedLocalizer["Arabic"]
+                            </a>
+                        </form>
+                    </div>
+                </div>
             </div>
         </header>
         <main class="main-content">
@@ -585,6 +709,55 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === "Escape") {
                 toggleSidebar(false);
+                hideLanguageDropdown();
+            }
+        });
+
+        // Language switcher functions
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function hideLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            dropdown.classList.remove('show');
+        }
+
+        function setLanguage(culture, element) {
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/Localization/SetLanguage';
+            form.style.display = 'none';
+
+            const cultureInput = document.createElement('input');
+            cultureInput.type = 'hidden';
+            cultureInput.name = 'culture';
+            cultureInput.value = culture;
+
+            const returnUrlInput = document.createElement('input');
+            returnUrlInput.type = 'hidden';
+            returnUrlInput.name = 'returnUrl';
+            returnUrlInput.value = window.location.pathname + window.location.search;
+
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '__RequestVerificationToken';
+            tokenInput.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            form.appendChild(cultureInput);
+            form.appendChild(returnUrlInput);
+            form.appendChild(tokenInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // Close language dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const languageSwitcher = document.querySelector('.language-switcher');
+            if (languageSwitcher && !languageSwitcher.contains(event.target)) {
+                hideLanguageDropdown();
             }
         });
     </script>

@@ -1,6 +1,9 @@
 using centrny.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.Razor;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,33 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddLogging();
+
+// ===== LOCALIZATION CONFIGURATION =====
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+builder.Services.AddMvc()
+    .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
+    .AddDataAnnotationsLocalization();
+
+// Configure supported cultures
+var supportedCultures = new[]
+{
+    new CultureInfo("en"),
+    new CultureInfo("ar")
+};
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture("en");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    
+    // Configure culture providers
+    options.RequestCultureProviders.Insert(0, new QueryStringRequestCultureProvider());
+    options.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
+    options.RequestCultureProviders.Insert(2, new AcceptLanguageHeaderRequestCultureProvider());
+});
+// ===== END LOCALIZATION CONFIG =======
 
 // ===== ADD THIS FOR SESSION =====
 builder.Services.AddSession(options =>
@@ -43,6 +73,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// ===== ADD LOCALIZATION MIDDLEWARE =====
+app.UseRequestLocalization();
+// ===== END LOCALIZATION =======
 
 // ===== ADD THIS FOR SESSION =====
 app.UseSession();
