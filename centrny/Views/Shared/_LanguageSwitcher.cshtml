@@ -1,0 +1,60 @@
+@using Microsoft.AspNetCore.Localization
+@using System.Globalization
+
+@{
+    var requestCulture = Context.Features.Get<IRequestCultureFeature>()!.RequestCulture;
+    var currentCulture = requestCulture.Culture;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="language-switcher">
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-globe me-1"></i>
+            @if (currentCulture.Name == "ar-EG")
+            {
+                <span>العربية</span>
+            }
+            else
+            {
+                <span>English</span>
+            }
+        </button>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item @(currentCulture.Name == "en-US" ? "active" : "")" 
+                   href="@Url.Action("SetLanguage", "Home", new { culture = "en-US", returnUrl = returnUrl })">
+                    <img src="~/images/flags/us.png" alt="English" class="flag-icon" onerror="this.style.display='none'"> English
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item @(currentCulture.Name == "ar-EG" ? "active" : "")"
+                   href="@Url.Action("SetLanguage", "Home", new { culture = "ar-EG", returnUrl = returnUrl })">
+                    <img src="~/images/flags/eg.png" alt="العربية" class="flag-icon" onerror="this.style.display='none'"> العربية
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<style>
+    .language-switcher {
+        display: inline-block;
+    }
+    
+    .flag-icon {
+        width: 16px;
+        height: 12px;
+        margin-right: 8px;
+        border-radius: 2px;
+    }
+    
+    .dropdown-item.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    .dropdown-item:hover {
+        background-color: var(--bs-primary-bg);
+    }
+</style>

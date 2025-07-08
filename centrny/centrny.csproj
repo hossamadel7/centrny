@@ -16,6 +16,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Localization" Version="2.2.0" />
   </ItemGroup>
 
 </Project>

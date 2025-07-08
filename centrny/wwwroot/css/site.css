@@ -1,4 +1,137 @@
-﻿/* /* ===============================================
+﻿/* ===============================================
+   INTERNATIONALIZATION & RTL SUPPORT
+   =============================================== */
+
+/* Base RTL support */
+html[dir="rtl"] {
+    text-align: right;
+}
+
+html[dir="rtl"] body {
+    font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+    direction: rtl;
+}
+
+/* RTL Bootstrap overrides */
+html[dir="rtl"] .text-start {
+    text-align: right !important;
+}
+
+html[dir="rtl"] .text-end {
+    text-align: left !important;
+}
+
+html[dir="rtl"] .me-1, html[dir="rtl"] .me-2, html[dir="rtl"] .me-3 {
+    margin-right: 0 !important;
+    margin-left: var(--bs-spacer) !important;
+}
+
+html[dir="rtl"] .ms-1, html[dir="rtl"] .ms-2, html[dir="rtl"] .ms-3 {
+    margin-left: 0 !important;
+    margin-right: var(--bs-spacer) !important;
+}
+
+html[dir="rtl"] .float-start {
+    float: right !important;
+}
+
+html[dir="rtl"] .float-end {
+    float: left !important;
+}
+
+/* RTL Sidebar adjustments */
+html[dir="rtl"] .modern-sidebar {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+}
+
+html[dir="rtl"] .modern-sidebar.show {
+    transform: translateX(0);
+}
+
+html[dir="rtl"] .sidebar-content {
+    padding-left: 0;
+    padding-right: var(--sidebar-width);
+}
+
+/* RTL Form controls */
+html[dir="rtl"] .form-control,
+html[dir="rtl"] .form-select,
+html[dir="rtl"] .modern-input {
+    text-align: right;
+}
+
+html[dir="rtl"] .input-group-text {
+    order: 2;
+}
+
+html[dir="rtl"] .input-group .form-control {
+    order: 1;
+}
+
+/* RTL Buttons with icons */
+html[dir="rtl"] .btn i {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+html[dir="rtl"] .btn i:first-child {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+/* RTL Dropdown */
+html[dir="rtl"] .dropdown-menu {
+    left: auto;
+    right: 0;
+}
+
+/* RTL Tables */
+html[dir="rtl"] table {
+    direction: rtl;
+}
+
+html[dir="rtl"] th,
+html[dir="rtl"] td {
+    text-align: right;
+}
+
+/* Language switcher styles */
+.language-switcher {
+    position: relative;
+}
+
+.language-switcher .dropdown-toggle::after {
+    margin-left: 0.255em;
+    margin-right: 0;
+}
+
+html[dir="rtl"] .language-switcher .dropdown-toggle::after {
+    margin-left: 0;
+    margin-right: 0.255em;
+}
+
+/* Modal RTL support */
+html[dir="rtl"] .modal-header .btn-close {
+    margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+/* Navigation RTL */
+html[dir="rtl"] .navbar-nav {
+    flex-direction: row-reverse;
+}
+
+/* Timeline RTL adjustments */
+html[dir="rtl"] .timeline-container {
+    direction: rtl;
+}
+
+html[dir="rtl"] .timeline-header {
+    text-align: right;
+}
+
+/* ===============================================
    GLOBAL (applies to all pages)
    =============================================== */
 body {

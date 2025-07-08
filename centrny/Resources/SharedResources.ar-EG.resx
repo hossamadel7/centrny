@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Common UI Elements -->
+  <data name="Welcome" xml:space="preserve">
+    <value>أهلاً وسهلاً</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>الرئيسية</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="Submit" xml:space="preserve">
+    <value>إرسال</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>إضافة</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>اليوم</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>اللغة</value>
+  </data>
+  
+  <!-- Student Related -->
+  <data name="StudentRegistration" xml:space="preserve">
+    <value>تسجيل الطلاب</value>
+  </data>
+  <data name="CompleteRegistration" xml:space="preserve">
+    <value>إكمال التسجيل</value>
+  </data>
+  <data name="StudentProfile" xml:space="preserve">
+    <value>ملف الطالب</value>
+  </data>
+  <data name="StudentName" xml:space="preserve">
+    <value>اسم الطالب</value>
+  </data>
+  <data name="StudentCode" xml:space="preserve">
+    <value>كود الطالب</value>
+  </data>
+  <data name="StudentPhone" xml:space="preserve">
+    <value>رقم الهاتف</value>
+  </data>
+  <data name="ParentPhone" xml:space="preserve">
+    <value>هاتف ولي الأمر</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>العنوان</value>
+  </data>
+  
+  <!-- Academic -->
+  <data name="Subject" xml:space="preserve">
+    <value>المادة</value>
+  </data>
+  <data name="Teacher" xml:space="preserve">
+    <value>المدرس</value>
+  </data>
+  <data name="Class" xml:space="preserve">
+    <value>الفصل</value>
+  </data>
+  <data name="Schedule" xml:space="preserve">
+    <value>الجدول</value>
+  </data>
+  <data name="Chapter" xml:space="preserve">
+    <value>الباب</value>
+  </data>
+  <data name="Question" xml:space="preserve">
+    <value>السؤال</value>
+  </data>
+  <data name="Exam" xml:space="preserve">
+    <value>الامتحان</value>
+  </data>
+  <data name="Year" xml:space="preserve">
+    <value>السنة</value>
+  </data>
+  <data name="EducationYear" xml:space="preserve">
+    <value>السنة الدراسية</value>
+  </data>
+  
+  <!-- Daily Class -->
+  <data name="DailyTimeline" xml:space="preserve">
+    <value>الجدول اليومي</value>
+  </data>
+  <data name="GenerateWeeklyClasses" xml:space="preserve">
+    <value>إنشاء فصول أسبوعية</value>
+  </data>
+  <data name="AddChapter" xml:space="preserve">
+    <value>إضافة باب</value>
+  </data>
+  <data name="ChapterName" xml:space="preserve">
+    <value>اسم الباب</value>
+  </data>
+  
+  <!-- Security Messages -->
+  <data name="SecureInformation" xml:space="preserve">
+    <value>معلوماتك آمنة وستستخدم فقط لأغراض تعليمية.</value>
+  </data>
+  
+  <!-- Root/Center -->
+  <data name="RootCode" xml:space="preserve">
+    <value>كود الجذر</value>
+  </data>
+  <data name="RootName" xml:space="preserve">
+    <value>اسم الجذر</value>
+  </data>
+  <data name="RootPhone" xml:space="preserve">
+    <value>هاتف الجذر</value>
+  </data>
+  <data name="RootOwner" xml:space="preserve">
+    <value>مالك الجذر</value>
+  </data>
+  <data name="IsCenter" xml:space="preserve">
+    <value>هو مركز</value>
+  </data>
+  
+  <!-- Common Form Validation -->
+  <data name="Required" xml:space="preserve">
+    <value>مطلوب</value>
+  </data>
+  <data name="FieldRequired" xml:space="preserve">
+    <value>هذا الحقل مطلوب</value>
+  </data>
+  
+  <!-- Navigation -->
+  <data name="PreviousDay" xml:space="preserve">
+    <value>اليوم السابق</value>
+  </data>
+  <data name="NextDay" xml:space="preserve">
+    <value>اليوم التالي</value>
+  </data>
+</root>
