@@ -176,21 +176,32 @@ class ScheduleManager {
         // Check if user is center or teacher
         const isCenter = window.userContext?.isCenter === true;
         const isTeacher = window.userContext?.isTeacher === true;
+        const isBranchManager = window.userContext?.isBranchManager === true;
 
-        console.log('[DEBUG] User type - isCenter:', isCenter, 'isTeacher:', isTeacher);
+        console.log('[DEBUG] User type - isCenter:', isCenter, 'isTeacher:', isTeacher, 'isBranchManager:', isBranchManager);
 
         let promises = [];
 
         if (isCenter) {
-            // For CENTER USERS: Load branches directly using the correct endpoint
+            // For CENTER USERS: Different behavior for branch managers vs center admins
             console.log('[DEBUG] Loading dropdowns for CENTER user...');
 
-            // Load branches for center user
-            promises.push(
-                this.loadDropdown('/Schedule/GetBranchesForCenterUser', 'branchCode', 'Select Branch (Optional)', schedule?.extendedProps?.branchCode)
-            );
+            if (isBranchManager) {
+                // Branch Manager: No need to load branches (already assigned)
+                console.log('[DEBUG] Branch Manager - skipping branch dropdown load');
+                // Set the branch code if it's not already set
+                if (this.dom.branchCode && !this.dom.branchCode.value) {
+                    this.dom.branchCode.value = window.userContext.assignedBranchCode || '';
+                }
+            } else {
+                // Center Admin: Load branches for selection
+                console.log('[DEBUG] Center Admin - loading branch dropdown');
+                promises.push(
+                    this.loadDropdown('/Schedule/GetBranchesForCenterUser', 'branchCode', 'Select Branch (Optional)', schedule?.extendedProps?.branchCode)
+                );
+            }
 
-            // Load teachers for center user
+            // Load teachers for center user (both types)
             promises.push(
                 this.loadDropdown('/Schedule/GetTeachersForCenterUser', 'teacherCode', 'Select Teacher', schedule?.extendedProps?.teacherCode)
             );
@@ -226,10 +237,18 @@ class ScheduleManager {
 
         // Now load dependent dropdowns
         if (isCenter) {
-            // For center users, if we have a branch selected, load halls
-            if (schedule?.extendedProps?.branchCode) {
-                console.log('[DEBUG] Loading halls for selected branch:', schedule.extendedProps.branchCode);
-                await this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${schedule.extendedProps.branchCode}`, 'hallCode', 'Select Hall', schedule.extendedProps.hallCode);
+            // For center users, handle branch and halls
+            let branchCodeToUse = schedule?.extendedProps?.branchCode;
+            
+            if (isBranchManager) {
+                // Branch Manager: Use assigned branch code
+                branchCodeToUse = branchCodeToUse || window.userContext.assignedBranchCode;
+                console.log('[DEBUG] Branch Manager - using branch code:', branchCodeToUse);
+            }
+            
+            if (branchCodeToUse) {
+                console.log('[DEBUG] Loading halls for branch:', branchCodeToUse);
+                await this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${branchCodeToUse}`, 'hallCode', 'Select Hall', schedule?.extendedProps?.hallCode);
             } else {
                 if (this.dom.hallCode) {
                     this.dom.hallCode.innerHTML = '<option value="">Select Branch First</option>';

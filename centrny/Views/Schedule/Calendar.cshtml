@@ -30,10 +30,41 @@
                         <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
                         Your schedules for: <strong>@ViewBag.UserRootName</strong>
                         <span class="badge ms-2">
-                            @(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode
+                            @if (ViewBag.IsCenter == true)
+                            {
+                                @if (ViewBag.IsBranchManager == true)
+                                {
+                                    <text>Branch Manager</text>
+                                }
+                                else
+                                {
+                                    <text>Center Admin</text>
+                                }
+                            }
+                            else
+                            {
+                                <text>Teacher</text>
+                            }
+                            - Root Code: @ViewBag.CurrentUserRootCode
                         </span>
                     </h6>
-                    <small>You can view and manage schedules for your assigned @(ViewBag.IsCenter ? "center" : "teaching account") only</small>
+                    <small>
+                        @if (ViewBag.IsCenter == true)
+                        {
+                            @if (ViewBag.IsBranchManager == true)
+                            {
+                                <text>You can view and manage schedules for your assigned branch only</text>
+                            }
+                            else
+                            {
+                                <text>You can view and manage schedules for all branches in your center</text>
+                            }
+                        }
+                        else
+                        {
+                            <text>You can view and manage schedules for your assigned teaching account only</text>
+                        }
+                    </small>
                 </div>
             }
 
@@ -244,15 +275,28 @@
                                 <!-- For CENTER USERS: NO CENTER FIELD, just hidden input -->
                                 <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
                                 
-                                <!-- Only show Branch and Educational Year for center users -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Branch</label>
-                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
-                                        <option value="">Select Branch (Optional)</option>
-                                        <!-- Branches will be loaded via JavaScript -->
-                                    </select>
-                                    <small class="text-muted">Select branch for this schedule</small>
-                                </div>
+                                @if (ViewBag.IsBranchManager == true)
+                                {
+                                    <!-- Branch Manager: Hidden branch field (auto-assigned) -->
+                                    <input type="hidden" id="branchCode" value="@ViewBag.AssignedBranchCode">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Branch (Auto-assigned)</label>
+                                        <input type="text" class="form-control" value="Your assigned branch" readonly>
+                                        <small class="text-muted">Branch is automatically assigned based on your role</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- Center Admin: Show branch dropdown for selection -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Branch</label>
+                                        <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                            <option value="">Select Branch (Optional)</option>
+                                            <!-- Branches will be loaded via JavaScript -->
+                                        </select>
+                                        <small class="text-muted">Select branch for this schedule</small>
+                                    </div>
+                                }
                                 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Educational Year</label>
@@ -503,6 +547,8 @@
         isTeacher: @Json.Serialize(ViewBag.IsTeacher ?? false),
         branchName: @Json.Serialize(ViewBag.BranchName ?? ""),
         singleCenterCode: @Json.Serialize(ViewBag.SingleCenterCode ?? null),
+        isBranchManager: @Json.Serialize(ViewBag.IsBranchManager ?? false),
+        assignedBranchCode: @Json.Serialize(ViewBag.AssignedBranchCode ?? null),
         hasError: @Json.Serialize(ViewBag.Error != null)
     };
 

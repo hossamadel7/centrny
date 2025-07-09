@@ -682,6 +682,11 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
+
+            entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Groups)
+                .HasForeignKey(d => d.BranchCode)
+                .HasConstraintName("FK_Group_Branch");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.GroupInsertUserNavigations)
                 .HasForeignKey(d => d.InsertUser)

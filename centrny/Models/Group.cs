@@ -13,6 +13,8 @@ public partial class Group
 
     public int RootCode { get; set; }
 
+    public int? BranchCode { get; set; }
+
     public int InsertUser { get; set; }
 
     public DateTime InsertTime { get; set; }
@@ -22,6 +24,8 @@ public partial class Group
     public DateTime? LastUpdateTime { get; set; }
 
     public virtual ICollection<GroupPage> GroupPages { get; set; } = new List<GroupPage>();
+
+    public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual User InsertUserNavigation { get; set; } = null!;
 
