@@ -83,6 +83,35 @@ namespace centrny.Controllers
             }
         }
 
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst("NameIdentifier");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            return 1; // Fallback
+        }
+
+        private async Task<int?> GetCurrentUserGroupBranchCode()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var user = await _context.Users
+                    .AsNoTracking()
+                    .Include(u => u.GroupCodeNavigation)
+                    .FirstOrDefaultAsync(u => u.UserCode == userId);
+
+                return user?.GroupCodeNavigation?.BranchCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting current user's group branch code");
+                return null;
+            }
+        }
+
         private async Task<(int? rootCode, string rootName, bool isCenter, string branchName)> GetUserContext()
         {
             try
@@ -114,7 +143,7 @@ namespace centrny.Controllers
             }
         }
 
-        private IQueryable<Schedule> GetFilteredScheduleQuery()
+        private async Task<IQueryable<Schedule>> GetFilteredScheduleQueryAsync()
         {
             var userRootCode = GetCurrentUserRootCode();
             var query = _context.Schedules.AsQueryable();
@@ -122,6 +151,19 @@ namespace centrny.Controllers
             if (userRootCode.HasValue)
             {
                 query = query.Where(s => s.RootCode == userRootCode.Value);
+
+                // Apply branch-level filtering for center users
+                if (IsCurrentUserCenter())
+                {
+                    var userGroupBranchCode = await GetCurrentUserGroupBranchCode();
+                    if (userGroupBranchCode.HasValue)
+                    {
+                        // Branch Manager: only see schedules for their specific branch
+                        query = query.Where(s => s.BranchCode == userGroupBranchCode.Value);
+                    }
+                    // Center Admin (userGroupBranchCode == null): see all schedules in their root
+                }
+                // Teacher users: see all schedules in their root (current behavior)
             }
             else
             {
@@ -197,6 +239,36 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "This endpoint is only available for center users." });
                 }
 
+                var userGroupBranchCode = await GetCurrentUserGroupBranchCode();
+                
+                // Branch Manager: has a specific branch assigned
+                if (userGroupBranchCode.HasValue)
+                {
+                    var branch = await _context.Branches
+                        .AsNoTracking()
+                        .Where(b => b.BranchCode == userGroupBranchCode.Value && b.RootCode == userRootCode.Value && b.IsActive)
+                        .Select(b => new {
+                            value = b.BranchCode,
+                            text = b.BranchName
+                        })
+                        .FirstOrDefaultAsync();
+
+                    if (branch == null)
+                    {
+                        return Json(new { success = false, error = "Your assigned branch is not found or inactive." });
+                    }
+
+                    // Return only their assigned branch
+                    return Json(new { 
+                        success = true, 
+                        branches = new[] { branch }, 
+                        centerCode = (int?)null, // Not needed for branch managers
+                        isBranchManager = true,
+                        assignedBranchCode = userGroupBranchCode.Value
+                    });
+                }
+                
+                // Center Admin: can see all branches under their center
                 var centerCode = await GetSingleCenterForCenterUser();
                 if (!centerCode.HasValue)
                 {
@@ -213,7 +285,13 @@ namespace centrny.Controllers
                     .OrderBy(b => b.text)
                     .ToListAsync();
 
-                return Json(new { success = true, branches = branches, centerCode = centerCode.Value });
+                return Json(new { 
+                    success = true, 
+                    branches = branches, 
+                    centerCode = centerCode.Value,
+                    isBranchManager = false,
+                    assignedBranchCode = (int?)null
+                });
             }
             catch (Exception ex)
             {
@@ -346,18 +424,7 @@ namespace centrny.Controllers
 
                 await PopulateDropDowns();
 
-                var schedules = await _context.Schedules
-                    .AsNoTracking()
-                    .Where(s => s.RootCode == rootCode.Value)
-                    .Include(s => s.RootCodeNavigation)
-                    .Include(s => s.YearCodeNavigation)
-                    .Include(s => s.HallCodeNavigation)
-                    .Include(s => s.TeacherCodeNavigation)
-                    .Include(s => s.SubjectCodeNavigation)
-                    .Include(s => s.CenterCodeNavigation)
-                    .Include(s => s.BranchCodeNavigation)
-                    .Include(s => s.EduYearCodeNavigation)
-                    .ToListAsync();
+                var schedules = await (await GetFilteredScheduleQueryAsync()).ToListAsync();
 
                 ViewBag.CurrentUserRootCode = rootCode;
                 ViewBag.UserRootName = rootName;
@@ -374,6 +441,11 @@ namespace centrny.Controllers
                         .Select(c => c.CenterCode)
                         .FirstOrDefaultAsync();
                     ViewBag.SingleCenterCode = centerCode;
+
+                    // Check if user is a branch manager or center admin
+                    var userGroupBranchCode = await GetCurrentUserGroupBranchCode();
+                    ViewBag.IsBranchManager = userGroupBranchCode.HasValue;
+                    ViewBag.AssignedBranchCode = userGroupBranchCode;
                 }
 
                 return View(schedules);
@@ -461,18 +533,9 @@ namespace centrny.Controllers
                     return Json(new List<object>());
                 }
 
-                // Load all schedules for user root code, as requested
-                var schedules = await _context.Schedules
-                    .AsNoTracking()
-                    .Where(s => s.RootCode == rootCode.Value && s.StartTime.HasValue && s.EndTime.HasValue && !string.IsNullOrEmpty(s.DayOfWeek))
-                    .Include(s => s.RootCodeNavigation)
-                    .Include(s => s.YearCodeNavigation)
-                    .Include(s => s.HallCodeNavigation)
-                    .Include(s => s.TeacherCodeNavigation)
-                    .Include(s => s.SubjectCodeNavigation)
-                    .Include(s => s.CenterCodeNavigation)
-                    .Include(s => s.BranchCodeNavigation)
-                    .Include(s => s.EduYearCodeNavigation)
+                // Load schedules using filtered query with branch-level access control
+                var schedules = await (await GetFilteredScheduleQueryAsync())
+                    .Where(s => s.StartTime.HasValue && s.EndTime.HasValue && !string.IsNullOrEmpty(s.DayOfWeek))
                     .ToListAsync();
 
                 var events = schedules.Select(schedule => new
@@ -883,7 +946,7 @@ namespace centrny.Controllers
                 return RedirectToAction("Index");
             }
 
-            var schedule = await GetFilteredScheduleQuery()
+            var schedule = await (await GetFilteredScheduleQueryAsync())
                 .Where(s => s.ScheduleCode == id.Value)
                 .FirstOrDefaultAsync();
 
@@ -1097,7 +1160,7 @@ namespace centrny.Controllers
                 return RedirectToAction("Index");
             }
 
-            var schedule = await GetFilteredScheduleQuery()
+            var schedule = await (await GetFilteredScheduleQueryAsync())
                 .Where(s => s.ScheduleCode == id.Value)
                 .FirstOrDefaultAsync();
 

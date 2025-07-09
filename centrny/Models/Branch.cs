@@ -37,6 +37,8 @@ public partial class Branch
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 
+    public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
+
     public virtual ICollection<Hall> Halls { get; set; } = new List<Hall>();
 
     public virtual User InsertUserNavigation { get; set; } = null!;
