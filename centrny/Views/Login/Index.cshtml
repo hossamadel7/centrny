@@ -1,17 +1,16 @@
-﻿@{
-    ViewData["Title"] = "Login";
+﻿@using centrny.Resources
+@{
+    ViewData["Title"] = Login.Title_Login;
     Layout = null;
 }
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName" dir="@(System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Center Management System</title>
+    <title>@Login.Title_LoginPage</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -239,7 +238,6 @@
             color: #495057;
         }
 
-        /* Animations */
         @@keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -284,7 +282,6 @@
             animation: fadeIn 0.8s ease-out;
         }
 
-        /* Responsive */
         @@media (max-width: 576px) {
             .login-container {
                 padding: 2rem 1.5rem;
@@ -303,11 +300,9 @@
             <div class="login-icon">
                 <i class="fas fa-graduation-cap"></i>
             </div>
-            <h1>Welcome Back</h1>
-            <p>Center Management System</p>
+            <h1>@Login.Login_WelcomeBack</h1>
+            <p>@Login.Login_CenterManagementSystem</p>
         </div>
-
-        @* Display any error messages *@
         @if (ViewBag.Error != null && !string.IsNullOrEmpty(ViewBag.Error.ToString()))
         {
             <div class="alert alert-danger" role="alert">
@@ -315,8 +310,6 @@
                 @ViewBag.Error
             </div>
         }
-
-        @* Display success messages *@
         @if (ViewBag.Success != null && !string.IsNullOrEmpty(ViewBag.Success.ToString()))
         {
             <div class="alert alert-success" role="alert">
@@ -324,29 +317,24 @@
                 @ViewBag.Success
             </div>
         }
-
         <div class="system-info">
             <i class="fas fa-info-circle me-2"></i>
-            <strong>Troubleshooting Login Issues</strong>
+            <strong>@Login.Login_TroubleshootingTitle</strong>
             <br>
-            <small class="text-muted">Press Ctrl+D to find your username • Check database for actual user records</small>
+            <small class="text-muted">@Login.Login_TroubleshootingHint</small>
         </div>
-
         <form method="post" asp-action="Login" asp-controller="Login" id="loginForm" novalidate>
             @Html.AntiForgeryToken()
-
-            @* Include returnUrl if provided *@
             @if (Context.Request.Query.ContainsKey("returnUrl") && !string.IsNullOrEmpty(Context.Request.Query["returnUrl"]))
             {
                 <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
             }
-
             <div class="input-group">
                 <input type="text"
                        name="username"
                        id="username"
                        class="form-control has-icon"
-                       placeholder="Enter your username"
+                       placeholder="@Login.Login_UsernamePlaceholder"
                        required
                        autocomplete="username"
                        maxlength="50"
@@ -354,219 +342,178 @@
                 <i class="fas fa-user input-icon"></i>
                 <div class="invalid-feedback" id="username-error"></div>
             </div>
-
             <div class="input-group">
                 <input type="password"
                        name="password"
                        id="password"
                        class="form-control has-icon"
-                       placeholder="Enter your password"
+                       placeholder="@Login.Login_PasswordPlaceholder"
                        required
                        autocomplete="current-password"
                        maxlength="100" />
                 <i class="fas fa-lock input-icon"></i>
-                <i class="fas fa-eye password-toggle" id="passwordToggle" title="Show/Hide Password"></i>
+                <i class="fas fa-eye password-toggle" id="passwordToggle" title="@Login.Login_PasswordToggle"></i>
                 <div class="invalid-feedback" id="password-error"></div>
             </div>
-
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="rememberMe" id="rememberMe">
                 <label class="form-check-label" for="rememberMe">
                     <i class="fas fa-clock me-1"></i>
-                    Keep me signed in for 8 hours
+                    @Login.Login_RememberMe
                 </label>
             </div>
-
             <button type="submit" class="btn btn-login" id="loginBtn">
                 <span class="btn-text">
                     <i class="fas fa-sign-in-alt me-2"></i>
-                    Sign In
+                    @Login.Login_SignIn
                 </span>
             </button>
-
             <div class="forgot-password">
                 <a href="#" onclick="showContactAdmin()">
                     <i class="fas fa-tools me-1"></i>
-                    Troubleshooting Login Issues
+                    @Login.Login_TroubleshootingLink
                 </a>
             </div>
         </form>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-                /*
-                 * LOGIN SYSTEM EXPLANATION:
-                 *
-                 * 1. When a Root is created, triggers automatically create:
-                 *    - Center record (if isCenter = 1)
-                 *    - Group record named "Administration"
-                 *    - User record with username: {Root_Name}_{Root_Code}
-                 *
-                 * 2. Default password is set to "123456789" (plain text)
-                 *
-                 * 3. User table trigger automatically hashes passwords:
-                 *    - Uses MD5 hashing: HASHBYTES('MD5', password)
-                 *    - Stores as UPPERCASE 32-character hex string
-                 *    - Only hashes if password isn't already a valid MD5 hash
-                 *
-                 * 4. Login verification:
-                 *    - User enters plain text password
-                 *    - Controller hashes it with MD5
-                 *    - Compares with database hash (case-insensitive)
-                 */
+                // Localized strings from resources
+                const usernameRequiredText = '@Login.Login_UsernameRequired';
+                const usernameMinLengthText = '@Login.Login_UsernameMinLength';
+                const usernamePatternText = '@Login.Login_UsernamePattern';
+                const passwordRequiredText = '@Login.Login_PasswordRequired';
+                const passwordMinLengthText = '@Login.Login_PasswordMinLength';
+                const signingInText = '@Login.Login_SigningIn';
+                const showPasswordText = '@Login.Login_ShowPassword';
+                const hidePasswordText = '@Login.Login_HidePassword';
+                const findUsernameText = '@Login.Login_FindUsername';
+                const runSqlQueryText = '@Login.Login_RunSqlQuery';
+                const commonTestCredentialsText = '@Login.Login_CommonTestCredentials';
+                const closeText = '@Login.Login_Close';
+                const troubleshootingStepsText = '@Login.Login_TroubleshootingSteps';
+                const step1Text = '@Login.Login_Step1';
+                const step2Text = '@Login.Login_Step2';
+                const step3Text = '@Login.Login_Step3';
+                const noteText = '@Login.Login_TroubleshootingNote';
+
                 document.addEventListener('DOMContentLoaded', function() {
                     const form = document.getElementById('loginForm');
                     const loginBtn = document.getElementById('loginBtn');
                     const usernameInput = document.getElementById('username');
                     const passwordInput = document.getElementById('password');
                     const passwordToggle = document.getElementById('passwordToggle');
-
-                    // Focus on username field
                     usernameInput.focus();
-
-                    // Password visibility toggle
                     passwordToggle.addEventListener('click', function() {
                         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                         passwordInput.setAttribute('type', type);
-
-                        // Toggle icon
                         this.classList.toggle('fa-eye');
                         this.classList.toggle('fa-eye-slash');
-
-                        // Update title
-                        this.title = type === 'password' ? 'Show Password' : 'Hide Password';
+                        this.title = type === 'password' ? showPasswordText : hidePasswordText;
                     });
-
-                    // Real-time validation
                     usernameInput.addEventListener('input', function() {
                         validateUsername();
                     });
-
                     passwordInput.addEventListener('input', function() {
                         validatePassword();
                     });
-
-                    // Handle form submission
                     form.addEventListener('submit', function(e) {
                         if (!validateForm()) {
                             e.preventDefault();
                             showValidationErrors();
                             return;
                         }
-
-                        // Show loading state
                         showLoadingState();
                     });
-
-                    // Handle Enter key navigation
                     usernameInput.addEventListener('keypress', function(e) {
                         if (e.key === 'Enter') {
                             e.preventDefault();
                             passwordInput.focus();
                         }
                     });
-
                     passwordInput.addEventListener('keypress', function(e) {
                         if (e.key === 'Enter' && validateForm()) {
                             form.submit();
                         }
                     });
-
                     function validateUsername() {
                         const username = usernameInput.value.trim();
                         const errorElement = document.getElementById('username-error');
-
                         if (username.length === 0) {
-                            setFieldError(usernameInput, errorElement, 'Username is required');
+                            setFieldError(usernameInput, errorElement, usernameRequiredText);
                             return false;
                         } else if (username.length < 3) {
-                            setFieldError(usernameInput, errorElement, 'Username must be at least 3 characters');
+                            setFieldError(usernameInput, errorElement, usernameMinLengthText);
                             return false;
                         } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                            setFieldError(usernameInput, errorElement, 'Username can only contain letters, numbers, and underscores');
+                            setFieldError(usernameInput, errorElement, usernamePatternText);
                             return false;
                         } else {
                             clearFieldError(usernameInput, errorElement);
                             return true;
                         }
                     }
-
                     function validatePassword() {
                         const password = passwordInput.value;
                         const errorElement = document.getElementById('password-error');
-
                         if (password.length === 0) {
-                            setFieldError(passwordInput, errorElement, 'Password is required');
+                            setFieldError(passwordInput, errorElement, passwordRequiredText);
                             return false;
                         } else if (password.length < 3) {
-                            setFieldError(passwordInput, errorElement, 'Password must be at least 3 characters');
+                            setFieldError(passwordInput, errorElement, passwordMinLengthText);
                             return false;
                         } else {
                             clearFieldError(passwordInput, errorElement);
                             return true;
                         }
                     }
-
                     function validateForm() {
                         const isUsernameValid = validateUsername();
                         const isPasswordValid = validatePassword();
                         return isUsernameValid && isPasswordValid;
                     }
-
                     function setFieldError(field, errorElement, message) {
                         field.classList.add('is-invalid');
                         errorElement.textContent = message;
                         errorElement.style.display = 'block';
                     }
-
                     function clearFieldError(field, errorElement) {
                         field.classList.remove('is-invalid');
                         errorElement.textContent = '';
                         errorElement.style.display = 'none';
                     }
-
                     function showValidationErrors() {
                         const container = document.querySelector('.login-container');
                         container.classList.add('shake');
-
                         setTimeout(() => {
                             container.classList.remove('shake');
                         }, 500);
                     }
-
                     function showLoadingState() {
                         loginBtn.classList.add('loading');
                         loginBtn.disabled = true;
-                        loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+                        loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + signingInText;
                     }
-
                     function hideLoadingState() {
                         loginBtn.classList.remove('loading');
                         loginBtn.disabled = false;
-                        loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Sign In';
+                        loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>' + '@Login.Login_SignIn';
                     }
-
-                    // Auto-hide loading state on page load (in case of server errors)
                     window.addEventListener('load', function() {
                         hideLoadingState();
                     });
-
-                    // Demo credentials helper
                     window.fillDemoCredentials = function() {
-                        // Show a dialog to help find the right username
                         showUsernameHelper();
                     };
-
                     function showUsernameHelper() {
                         const helper = `
                             <div class="alert alert-warning mt-3" id="usernameHelper">
-                                <h6><i class="fas fa-search me-2"></i>Find Your Username</h6>
-                                <p class="mb-2"><strong>Run this SQL query in your database:</strong></p>
+                                <h6><i class="fas fa-search me-2"></i>${findUsernameText}</h6>
+                                <p class="mb-2"><strong>${runSqlQueryText}</strong></p>
                                 <code style="display: block; background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
         SELECT Username, [Name], IsActive FROM [User] WHERE IsActive = 1 ORDER BY User_Code;
                                 </code>
-                                <p class="mb-2"><strong>Common Test Credentials:</strong></p>
+                                <p class="mb-2"><strong>${commonTestCredentialsText}</strong></p>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="fillCredentials('testuser', '123456789')">
@@ -580,19 +527,14 @@
                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('usernameHelper').remove()">
-                                    <i class="fas fa-times"></i> Close
+                                    <i class="fas fa-times"></i> ${closeText}
                                 </button>
                             </div>
                         `;
-
-                        // Remove existing helper
                         const existing = document.getElementById('usernameHelper');
                         if (existing) existing.remove();
-
-                        // Add new helper
                         document.querySelector('.forgot-password').insertAdjacentHTML('afterend', helper);
                     }
-
                     function fillCredentials(username, password) {
                         usernameInput.value = username;
                         passwordInput.value = password;
@@ -601,39 +543,31 @@
                         document.getElementById('usernameHelper').remove();
                     }
                 });
-
                 function showContactAdmin() {
                     const troubleshootingInfo = `
                         <div class="alert alert-info mt-3" id="troubleshootingInfo">
-                            <h6><i class="fas fa-tools me-2"></i>Troubleshooting Steps</h6>
-
-                            <p class="mb-2"><strong>Step 1: Check if users exist</strong></p>
+                            <h6><i class="fas fa-tools me-2"></i>${troubleshootingStepsText}</h6>
+                            <p class="mb-2"><strong>${step1Text}</strong></p>
                             <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
         SELECT Username, [Name], IsActive FROM [User] WHERE IsActive = 1;
                             </code>
-
-                            <p class="mb-2 mt-3"><strong>Step 2: Verify password hashes</strong></p>
+                            <p class="mb-2 mt-3"><strong>${step2Text}</strong></p>
                             <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
         SELECT Username, Password, LEN(Password) FROM [User] WHERE Username = 'your_username';
                             </code>
-
-                            <p class="mb-2 mt-3"><strong>Step 3: Create a test user</strong></p>
+                            <p class="mb-2 mt-3"><strong>${step3Text}</strong></p>
                             <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
         INSERT INTO [User] (User_Code, [Name], Username, [Password], Group_Code, IsActive, Insert_User, Insert_Time)
         VALUES (999, 'Test User', 'testuser', '123456789', 1, 1, 1, GETDATE());
                             </code>
-
                             <div class="alert alert-warning mt-3">
-                                <small><strong>Note:</strong> Password should automatically hash to MD5. If Group_Code 1 doesn't exist, create a group first or use an existing Group_Code from your database.</small>
+                                <small><strong>${noteText}</strong></small>
                             </div>
-
                             <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('troubleshootingInfo').remove()">
-                                <i class="fas fa-times"></i> Close
+                                <i class="fas fa-times"></i> ${closeText}
                             </button>
                         </div>
                     `;
-
-                    // Remove existing info
                     const existing = document.getElementById('troubleshootingInfo');
                     if (existing) {
                         existing.remove();
@@ -641,8 +575,6 @@
                         document.querySelector('.forgot-password').insertAdjacentHTML('afterend', troubleshootingInfo);
                     }
                 }
-
-                // Add keyboard shortcut for demo (Ctrl + D)
                 document.addEventListener('keydown', function(e) {
                     if (e.ctrlKey && e.key === 'd') {
                         e.preventDefault();

@@ -21,6 +21,8 @@ public partial class Group
 
     public DateTime? LastUpdateTime { get; set; }
 
+    public int? BranchCode { get; set; }
+
     public virtual ICollection<GroupPage> GroupPages { get; set; } = new List<GroupPage>();
 
     public virtual User InsertUserNavigation { get; set; } = null!;

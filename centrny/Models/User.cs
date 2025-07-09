@@ -25,13 +25,9 @@ public partial class User
 
     public DateTime? LastUpdateTime { get; set; }
 
-    public int? BranchCode { get; set; }
-
     public virtual ICollection<Answer> AnswerInsertUserNavigations { get; set; } = new List<Answer>();
 
     public virtual ICollection<Answer> AnswerLastUpdateUserNavigations { get; set; } = new List<Answer>();
-
-    public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual ICollection<Branch> BranchInsertUserNavigations { get; set; } = new List<Branch>();
 

@@ -1,6 +1,8 @@
 using centrny.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,11 +26,24 @@ builder.Services.AddLogging();
 // ===== ADD THIS FOR SESSION =====
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // or whatever timeout you want
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 // ===== END SESSION CONFIG =======
+
+// ===== ADD THIS FOR LOCALIZATION =====
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+var supportedCultures = new[] { new CultureInfo("en"), new CultureInfo("ar") };
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture("en");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    // Accept-Language from browser
+    options.RequestCultureProviders.Insert(0, new AcceptLanguageHeaderRequestCultureProvider());
+});
+// ===== END LOCALIZATION CONFIG =======
 
 var app = builder.Build();
 
@@ -44,7 +59,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ===== ADD THIS FOR SESSION =====
+// ===== ENABLE LOCALIZATION =====
+var locOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
+app.UseRequestLocalization(locOptions);
+// ===== END LOCALIZATION =======
+
+// ===== ENABLE SESSION =====
 app.UseSession();
 // ===== END SESSION CONFIG =======
 

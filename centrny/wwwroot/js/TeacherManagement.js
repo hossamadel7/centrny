@@ -5,7 +5,7 @@ let currentTeacherCode = null;
 $(function () {
     // Load user info and setup UI
     $.ajax({
-        url: '/Management/GetUserRootInfo',
+        url: '/TeacherManagement/GetUserRootInfo',
         method: 'GET',
         success: function (data) {
             if (data.error) {
@@ -25,7 +25,7 @@ $(function () {
 
     function loadTeachers(rootCode) {
         $.ajax({
-            url: '/Management/GetTeachersByRoot?rootCode=' + rootCode,
+            url: '/TeacherManagement/GetTeachersByRoot?rootCode=' + rootCode,
             method: 'GET',
             success: function (teachers) {
                 let html = teachers.map(teacher => `
@@ -66,7 +66,7 @@ $(function () {
             InsertUser: loggedInUserCode
         };
         $.ajax({
-            url: '/Management/AddTeacher',
+            url: '/TeacherManagement/AddTeacher',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(teacherData),
@@ -84,7 +84,7 @@ $(function () {
     // --- Edit Teacher ---
     $(document).on('click', '.edit-teacher-btn', function () {
         let teacherCode = $(this).data('teacher');
-        $.get('/Management/GetTeacherById?teacherCode=' + teacherCode, function (teacher) {
+        $.get('/TeacherManagement/GetTeacherById?teacherCode=' + teacherCode, function (teacher) {
             $('#editTeacherCode').val(teacher.teacherCode);
             $('#editTeacherName').val(teacher.teacherName);
             $('#editTeacherPhone').val(teacher.teacherPhone);
@@ -102,7 +102,7 @@ $(function () {
             TeacherAddress: $('#editTeacherAddress').val()
         };
         $.ajax({
-            url: '/Management/EditTeacher',
+            url: '/TeacherManagement/EditTeacher',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(teacherEdit),
@@ -119,7 +119,7 @@ $(function () {
         let teacherCode = $(this).data('teacher');
         if (!confirm('Are you sure you want to delete this teacher? All their teaching subjects will also be deleted.')) return;
         $.ajax({
-            url: '/Management/DeleteTeacher',
+            url: '/TeacherManagement/DeleteTeacher',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(teacherCode),
@@ -139,7 +139,7 @@ $(function () {
             return;
         }
         $.ajax({
-            url: `/Management/GetSubjectsByTeacher?teacherCode=${teacherCode}&rootCode=${loggedInUserRootCode}`,
+            url: `/TeacherManagement/GetSubjectsByTeacher?teacherCode=${teacherCode}&rootCode=${loggedInUserRootCode}`,
             method: 'GET',
             success: function (subjects) {
                 let html = '';
@@ -167,7 +167,7 @@ $(function () {
         currentTeacherCode = $(this).data('teacher');
         // Populate year dropdown
         $.ajax({
-            url: '/Management/GetYearsByRoot?rootCode=' + loggedInUserRootCode,
+            url: '/TeacherManagement/GetYearsByRoot?rootCode=' + loggedInUserRootCode,
             type: 'GET',
             success: function (years) {
                 let $yearSelect = $('#yearSelect');
@@ -177,7 +177,7 @@ $(function () {
                 }
                 // Set educational year display
                 $.ajax({
-                    url: '/Management/GetActiveEduYearByRoot?rootCode=' + loggedInUserRootCode,
+                    url: '/TeacherManagement/GetActiveEduYearByRoot?rootCode=' + loggedInUserRootCode,
                     type: 'GET',
                     success: function (activeYear) {
                         $('#activeYearDisplay').val(activeYear.eduYearName || "No educational year");
@@ -185,7 +185,7 @@ $(function () {
                         if (activeYear.yearCode) $yearSelect.val(activeYear.yearCode);
                         // Now load branches
                         $.ajax({
-                            url: '/Management/GetBranchesForRootWithCenters?rootCode=' + loggedInUserRootCode,
+                            url: '/TeacherManagement/GetBranchesForRootWithCenters?rootCode=' + loggedInUserRootCode,
                             type: 'GET',
                             success: function (branches) {
                                 let $branchSelect = $('#branchSelect');
@@ -226,7 +226,7 @@ $(function () {
             TeacherCode: currentTeacherCode
         };
         $.ajax({
-            url: '/Management/AddTeachingSubject',
+            url: '/TeacherManagement/AddTeachingSubject',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),
@@ -247,7 +247,7 @@ $(function () {
         let subjectCode = $(this).data('subject');
         if (!confirm('Are you sure you want to delete this teaching subject?')) return;
         $.ajax({
-            url: '/Management/DeleteTeach',
+            url: '/TeacherManagement/DeleteTeach',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ TeacherCode: teacherCode, SubjectCode: subjectCode }),

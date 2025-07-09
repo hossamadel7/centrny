@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function eduYearRowHTML(eduYear) {
         return `
-            <td>${eduYear.eduCode ?? ''}</td>
+         
             <td>${eduYear.eduName ?? ''}</td>
             <td>${eduYear.isActive ? 'Yes' : 'No'}</td>
             <td>
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function yearRowHTML(year) {
         return `
-            <td>${year.yearCode ?? ''}</td>
+         
             <td>${year.yearName ?? ''}</td>
             <td>${year.yearSort ?? ''}</td>
             <td>${year.levelName ?? ''}</td>

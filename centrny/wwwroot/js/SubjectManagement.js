@@ -1,7 +1,10 @@
-﻿console.log('SubjectManagment.js loaded');
+﻿// Localized JS variables are expected to be injected from the Razor view
+// Example: const editTitle = 'Edit Subject';
+
+console.log("SubjectManagement.js loaded");
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Modal elements
+    console.log("DOMContentLoaded fired, JS running!");
     const modal = document.getElementById('addSubjectModal');
     const openBtn = document.getElementById('add-subject-btn');
     const closeBtn = document.getElementById('closeModal');
@@ -15,13 +18,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let editMode = false;
 
-    // Modal open/close logic
     function openModal(isEdit = false, subject = null) {
         modal.style.display = "flex";
         errorDiv.textContent = "";
         form.reset();
         editMode = isEdit;
-        modalTitle.textContent = isEdit ? "Edit Subject" : "Add Subject";
+        modalTitle.textContent = isEdit ? editTitle : addTitle;
         subjectCodeInput.value = '';
         if (!isEdit) {
             loadYears();
@@ -42,9 +44,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (event.target === modal) closeModalFunc();
     };
 
-    // Load all active years for the dropdown, optionally select a value
     function loadYears(selectedYearCode = null) {
-        yearSelect.innerHTML = `<option value="">Loading...</option>`;
+        yearSelect.innerHTML = `<option value="">${loadingYearsText}</option>`;
         fetch('/Subject/GetActiveYears')
             .then(resp => {
                 if (!resp.ok) throw new Error('Network response was not ok');
@@ -53,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 yearSelect.innerHTML = "";
                 if (!data || data.length === 0) {
-                    yearSelect.innerHTML = `<option value="">No active years</option>`;
+                    yearSelect.innerHTML = `<option value="">${noActiveYearsText}</option>`;
                     return;
                 }
                 data.forEach(y => {
@@ -62,11 +63,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .catch(() => {
-                yearSelect.innerHTML = `<option value="">Error loading years</option>`;
+                yearSelect.innerHTML = `<option value="">${errorLoadingYearsText}</option>`;
             });
     }
 
-    // Add/Edit Subject Form Submission
     form.onsubmit = function (e) {
         e.preventDefault();
         errorDiv.textContent = "";
@@ -77,12 +77,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const subjectCode = subjectCodeInput.value;
 
         if (!subjectName || !yearCode) {
-            errorDiv.textContent = "Please fill in all fields.";
+            errorDiv.textContent = pleaseFillFieldsText;
             return;
         }
 
         if (editMode && subjectCode) {
-            // Edit
             fetch('/Subject/EditSubject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -97,10 +96,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     closeModalFunc();
                 })
                 .catch(err => {
-                    errorDiv.textContent = "Could not edit subject: " + (err.message || "Unknown error");
+                    errorDiv.textContent = couldNotEditText + ": " + (err.message || "Unknown error");
                 });
         } else {
-            // Add
             fetch('/Subject/AddSubject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -115,12 +113,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     closeModalFunc();
                 })
                 .catch(err => {
-                    errorDiv.textContent = "Could not add subject: " + (err.message || "Unknown error");
+                    errorDiv.textContent = couldNotAddText + ": " + (err.message || "Unknown error");
                 });
         }
     };
 
-    // Add a new row to the subject table
     function addSubjectRow(subject) {
         if (!tbody) return;
         const tr = document.createElement('tr');
@@ -132,7 +129,6 @@ document.addEventListener('DOMContentLoaded', function () {
         addActionListeners(tr, subject);
     }
 
-    // Update an existing row
     function updateSubjectRow(subject) {
         const tr = tbody.querySelector(`tr[data-code="${subject.subjectCode}"]`);
         if (tr) {
@@ -143,14 +139,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function subjectRowHTML(subject) {
         return `
-            <td>${subject.subjectCode ?? ''}</td>
             <td>${subject.subjectName ?? ''}</td>
-            <td>${subject.isPrimary ? 'Yes' : 'No'}</td>
-            <td>${subject.rootName ?? ''}</td>
+            <td>${subject.isPrimary ? yesText : noText}</td>
             <td>${subject.yearName ?? ''}</td>
             <td>
-                <button class="action-btn edit-btn" data-code="${subject.subjectCode}">Edit</button>
-                <button class="action-btn delete-btn" data-code="${subject.subjectCode}">Delete</button>
+                <button class="action-btn edit-btn" data-code="${subject.subjectCode}">${editTitle}</button>
+                <button class="action-btn delete-btn" data-code="${subject.subjectCode}">${closeText}</button>
             </td>
         `;
     }
@@ -165,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (deleteBtn) {
             deleteBtn.onclick = function () {
-                if (confirm('Are you sure you want to delete this subject?')) {
+                if (confirm(deleteConfirmText)) {
                     fetch('/Subject/DeleteSubject', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -175,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (!r.ok) return r.text().then(t => { throw new Error(t); });
                             removeSubjectRow(subject.subjectCode);
                         })
-                        .catch(err => alert("Could not delete subject: " + (err.message || "Unknown error")));
+                        .catch(err => alert(couldNotDeleteText + ": " + (err.message || "Unknown error")));
                 }
             };
         }
@@ -186,16 +180,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tr) tr.remove();
     }
 
-    // Load subjects for the subject table
     function loadSubjects() {
         fetch('/Subject/GetSubjects')
             .then(response => {
                 if (response.status === 401) {
-                    if (subjectMsg) subjectMsg.textContent = "Unauthorized. Please log in.";
+                    if (subjectMsg) subjectMsg.textContent = unauthorizedText;
                     return [];
                 }
                 if (response.status === 404) {
-                    if (subjectMsg) subjectMsg.textContent = "Your group or root was not found.";
+                    if (subjectMsg) subjectMsg.textContent = notFoundText;
                     return [];
                 }
                 return response.json();
@@ -206,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (subjectMsg) subjectMsg.textContent = '';
 
                 if (!data || data.length === 0) {
-                    if (subjectMsg) subjectMsg.textContent = "No subjects found for your group.";
+                    if (subjectMsg) subjectMsg.textContent = noSubjectsText;
                     return;
                 }
 
@@ -220,11 +213,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .catch(error => {
-                if (subjectMsg) subjectMsg.textContent = "An error occurred loading subjects.";
+                if (subjectMsg) subjectMsg.textContent = errorLoadingText;
                 console.error('Error fetching subjects:', error);
             });
     }
 
-    // Init: Load subjects table on page load
     loadSubjects();
 });
