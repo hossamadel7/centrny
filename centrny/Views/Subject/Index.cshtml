@@ -5,6 +5,10 @@
 <link rel="stylesheet" href="~/css/Hamody.css" />
 
 <h2>@SubjectResource.Subject_ListTitle</h2>
+<!-- DEBUG: Direct resource output -->
+<div style="color:red; font-weight:bold; margin:10px 0;">
+    @centrny.Resources.Subject.Subject_AddModalTitle
+</div>
 
 <!-- Add Subject Button -->
 <div style="margin-bottom: 22px;">
@@ -43,6 +47,41 @@
     </div>
 </div>
 
+<!-- Modal for Add Teacher to Subject -->
+<div id="addTeacherToSubjectModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span style="font-weight:600;font-size:1.15rem;">@SubjectResource.Subject_AssignTeacherToSubjectTitle</span>
+            <span id="closeAddTeacherToSubjectModal" style="cursor:pointer;font-size:1.4rem;">&times;</span>
+        </div>
+        <form id="addTeacherToSubjectForm">
+            <div class="form-group">
+                <label>@SubjectResource.Subject_NameLabel</label>
+                <input type="text" id="addTeacherSubjectName" readonly />
+            </div>
+            <div class="form-group">
+                <label>@SubjectResource.Subject_TeacherLabel</label>
+                <select id="addTeacherTeacherCode" required></select>
+            </div>
+            <div class="form-group">
+                <label>@SubjectResource.Subject_BranchLabel</label>
+                <select id="addTeacherBranchCode" required></select>
+            </div>
+            <div class="form-group">
+                <label>@SubjectResource.Subject_CenterPercentageLabel</label>
+                <input type="number" step="0.01" id="addTeacherCenterPercentage" />
+            </div>
+            <div class="form-group">
+                <label>@SubjectResource.Subject_CenterAmountLabel</label>
+                <input type="number" step="0.01" id="addTeacherCenterAmount" />
+            </div>
+            <input type="hidden" id="addTeacherYearCode" />
+            <input type="hidden" id="addTeacherEduYearCode" />
+            <button type="submit" class="modern-btn" style="width:100%;">@SubjectResource.Subject_AssignTeacher</button>
+        </form>
+    </div>
+</div>
+
 <div class="subject-table-container">
     <table>
         <thead>
@@ -54,7 +93,7 @@
             </tr>
         </thead>
         <tbody id="subject-body">
-            <!-- JS will populate this -->
+            <!-- JS will populate this, including show/hide teacher rows -->
         </tbody>
     </table>
     <div id="subject-message" style="margin-top:20px;color:#b33c3c;font-weight:600;"></div>
@@ -80,6 +119,12 @@
         const noSubjectsText = '@SubjectResource.Subject_NoSubjects';
         const errorLoadingText = '@SubjectResource.Subject_ErrorLoading';
         const closeText = '@SubjectResource.Subject_Close';
+        const assignTeacherText = '@SubjectResource.Subject_AssignTeacher';
+        const processingText = '@SubjectResource.Subject_Processing';
+        const addTeacherText = '@SubjectResource.Subject_AddTeacher';
+        const showTeachersText = '@SubjectResource.Subject_ShowTeachers';
+        const couldNotAssignTeacherText = '@SubjectResource.Subject_CouldNotAssignTeacher';
+        const noTeachersAssignedText = '@SubjectResource.Subject_NoTeachersAssigned';
     </script>
     <script src="~/js/SubjectManagement.js"></script>
 }

@@ -3,6 +3,16 @@ let loggedInUserRootCode = null;
 let currentTeacherCode = null;
 
 $(function () {
+    // --- PATCH: cache submit buttons for reset ---
+    const addTeacherSubmitBtn = $('#teacherForm button[type="submit"]');
+    const editTeacherSubmitBtn = $('#editTeacherForm button[type="submit"]');
+    const teachSubjectSubmitBtn = $('#teachSubjectForm button[type="submit"]');
+
+    // --- PATCH: helper to reset submit button ---
+    function resetSubmitButton($btn, defaultText) {
+        $btn.text(defaultText).prop('disabled', false);
+    }
+
     // Load user info and setup UI
     $.ajax({
         url: '/TeacherManagement/GetUserRootInfo',
@@ -53,11 +63,14 @@ $(function () {
     // --- Add Teacher ---
     $(document).on('click', '#openAddTeacher', function () {
         $('#teacherForm')[0].reset();
+        // --- PATCH: reset submit button when modal opens ---
+        resetSubmitButton(addTeacherSubmitBtn, "Submit");
         $('#addTeacherModal').modal('show');
     });
 
     $('#teacherForm').on('submit', function (e) {
         e.preventDefault();
+        addTeacherSubmitBtn.text("Processing...").prop('disabled', true); // PATCH: show processing
         var teacherData = {
             TeacherName: $('#teacherName').val(),
             TeacherPhone: $('#teacherPhone').val(),
@@ -74,11 +87,18 @@ $(function () {
                 $('#addTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
                 alert(res.message);
+                resetSubmitButton(addTeacherSubmitBtn, "Submit"); // PATCH: always reset
             },
             error: function (xhr) {
                 alert("Failed to add teacher: " + xhr.responseText);
+                resetSubmitButton(addTeacherSubmitBtn, "Submit"); // PATCH: always reset
             }
         });
+    });
+
+    // --- PATCH: reset submit button on modal close ---
+    $('#addTeacherModal').on('hidden.bs.modal', function () {
+        resetSubmitButton(addTeacherSubmitBtn, "Submit");
     });
 
     // --- Edit Teacher ---
@@ -89,12 +109,14 @@ $(function () {
             $('#editTeacherName').val(teacher.teacherName);
             $('#editTeacherPhone').val(teacher.teacherPhone);
             $('#editTeacherAddress').val(teacher.teacherAddress);
+            resetSubmitButton(editTeacherSubmitBtn, "Submit"); // PATCH: reset on open
             $('#editTeacherModal').modal('show');
         });
     });
 
     $('#editTeacherForm').on('submit', function (e) {
         e.preventDefault();
+        editTeacherSubmitBtn.text("Processing...").prop('disabled', true); // PATCH: show processing
         var teacherEdit = {
             TeacherCode: $('#editTeacherCode').val(),
             TeacherName: $('#editTeacherName').val(),
@@ -110,8 +132,18 @@ $(function () {
                 $('#editTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
                 alert(res.message);
+                resetSubmitButton(editTeacherSubmitBtn, "Submit"); // PATCH: always reset
+            },
+            error: function (xhr) {
+                alert("Failed to edit teacher: " + xhr.responseText);
+                resetSubmitButton(editTeacherSubmitBtn, "Submit"); // PATCH: always reset
             }
         });
+    });
+
+    // --- PATCH: reset submit button on modal close ---
+    $('#editTeacherModal').on('hidden.bs.modal', function () {
+        resetSubmitButton(editTeacherSubmitBtn, "Submit");
     });
 
     // --- Delete Teacher ---
@@ -150,7 +182,9 @@ $(function () {
                     for (let s of subjects) {
                         html += `
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                ${s.subjectName}
+                                <span>
+                                    ${s.subjectName} <span class="text-secondary">(${s.yearName})</span>
+                                </span>
                                 <button class="btn btn-danger btn-sm ms-2 delete-teach-btn"
                                     data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}">Delete</button>
                             </li>`;
@@ -162,9 +196,12 @@ $(function () {
         });
     });
 
-    // --- Add Teaching Subject (open modal and fill years, branches & educational year) ---
+    // --- Add Teaching Subject (open modal and fill years, branches, educational year, subject list) ---
     $(document).on('click', '.add-teachsubject-btn', function () {
         currentTeacherCode = $(this).data('teacher');
+        $('#teachSubjectForm')[0].reset();
+        resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: reset on open
+
         // Populate year dropdown
         $.ajax({
             url: '/TeacherManagement/GetYearsByRoot?rootCode=' + loggedInUserRootCode,
@@ -175,14 +212,13 @@ $(function () {
                 for (let year of years) {
                     $yearSelect.append($('<option>', { value: year.yearCode, text: year.yearName }));
                 }
-                // Set educational year display
+
+                // Set educational year display (get name)
                 $.ajax({
                     url: '/TeacherManagement/GetActiveEduYearByRoot?rootCode=' + loggedInUserRootCode,
                     type: 'GET',
                     success: function (activeYear) {
                         $('#activeYearDisplay').val(activeYear.eduYearName || "No educational year");
-                        $('#activeYearCode').val(activeYear.yearCode || "");
-                        if (activeYear.yearCode) $yearSelect.val(activeYear.yearCode);
                         // Now load branches
                         $.ajax({
                             url: '/TeacherManagement/GetBranchesForRootWithCenters?rootCode=' + loggedInUserRootCode,
@@ -193,10 +229,19 @@ $(function () {
                                 for (let branch of branches) {
                                     $branchSelect.append($('<option>', { value: branch.branchCode, text: branch.branchName }));
                                 }
-                                $('#teachSubjectForm')[0].reset();
-                                $('#addTeachSubjectModal').modal('show');
-                                if (activeYear.yearCode) $yearSelect.val(activeYear.yearCode);
-                                $('#activeYearDisplay').val(activeYear.eduYearName || "No educational year");
+                                // Now load subjects for this root
+                                $.ajax({
+                                    url: '/TeacherManagement/GetSubjectsByRoot?rootCode=' + loggedInUserRootCode,
+                                    type: 'GET',
+                                    success: function (subjects) {
+                                        let $subjectSelect = $('#subjectSelect');
+                                        $subjectSelect.empty();
+                                        for (let subject of subjects) {
+                                            $subjectSelect.append($('<option>', { value: subject.subjectCode, text: subject.subjectName }));
+                                        }
+                                        $('#addTeachSubjectModal').modal('show');
+                                    }
+                                });
                             }
                         });
                     }
@@ -205,19 +250,26 @@ $(function () {
         });
     });
 
+    // --- PATCH: reset submit button on modal close ---
+    $('#addTeachSubjectModal').on('hidden.bs.modal', function () {
+        resetSubmitButton(teachSubjectSubmitBtn, "Submit");
+    });
+
     // --- Submit Add Teaching Subject ---
     $('#teachSubjectForm').on('submit', function (e) {
         e.preventDefault();
-        let subjectName = $('#subjectName').val();
+        teachSubjectSubmitBtn.text("Processing...").prop('disabled', true); // PATCH: show processing
+        let subjectCode = $('#subjectSelect').val();
         let isPrimary = $('#isPrimary').val() === "true";
         let branchCode = $('#branchSelect').val();
         let yearCode = $('#yearSelect').val();
-        if (!subjectName || !branchCode || !currentTeacherCode || !loggedInUserRootCode || !yearCode) {
+        if (!subjectCode || !branchCode || !currentTeacherCode || !loggedInUserRootCode || !yearCode) {
             alert('Please fill all fields');
+            resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: always reset
             return;
         }
         let data = {
-            SubjectName: subjectName,
+            SubjectCode: subjectCode,
             IsPrimary: isPrimary,
             RootCode: loggedInUserRootCode,
             YearCode: yearCode,
@@ -234,9 +286,11 @@ $(function () {
                 $('#addTeachSubjectModal').modal('hide');
                 $(`.show-subjects-btn[data-teacher="${currentTeacherCode}"]`).trigger('click');
                 alert(res.message);
+                resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: always reset
             },
             error: function (xhr) {
                 alert("Failed to add teaching subject: " + xhr.responseText);
+                resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: always reset
             }
         });
     });

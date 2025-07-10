@@ -1,12 +1,15 @@
 ﻿using centrny.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace centrny1.Controllers
+namespace centrny.Controllers
 {
+    [Authorize]
     public class SecurityController : Controller
     {
         private readonly CenterContext _context;
@@ -40,13 +43,80 @@ namespace centrny1.Controllers
         {
             var groups = _context.Groups
                 .Where(g => g.RootCode == rootCode)
-                .Select(g => new { g.GroupCode, g.GroupName })
+                .Select(g => new { g.GroupCode, g.GroupName, g.GroupDesc, g.RootCode })
                 .ToList();
 
             if (groups.Count == 0)
-                return Json(new { success = false, message = "No groups found" });
+                return Json(new { success = true, groups = new List<object>() });
 
             return Json(new { success = true, groups = groups });
+        }
+
+        [HttpPost]
+        public JsonResult CreateGroup(string groupName, string groupDesc, int rootCode, int insertUser)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(groupName))
+                {
+                    return Json(new { success = false, message = "Group name is required" });
+                }
+                var group = new Group
+                {
+                    GroupName = groupName,
+                    GroupDesc = groupDesc,
+                    RootCode = rootCode,
+                    InsertUser = insertUser,
+                    InsertTime = DateTime.Now
+                };
+                _context.Groups.Add(group);
+                _context.SaveChanges();
+                return Json(new { success = true, group = new { group.GroupCode, group.GroupName, group.GroupDesc, group.RootCode } });
+            }
+            catch (Exception ex)
+            {
+                string message = ex.Message;
+                Exception inner = ex.InnerException;
+                while (inner != null)
+                {
+                    message += " | Inner: " + inner.Message;
+                    inner = inner.InnerException;
+                }
+                return Json(new { success = false, message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult EditGroup(int groupCode, string groupName, string groupDesc)
+        {
+            var group = _context.Groups.FirstOrDefault(g => g.GroupCode == groupCode);
+            if (group == null)
+                return Json(new { success = false, message = "Group not found" });
+
+            if (!string.IsNullOrWhiteSpace(groupName))
+                group.GroupName = groupName;
+            group.GroupDesc = groupDesc;
+
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public JsonResult DeleteGroup(int groupCode)
+        {
+            var group = _context.Groups.FirstOrDefault(g => g.GroupCode == groupCode);
+            if (group == null)
+                return Json(new { success = false, message = "Group not found" });
+
+            // Check for referencing users
+            var hasUsers = _context.Users.Any(u => u.GroupCode == groupCode && u.IsActive);
+            if (hasUsers)
+                return Json(new { success = false, message = "Cannot delete group with active users. Remove users first." });
+
+            _context.Groups.Remove(group);
+            _context.SaveChanges();
+            return Json(new { success = true });
         }
 
         [HttpGet]
@@ -84,13 +154,12 @@ namespace centrny1.Controllers
 
             using (MD5 md5 = MD5.Create())
             {
-                // Use Encoding.Unicode to match SQL Server NVARCHAR hashing
                 byte[] inputBytes = Encoding.Unicode.GetBytes("123456789");
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
 
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < hashBytes.Length; i++)
-                    sb.Append(hashBytes[i].ToString("X2")); // UPPERCASE HEX
+                    sb.Append(hashBytes[i].ToString("X2"));
                 user.Password = sb.ToString();
             }
             _context.SaveChanges();

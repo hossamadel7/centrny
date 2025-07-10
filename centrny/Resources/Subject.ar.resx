@@ -1,42 +1,60 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>2.0</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<data name="Subject_ListTitle" xml:space="preserve"><value>قائمة المواد</value></data>
-	<data name="Subject_AddBtn" xml:space="preserve"><value>إضافة مادة</value></data>
-	<data name="Subject_EditBtn" xml:space="preserve"><value>تعديل المادة</value></data>
-	<data name="Subject_NameLabel" xml:space="preserve"><value>اسم المادة</value></data>
-	<data name="Subject_IsPrimaryLabel" xml:space="preserve"><value>أساسية؟</value></data>
-	<data name="Subject_Yes" xml:space="preserve"><value>نعم</value></data>
-	<data name="Subject_No" xml:space="preserve"><value>لا</value></data>
-	<data name="Subject_YearLabel" xml:space="preserve"><value>السنة</value></data>
-	<data name="Subject_Submit" xml:space="preserve"><value>إرسال</value></data>
-	<data name="Subject_EditModalTitle" xml:space="preserve"><value>تعديل المادة</value></data>
-	<data name="Subject_AddModalTitle" xml:space="preserve"><value>إضافة مادة</value></data>
-	<data name="Subject_Close" xml:space="preserve"><value>مسح</value></data>
-	<data name="Subject_LoadingYears" xml:space="preserve"><value>جاري التحميل...</value></data>
-	<data name="Subject_NoActiveYears" xml:space="preserve"><value>لا توجد سنوات نشطة</value></data>
-	<data name="Subject_ErrorLoadingYears" xml:space="preserve"><value>خطأ في تحميل السنوات</value></data>
-	<data name="Subject_PleaseFillFields" xml:space="preserve"><value>يرجى تعبئة جميع الحقول.</value></data>
-	<data name="Subject_CouldNotAdd" xml:space="preserve"><value>تعذر إضافة المادة</value></data>
-	<data name="Subject_CouldNotEdit" xml:space="preserve"><value>تعذر تعديل المادة</value></data>
-	<data name="Subject_CouldNotDelete" xml:space="preserve"><value>تعذر حذف المادة</value></data>
-	<data name="Subject_DeleteConfirm" xml:space="preserve"><value>هل أنت متأكد أنك تريد حذف هذه المادة؟</value></data>
-	<data name="Subject_Actions" xml:space="preserve"><value>إجراءات</value></data>
-	<data name="Subject_YearName" xml:space="preserve"><value>اسم السنة</value></data>
-	<data name="Subject_IsPrimary" xml:space="preserve"><value>أساسية</value></data>
-	<data name="Subject_Unauthorized" xml:space="preserve"><value>غير مصرح. يرجى تسجيل الدخول.</value></data>
-	<data name="Subject_NotFound" xml:space="preserve"><value>لم يتم العثور على المجموعة أو الأصل.</value></data>
-	<data name="Subject_NoSubjects" xml:space="preserve"><value>لا توجد مواد لهذه المجموعة.</value></data>
-	<data name="Subject_ErrorLoading" xml:space="preserve"><value>حدث خطأ أثناء تحميل المواد.</value></data>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Subject_ListTitle" xml:space="preserve"><value>قائمة المواد</value></data>
+  <data name="Subject_AddBtn" xml:space="preserve"><value>إضافة مادة</value></data>
+  <data name="Subject_EditBtn" xml:space="preserve"><value>تعديل المادة</value></data>
+  <data name="Subject_NameLabel" xml:space="preserve"><value>اسم المادة</value></data>
+  <data name="Subject_IsPrimaryLabel" xml:space="preserve"><value>أساسية؟</value></data>
+  <data name="Subject_Yes" xml:space="preserve"><value>نعم</value></data>
+  <data name="Subject_No" xml:space="preserve"><value>لا</value></data>
+  <data name="Subject_YearLabel" xml:space="preserve"><value>السنة</value></data>
+  <data name="Subject_Submit" xml:space="preserve"><value>إرسال</value></data>
+  <data name="Subject_EditModalTitle" xml:space="preserve"><value>تعديل المادة</value></data>
+  <data name="Subject_AddModalTitle" xml:space="preserve"><value>إضافة مادة</value></data>
+  <data name="Subject_Close" xml:space="preserve"><value>مسح</value></data>
+  <data name="Subject_LoadingYears" xml:space="preserve"><value>جاري التحميل...</value></data>
+  <data name="Subject_NoActiveYears" xml:space="preserve"><value>لا توجد سنوات نشطة</value></data>
+  <data name="Subject_ErrorLoadingYears" xml:space="preserve"><value>خطأ في تحميل السنوات</value></data>
+  <data name="Subject_PleaseFillFields" xml:space="preserve"><value>يرجى تعبئة جميع الحقول.</value></data>
+  <data name="Subject_CouldNotAdd" xml:space="preserve"><value>تعذر إضافة المادة</value></data>
+  <data name="Subject_CouldNotEdit" xml:space="preserve"><value>تعذر تعديل المادة</value></data>
+  <data name="Subject_CouldNotDelete" xml:space="preserve"><value>تعذر حذف المادة</value></data>
+  <data name="Subject_DeleteConfirm" xml:space="preserve"><value>هل أنت متأكد أنك تريد حذف هذه المادة؟</value></data>
+  <data name="Subject_Actions" xml:space="preserve"><value>إجراءات</value></data>
+  <data name="Subject_YearName" xml:space="preserve"><value>اسم السنة</value></data>
+  <data name="Subject_IsPrimary" xml:space="preserve"><value>أساسية</value></data>
+  <data name="Subject_Unauthorized" xml:space="preserve"><value>غير مصرح. يرجى تسجيل الدخول.</value></data>
+  <data name="Subject_NotFound" xml:space="preserve"><value>لم يتم العثور على المجموعة أو الأصل.</value></data>
+  <data name="Subject_NoSubjects" xml:space="preserve"><value>لا توجد مواد لهذه المجموعة.</value></data>
+  <data name="Subject_ErrorLoading" xml:space="preserve"><value>حدث خطأ أثناء تحميل المواد.</value></data>
+  <data name="Subject_AssignTeacher" xml:space="preserve"><value>تعيين معلم</value></data>
+  <data name="Subject_Processing" xml:space="preserve"><value>جاري المعالجة...</value></data>
+  <data name="Subject_AddTeacher" xml:space="preserve"><value>إضافة معلم</value></data>
+  <data name="Subject_ShowTeachers" xml:space="preserve"><value>عرض المعلمين</value></data>
+  <data name="Subject_CouldNotAssignTeacher" xml:space="preserve"><value>تعذر تعيين المعلم</value></data>
+  <data name="Subject_NoTeachersAssigned" xml:space="preserve"><value>لا يوجد معلمون مخصصون.</value></data>
+  <data name="Subject_AssignTeacherToSubjectTitle" xml:space="preserve"><value>تعيين معلم على المادة</value></data>
+  <data name="Subject_TeacherLabel" xml:space="preserve"><value>المعلم</value></data>
+  <data name="Subject_BranchLabel" xml:space="preserve"><value>الفرع</value></data>
+  <data name="Subject_CenterPercentageLabel" xml:space="preserve"><value>نسبة المركز</value></data>
+  <data name="Subject_CenterAmountLabel" xml:space="preserve"><value>مبلغ المركز</value></data>
+  <data name="Subject_CouldNotAssignTeacher_Server" xml:space="preserve"><value>تعذر تعيين المعلم: {0}</value></data>
+  <data name="Subject_InvalidData" xml:space="preserve"><value>بيانات غير صالحة.</value></data>
+  <data name="Subject_TeacherNotFound" xml:space="preserve"><value>المعلم غير موجود.</value></data>
+  <data name="Subject_BranchNotFound" xml:space="preserve"><value>الفرع غير موجود.</value></data>
+  <data name="Subject_CouldNotDetermineEduYear" xml:space="preserve"><value>تعذر تحديد سنة التعليم للسنة المختارة.</value></data>
+  <data name="Subject_SubjectNotFound" xml:space="preserve"><value>المادة غير موجودة.</value></data>
+  <data name="Subject_SuccessTeacherAssigned" xml:space="preserve"><value>تم تعيين المعلم على المادة بنجاح.</value></data>
 </root>

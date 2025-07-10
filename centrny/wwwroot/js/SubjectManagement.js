@@ -1,6 +1,4 @@
 ﻿// Localized JS variables are expected to be injected from the Razor view
-// Example: const editTitle = 'Edit Subject';
-
 console.log("SubjectManagement.js loaded");
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -16,7 +14,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalTitle = document.getElementById('modalTitle');
     const subjectCodeInput = document.getElementById('subjectCode');
 
+    // Add Teacher to Subject Modal
+    const addTeacherModal = document.getElementById('addTeacherToSubjectModal');
+    const closeAddTeacherModalBtn = document.getElementById('closeAddTeacherToSubjectModal');
+    const addTeacherForm = document.getElementById('addTeacherToSubjectForm');
+    const teacherSelect = document.getElementById('addTeacherTeacherCode');
+    const branchSelect = document.getElementById('addTeacherBranchCode');
+    const addTeacherSubjectName = document.getElementById('addTeacherSubjectName');
+    const addTeacherYearCode = document.getElementById('addTeacherYearCode');
+    const addTeacherEduYearCode = document.getElementById('addTeacherEduYearCode');
+    const addTeacherCenterPercentage = document.getElementById('addTeacherCenterPercentage');
+    const addTeacherCenterAmount = document.getElementById('addTeacherCenterAmount');
+
+    // Submit buttons
+    const addSubjectSubmitBtn = document.querySelector('#addSubjectForm button[type="submit"]');
+    const addTeacherSubmitBtn = document.querySelector('#addTeacherToSubjectForm button[type="submit"]');
+
     let editMode = false;
+    let selectedSubjectData = {};
+
+    // Helper to reset submit buttons
+    function resetSubmitButton(btn, defaultText) {
+        if (btn) {
+            btn.textContent = defaultText || processingText;
+            btn.disabled = false;
+        }
+    }
 
     function openModal(isEdit = false, subject = null) {
         modal.style.display = "flex";
@@ -25,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
         editMode = isEdit;
         modalTitle.textContent = isEdit ? editTitle : addTitle;
         subjectCodeInput.value = '';
+        resetSubmitButton(addSubjectSubmitBtn, processingText);
         if (!isEdit) {
             loadYears();
         } else if (subject) {
@@ -37,11 +61,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function closeModalFunc() {
         modal.style.display = "none";
         editMode = false;
+        resetSubmitButton(addSubjectSubmitBtn, processingText);
     }
     if (openBtn) openBtn.onclick = () => openModal(false);
     if (closeBtn) closeBtn.onclick = closeModalFunc;
     window.onclick = function (event) {
         if (event.target === modal) closeModalFunc();
+        if (event.target === addTeacherModal) {
+            addTeacherModal.style.display = "none";
+            resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+        }
     };
 
     function loadYears(selectedYearCode = null) {
@@ -70,6 +99,8 @@ document.addEventListener('DOMContentLoaded', function () {
     form.onsubmit = function (e) {
         e.preventDefault();
         errorDiv.textContent = "";
+        addSubjectSubmitBtn.textContent = processingText;
+        addSubjectSubmitBtn.disabled = true;
 
         const subjectName = form.subjectName.value.trim();
         const isPrimary = form.isPrimary.value === "true";
@@ -77,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const subjectCode = subjectCodeInput.value;
 
         if (!subjectName || !yearCode) {
+            resetSubmitButton(addSubjectSubmitBtn, processingText);
             errorDiv.textContent = pleaseFillFieldsText;
             return;
         }
@@ -96,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     closeModalFunc();
                 })
                 .catch(err => {
+                    resetSubmitButton(addSubjectSubmitBtn, processingText);
                     errorDiv.textContent = couldNotEditText + ": " + (err.message || "Unknown error");
                 });
         } else {
@@ -113,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     closeModalFunc();
                 })
                 .catch(err => {
+                    resetSubmitButton(addSubjectSubmitBtn, processingText);
                     errorDiv.textContent = couldNotAddText + ": " + (err.message || "Unknown error");
                 });
         }
@@ -123,8 +157,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const tr = document.createElement('tr');
         tr.classList.add('subject-row');
         tr.setAttribute('data-code', subject.subjectCode);
+        tr.setAttribute('data-subject-code', subject.subjectCode);
+        tr.setAttribute('data-year-code', subject.yearCode);
+        tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
         tr.innerHTML = subjectRowHTML(subject);
         tbody.appendChild(tr);
+
+        // Insert the hidden row for teachers after this row
+        const trTeachers = document.createElement('tr');
+        trTeachers.classList.add('teachers-row');
+        trTeachers.setAttribute('data-subject-code', subject.subjectCode);
+        trTeachers.style.display = "none";
+        trTeachers.innerHTML = `<td colspan="4" class="teachers-list-td"></td>`;
+        tbody.appendChild(trTeachers);
+
         if (subjectMsg) subjectMsg.textContent = "";
         addActionListeners(tr, subject);
     }
@@ -132,6 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateSubjectRow(subject) {
         const tr = tbody.querySelector(`tr[data-code="${subject.subjectCode}"]`);
         if (tr) {
+            tr.setAttribute('data-subject-code', subject.subjectCode);
+            tr.setAttribute('data-year-code', subject.yearCode);
+            tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
             tr.innerHTML = subjectRowHTML(subject);
             addActionListeners(tr, subject);
         }
@@ -139,12 +188,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function subjectRowHTML(subject) {
         return `
-            <td>${subject.subjectName ?? ''}</td>
+            <td class="subject-name-cell">${subject.subjectName ?? ''}</td>
             <td>${subject.isPrimary ? yesText : noText}</td>
             <td>${subject.yearName ?? ''}</td>
             <td>
                 <button class="action-btn edit-btn" data-code="${subject.subjectCode}">${editTitle}</button>
                 <button class="action-btn delete-btn" data-code="${subject.subjectCode}">${closeText}</button>
+                <button class="action-btn add-teacher-btn" data-code="${subject.subjectCode}">${addTeacherText}</button>
+                <button class="action-btn show-teachers-btn" data-code="${subject.subjectCode}">${showTeachersText}</button>
             </td>
         `;
     }
@@ -152,6 +203,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function addActionListeners(tr, subject) {
         const editBtn = tr.querySelector('.edit-btn');
         const deleteBtn = tr.querySelector('.delete-btn');
+        const addTeacherBtn = tr.querySelector('.add-teacher-btn');
+        const showTeachersBtn = tr.querySelector('.show-teachers-btn');
         if (editBtn) {
             editBtn.onclick = function () {
                 openModal(true, subject);
@@ -173,11 +226,86 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             };
         }
+        if (addTeacherBtn) {
+            addTeacherBtn.onclick = function () {
+                // Store subject data for modal submission
+                selectedSubjectData = {
+                    SubjectCode: tr.getAttribute('data-subject-code'),
+                    SubjectName: tr.querySelector('.subject-name-cell').textContent,
+                    YearCode: tr.getAttribute('data-year-code'),
+                    EduYearCode: tr.getAttribute('data-eduyear-code')
+                };
+
+                // Fill subject info in modal (read-only or hidden)
+                addTeacherSubjectName.value = selectedSubjectData.SubjectName;
+                addTeacherYearCode.value = selectedSubjectData.YearCode;
+                addTeacherEduYearCode.value = selectedSubjectData.EduYearCode;
+                resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+
+                // Load teachers
+                fetch('/Subject/GetTeachersByRoot')
+                    .then(resp => resp.json())
+                    .then(teachers => {
+                        teacherSelect.innerHTML = "";
+                        teachers.forEach(t => {
+                            teacherSelect.innerHTML += `<option value="${t.teacherCode}">${t.teacherName}</option>`;
+                        });
+                    });
+
+                // Load branches
+                fetch('/Subject/GetBranchesByRoot')
+                    .then(resp => resp.json())
+                    .then(branches => {
+                        branchSelect.innerHTML = "";
+                        branches.forEach(b => {
+                            branchSelect.innerHTML += `<option value="${b.branchCode}">${b.branchName}</option>`;
+                        });
+                    });
+
+                addTeacherCenterPercentage.value = "";
+                addTeacherCenterAmount.value = "";
+
+                addTeacherModal.style.display = "flex";
+            };
+        }
+        if (showTeachersBtn) {
+            showTeachersBtn.onclick = function () {
+                const subjectCode = tr.getAttribute('data-subject-code');
+                const trTeachers = document.querySelector(`tr.teachers-row[data-subject-code="${subjectCode}"]`);
+                if (!trTeachers) return;
+                const td = trTeachers.querySelector('.teachers-list-td');
+
+                // Toggle display
+                if (trTeachers.style.display === "none" || trTeachers.style.display === "") {
+                    // Fetch and display teachers
+                    td.innerHTML = `<div class="text-muted">${processingText}</div>`;
+                    fetch('/Subject/GetTeachersForSubject?subjectCode=' + subjectCode)
+                        .then(resp => resp.json())
+                        .then(data => {
+                            if (!data || data.length === 0) {
+                                td.innerHTML = `<span class="text-danger">${noTeachersAssignedText}</span>`;
+                            } else {
+                                let html = '<ul style="margin-bottom:0">';
+                                data.forEach(teacher => {
+                                    html += `<li>${teacher.teacherName}</li>`;
+                                });
+                                html += '</ul>';
+                                td.innerHTML = html;
+                            }
+                        });
+                    trTeachers.style.display = "";
+                } else {
+                    trTeachers.style.display = "none";
+                }
+            };
+        }
     }
 
     function removeSubjectRow(subjectCode) {
         const tr = tbody.querySelector(`tr[data-code="${subjectCode}"]`);
+        const trTeachers = tbody.querySelector(`tr.teachers-row[data-subject-code="${subjectCode}"]`);
         if (tr) tr.remove();
+        if (trTeachers) trTeachers.remove();
     }
 
     function loadSubjects() {
@@ -207,8 +335,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     const tr = document.createElement('tr');
                     tr.classList.add('subject-row');
                     tr.setAttribute('data-code', subject.subjectCode);
+                    tr.setAttribute('data-subject-code', subject.subjectCode);
+                    tr.setAttribute('data-year-code', subject.yearCode);
+                    tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
                     tr.innerHTML = subjectRowHTML(subject);
                     tbody.appendChild(tr);
+
+                    // Insert the hidden row for teachers after this row
+                    const trTeachers = document.createElement('tr');
+                    trTeachers.classList.add('teachers-row');
+                    trTeachers.setAttribute('data-subject-code', subject.subjectCode);
+                    trTeachers.style.display = "none";
+                    trTeachers.innerHTML = `<td colspan="4" class="teachers-list-td"></td>`;
+                    tbody.appendChild(trTeachers);
+
                     addActionListeners(tr, subject);
                 });
             })
@@ -216,6 +356,47 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (subjectMsg) subjectMsg.textContent = errorLoadingText;
                 console.error('Error fetching subjects:', error);
             });
+    }
+
+    addTeacherForm.onsubmit = function (e) {
+        e.preventDefault();
+        addTeacherSubmitBtn.textContent = processingText;
+        addTeacherSubmitBtn.disabled = true;
+        const data = {
+            TeacherCode: parseInt(teacherSelect.value),
+            SubjectCode: parseInt(selectedSubjectData.SubjectCode),
+            EduYearCode: parseInt(selectedSubjectData.EduYearCode),
+            BranchCode: parseInt(branchSelect.value),
+            RootCode: 0,
+            YearCode: parseInt(selectedSubjectData.YearCode),
+            CenterPercentage: addTeacherCenterPercentage.value ? parseFloat(addTeacherCenterPercentage.value) : null,
+            CenterAmount: addTeacherCenterAmount.value ? parseFloat(addTeacherCenterAmount.value) : null
+        };
+
+        fetch('/Subject/AddTeacherToSubject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(r => {
+                if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                return r.json();
+            })
+            .then(resp => {
+                resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+                addTeacherModal.style.display = "none";
+            })
+            .catch(err => {
+                resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+                alert(couldNotAssignTeacherText + ": " + (err.message || "Unknown error"));
+            });
+    };
+
+    if (closeAddTeacherModalBtn) {
+        closeAddTeacherModalBtn.onclick = function () {
+            addTeacherModal.style.display = "none";
+            resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+        };
     }
 
     loadSubjects();

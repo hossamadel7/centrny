@@ -1788,7 +1788,30 @@ h2 {
         box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
     }
 }
+@media (min-width: 576px) {
+    /* Apply to all modals globally */
+    .modal-dialog {
+        margin: 1.75rem auto !important; /* Default Bootstrap value */
+        max-width: 600px;
+    }
+    /* Apply custom margin to all your specific modals */
+    #createGroupModal .modal-dialog,
+    #editGroupModal .modal-dialog,
+    #createUserModal .modal-dialog,
+    #editUserModal .modal-dialog {
+        margin: 17rem auto !important;
+        max-width: 600px;
+    }
+}
 
+/* Optional: ensure modal content is scrollable if it gets too tall */
+#createGroupModal .modal-content,
+#editGroupModal .modal-content,
+#createUserModal .modal-content,
+#editUserModal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+}
 /* ===============================================
    SECURITY VIEW - MODERN UI CSS END
    =============================================== */
@@ -3494,5 +3517,7 @@ tbody tr:last-child td {
         padding: 16px 6vw 16px 6vw;
     }
 }
+
+/* Fix Bootstrap modal overflow for large modals */
 
 /* ====== Subject View Modern UI END ====== */

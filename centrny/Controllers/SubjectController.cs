@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Linq;
+using SubjectRes = centrny.Resources.Subject;
 
 namespace centrny.Controllers
 {
@@ -74,14 +75,29 @@ namespace centrny.Controllers
                                       s.IsPrimary,
                                       RootName = r != null ? r.RootName : null,
                                       YearName = y != null ? y.YearName : null,
-                                      s.YearCode
+                                      s.YearCode,
+                                      EduYearCode = y != null ? y.EduYearCode : null
                                   })
                                   .ToListAsync();
 
             return Json(subjects);
         }
 
-        // Get all active years for the current user's root code (for dropdown)
+        [HttpGet]
+        public async Task<IActionResult> GetTeachersForSubject(int subjectCode)
+        {
+            var teachJoin = await (from t in _context.Teaches
+                                   join teacher in _context.Teachers on t.TeacherCode equals teacher.TeacherCode
+                                   where t.SubjectCode == subjectCode
+                                   select new
+                                   {
+                                       teacher.TeacherCode,
+                                       teacher.TeacherName
+                                   }).ToListAsync();
+
+            return Json(teachJoin);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetActiveYears()
         {
@@ -95,13 +111,11 @@ namespace centrny.Controllers
 
             int rootCode = group.RootCode;
 
-            // Get all active EduYear codes for this root
             var activeEduYearCodes = await _context.EduYears
                 .Where(e => e.IsActive && e.RootCode == rootCode)
                 .Select(e => e.EduCode)
                 .ToListAsync();
 
-            // Now get all Years that reference those EduYear codes
             var yearList = await _context.Years
                 .Where(y => activeEduYearCodes.Contains((int)y.EduYearCode))
                 .Select(y => new { y.YearCode, y.YearName })
@@ -110,11 +124,99 @@ namespace centrny.Controllers
             return Json(yearList);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetTeachersByRoot()
+        {
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+            if (user == null) return Unauthorized();
+
+            int groupCode = user.GroupCode;
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+            if (group == null) return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            var teachers = await _context.Teachers
+                .Where(t => t.RootCode == rootCode && t.IsActive)
+                .Select(t => new { t.TeacherCode, t.TeacherName })
+                .ToListAsync();
+
+            return Json(teachers);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetBranchesByRoot()
+        {
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+            if (user == null) return Unauthorized();
+
+            int groupCode = user.GroupCode;
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+            if (group == null) return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            var branches = await _context.Branches
+                .Where(b => b.RootCode == rootCode)
+                .Select(b => new { b.BranchCode, b.BranchName })
+                .ToListAsync();
+
+            return Json(branches);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddTeacherToSubject([FromBody] AddTeacherToSubjectDto dto)
+        {
+            if (dto == null || dto.TeacherCode == 0 || dto.SubjectCode == 0 || dto.BranchCode == 0 || dto.YearCode == 0)
+                return BadRequest(SubjectRes.Subject_InvalidData);
+
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+            if (user == null) return Unauthorized();
+
+            int groupCode = user.GroupCode;
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+            if (group == null) return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherCode == dto.TeacherCode && t.RootCode == rootCode);
+            if (teacher == null) return BadRequest(SubjectRes.Subject_TeacherNotFound);
+
+            var branch = await _context.Branches.FirstOrDefaultAsync(b => b.BranchCode == dto.BranchCode && b.RootCode == rootCode);
+            if (branch == null) return BadRequest(SubjectRes.Subject_BranchNotFound);
+
+            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
+            if (year == null || year.EduYearCode == null)
+                return BadRequest(SubjectRes.Subject_CouldNotDetermineEduYear);
+
+            var teach = new Teach
+            {
+                TeacherCode = dto.TeacherCode,
+                SubjectCode = dto.SubjectCode,
+                EduYearCode = year.EduYearCode.Value,
+                BranchCode = dto.BranchCode,
+                RootCode = rootCode,
+                YearCode = dto.YearCode,
+                CenterPercentage = dto.CenterPercentage,
+                CenterAmount = dto.CenterAmount,
+                InsertUser = userId,
+                InsertTime = DateTime.Now,
+                IsActive = true
+            };
+            _context.Teaches.Add(teach);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = SubjectRes.Subject_SuccessTeacherAssigned });
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddSubject([FromBody] AddSubjectDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
-                return BadRequest("Invalid data.");
+                return BadRequest(SubjectRes.Subject_InvalidData);
 
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
@@ -149,7 +251,8 @@ namespace centrny.Controllers
                 subject.IsPrimary,
                 RootName = root?.RootName,
                 YearName = year?.YearName,
-                subject.YearCode
+                subject.YearCode,
+                EduYearCode = year?.EduYearCode
             });
         }
 
@@ -157,10 +260,10 @@ namespace centrny.Controllers
         public async Task<IActionResult> EditSubject([FromBody] EditSubjectDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
-                return BadRequest("Invalid data.");
+                return BadRequest(SubjectRes.Subject_InvalidData);
             var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode);
             if (subject == null)
-                return NotFound("Subject not found.");
+                return NotFound(SubjectRes.Subject_SubjectNotFound);
 
             subject.SubjectName = dto.SubjectName;
             subject.IsPrimary = dto.IsPrimary;
@@ -179,7 +282,8 @@ namespace centrny.Controllers
                 subject.IsPrimary,
                 RootName = root?.RootName,
                 YearName = year?.YearName,
-                subject.YearCode
+                subject.YearCode,
+                EduYearCode = year?.EduYearCode
             });
         }
 
@@ -187,11 +291,11 @@ namespace centrny.Controllers
         public async Task<IActionResult> DeleteSubject([FromBody] DeleteSubjectDto dto)
         {
             if (dto == null || dto.SubjectCode == 0)
-                return BadRequest("Invalid data.");
+                return BadRequest(SubjectRes.Subject_InvalidData);
 
             var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode);
             if (subject == null)
-                return NotFound("Subject not found.");
+                return NotFound(SubjectRes.Subject_SubjectNotFound);
 
             _context.Subjects.Remove(subject);
             await _context.SaveChangesAsync();
@@ -215,6 +319,17 @@ namespace centrny.Controllers
         public class DeleteSubjectDto
         {
             public int SubjectCode { get; set; }
+        }
+        public class AddTeacherToSubjectDto
+        {
+            public int TeacherCode { get; set; }
+            public int SubjectCode { get; set; }
+            public int EduYearCode { get; set; }
+            public int BranchCode { get; set; }
+            public int RootCode { get; set; }
+            public int YearCode { get; set; }
+            public double? CenterPercentage { get; set; }
+            public double? CenterAmount { get; set; }
         }
     }
 }
