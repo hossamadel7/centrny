@@ -12,7 +12,7 @@ namespace centrny.Controllers
             _db = db;
         }
 
-        private int GetUserRootCode()
+        public int GetUserRootCode()
         {
             string username = User.Identity.Name;
             var user = _db.Users.FirstOrDefault(u => u.Username == username);

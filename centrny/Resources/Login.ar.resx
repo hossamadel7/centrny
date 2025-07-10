@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="accessModifier">
+		<value>Public</value>
+	</resheader>
+	<data name="Title_Login" xml:space="preserve"><value>تسجيل الدخول</value></data>
+	<data name="Title_LoginPage" xml:space="preserve"><value>تسجيل الدخول - نظام إدارة المركز</value></data>
+	<data name="Login_WelcomeBack" xml:space="preserve"><value>مرحبًا بعودتك</value></data>
+	<data name="Login_CenterManagementSystem" xml:space="preserve"><value>نظام إدارة المركز</value></data>
+	<data name="Login_TroubleshootingTitle" xml:space="preserve"><value>مشكلة في تسجيل الدخول</value></data>
+	<data name="Login_TroubleshootingHint" xml:space="preserve"><value>اضغط Ctrl+D للعثور على اسم المستخدم • تحقق من قاعدة البيانات</value></data>
+	<data name="Login_UsernamePlaceholder" xml:space="preserve"><value>أدخل اسم المستخدم</value></data>
+	<data name="Login_PasswordPlaceholder" xml:space="preserve"><value>أدخل كلمة المرور</value></data>
+	<data name="Login_UsernameRequired" xml:space="preserve"><value>اسم المستخدم مطلوب</value></data>
+	<data name="Login_UsernameMinLength" xml:space="preserve"><value>يجب أن يكون اسم المستخدم 3 أحرف على الأقل</value></data>
+	<data name="Login_UsernamePattern" xml:space="preserve"><value>يمكن أن يحتوي اسم المستخدم على أحرف وأرقام وشرطات سفلية فقط</value></data>
+	<data name="Login_PasswordRequired" xml:space="preserve"><value>كلمة المرور مطلوبة</value></data>
+	<data name="Login_PasswordMinLength" xml:space="preserve"><value>يجب أن تكون كلمة المرور 3 أحرف على الأقل</value></data>
+	<data name="Login_RememberMe" xml:space="preserve"><value>تذكرني لمدة 8 ساعات</value></data>
+	<data name="Login_SignIn" xml:space="preserve"><value>تسجيل الدخول</value></data>
+	<data name="Login_TroubleshootingLink" xml:space="preserve"><value>حل مشاكل تسجيل الدخول</value></data>
+	<data name="Login_PasswordToggle" xml:space="preserve"><value>إظهار/إخفاء كلمة المرور</value></data>
+	<data name="Login_FindUsername" xml:space="preserve"><value>البحث عن اسم المستخدم</value></data>
+	<data name="Login_RunSqlQuery" xml:space="preserve"><value>نفذ هذا الاستعلام في قاعدة البيانات:</value></data>
+	<data name="Login_CommonTestCredentials" xml:space="preserve"><value>بيانات تجريبية شائعة:</value></data>
+	<data name="Login_Close" xml:space="preserve"><value>إغلاق</value></data>
+	<data name="Login_TroubleshootingSteps" xml:space="preserve"><value>خطوات حل المشكلة</value></data>
+	<data name="Login_Step1" xml:space="preserve"><value>الخطوة 1: تحقق من وجود المستخدمين</value></data>
+	<data name="Login_Step2" xml:space="preserve"><value>الخطوة 2: تحقق من تشفير كلمة المرور</value></data>
+	<data name="Login_Step3" xml:space="preserve"><value>الخطوة 3: أنشئ مستخدم تجريبي</value></data>
+	<data name="Login_TroubleshootingNote" xml:space="preserve"><value>ملاحظة: يجب أن تُشفّر كلمة المرور تلقائيًا إلى MD5. إذا لم يكن Group_Code 1 موجودًا، أنشئ مجموعة أولاً أو استخدم رمز مجموعة موجود.</value></data>
+	<data name="Login_ShowPassword" xml:space="preserve"><value>إظهار كلمة المرور</value></data>
+	<data name="Login_HidePassword" xml:space="preserve"><value>إخفاء كلمة المرور</value></data>
+	<data name="Login_SigningIn" xml:space="preserve"><value>جاري تسجيل الدخول...</value></data>
+</root>
