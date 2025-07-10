@@ -55,16 +55,20 @@ class ScheduleManager {
 
     // Main Schedules Loader
     async loadSchedules() {
-        this.showLoader();
+        this.showLoader && this.showLoader();
         try {
-            const res = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
+            let url = '/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31';
+            if (window.selectedBranchCode) {
+                url += '&branchCode=' + encodeURIComponent(window.selectedBranchCode);
+            }
+            const res = await fetch(url);
             const data = await res.json();
             this.schedules = Array.isArray(data) ? data : [];
             this.renderWeeklyGrid();
         } catch (e) {
-            this.showToast('Failed to load schedules', 'error');
+            this.showToast && this.showToast('Failed to load schedules', 'error');
         } finally {
-            this.hideLoader();
+            this.hideLoader && this.hideLoader();
         }
     }
 
