@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	
+		<!-- UI labels ... -->
+		<data name="UnableToDetermineRootAssignment" xml:space="preserve">
+    <value>Unable to determine your root assignment. Please contact administrator.</value>
+  </data>
+		<data name="MissingRequiredFields" xml:space="preserve">
+    <value>Missing required field(s)</value>
+  </data>
+		<data name="AnswerNotFound" xml:space="preserve">
+    <value>Answer not found.</value>
+  </data>
+		<data name="OnlyOneCorrectAnswer" xml:space="preserve">
+    <value>Only one correct answer is allowed per question.</value>
+  </data>
+		<data name="CorrectAnswerAlreadyExists" xml:space="preserve">
+    <value>A correct answer already exists. Only one correct answer is allowed per question.</value>
+  </data>
+		<data name="InvalidAnswerData" xml:space="preserve">
+    <value>Invalid answer data.</value>
+  </data>
+		<data name="QuestionNotFound" xml:space="preserve">
+    <value>Question not found.</value>
+  </data>
+		<data name="MatchingTeachNotFound" xml:space="preserve">
+    <value>Matching Teach record not found.</value>
+  </data>
+
+	<data name="Title" xml:space="preserve"><value>Chapters and Lessons</value></data>
+	<data name="Questions" xml:space="preserve"><value>Questions</value></data>
+	<data name="SearchPlaceholder" xml:space="preserve"><value>Search questions...</value></data>
+	<data name="SearchBtn" xml:space="preserve"><value>Search</value></data>
+	<data name="ClearBtn" xml:space="preserve"><value>Clear</value></data>
+	<data name="TeachingLabel" xml:space="preserve"><value>Teaching:</value></data>
+	<data name="AddChapterBtn" xml:space="preserve"><value>Add Chapter</value></data>
+	<data name="AddLessonBtn" xml:space="preserve"><value>Add Lesson</value></data>
+	<data name="AddQuestionBtn" xml:space="preserve"><value>Add Question</value></data>
+	<data name="AddAnswersBtn" xml:space="preserve"><value>Add Answers</value></data>
+	<data name="ShowAnswersBtn" xml:space="preserve"><value>Show Answers</value></data>
+	<data name="EditBtn" xml:space="preserve"><value>Edit</value></data>
+	<data name="DeleteBtn" xml:space="preserve"><value>Delete</value></data>
+	<data name="NoTeachingSubjects" xml:space="preserve"><value>No teaching subjects found.</value></data>
+	<data name="NoChapters" xml:space="preserve"><value>No chapters found.</value></data>
+	<data name="NoLessons" xml:space="preserve"><value>No lessons available for this chapter.</value></data>
+	<data name="NoQuestions" xml:space="preserve"><value>No questions for this lesson.</value></data>
+	<data name="NoAnswers" xml:space="preserve"><value>No answers for this question.</value></data>
+	<data name="SelectOption" xml:space="preserve"><value>Select...</value></data>
+	<data name="Select" xml:space="preserve"><value>Select</value></data>
+	<data name="CancelBtn" xml:space="preserve"><value>Cancel</value></data>
+	<data name="Processing" xml:space="preserve"><value>Processing...</value></data>
+	<data name="Saved" xml:space="preserve"><value>Saved!</value></data>
+	<data name="Failed" xml:space="preserve"><value>Failed.</value></data>
+	<data name="ErrorOccurred" xml:space="preserve"><value>An error occurred.</value></data>
+	<data name="PleaseFillAllFields" xml:space="preserve"><value>Please fill all fields.</value></data>
+	<data name="PleaseFillRequiredFields" xml:space="preserve"><value>Please fill all required fields.</value></data>
+	<data name="AddAnotherAnswer" xml:space="preserve"><value>Add another answer</value></data>
+	<data name="RemoveAnswer" xml:space="preserve"><value>Remove</value></data>
+	<data name="AnswerContentPlaceholder" xml:space="preserve"><value>Answer Content</value></data>
+	<data name="IsCorrect" xml:space="preserve"><value>Is Correct</value></data>
+	<data name="IsCorrectAnswer" xml:space="preserve"><value>Is Correct Answer</value></data>
+	<data name="OnlyOneCorrectAnswer" xml:space="preserve"><value>Only one correct answer is allowed per question.</value></data>
+	<data name="AddAtLeastOneAnswer" xml:space="preserve"><value>Add at least one answer.</value></data>
+	<data name="LessonName" xml:space="preserve"><value>Lesson Name</value></data>
+	<data name="ChapterName" xml:space="preserve"><value>Chapter Name</value></data>
+	<data name="EducationYear" xml:space="preserve"><value>Education Year</value></data>
+	<data name="Teacher" xml:space="preserve"><value>Teacher</value></data>
+	<data name="Subject" xml:space="preserve"><value>Subject</value></data>
+	<data name="QuestionContent" xml:space="preserve"><value>Question Content</value></data>
+	<data name="ExamCode" xml:space="preserve"><value>Exam Code (optional)</value></data>
+	<data name="BackBtn" xml:space="preserve"><value>Back</value></data>
+	<data name="Page" xml:space="preserve"><value>Page</value></data>
+	<data name="Of" xml:space="preserve"><value>of</value></data>
+	<data name="Previous" xml:space="preserve"><value>Previous</value></data>
+	<data name="Next" xml:space="preserve"><value>Next</value></data>
+	<data name="DeleteQuestionConfirm" xml:space="preserve"><value>Are you sure you want to delete this question?</value></data>
+	<data name="DeleteAnswerConfirm" xml:space="preserve"><value>Are you sure you want to delete this answer?</value></data>
+	<data name="NoQuestionsFound" xml:space="preserve"><value>No questions found for</value></data>
+	<data name="FoundQuestions" xml:space="preserve"><value>Found {0} question(s):</value></data>
+	<data name="Lesson" xml:space="preserve"><value>Lesson</value></data>
+</root>

@@ -1,9 +1,55 @@
 ﻿console.log("=== Question.js file is being loaded ===");
 
-$(document).ready(function () {
-    console.log("=== jQuery ready function executed ===");
+// Use camelCase for all keys to match jQuery .data() parsing
+function getJsString(key) {
+    // Convert dash-case to camelCase for jQuery .data()
+    key = key.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+    return $('#js-localization').data(key);
+}
 
-    // --- Helper functions for button processing state ---
+// Insert all localized labels/text in static UI and modals
+function setModalLabels() {
+    $('#chapter-modal-title').text(getJsString('addChapterBtn'));
+    $('#chapter-name-label').text(getJsString('chapterName'));
+    $('#education-year-label').text(getJsString('educationYear'));
+    $('#teacher-label').text(getJsString('teacher'));
+    $('#subject-label').text(getJsString('subject'));
+    $('#save-chapter-btn').text(getJsString('addChapterBtn'));
+    $('#cancel-chapter-btn').text(getJsString('cancelBtn'));
+
+    $('#lesson-modal-title').text(getJsString('addLessonBtn'));
+    $('#lesson-name-label').text(getJsString('lessonName'));
+    $('#save-lesson-btn').text(getJsString('addLessonBtn'));
+    $('#cancel-lesson-btn').text(getJsString('cancelBtn'));
+
+    $('#question-modal-title').text(getJsString('addQuestionBtn'));
+    $('#question-content-label').text(getJsString('questionContent'));
+    $('#exam-code-label').text(getJsString('examCode'));
+    $('#save-question-btn').text(getJsString('addQuestionBtn'));
+    $('#cancel-question-btn').text(getJsString('cancelBtn'));
+
+    $('#answers-modal-title').text(getJsString('addAnswersBtn'));
+    $('#add-more-answer-btn').text(getJsString('addAnotherAnswer'));
+    $('#save-answers-btn').text(getJsString('addAnswersBtn'));
+    $('#cancel-answers-btn').text(getJsString('cancelBtn'));
+
+    $('#edit-answer-modal-title').text(getJsString('editBtn'));
+    $('#edit-answer-content-label').text(getJsString('answerContentPlaceholder'));
+    $('#edit-answer-istrue-label').text(getJsString('isCorrectAnswer'));
+    $('#save-edit-answer-btn').text(getJsString('editBtn'));
+    $('#cancel-edit-answer-btn').text(getJsString('cancelBtn'));
+}
+
+$(document).ready(function () {
+    // Localize static UI elements - all keys must be camelCase!
+    $('#questionSearchInput').attr('placeholder', getJsString('searchPlaceholder'));
+    $('#questionSearchBtn').text(getJsString('searchBtn'));
+    $('#questionSearchClearBtn').text(getJsString('clearBtn'));
+    $('#add-chapter-btn').text(getJsString('addChapterBtn'));
+    $('#subject-year-filter-bar label b').text(getJsString('teachingLabel'));
+    setModalLabels();
+
+    // Helper functions for button processing state
     function setButtonProcessing($btn, processingText) {
         if (!$btn.data('original-text')) {
             $btn.data('original-text', $btn.text());
@@ -11,10 +57,10 @@ $(document).ready(function () {
         $btn.text(processingText).prop('disabled', true);
     }
     function resetButton($btn) {
-        $btn.text($btn.data('original-text') || 'Save').prop('disabled', false);
+        $btn.text($btn.data('original-text') || getJsString('save')).prop('disabled', false);
     }
 
-    // ---- USER/ROOT/TEACHER INFO BOX ----
+    // User info box
     $.get('/Question/GetUserRootTeacherInfo', function (data) {
         if (data.isCenter === false) {
             let boxHtml = `
@@ -30,7 +76,7 @@ $(document).ready(function () {
         }
     });
 
-    // === Subject-Year Filter Setup ===
+    // Subject-Year Filter Setup
     let isCenter = false;
     let userTeacherCode = 0;
     let subjectYearPairs = [];
@@ -40,7 +86,6 @@ $(document).ready(function () {
     let currentPage = 1;
     let pageSize = 5;
 
-    // On page load, determine if user is center and setup subject-year filter if not
     $.get('/Question/IsUserCenter', function (res) {
         isCenter = res.isCenter;
         if (!isCenter) {
@@ -68,7 +113,7 @@ $(document).ready(function () {
             loadChapters();
         } else if (subjectYearPairs.length > 1) {
             $('#subject-year-filter-bar').show();
-            let html = '<option value="">Select...</option>';
+            let html = `<option value="">${getJsString('selectOption')}</option>`;
             subjectYearPairs.forEach(p => {
                 html += `<option value="${p.subjectCode}|${p.yearCode}">${p.subjectName} (${p.yearName})</option>`;
             });
@@ -104,7 +149,7 @@ $(document).ready(function () {
             });
         } else {
             $('#subject-year-filter-bar').hide();
-            $('#chapters-container').html('<div style="padding:20px;">No teaching subjects found.</div>');
+            $('#chapters-container').html(`<div style="padding:20px;">${getJsString('noTeachingSubjects')}</div>`);
         }
     }
     function setStickyFilter(subjectCode, yearCode) {
@@ -118,15 +163,16 @@ $(document).ready(function () {
 
     // ------ ADD CHAPTER LOGIC ------
     $('#add-chapter-btn').on('click', function () {
+        setModalLabels();
         $('#chapter-lessonname').val('');
         $('#chapter-message').text('');
         $('#chapter-eduyearcode').html('');
-        $('#chapter-subjectcode').html('<option value="">Select</option>');
+        $('#chapter-subjectcode').html(`<option value="">${getJsString('select')}</option>`);
         $('#chapter-teachercode').html('');
         $('#chapter-teachercode-hidden').val('');
         $('#teacher-group').hide();
         $('#chapter-yearcode').val('');
-        $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
+        $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
 
         $.get('/Question/IsUserCenter', function (res) {
             isCenter = res.isCenter;
@@ -138,7 +184,7 @@ $(document).ready(function () {
             } else {
                 $('#teacher-group').hide();
                 if (subjectYearPairs.length > 1) {
-                    $('#chapter-subjectcode').html('<option value="">Select</option>');
+                    $('#chapter-subjectcode').html(`<option value="">${getJsString('select')}</option>`);
                     subjectYearPairs.forEach(p => {
                         $('#chapter-subjectcode').append(
                             `<option value="${p.subjectCode}|${p.yearCode}">${p.subjectName} (${p.yearName})</option>`
@@ -154,7 +200,6 @@ $(document).ready(function () {
                             $('#chapter-yearcode').val('');
                         }
                     });
-                    // --- Autofill from Teaching Subjects filter ---
                     var selected = $('#subjectYearFilter').val();
                     if (selected) {
                         $('#chapter-subjectcode').val(selected);
@@ -169,7 +214,7 @@ $(document).ready(function () {
                     $('#chapter-subjectcode').val(subjectYearPairs[0].subjectCode);
                     $('#chapter-yearcode').val(subjectYearPairs[0].yearCode);
                 } else {
-                    $('#chapter-subjectcode').html('<option value="">No subjects</option>').prop('disabled', true);
+                    $('#chapter-subjectcode').html(`<option value="">${getJsString('noTeachingSubjects')}</option>`).prop('disabled', true);
                     $('#chapter-yearcode').val('');
                 }
             }
@@ -179,7 +224,7 @@ $(document).ready(function () {
 
     function loadChapterYears() {
         $.get('/Question/GetEduYearsByRoot', function (years) {
-            let html = '<option value="">Select</option>';
+            let html = `<option value="">${getJsString('select')}</option>`;
             years.forEach(y => {
                 html += `<option value="${y.eduYearCode}">${y.eduYearCode} - ${y.eduYearName}</option>`;
             });
@@ -188,7 +233,7 @@ $(document).ready(function () {
     }
     function loadChapterTeachers() {
         $.get('/Question/GetTeachersByRoot', function (teachers) {
-            let html = '<option value="">Select</option>';
+            let html = `<option value="">${getJsString('select')}</option>`;
             teachers.forEach(t => {
                 html += `<option value="${t.teacherCode}">${t.teacherName}</option>`;
             });
@@ -197,11 +242,11 @@ $(document).ready(function () {
     }
     function loadChapterSubjects(teacherCode, eduYearCode) {
         if (!teacherCode || !eduYearCode) {
-            $('#chapter-subjectcode').html('<option value="">Select</option>');
+            $('#chapter-subjectcode').html(`<option value="">${getJsString('select')}</option>`);
             return;
         }
         $.get('/Question/GetSubjectsByTeacherYear', { teacherCode, eduYearCode }, function (subjects) {
-            let html = '<option value="">Select</option>';
+            let html = `<option value="">${getJsString('select')}</option>`;
             subjects.forEach(s => {
                 html += `<option value="${s.subjectCode}">${s.subjectName}</option>`;
             });
@@ -224,19 +269,19 @@ $(document).ready(function () {
     });
     $('#cancel-chapter-btn').on('click', function () {
         $('#chapter-modal').fadeOut(120);
-        $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
+        $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
     });
     $('#chapter-modal').on('click', function (e) {
         if (e.target === this) {
             $('#chapter-modal').fadeOut(120);
-            $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
+            $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
         }
     });
     $('#chapter-form').on('submit', function (e) {
         e.preventDefault();
         $('#chapter-message').text('');
         let $saveBtn = $('#save-chapter-btn');
-        setButtonProcessing($saveBtn, 'Processing...');
+        setButtonProcessing($saveBtn, getJsString('processing'));
         let data = {
             LessonName: $('#chapter-lessonname').val(),
         };
@@ -256,7 +301,7 @@ $(document).ready(function () {
             }
         }
         if (!data.LessonName || !data.SubjectCode || (!isCenter && !data.YearCode)) {
-            $('#chapter-message').css('color', '#e74c3c').text('Please fill all fields.');
+            $('#chapter-message').css('color', '#e74c3c').text(getJsString('pleaseFillAllFields'));
             resetButton($saveBtn);
             return;
         }
@@ -266,18 +311,18 @@ $(document).ready(function () {
             data: data,
             success: function (result) {
                 if (result.success) {
-                    $('#chapter-message').css('color', '#27ae60').text('Saved!');
+                    $('#chapter-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
                         $('#chapter-modal').fadeOut(120);
-                        $('#save-chapter-btn').text('Add Chapter').prop('disabled', false);
+                        $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
                         loadChapters();
                     }, 700);
                 } else {
-                    $('#chapter-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                    $('#chapter-message').css('color', '#e74c3c').text(result.message || getJsString('failed'));
                 }
             },
             error: function () {
-                $('#chapter-message').css('color', '#e74c3c').text('An error occurred.');
+                $('#chapter-message').css('color', '#e74c3c').text(getJsString('errorOccurred'));
             },
             complete: function () {
                 resetButton($saveBtn);
@@ -287,6 +332,7 @@ $(document).ready(function () {
 
     // ------ ADD LESSON LOGIC ------
     $(document).on('click', '.add-lesson-btn', function () {
+        setModalLabels();
         $('#lesson-name').val('');
         $('#lesson-message').text('');
         $('#lesson-rootcode').val($(this).data('rootcode'));
@@ -300,24 +346,24 @@ $(document).ready(function () {
         }
         $('#lesson-eduyearcode').val($(this).data('eduyearcode'));
         $('#lesson-chaptercode').val($(this).data('chaptercode'));
-        $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
+        $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
         $('#lesson-modal').fadeIn(180);
     });
     $('#cancel-lesson-btn').on('click', function () {
         $('#lesson-modal').fadeOut(120);
-        $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
+        $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
     });
     $('#lesson-modal').on('click', function (e) {
         if (e.target === this) {
             $('#lesson-modal').fadeOut(120);
-            $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
+            $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
         }
     });
     $('#lesson-form').on('submit', function (e) {
         e.preventDefault();
         $('#lesson-message').text('');
         let $saveBtn = $('#save-lesson-btn');
-        setButtonProcessing($saveBtn, 'Processing...');
+        setButtonProcessing($saveBtn, getJsString('processing'));
         var formData = {
             LessonName: $('#lesson-name').val(),
             RootCode: $('#lesson-rootcode').val(),
@@ -328,7 +374,7 @@ $(document).ready(function () {
             YearCode: $('#lesson-yearcode').val()
         };
         if (!formData.LessonName || !formData.RootCode || !formData.TeacherCode || !formData.SubjectCode || (!isCenter && !formData.YearCode)) {
-            $('#lesson-message').css('color', '#e74c3c').text('Please fill all fields.');
+            $('#lesson-message').css('color', '#e74c3c').text(getJsString('pleaseFillAllFields'));
             resetButton($saveBtn);
             return;
         }
@@ -338,18 +384,18 @@ $(document).ready(function () {
             data: formData,
             success: function (result) {
                 if (result.success) {
-                    $('#lesson-message').css('color', '#27ae60').text('Saved!');
+                    $('#lesson-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
                         $('#lesson-modal').fadeOut(100);
-                        $('#save-lesson-btn').text('Add Lesson').prop('disabled', false);
+                        $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 700);
                 } else {
-                    $('#lesson-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                    $('#lesson-message').css('color', '#e74c3c').text(result.message || getJsString('failed'));
                 }
             },
             error: function () {
-                $('#lesson-message').css('color', '#e74c3c').text('An error occurred.');
+                $('#lesson-message').css('color', '#e74c3c').text(getJsString('errorOccurred'));
             },
             complete: function () {
                 resetButton($saveBtn);
@@ -381,25 +427,25 @@ $(document).ready(function () {
             req.subjectCode = currentSubjectCode;
             req.yearCode = currentYearCode;
         }
-        $('#question-search-results').html('<div style="padding:18px;">Searching...</div>').show();
+        $('#question-search-results').html('<div style="padding:18px;">' + getJsString('processing') + '</div>').show();
         $('#chapters-container').hide();
         $('#pagination-container').hide();
         $('#questionSearchClearBtn').show();
         $.get('/Question/SearchQuestions', req, function (data) {
             let html = '';
             if (!data || data.length === 0) {
-                html = '<div style="padding:18px; color:#888;">No questions found for "<b>' + $('<div/>').text(term).html() + '</b>".</div>';
+                html = `<div style="padding:18px; color:#888;">${getJsString('noQuestionsFound')} "<b>${$('<div/>').text(term).html()}</b>".</div>`;
             } else {
-                html = '<div style="padding-bottom:8px;color:#444;">Found ' + data.length + ' question(s):</div><ul style="padding-left:18px;">';
+                html = `<div style="padding-bottom:8px;color:#444;">${getJsString('foundQuestions').replace('{0}', data.length)}</div><ul style="padding-left:18px;">`;
                 data.forEach(function (q) {
                     html += '<li style="margin-bottom:8px;">';
-                    html += '<span class="question-content">' + $('<div/>').text(q.questionContent).html() + '</span>';
-                    html += ' <span style="color:#aaa;font-size:13px;">[Lesson: ' + (q.lessonName || '-') + ']</span>';
+                    html += `<span class="question-content">${$('<div/>').text(q.questionContent).html()}</span>`;
+                    html += ` <span style="color:#aaa;font-size:13px;">[${getJsString('lesson')}: ${q.lessonName || '-'}]</span>`;
                     html += '</li>';
                 });
                 html += '</ul>';
             }
-            html += '<button id="questionSearchBackBtn" class="modern-btn btn-cancel" style="margin-top:14px;">Back</button>';
+            html += `<button id="questionSearchBackBtn" class="modern-btn btn-cancel" style="margin-top:14px;">${getJsString('backBtn')}</button>`;
             $('#question-search-results').html(html).show();
         });
     }
@@ -429,7 +475,7 @@ $(document).ready(function () {
                 let totalCount = result.totalCount;
                 let html = '';
                 if (data.length === 0) {
-                    html = `<div style="padding:32px;text-align:center;color:#888;">No chapters found.</div>`;
+                    html = `<div style="padding:32px;text-align:center;color:#888;">${getJsString('noChapters')}</div>`;
                 }
                 data.forEach(function (item, idx) {
                     let chapterBlockAddLessonBtn = `<button class="modern-btn add-lesson-btn"
@@ -439,7 +485,7 @@ $(document).ready(function () {
                         data-eduyearcode="${item.eduYearCode || ''}"
                         data-teachercode="${item.teacherCode || ''}"
                         data-subjectcode="${item.subjectCode || ''}">
-                        Add Lesson
+                        ${getJsString('addLessonBtn')}
                     </button>`;
 
                     html += `<div class="chapter-block">
@@ -456,7 +502,7 @@ $(document).ready(function () {
                                 <div class="lesson-header">
                                     <span class="lesson-title"><i class="fa-solid fa-book"></i> ${lesson.lessonName}</span>
                                     <button class="styled-btn add-question-btn" data-lesson="${lesson.lessonCode}" data-lessonname="${lesson.lessonName}">
-                                        <i class="fa-solid fa-plus"></i> Add Question
+                                        <i class="fa-solid fa-plus"></i> ${getJsString('addQuestionBtn')}
                                     </button>
                                 </div>
                                 <div class="questions-list" id="questions-list-${lesson.lessonCode}">`;
@@ -467,10 +513,10 @@ $(document).ready(function () {
                                         <span class="question-content">${q.questionContent}</span>
                                         <div class="question-actions">
                                             <button class="styled-btn show-answers-btn" data-question="${q.questionCode}">
-                                                <i class="fa-solid fa-chevron-down"></i> Show Answers
+                                                <i class="fa-solid fa-chevron-down"></i> ${getJsString('showAnswersBtn')}
                                             </button>
                                             <button class="styled-btn add-answers-btn" data-question="${q.questionCode}" data-questioncontent="${q.questionContent}">
-                                                <i class="fa-solid fa-plus"></i> Add Answers
+                                                <i class="fa-solid fa-plus"></i> ${getJsString('addAnswersBtn')}
                                             </button>
                                             <button class="icon-btn edit-question-btn" data-question='${JSON.stringify(q)}'><i class="fa-solid fa-edit"></i></button>
                                             <button class="icon-btn delete-question-btn" data-question="${q.questionCode}"><i class="fa-solid fa-trash"></i></button>
@@ -479,13 +525,13 @@ $(document).ready(function () {
                                     </div>`;
                                 });
                             } else {
-                                html += `<div class="empty-lessons"><i class="fa-regular fa-circle-xmark"></i> No questions for this lesson.</div>`;
+                                html += `<div class="empty-lessons"><i class="fa-regular fa-circle-xmark"></i> ${getJsString('noQuestions')}</div>`;
                             }
 
                             html += `</div></div>`;
                         });
                     } else {
-                        html += `<div class="empty-lessons"><i class="fa-regular fa-circle-xmark"></i> No lessons available for this chapter.</div>`;
+                        html += `<div class="empty-lessons"><i class="fa-regular fa-circle-xmark"></i> ${getJsString('noLessons')}</div>`;
                     }
                     html += `</div></div>`;
                 });
@@ -493,7 +539,7 @@ $(document).ready(function () {
                 renderPagination(totalCount, currentPage, pageSize);
             },
             error: function (xhr, status, error) {
-                $('#chapters-container').html('<div style="padding:32px;text-align:center;color:#e74c3c;">Error loading chapters.</div>');
+                $('#chapters-container').html('<div style="padding:32px;text-align:center;color:#e74c3c;">' + getJsString('errorOccurred') + '</div>');
             }
         });
     }
@@ -505,11 +551,11 @@ $(document).ready(function () {
         }
         let html = '';
         if (currentPage > 1) {
-            html += `<button class="modern-btn" id="prev-page-btn">Previous</button>`;
+            html += `<button class="modern-btn" id="prev-page-btn">${getJsString('previous')}</button>`;
         }
-        html += ` Page ${currentPage} of ${totalPages} `;
+        html += ` ${getJsString('page')} ${currentPage} ${getJsString('of')} ${totalPages} `;
         if (currentPage < totalPages) {
-            html += `<button class="modern-btn" id="next-page-btn">Next</button>`;
+            html += `<button class="modern-btn" id="next-page-btn">${getJsString('next')}</button>`;
         }
         $('#pagination-container').html(html);
         $('#prev-page-btn').off().on('click', function () {
@@ -520,9 +566,7 @@ $(document).ready(function () {
         });
     }
 
-    // ========== ALL OTHER QUESTION/ANSWER LOGIC REMAINS UNCHANGED ==========
-
-    // Toggle lessons dropdown
+    // ========== TOGGLE LESSONS ==========
     $(document).on('click', '.chapter-header', function () {
         let idx = $(this).data('idx');
         let $lessons = $('#lessons-list-' + idx);
@@ -533,6 +577,7 @@ $(document).ready(function () {
     // Show modal for add question
     $(document).on('click', '.add-question-btn', function (e) {
         e.stopPropagation();
+        setModalLabels();
         const lessonCode = $(this).data('lesson');
         const lessonName = $(this).data('lessonname');
 
@@ -540,35 +585,36 @@ $(document).ready(function () {
         $('#question-lessoncode').val(lessonCode);
         $('#question-content').val('');
         $('#question-examcode').val('');
-        $('#question-modal-title').text('Add Question to "' + lessonName + '"');
+        $('#question-modal-title').text(getJsString('addQuestionBtn') + ' "' + lessonName + '"');
         $('#question-message').text('');
-        $('#save-question-btn').text('Add Question').prop('disabled', false);
+        $('#save-question-btn').text(getJsString('addQuestionBtn')).prop('disabled', false);
         $('#question-modal').fadeIn(180);
     });
 
     // Show modal for edit question
     $(document).on('click', '.edit-question-btn', function (e) {
         e.stopPropagation();
+        setModalLabels();
         const q = $(this).data('question');
         $('#question-id').val(q.questionCode);
         $('#question-lessoncode').val(q.lessonCode);
         $('#question-content').val(q.questionContent);
         $('#question-examcode').val(q.examCode || '');
-        $('#question-modal-title').text('Edit Question');
+        $('#question-modal-title').text(getJsString('editBtn'));
         $('#question-message').text('');
-        $('#save-question-btn').text('Save').prop('disabled', false);
+        $('#save-question-btn').text(getJsString('editBtn')).prop('disabled', false);
         $('#question-modal').fadeIn(180);
     });
 
     // Hide question modal
     $('#cancel-question-btn').on('click', function () {
         $('#question-modal').fadeOut(150);
-        $('#save-question-btn').text('Add Question').prop('disabled', false);
+        $('#save-question-btn').text(getJsString('addQuestionBtn')).prop('disabled', false);
     });
     $('#question-modal').on('click', function (e) {
         if (e.target === this) {
             $('#question-modal').fadeOut(150);
-            $('#save-question-btn').text('Add Question').prop('disabled', false);
+            $('#save-question-btn').text(getJsString('addQuestionBtn')).prop('disabled', false);
         }
     });
 
@@ -577,7 +623,7 @@ $(document).ready(function () {
         e.preventDefault();
         $('#question-message').text('');
         let $saveBtn = $('#save-question-btn');
-        setButtonProcessing($saveBtn, 'Processing...');
+        setButtonProcessing($saveBtn, getJsString('processing'));
 
         let formData = {
             QuestionCode: $('#question-id').val(),
@@ -590,7 +636,7 @@ $(document).ready(function () {
         let url = isEdit ? '/Question/EditQuestion' : '/Question/AddQuestion';
 
         if (!formData.QuestionContent || !formData.LessonCode) {
-            $('#question-message').css('color', '#e74c3c').text('Please fill all required fields.');
+            $('#question-message').css('color', '#e74c3c').text(getJsString('pleaseFillRequiredFields'));
             resetButton($saveBtn);
             return;
         }
@@ -601,18 +647,18 @@ $(document).ready(function () {
             data: formData,
             success: function (result) {
                 if (result.success) {
-                    $('#question-message').css('color', '#27ae60').text('Saved!');
+                    $('#question-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
                         $('#question-modal').fadeOut(100);
-                        $('#save-question-btn').text(isEdit ? 'Save' : 'Add Question').prop('disabled', false);
+                        $('#save-question-btn').text(isEdit ? getJsString('editBtn') : getJsString('addQuestionBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
                 } else {
-                    $('#question-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                    $('#question-message').css('color', '#e74c3c').text(result.message || getJsString('failed'));
                 }
             },
             error: function () {
-                $('#question-message').css('color', '#e74c3c').text('An error occurred.');
+                $('#question-message').css('color', '#e74c3c').text(getJsString('errorOccurred'));
             },
             complete: function () {
                 resetButton($saveBtn);
@@ -624,7 +670,7 @@ $(document).ready(function () {
     $(document).on('click', '.delete-question-btn', function (e) {
         e.stopPropagation();
         let questionCode = $(this).data('question');
-        if (!confirm('Are you sure you want to delete this question?')) return;
+        if (!confirm(getJsString('deleteQuestionConfirm'))) return;
 
         $.ajax({
             url: '/Question/DeleteQuestion',
@@ -634,11 +680,11 @@ $(document).ready(function () {
                 if (result.success) {
                     loadChapters(currentPage);
                 } else {
-                    alert(result.message || 'Failed to delete the question.');
+                    alert(result.message || getJsString('failed'));
                 }
             },
             error: function (xhr, status, error) {
-                alert('An error occurred while deleting.');
+                alert(getJsString('errorOccurred'));
             }
         });
     });
@@ -661,7 +707,7 @@ $(document).ready(function () {
                 success: function (answers) {
                     let html = '';
                     if (answers.length === 0) {
-                        html = `<div style="padding:12px;color:#888;">No answers for this question.</div>`;
+                        html = `<div style="padding:12px;color:#888;">${getJsString('noAnswers')}</div>`;
                     } else {
                         answers.forEach(ans => {
                             html += `
@@ -682,7 +728,7 @@ $(document).ready(function () {
                     $btn.find('i').addClass('fa-rotate-180');
                 },
                 error: function (xhr, status, error) {
-                    $answersList.html('<div style="padding:12px;color:#e74c3c;">Error loading answers.</div>').slideDown(120);
+                    $answersList.html('<div style="padding:12px;color:#e74c3c;">' + getJsString('errorOccurred') + '</div>').slideDown(120);
                 }
             });
         }
@@ -691,27 +737,28 @@ $(document).ready(function () {
     // Show Add Answers Modal
     $(document).on('click', '.add-answers-btn', function (e) {
         e.stopPropagation();
+        setModalLabels();
         const questionCode = $(this).data('question');
         const questionContent = $(this).data('questioncontent');
 
         $('#answers-questioncode').val(questionCode);
         $('#answers-fields').html('');
         addAnswerField();
-        $('#answers-modal-title').text('Add Answers to: "' + questionContent + '"');
+        $('#answers-modal-title').text(getJsString('addAnswersBtn') + ': "' + questionContent + '"');
         $('#answers-message').text('');
-        $('#save-answers-btn').text('Add Answers').prop('disabled', false);
+        $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
         $('#answers-modal').fadeIn(180);
     });
 
     // Hide answers modal
     $('#cancel-answers-btn').on('click', function () {
         $('#answers-modal').fadeOut(150);
-        $('#save-answers-btn').text('Add Answers').prop('disabled', false);
+        $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
     });
     $('#answers-modal').on('click', function (e) {
         if (e.target === this) {
             $('#answers-modal').fadeOut(150);
-            $('#save-answers-btn').text('Add Answers').prop('disabled', false);
+            $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
         }
     });
 
@@ -725,11 +772,11 @@ $(document).ready(function () {
         let idx = $('#answers-fields .answer-field-block').length;
         let fieldHtml = `
             <div class="answer-field-block" data-idx="${idx}" style="margin-bottom:8px;">
-                <input type="text" name="AnswerContent" placeholder="Answer Content" class="modern-input" required style="margin-right:8px;width:60%;" />
+                <input type="text" name="AnswerContent" placeholder="${getJsString('answerContentPlaceholder')}" class="modern-input" required style="margin-right:8px;width:60%;" />
                 <label style="margin-right:8px;">
-                    <input type="checkbox" name="IsTrue" value="true" style="vertical-align:middle;" /> Is Correct
+                    <input type="checkbox" name="IsTrue" value="true" style="vertical-align:middle;" /> ${getJsString('isCorrect')}
                 </label>
-                <button type="button" class="modern-btn btn-cancel remove-answer-field-btn" style="padding:2px 8px;">Remove</button>
+                <button type="button" class="modern-btn btn-cancel remove-answer-field-btn" style="padding:2px 8px;">${getJsString('removeAnswer')}</button>
             </div>
         `;
         $('#answers-fields').append(fieldHtml);
@@ -745,11 +792,11 @@ $(document).ready(function () {
         e.preventDefault();
         $('#answers-message').text('');
         let $saveBtn = $('#save-answers-btn');
-        setButtonProcessing($saveBtn, 'Processing...');
+        setButtonProcessing($saveBtn, getJsString('processing'));
 
         let $blocks = $('#answers-fields .answer-field-block');
         if ($blocks.length === 0) {
-            $('#answers-message').css('color', '#e74c3c').text('Add at least one answer.');
+            $('#answers-message').css('color', '#e74c3c').text(getJsString('addAtLeastOneAnswer'));
             resetButton($saveBtn);
             return;
         }
@@ -761,7 +808,7 @@ $(document).ready(function () {
             }
         });
         if (correctCount > 1) {
-            $('#answers-message').css('color', '#e74c3c').text('Only one correct answer is allowed per question.');
+            $('#answers-message').css('color', '#e74c3c').text(getJsString('onlyOneCorrectAnswer'));
             resetButton($saveBtn);
             return;
         }
@@ -785,18 +832,18 @@ $(document).ready(function () {
             contentType: false,
             success: function (result) {
                 if (result.success) {
-                    $('#answers-message').css('color', '#27ae60').text('Saved!');
+                    $('#answers-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
                         $('#answers-modal').fadeOut(100);
-                        $('#save-answers-btn').text('Add Answers').prop('disabled', false);
+                        $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
                 } else {
-                    $('#answers-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                    $('#answers-message').css('color', '#e74c3c').text(result.message || getJsString('failed'));
                 }
             },
             error: function () {
-                $('#answers-message').css('color', '#e74c3c').text('An error occurred.');
+                $('#answers-message').css('color', '#e74c3c').text(getJsString('errorOccurred'));
             },
             complete: function () {
                 resetButton($saveBtn);
@@ -807,6 +854,7 @@ $(document).ready(function () {
     // Show Edit Answer Modal
     $(document).on('click', '.edit-answer-btn', function (e) {
         e.stopPropagation();
+        setModalLabels();
         const ans = $(this).data('answer');
 
         $('#edit-answer-code').val(ans.answerCode);
@@ -814,19 +862,19 @@ $(document).ready(function () {
         $('#edit-answer-content').val(ans.answerContent);
         $('#edit-answer-istrue').prop('checked', ans.isTrue);
         $('#edit-answer-message').text('');
-        $('#save-edit-answer-btn').text('Save').prop('disabled', false);
+        $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
         $('#edit-answer-modal').fadeIn(180);
     });
 
     // Hide edit answer modal
     $('#cancel-edit-answer-btn').on('click', function () {
         $('#edit-answer-modal').fadeOut(150);
-        $('#save-edit-answer-btn').text('Save').prop('disabled', false);
+        $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
     });
     $('#edit-answer-modal').on('click', function (e) {
         if (e.target === this) {
             $('#edit-answer-modal').fadeOut(150);
-            $('#save-edit-answer-btn').text('Save').prop('disabled', false);
+            $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
         }
     });
 
@@ -835,7 +883,7 @@ $(document).ready(function () {
         e.preventDefault();
         $('#edit-answer-message').text('');
         let $saveBtn = $('#save-edit-answer-btn');
-        setButtonProcessing($saveBtn, 'Processing...');
+        setButtonProcessing($saveBtn, getJsString('processing'));
 
         let formData = {
             AnswerCode: $('#edit-answer-code').val(),
@@ -845,7 +893,7 @@ $(document).ready(function () {
         };
 
         if (!formData.AnswerContent) {
-            $('#edit-answer-message').css('color', '#e74c3c').text('Please fill in the answer content.');
+            $('#edit-answer-message').css('color', '#e74c3c').text(getJsString('pleaseFillAllFields'));
             resetButton($saveBtn);
             return;
         }
@@ -856,18 +904,18 @@ $(document).ready(function () {
             data: formData,
             success: function (result) {
                 if (result.success) {
-                    $('#edit-answer-message').css('color', '#27ae60').text('Saved!');
+                    $('#edit-answer-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
                         $('#edit-answer-modal').fadeOut(100);
-                        $('#save-edit-answer-btn').text('Save').prop('disabled', false);
+                        $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
                 } else {
-                    $('#edit-answer-message').css('color', '#e74c3c').text(result.message || 'Failed.');
+                    $('#edit-answer-message').css('color', '#e74c3c').text(result.message || getJsString('failed'));
                 }
             },
             error: function () {
-                $('#edit-answer-message').css('color', '#e74c3c').text('An error occurred.');
+                $('#edit-answer-message').css('color', '#e74c3c').text(getJsString('errorOccurred'));
             },
             complete: function () {
                 resetButton($saveBtn);
@@ -879,7 +927,7 @@ $(document).ready(function () {
     $(document).on('click', '.delete-answer-btn', function (e) {
         e.stopPropagation();
         let answerCode = $(this).data('answer');
-        if (!confirm('Are you sure you want to delete this answer?')) return;
+        if (!confirm(getJsString('deleteAnswerConfirm'))) return;
 
         $.ajax({
             url: '/Question/DeleteAnswer',
@@ -889,16 +937,14 @@ $(document).ready(function () {
                 if (result.success) {
                     loadChapters(currentPage);
                 } else {
-                    alert(result.message || 'Failed to delete the answer.');
+                    alert(result.message || getJsString('failed'));
                 }
             },
             error: function () {
-                alert('An error occurred while deleting.');
+                alert(getJsString('errorOccurred'));
             }
         });
     });
 
-    console.log("=== Event handlers attached ===");
+    console.log("=== End of Question.js file ===");
 });
-
-console.log("=== End of Question.js file ===");

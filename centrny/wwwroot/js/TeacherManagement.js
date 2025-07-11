@@ -2,18 +2,37 @@
 let loggedInUserRootCode = null;
 let currentTeacherCode = null;
 
+function getJsString(key) {
+    return $('#js-localization').data(key);
+}
+
 $(function () {
-    // --- PATCH: cache submit buttons for reset ---
+    // Localized JS strings
+    const deleteTeacherConfirm = getJsString('delete-teacher-confirm');
+    const deleteTeachConfirm = getJsString('delete-teach-confirm');
+    const noSubjectsFound = getJsString('no-subjects-found');
+    const fillAllFields = getJsString('fill-all-fields');
+    const processingText = getJsString('processing');
+    const submitText = getJsString('submit');
+    const userCodeText = getJsString('usercode');
+    const userNameText = getJsString('username');
+    const rootNameText = getJsString('rootname');
+    const phoneText = getJsString('phone');
+    const addressText = getJsString('address');
+    const showSubjectsBtn = getJsString('show-subjects-btn');
+    const addTeachingSubjectBtn = getJsString('add-teaching-subject-btn');
+    const editBtn = getJsString('edit-btn');
+    const deleteBtn = getJsString('delete-btn');
+    const noEduYear = getJsString('no-educational-year');
+
     const addTeacherSubmitBtn = $('#teacherForm button[type="submit"]');
     const editTeacherSubmitBtn = $('#editTeacherForm button[type="submit"]');
     const teachSubjectSubmitBtn = $('#teachSubjectForm button[type="submit"]');
 
-    // --- PATCH: helper to reset submit button ---
     function resetSubmitButton($btn, defaultText) {
         $btn.text(defaultText).prop('disabled', false);
     }
 
-    // Load user info and setup UI
     $.ajax({
         url: '/TeacherManagement/GetUserRootInfo',
         method: 'GET',
@@ -25,9 +44,9 @@ $(function () {
             loggedInUserCode = data.user_code;
             loggedInUserRootCode = data.user_root_code;
             $('#user-info').html(
-                'User Code: <b>' + data.user_code + '</b> | ' +
-                'User Name: <b>' + data.user_name + '</b> | ' +
-                'Root Name: <b>' + data.root_name + '</b>'
+                userCodeText + ': <b>' + data.user_code + '</b> | ' +
+                userNameText + ': <b>' + data.user_name + '</b> | ' +
+                rootNameText + ': <b>' + data.root_name + '</b>'
             );
             loadTeachers(loggedInUserRootCode);
         }
@@ -42,14 +61,14 @@ $(function () {
                 <div class="card mb-3">
                     <div class="card-body">
                         <div><b>${teacher.teacherName}</b></div>
-                        <div>Phone: ${teacher.teacherPhone}</div>
-                        <div>Address: ${teacher.teacherAddress || ''}</div>
+                        <div>${phoneText}: ${teacher.teacherPhone}</div>
+                        <div>${addressText}: ${teacher.teacherAddress || ''}</div>
                         <div>Status: ${teacher.isActive ? 'Active' : 'Inactive'}</div>
                         <div class="mt-2">
-                            <button class="btn btn-info btn-sm show-subjects-btn" data-teacher="${teacher.teacherCode}">Show Subjects</button>
-                            <button class="btn btn-success btn-sm add-teachsubject-btn" data-teacher="${teacher.teacherCode}">Add Teaching Subject</button>
-                            <button class="btn btn-warning btn-sm edit-teacher-btn" data-teacher="${teacher.teacherCode}">Edit</button>
-                            <button class="btn btn-danger btn-sm delete-teacher-btn" data-teacher="${teacher.teacherCode}">Delete</button>
+                            <button class="btn btn-info btn-sm show-subjects-btn" data-teacher="${teacher.teacherCode}">${showSubjectsBtn}</button>
+                            <button class="btn btn-success btn-sm add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>
+                            <button class="btn btn-warning btn-sm edit-teacher-btn" data-teacher="${teacher.teacherCode}">${editBtn}</button>
+                            <button class="btn btn-danger btn-sm delete-teacher-btn" data-teacher="${teacher.teacherCode}">${deleteBtn}</button>
                         </div>
                         <div class="mt-2 subjects-container" id="subjects-for-teacher-${teacher.teacherCode}" style="display:none;"></div>
                     </div>
@@ -60,17 +79,15 @@ $(function () {
         });
     }
 
-    // --- Add Teacher ---
     $(document).on('click', '#openAddTeacher', function () {
         $('#teacherForm')[0].reset();
-        // --- PATCH: reset submit button when modal opens ---
-        resetSubmitButton(addTeacherSubmitBtn, "Submit");
+        resetSubmitButton(addTeacherSubmitBtn, submitText);
         $('#addTeacherModal').modal('show');
     });
 
     $('#teacherForm').on('submit', function (e) {
         e.preventDefault();
-        addTeacherSubmitBtn.text("Processing...").prop('disabled', true); // PATCH: show processing
+        addTeacherSubmitBtn.text(processingText).prop('disabled', true);
         var teacherData = {
             TeacherName: $('#teacherName').val(),
             TeacherPhone: $('#teacherPhone').val(),
@@ -87,21 +104,19 @@ $(function () {
                 $('#addTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
                 alert(res.message);
-                resetSubmitButton(addTeacherSubmitBtn, "Submit"); // PATCH: always reset
+                resetSubmitButton(addTeacherSubmitBtn, submitText);
             },
             error: function (xhr) {
                 alert("Failed to add teacher: " + xhr.responseText);
-                resetSubmitButton(addTeacherSubmitBtn, "Submit"); // PATCH: always reset
+                resetSubmitButton(addTeacherSubmitBtn, submitText);
             }
         });
     });
 
-    // --- PATCH: reset submit button on modal close ---
     $('#addTeacherModal').on('hidden.bs.modal', function () {
-        resetSubmitButton(addTeacherSubmitBtn, "Submit");
+        resetSubmitButton(addTeacherSubmitBtn, submitText);
     });
 
-    // --- Edit Teacher ---
     $(document).on('click', '.edit-teacher-btn', function () {
         let teacherCode = $(this).data('teacher');
         $.get('/TeacherManagement/GetTeacherById?teacherCode=' + teacherCode, function (teacher) {
@@ -109,14 +124,14 @@ $(function () {
             $('#editTeacherName').val(teacher.teacherName);
             $('#editTeacherPhone').val(teacher.teacherPhone);
             $('#editTeacherAddress').val(teacher.teacherAddress);
-            resetSubmitButton(editTeacherSubmitBtn, "Submit"); // PATCH: reset on open
+            resetSubmitButton(editTeacherSubmitBtn, submitText);
             $('#editTeacherModal').modal('show');
         });
     });
 
     $('#editTeacherForm').on('submit', function (e) {
         e.preventDefault();
-        editTeacherSubmitBtn.text("Processing...").prop('disabled', true); // PATCH: show processing
+        editTeacherSubmitBtn.text(processingText).prop('disabled', true);
         var teacherEdit = {
             TeacherCode: $('#editTeacherCode').val(),
             TeacherName: $('#editTeacherName').val(),
@@ -132,24 +147,22 @@ $(function () {
                 $('#editTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
                 alert(res.message);
-                resetSubmitButton(editTeacherSubmitBtn, "Submit"); // PATCH: always reset
+                resetSubmitButton(editTeacherSubmitBtn, submitText);
             },
             error: function (xhr) {
                 alert("Failed to edit teacher: " + xhr.responseText);
-                resetSubmitButton(editTeacherSubmitBtn, "Submit"); // PATCH: always reset
+                resetSubmitButton(editTeacherSubmitBtn, submitText);
             }
         });
     });
 
-    // --- PATCH: reset submit button on modal close ---
     $('#editTeacherModal').on('hidden.bs.modal', function () {
-        resetSubmitButton(editTeacherSubmitBtn, "Submit");
+        resetSubmitButton(editTeacherSubmitBtn, submitText);
     });
 
-    // --- Delete Teacher ---
     $(document).on('click', '.delete-teacher-btn', function () {
         let teacherCode = $(this).data('teacher');
-        if (!confirm('Are you sure you want to delete this teacher? All their teaching subjects will also be deleted.')) return;
+        if (!confirm(deleteTeacherConfirm)) return;
         $.ajax({
             url: '/TeacherManagement/DeleteTeacher',
             method: 'POST',
@@ -162,7 +175,6 @@ $(function () {
         });
     });
 
-    // --- Show Subjects for Teacher ---
     $(document).on('click', '.show-subjects-btn', function () {
         let teacherCode = $(this).data('teacher');
         let $container = $(`#subjects-for-teacher-${teacherCode}`);
@@ -176,7 +188,7 @@ $(function () {
             success: function (subjects) {
                 let html = '';
                 if (!subjects.length) {
-                    html = '<span class="text-muted">No subjects found.</span>';
+                    html = `<span class="text-muted">${noSubjectsFound}</span>`;
                 } else {
                     html = '<ul class="list-group">';
                     for (let s of subjects) {
@@ -186,7 +198,7 @@ $(function () {
                                     ${s.subjectName} <span class="text-secondary">(${s.yearName})</span>
                                 </span>
                                 <button class="btn btn-danger btn-sm ms-2 delete-teach-btn"
-                                    data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}">Delete</button>
+                                    data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}">${deleteBtn}</button>
                             </li>`;
                     }
                     html += '</ul>';
@@ -196,13 +208,11 @@ $(function () {
         });
     });
 
-    // --- Add Teaching Subject (open modal and fill years, branches, educational year, subject list) ---
     $(document).on('click', '.add-teachsubject-btn', function () {
         currentTeacherCode = $(this).data('teacher');
         $('#teachSubjectForm')[0].reset();
-        resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: reset on open
+        resetSubmitButton(teachSubjectSubmitBtn, submitText);
 
-        // Populate year dropdown
         $.ajax({
             url: '/TeacherManagement/GetYearsByRoot?rootCode=' + loggedInUserRootCode,
             type: 'GET',
@@ -213,13 +223,11 @@ $(function () {
                     $yearSelect.append($('<option>', { value: year.yearCode, text: year.yearName }));
                 }
 
-                // Set educational year display (get name)
                 $.ajax({
                     url: '/TeacherManagement/GetActiveEduYearByRoot?rootCode=' + loggedInUserRootCode,
                     type: 'GET',
                     success: function (activeYear) {
-                        $('#activeYearDisplay').val(activeYear.eduYearName || "No educational year");
-                        // Now load branches
+                        $('#activeYearDisplay').val(activeYear.eduYearName || noEduYear);
                         $.ajax({
                             url: '/TeacherManagement/GetBranchesForRootWithCenters?rootCode=' + loggedInUserRootCode,
                             type: 'GET',
@@ -229,7 +237,6 @@ $(function () {
                                 for (let branch of branches) {
                                     $branchSelect.append($('<option>', { value: branch.branchCode, text: branch.branchName }));
                                 }
-                                // Now load subjects for this root
                                 $.ajax({
                                     url: '/TeacherManagement/GetSubjectsByRoot?rootCode=' + loggedInUserRootCode,
                                     type: 'GET',
@@ -250,22 +257,20 @@ $(function () {
         });
     });
 
-    // --- PATCH: reset submit button on modal close ---
     $('#addTeachSubjectModal').on('hidden.bs.modal', function () {
-        resetSubmitButton(teachSubjectSubmitBtn, "Submit");
+        resetSubmitButton(teachSubjectSubmitBtn, submitText);
     });
 
-    // --- Submit Add Teaching Subject ---
     $('#teachSubjectForm').on('submit', function (e) {
         e.preventDefault();
-        teachSubjectSubmitBtn.text("Processing...").prop('disabled', true); // PATCH: show processing
+        teachSubjectSubmitBtn.text(processingText).prop('disabled', true);
         let subjectCode = $('#subjectSelect').val();
         let isPrimary = $('#isPrimary').val() === "true";
         let branchCode = $('#branchSelect').val();
         let yearCode = $('#yearSelect').val();
         if (!subjectCode || !branchCode || !currentTeacherCode || !loggedInUserRootCode || !yearCode) {
-            alert('Please fill all fields');
-            resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: always reset
+            alert(fillAllFields);
+            resetSubmitButton(teachSubjectSubmitBtn, submitText);
             return;
         }
         let data = {
@@ -286,20 +291,19 @@ $(function () {
                 $('#addTeachSubjectModal').modal('hide');
                 $(`.show-subjects-btn[data-teacher="${currentTeacherCode}"]`).trigger('click');
                 alert(res.message);
-                resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: always reset
+                resetSubmitButton(teachSubjectSubmitBtn, submitText);
             },
             error: function (xhr) {
                 alert("Failed to add teaching subject: " + xhr.responseText);
-                resetSubmitButton(teachSubjectSubmitBtn, "Submit"); // PATCH: always reset
+                resetSubmitButton(teachSubjectSubmitBtn, submitText);
             }
         });
     });
 
-    // --- Delete Teach (from teach table) ---
     $(document).on('click', '.delete-teach-btn', function () {
         let teacherCode = $(this).data('teacher');
         let subjectCode = $(this).data('subject');
-        if (!confirm('Are you sure you want to delete this teaching subject?')) return;
+        if (!confirm(deleteTeachConfirm)) return;
         $.ajax({
             url: '/TeacherManagement/DeleteTeach',
             method: 'POST',

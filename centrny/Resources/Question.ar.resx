@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	
+		<!-- UI labels ... -->
+		<data name="UnableToDetermineRootAssignment" xml:space="preserve">
+    <value>تعذر تحديد الجذر الخاص بك. يرجى الاتصال بالمسؤول.</value>
+  </data>
+		<data name="MissingRequiredFields" xml:space="preserve">
+    <value>الحقول المطلوبة مفقودة</value>
+  </data>
+		<data name="AnswerNotFound" xml:space="preserve">
+    <value>الإجابة غير موجودة.</value>
+  </data>
+		<data name="OnlyOneCorrectAnswer" xml:space="preserve">
+    <value>يسمح بإجابة صحيحة واحدة فقط لكل سؤال.</value>
+  </data>
+		<data name="CorrectAnswerAlreadyExists" xml:space="preserve">
+    <value>هناك بالفعل إجابة صحيحة. يسمح بإجابة صحيحة واحدة فقط لكل سؤال.</value>
+  </data>
+		<data name="InvalidAnswerData" xml:space="preserve">
+    <value>بيانات الإجابة غير صالحة.</value>
+  </data>
+		<data name="QuestionNotFound" xml:space="preserve">
+    <value>السؤال غير موجود.</value>
+  </data>
+		<data name="MatchingTeachNotFound" xml:space="preserve">
+    <value>لم يتم العثور على سجل تدريس مطابق.</value>
+  </data>
+
+	<data name="Title" xml:space="preserve"><value>الدروس والفصول</value></data>
+	<data name="Questions" xml:space="preserve"><value>الأسئلة</value></data>
+	<data name="SearchPlaceholder" xml:space="preserve"><value>ابحث عن الأسئلة...</value></data>
+	<data name="SearchBtn" xml:space="preserve"><value>بحث</value></data>
+	<data name="ClearBtn" xml:space="preserve"><value>مسح</value></data>
+	<data name="TeachingLabel" xml:space="preserve"><value>التدريس:</value></data>
+	<data name="AddChapterBtn" xml:space="preserve"><value>إضافة فصل</value></data>
+	<data name="AddLessonBtn" xml:space="preserve"><value>إضافة درس</value></data>
+	<data name="AddQuestionBtn" xml:space="preserve"><value>إضافة سؤال</value></data>
+	<data name="AddAnswersBtn" xml:space="preserve"><value>إضافة إجابات</value></data>
+	<data name="ShowAnswersBtn" xml:space="preserve"><value>عرض الإجابات</value></data>
+	<data name="EditBtn" xml:space="preserve"><value>تعديل</value></data>
+	<data name="DeleteBtn" xml:space="preserve"><value>حذف</value></data>
+	<data name="NoTeachingSubjects" xml:space="preserve"><value>لا توجد مواد تدريسية.</value></data>
+	<data name="NoChapters" xml:space="preserve"><value>لا توجد فصول.</value></data>
+	<data name="NoLessons" xml:space="preserve"><value>لا توجد دروس لهذا الفصل.</value></data>
+	<data name="NoQuestions" xml:space="preserve"><value>لا توجد أسئلة لهذا الدرس.</value></data>
+	<data name="NoAnswers" xml:space="preserve"><value>لا توجد إجابات لهذا السؤال.</value></data>
+	<data name="SelectOption" xml:space="preserve"><value>اختر...</value></data>
+	<data name="Select" xml:space="preserve"><value>اختر</value></data>
+	<data name="CancelBtn" xml:space="preserve"><value>إلغاء</value></data>
+	<data name="Processing" xml:space="preserve"><value>جاري المعالجة...</value></data>
+	<data name="Saved" xml:space="preserve"><value>تم الحفظ!</value></data>
+	<data name="Failed" xml:space="preserve"><value>فشل.</value></data>
+	<data name="ErrorOccurred" xml:space="preserve"><value>حدث خطأ.</value></data>
+	<data name="PleaseFillAllFields" xml:space="preserve"><value>يرجى تعبئة جميع الحقول.</value></data>
+	<data name="PleaseFillRequiredFields" xml:space="preserve"><value>يرجى تعبئة جميع الحقول المطلوبة.</value></data>
+	<data name="AddAnotherAnswer" xml:space="preserve"><value>إضافة إجابة أخرى</value></data>
+	<data name="RemoveAnswer" xml:space="preserve"><value>إزالة</value></data>
+	<data name="AnswerContentPlaceholder" xml:space="preserve"><value>محتوى الإجابة</value></data>
+	<data name="IsCorrect" xml:space="preserve"><value>إجابة صحيحة</value></data>
+	<data name="IsCorrectAnswer" xml:space="preserve"><value>هل الإجابة صحيحة</value></data>
+	<data name="OnlyOneCorrectAnswer" xml:space="preserve"><value>يسمح بإجابة صحيحة واحدة فقط لكل سؤال.</value></data>
+	<data name="AddAtLeastOneAnswer" xml:space="preserve"><value>أضف إجابة واحدة على الأقل.</value></data>
+	<data name="LessonName" xml:space="preserve"><value>اسم الدرس</value></data>
+	<data name="ChapterName" xml:space="preserve"><value>اسم الفصل</value></data>
+	<data name="EducationYear" xml:space="preserve"><value>السنة الدراسية</value></data>
+	<data name="Teacher" xml:space="preserve"><value>المعلم</value></data>
+	<data name="Subject" xml:space="preserve"><value>المادة</value></data>
+	<data name="QuestionContent" xml:space="preserve"><value>محتوى السؤال</value></data>
+	<data name="ExamCode" xml:space="preserve"><value>رمز الامتحان (اختياري)</value></data>
+	<data name="BackBtn" xml:space="preserve"><value>رجوع</value></data>
+	<data name="Page" xml:space="preserve"><value>صفحة</value></data>
+	<data name="Of" xml:space="preserve"><value>من</value></data>
+	<data name="Previous" xml:space="preserve"><value>السابق</value></data>
+	<data name="Next" xml:space="preserve"><value>التالي</value></data>
+	<data name="DeleteQuestionConfirm" xml:space="preserve"><value>هل أنت متأكد من حذف هذا السؤال؟</value></data>
+	<data name="DeleteAnswerConfirm" xml:space="preserve"><value>هل أنت متأكد من حذف هذه الإجابة؟</value></data>
+	<data name="NoQuestionsFound" xml:space="preserve"><value>لا توجد أسئلة لـ</value></data>
+	<data name="FoundQuestions" xml:space="preserve"><value>تم العثور على {0} سؤال:</value></data>
+	<data name="Lesson" xml:space="preserve"><value>الدرس</value></data>
+</root>

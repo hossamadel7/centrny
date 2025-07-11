@@ -1,19 +1,42 @@
-﻿@{
-    ViewBag.Title = "Teacher Management";
+﻿@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
+@{
+    var Localizer = LocalizerFactory.Create("Teacher", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewBag.Title = Localizer["Title"];
     Layout = "_Layout";
 }
+
 <link rel="stylesheet" href="~/css/site.css" />
+
+<!-- Localized strings for JS -->
+<div id="js-localization"
+     data-delete-teacher-confirm="@Localizer["DeleteTeacherConfirm"]"
+     data-delete-teach-confirm="@Localizer["DeleteTeachConfirm"]"
+     data-no-subjects-found="@Localizer["NoSubjectsFound"]"
+     data-fill-all-fields="@Localizer["FillAllFields"]"
+     data-processing="@Localizer["Processing"]"
+     data-submit="@Localizer["Submit"]"
+     data-usercode="@Localizer["UserCode"]"
+     data-username="@Localizer["UserName"]"
+     data-rootname="@Localizer["RootName"]"
+     data-phone="@Localizer["Phone"]"
+     data-address="@Localizer["Address"]"
+     data-show-subjects-btn="@Localizer["ShowSubjectsBtn"]"
+     data-add-teaching-subject-btn="@Localizer["AddTeachingSubjectBtn"]"
+     data-edit-btn="@Localizer["EditBtn"]"
+     data-delete-btn="@Localizer["DeleteBtn"]"
+     data-no-educational-year="@Localizer["NoEducationalYear"]"></div>
 
 <div class="container mt-4">
     <div class="d-flex align-items-center mb-4">
         <i class="fas fa-chalkboard-teacher fa-2x me-2"></i>
-        <h2 class="mb-0">Teacher Management</h2>
+        <h2 class="mb-0">@Localizer["Title"]</h2>
     </div>
     <div class="user-info mb-3" id="user-info"></div>
     <div id="teachers-section">
         <div class="d-flex align-items-center mb-2">
-            <h5 class="mb-0">Teachers</h5>
-            <button class="btn btn-primary btn-sm ms-2" id="openAddTeacher">Add Teacher</button>
+            <h5 class="mb-0">@Localizer["Teachers"]</h5>
+            <button class="btn btn-primary btn-sm ms-2" id="openAddTeacher">@Localizer["AddTeacherBtn"]</button>
         </div>
         <div id="teachers-list"></div>
     </div>
@@ -25,25 +48,25 @@
         <div class="modal-content ">
             <form id="teacherForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addTeacherModalLabel">Add Teacher</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="addTeacherModalLabel">@Localizer["AddTeacherModalTitle"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["Close"]"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
-                        <label for="teacherName" class="form-label">Teacher Name</label>
+                        <label for="teacherName" class="form-label">@Localizer["TeacherName"]</label>
                         <input type="text" class="form-control" id="teacherName" required>
                     </div>
                     <div class="mb-2">
-                        <label for="teacherPhone" class="form-label">Phone</label>
+                        <label for="teacherPhone" class="form-label">@Localizer["Phone"]</label>
                         <input type="text" class="form-control" id="teacherPhone" required>
                     </div>
                     <div class="mb-2">
-                        <label for="teacherAddress" class="form-label">Address</label>
+                        <label for="teacherAddress" class="form-label">@Localizer["Address"]</label>
                         <input type="text" class="form-control" id="teacherAddress">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btn-action">Add Teacher</button>
+                    <button type="submit" class="btn btn-primary btn-action">@Localizer["AddTeacherBtn"]</button>
                 </div>
             </form>
         </div>
@@ -56,26 +79,26 @@
         <div class="modal-content ">
             <form id="editTeacherForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editTeacherModalLabel">Edit Teacher</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="editTeacherModalLabel">@Localizer["EditTeacherModalTitle"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["Close"]"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editTeacherCode">
                     <div class="mb-2">
-                        <label for="editTeacherName" class="form-label">Teacher Name</label>
+                        <label for="editTeacherName" class="form-label">@Localizer["TeacherName"]</label>
                         <input type="text" class="form-control" id="editTeacherName" required>
                     </div>
                     <div class="mb-2">
-                        <label for="editTeacherPhone" class="form-label">Phone</label>
+                        <label for="editTeacherPhone" class="form-label">@Localizer["Phone"]</label>
                         <input type="text" class="form-control" id="editTeacherPhone" required>
                     </div>
                     <div class="mb-2">
-                        <label for="editTeacherAddress" class="form-label">Address</label>
+                        <label for="editTeacherAddress" class="form-label">@Localizer["Address"]</label>
                         <input type="text" class="form-control" id="editTeacherAddress">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-warning btn-action">Save Changes</button>
+                    <button type="submit" class="btn btn-warning btn-action">@Localizer["SaveChanges"]</button>
                 </div>
             </form>
         </div>
@@ -88,36 +111,36 @@
         <div class="modal-content ">
             <form id="teachSubjectForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addTeachSubjectModalLabel">Add Teaching Subject</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="addTeachSubjectModalLabel">@Localizer["AddTeachingSubjectModalTitle"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["Close"]"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
-                        <label for="yearSelect" class="form-label">Year</label>
+                        <label for="yearSelect" class="form-label">@Localizer["Year"]</label>
                         <select id="yearSelect" class="form-select" required></select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Educational Year:</label>
+                        <label class="form-label">@Localizer["EducationalYear"]</label>
                         <input type="text" class="form-control" id="activeYearDisplay" readonly disabled>
                     </div>
                     <div class="mb-2">
-                        <label for="subjectSelect" class="form-label">Subject</label>
+                        <label for="subjectSelect" class="form-label">@Localizer["Subject"]</label>
                         <select id="subjectSelect" class="form-select" required></select>
                     </div>
                     <div class="mb-2">
-                        <label for="isPrimary" class="form-label">Is Primary</label>
+                        <label for="isPrimary" class="form-label">@Localizer["IsPrimary"]</label>
                         <select id="isPrimary" class="form-select" required>
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
+                            <option value="true">@Localizer["Yes"]</option>
+                            <option value="false">@Localizer["No"]</option>
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label for="branchSelect" class="form-label">Branch</label>
+                        <label for="branchSelect" class="form-label">@Localizer["Branch"]</label>
                         <select id="branchSelect" class="form-select" required></select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-success btn-action">Add Teaching Subject</button>
+                    <button type="submit" class="btn btn-success btn-action">@Localizer["AddTeachingSubjectSubmit"]</button>
                 </div>
             </form>
         </div>
