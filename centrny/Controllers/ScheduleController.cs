@@ -21,6 +21,14 @@ namespace centrny.Controllers
 
         // ==================== HELPER METHODS ====================
 
+        private async Task<int?> GetCurrentUserGroupBranchCode()
+        {
+            var username = User.Identity.Name;
+            var user = await _context.Users
+                .Include(u => u.GroupCodeNavigation)
+                .FirstOrDefaultAsync(u => u.Username == username);
+            return user?.GroupCodeNavigation?.BranchCode;
+        }
         private int? GetCurrentUserRootCode()
         {
             if (HttpContext.Items.ContainsKey("CurrentUserRootCode"))
@@ -389,6 +397,20 @@ namespace centrny.Controllers
         public async Task<IActionResult> Calendar()
         {
             var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
+            int? groupBranchCode = await GetCurrentUserGroupBranchCode();
+
+            ViewBag.GroupBranchCode = groupBranchCode;
+            if (isCenter && groupBranchCode == null)
+            {
+                // Center admin: load all branches for dropdown
+                var centerCode = await GetSingleCenterForCenterUser();
+                var branches = await _context.Branches
+                    .AsNoTracking()
+                    .Where(b => b.CenterCode == centerCode && b.RootCode == rootCode && b.IsActive)
+                    .Select(b => new { value = b.BranchCode, text = b.BranchName })
+                    .ToListAsync();
+                ViewBag.Branches = branches;
+            }
 
             if (!rootCode.HasValue)
             {
@@ -450,21 +472,29 @@ namespace centrny.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCalendarEvents(DateTime start, DateTime end)
+        public async Task<IActionResult> GetCalendarEvents(DateTime start, DateTime end, int? branchCode = null)
         {
             try
             {
                 var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
+                int? groupBranchCode = await GetCurrentUserGroupBranchCode();
 
                 if (!rootCode.HasValue)
-                {
                     return Json(new List<object>());
+
+                var query = _context.Schedules.AsNoTracking()
+                    .Where(s => s.RootCode == rootCode.Value && s.StartTime.HasValue && s.EndTime.HasValue && !string.IsNullOrEmpty(s.DayOfWeek));
+
+                // Branch filtering:
+                if (isCenter)
+                {
+                    if (groupBranchCode != null)
+                        query = query.Where(s => s.BranchCode == groupBranchCode.Value);
+                    else if (branchCode.HasValue && branchCode > 0)
+                        query = query.Where(s => s.BranchCode == branchCode.Value);
                 }
 
-                // Load all schedules for user root code, as requested
-                var schedules = await _context.Schedules
-                    .AsNoTracking()
-                    .Where(s => s.RootCode == rootCode.Value && s.StartTime.HasValue && s.EndTime.HasValue && !string.IsNullOrEmpty(s.DayOfWeek))
+                var schedules = await query
                     .Include(s => s.RootCodeNavigation)
                     .Include(s => s.YearCodeNavigation)
                     .Include(s => s.HallCodeNavigation)
@@ -519,7 +549,6 @@ namespace centrny.Controllers
                 return Json(new { error = ex.Message });
             }
         }
-
         [HttpPost]
         [RequirePageAccess("Schedule", "insert")]
         public async Task<IActionResult> CreateScheduleEvent([FromBody] ScheduleEventModel model)

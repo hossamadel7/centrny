@@ -29,6 +29,14 @@ namespace centrny.Controllers
 
         // ==================== HELPER METHODS ====================
 
+        private async Task<int?> GetCurrentUserGroupBranchCode()
+        {
+            var username = User.Identity.Name;
+            var user = await _context.Users
+                .Include(u => u.GroupCodeNavigation)
+                .FirstOrDefaultAsync(u => u.Username == username);
+            return user?.GroupCodeNavigation?.BranchCode;
+        }
         /// <summary>
         /// Gets the current user's RootCode from claims - REQUIRED for all users
         /// </summary>
@@ -81,9 +89,19 @@ namespace centrny.Controllers
             ViewBag.SelectedDateFormatted = selectedDate.ToString("yyyy-MM-dd");
             ViewBag.DayOfWeek = selectedDate.DayOfWeek.ToString();
 
-            // OPTIMIZATION: Remove heavy operations from initial page load
-            // Dropdowns will be loaded via AJAX
-            // Auto-generation will be triggered only when needed
+            if (isCenter)
+            {
+                var groupBranchCode = await GetCurrentUserGroupBranchCode();
+                ViewBag.GroupBranchCode = groupBranchCode;
+                if (groupBranchCode != null)
+                {
+                    ViewBag.BranchName = await _context.Branches
+                        .AsNoTracking()
+                        .Where(b => b.BranchCode == groupBranchCode)
+                        .Select(b => b.BranchName)
+                        .FirstOrDefaultAsync();
+                }
+            }
 
             return View();
         }
@@ -92,7 +110,7 @@ namespace centrny.Controllers
         /// GET: DailyClass/GetDailyClasses - API endpoint to get classes for a specific date (OPTIMIZED)
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetDailyClasses(DateTime date)
+        public async Task<IActionResult> GetDailyClasses(DateTime? date)
         {
             try
             {
@@ -104,18 +122,26 @@ namespace centrny.Controllers
                     return Json(new List<object>());
                 }
 
-                var dayOfWeek = date.DayOfWeek.ToString();
-                var dateOnly = DateOnly.FromDateTime(date);
+                // Use today's date if date is null
+                var selectedDate = date ?? DateTime.Today;
+                var dayOfWeek = selectedDate.DayOfWeek.ToString();
+                var dateOnly = DateOnly.FromDateTime(selectedDate);
 
-                // OPTIMIZATION: Single combined query instead of 3 separate queries with projection
-                var allClasses = await _context.Classes
-                    .AsNoTracking() // No change tracking for read-only data
+                int? groupBranchCode = null;
+                if (isCenter)
+                {
+                    groupBranchCode = await GetCurrentUserGroupBranchCode();
+                }
+
+                // Build query for daily classes
+                var classQuery = _context.Classes
+                    .AsNoTracking()
                     .Where(c => c.RootCode == userRootCode.Value && (
                         // Reservation-based classes for this date
                         (c.ReservationCode != null &&
                          c.ReservationCodeNavigation != null &&
                          c.ReservationCodeNavigation.RTime == dateOnly) ||
-                        // Schedule-based classes for this day of week  
+                        // Schedule-based classes for this day of week
                         (c.ScheduleCode != null &&
                          c.ScheduleCodeNavigation != null &&
                          c.ScheduleCodeNavigation.DayOfWeek == dayOfWeek) ||
@@ -123,9 +149,18 @@ namespace centrny.Controllers
                         (c.ClassDate == dateOnly &&
                          c.ScheduleCode == null &&
                          c.ReservationCode == null)
-                    ))
-                    // OPTIMIZATION: Only select what we need instead of Include()
-                    .Select(c => new {
+                    ));
+
+                // If center user with group branch, filter to only that branch
+                if (isCenter && groupBranchCode != null)
+                {
+                    classQuery = classQuery.Where(c => c.BranchCode == groupBranchCode.Value);
+                }
+
+                // Project to anonymous object for view model
+                var allClasses = await classQuery
+                    .Select(c => new
+                    {
                         c.ClassCode,
                         c.ClassName,
                         c.ClassStartTime,
@@ -145,7 +180,7 @@ namespace centrny.Controllers
                         c.ScheduleCode,
                         c.ReservationCode,
 
-                        // Only select needed navigation properties
+                        // Navigation properties
                         TeacherName = c.TeacherCodeNavigation.TeacherName,
                         SubjectName = c.SubjectCodeNavigation.SubjectName,
                         HallName = c.HallCodeNavigation.HallName,
@@ -162,33 +197,92 @@ namespace centrny.Controllers
                         ScheduleEndTime = c.ScheduleCodeNavigation.EndTime,
                         ScheduleCenterName = c.ScheduleCodeNavigation.CenterCodeNavigation.CenterName,
 
-                        // Reservation info (only if reservation-based)  
+                        // Reservation info (only if reservation-based)
                         ReservationStartTime = c.ReservationCodeNavigation.ReservationStartTime,
                         ReservationEndTime = c.ReservationCodeNavigation.ReservationEndTime
                     })
                     .ToListAsync();
 
-                // Transform to view models
-                var classViewModels = allClasses.Select(cls => {
+                // Transform to view models (copying existing logic)
+                var classViewModels = allClasses.Select(cls =>
+                {
                     var classType = cls.ReservationCode.HasValue ? "reservation" :
-                                   cls.ScheduleCode.HasValue ? "schedule" : "direct";
+                        cls.ScheduleCode.HasValue ? "schedule" : "direct";
 
-                    return CreateClassViewModelOptimized(cls, date, classType, isCenter);
+                    // Get actual times based on class type
+                    TimeOnly? startTime = cls.ClassStartTime;
+                    TimeOnly? endTime = cls.ClassEndTime;
+
+                    if (!startTime.HasValue || !endTime.HasValue)
+                    {
+                        if (classType == "schedule" && cls.ScheduleStartTime != null)
+                        {
+                            startTime = TimeOnly.FromDateTime(cls.ScheduleStartTime.Value);
+                            endTime = TimeOnly.FromDateTime(cls.ScheduleEndTime.Value);
+                        }
+                        else if (classType == "reservation")
+                        {
+                            startTime = cls.ReservationStartTime;
+                            endTime = cls.ReservationEndTime;
+                        }
+                    }
+
+                    return new
+                    {
+                        id = $"class_{cls.ClassCode}",
+                        classCode = cls.ClassCode,
+                        title = cls.ClassName,
+                        startTime = startTime?.ToString("HH:mm") ?? "00:00",
+                        endTime = endTime?.ToString("HH:mm") ?? "23:59",
+                        startTime12 = startTime?.ToString("h:mm tt") ?? "",
+                        endTime12 = endTime?.ToString("h:mm tt") ?? "",
+                        classType = classType,
+                        backgroundColor = "#6c5ce7",
+                        borderColor = "#5a4fcf",
+                        textColor = "#ffffff",
+
+                        // CENTER USERS see: Teacher name and Hall
+                        teacherName = isCenter ? cls.TeacherName : null,
+                        teacherCode = cls.TeacherCode,
+                        hallName = isCenter ? cls.HallName : null,
+                        hallCode = isCenter ? (int?)cls.HallCode : null,
+
+                        // TEACHER USERS see: Center name and Branch (NO HALL)
+                        centerName = !isCenter ? (classType == "schedule" ? cls.ScheduleCenterName : cls.CenterName) : null,
+                        branchName = !isCenter ? cls.BranchName : null,
+
+                        // Always include for form population (but display depends on user type)
+                        subjectName = cls.SubjectName,
+                        subjectCode = cls.SubjectCode,
+                        branchCode = cls.BranchCode,
+                        eduYearName = cls.EduYearName,
+                        eduYearCode = cls.EduYearCode,
+                        yearName = cls.YearName,
+                        yearCode = cls.YearCode,
+                        rootName = cls.RootName,
+                        rootCode = cls.RootCode,
+                        noOfStudents = cls.NoOfStudents,
+                        totalAmount = cls.TotalAmount?.ToString("F2"),
+                        teacherAmount = cls.TeacherAmount?.ToString("F2"),
+                        centerAmount = cls.CenterAmount?.ToString("F2"),
+                        date = selectedDate.ToString("yyyy-MM-dd"),
+                        classDate = cls.ClassDate?.ToString("yyyy-MM-dd"),
+                        isCenter = isCenter
+                    };
                 }).ToList();
 
                 _logger.LogInformation("Loaded {Count} classes for date {Date} and user {Username} (Root: {RootCode})",
-                    classViewModels.Count, date.ToString("yyyy-MM-dd"), User.Identity?.Name, userRootCode);
+                    classViewModels.Count, selectedDate.ToString("yyyy-MM-dd"), User.Identity?.Name, userRootCode);
 
                 return Json(classViewModels);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading daily classes for date {Date} and user {Username}",
-                    date.ToString("yyyy-MM-dd"), User.Identity?.Name);
+                    date?.ToString("yyyy-MM-dd") ?? "", User.Identity?.Name);
                 return Json(new { error = ex.Message });
             }
         }
-
         /// <summary>
         /// GET: DailyClass/GetDropdownData - OPTIMIZED dropdown loading with caching
         /// </summary>
@@ -278,8 +372,17 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Unable to determine your root assignment." });
                 }
 
-                // Always set RootCode to current user's root
                 model.RootCode = userRootCode.Value;
+
+                // ENFORCE: If center user has a group branch, override posted branch code with user's group branch
+                if (isCenter)
+                {
+                    var groupBranchCode = await GetCurrentUserGroupBranchCode();
+                    if (groupBranchCode != null)
+                    {
+                        model.BranchCode = groupBranchCode;
+                    }
+                }
 
                 // Validate required fields
                 if (string.IsNullOrEmpty(model.ClassName) ||
@@ -291,7 +394,7 @@ namespace centrny.Controllers
                 // Different validation based on user type
                 if (isCenter)
                 {
-                    // Center users must provide teacher
+                    // Center users must provide teacher and hall
                     if (!model.TeacherCode.HasValue || !model.SubjectCode.HasValue ||
                         !model.BranchCode.HasValue || !model.HallCode.HasValue || !model.EduYearCode.HasValue)
                     {
@@ -300,11 +403,11 @@ namespace centrny.Controllers
                 }
                 else
                 {
-                    // Teacher users must provide center
+                    // Teacher users must provide center (hall is optional for teachers)
                     if (!model.CenterCode.HasValue || !model.SubjectCode.HasValue ||
-                        !model.BranchCode.HasValue || !model.HallCode.HasValue || !model.EduYearCode.HasValue)
+                        !model.BranchCode.HasValue || !model.EduYearCode.HasValue)
                     {
-                        return Json(new { success = false, error = "Center, subject, branch, hall, and education year are required." });
+                        return Json(new { success = false, error = "Center, subject, branch, and education year are required." });
                     }
 
                     // For teachers, set TeacherCode to the teacher belonging to this root
@@ -320,6 +423,12 @@ namespace centrny.Controllers
                     }
 
                     model.TeacherCode = teacherCode;
+
+                    // For teachers, if no hall is provided, use default hall
+                    if (!model.HallCode.HasValue)
+                    {
+                        model.HallCode = await GetDefaultHallForRoot(userRootCode.Value);
+                    }
                 }
 
                 // Parse and validate times
@@ -387,9 +496,6 @@ namespace centrny.Controllers
             }
         }
 
-        /// <summary>
-        /// POST: DailyClass/EditClass - Edit existing class (OPTIMIZED)
-        /// </summary>
         [HttpPost]
         [RequirePageAccess("DailyClass", "update")]
         public async Task<IActionResult> EditClass(int id, [FromBody] JsonElement json)
@@ -516,25 +622,57 @@ namespace centrny.Controllers
                     existingClass.SubjectCode = subjectCode.Value;
                 }
 
-                var branchCode = GetIntValue("branchCode");
-                if (branchCode.HasValue && branchCode > 0)
+                // --- Branch logic START ---
+                // If center user with group branch, override posted branch with group branch
+                if (isCenter)
                 {
-                    var branchExists = await _context.Branches
-                        .AsNoTracking()
-                        .AnyAsync(b => b.BranchCode == branchCode && b.RootCode == userRootCode.Value);
-                    if (branchExists)
-                        existingClass.BranchCode = branchCode.Value;
+                    var groupBranchCode = await GetCurrentUserGroupBranchCode();
+                    if (groupBranchCode != null)
+                    {
+                        existingClass.BranchCode = groupBranchCode.Value;
+                    }
+                    else
+                    {
+                        var branchCode = GetIntValue("branchCode");
+                        if (branchCode.HasValue && branchCode > 0)
+                        {
+                            var branchExists = await _context.Branches
+                                .AsNoTracking()
+                                .AnyAsync(b => b.BranchCode == branchCode && b.RootCode == userRootCode.Value);
+                            if (branchExists)
+                                existingClass.BranchCode = branchCode.Value;
+                        }
+                    }
                 }
+                else
+                {
+                    var branchCode = GetIntValue("branchCode");
+                    if (branchCode.HasValue && branchCode > 0)
+                    {
+                        var branchExists = await _context.Branches
+                            .AsNoTracking()
+                            .AnyAsync(b => b.BranchCode == branchCode && b.RootCode == userRootCode.Value);
+                        if (branchExists)
+                            existingClass.BranchCode = branchCode.Value;
+                    }
+                }
+                // --- Branch logic END ---
 
+                // Handle hall update based on user type
                 var hallCode = GetIntValue("hallCode");
-                if (hallCode.HasValue && hallCode > 0)
+                if (isCenter)
                 {
-                    var hallExists = await _context.Halls
-                        .AsNoTracking()
-                        .AnyAsync(h => h.HallCode == hallCode && h.RootCode == userRootCode.Value);
-                    if (hallExists)
-                        existingClass.HallCode = hallCode.Value;
+                    // Center users can update hall
+                    if (hallCode.HasValue && hallCode > 0)
+                    {
+                        var hallExists = await _context.Halls
+                            .AsNoTracking()
+                            .AnyAsync(h => h.HallCode == hallCode && h.RootCode == userRootCode.Value);
+                        if (hallExists)
+                            existingClass.HallCode = hallCode.Value;
+                    }
                 }
+                // For teacher users, don't update hall (they don't see/edit halls)
 
                 var eduYearCode = GetIntValue("eduYearCode");
                 if (eduYearCode.HasValue && eduYearCode > 0)
@@ -762,6 +900,9 @@ namespace centrny.Controllers
 
         // ==================== UTILITY METHODS ====================
 
+        /// <summary>
+        /// Creates optimized class view model with conditional display based on user type
+        /// </summary>
         private object CreateClassViewModelOptimized(dynamic cls, DateTime date, string classType, bool isCenter)
         {
             // Get actual times based on class type
@@ -796,17 +937,19 @@ namespace centrny.Controllers
                 borderColor = "#5a4fcf",
                 textColor = "#ffffff",
 
-                // Conditional display based on user type
+                // CENTER USERS see: Teacher name and Hall
                 teacherName = isCenter ? cls.TeacherName : null,
                 teacherCode = cls.TeacherCode,
+                hallName = isCenter ? cls.HallName : null, // Only show hall to center users
+                hallCode = isCenter ? cls.HallCode : null, // Only include hall code for center users
+
+                // TEACHER USERS see: Center name and Branch (NO HALL)
                 centerName = !isCenter ? (classType == "schedule" ? cls.ScheduleCenterName : cls.CenterName) : null,
                 branchName = !isCenter ? cls.BranchName : null,
 
-                // Always include for form population
+                // Always include for form population (but display depends on user type)
                 subjectName = cls.SubjectName,
                 subjectCode = cls.SubjectCode,
-                hallName = cls.HallName,
-                hallCode = cls.HallCode,
                 branchCode = cls.BranchCode,
                 eduYearName = cls.EduYearName,
                 eduYearCode = cls.EduYearCode,
@@ -847,7 +990,7 @@ namespace centrny.Controllers
                                  _context.Branches.Any(b => b.BranchCode == model.BranchCode && b.RootCode == rootCode &&
                                                            (!isCenter || !model.CenterCode.HasValue || b.CenterCode == model.CenterCode)),
 
-                    // Validate hall
+                    // Validate hall (only for center users, optional for teachers)
                     HallValid = !model.HallCode.HasValue ||
                                _context.Halls.Any(h => h.HallCode == model.HallCode && h.RootCode == rootCode),
 
@@ -878,12 +1021,6 @@ namespace centrny.Controllers
                     .Select(y => new { value = y.YearCode, text = y.YearName })
                     .ToListAsync(),
 
-                halls = await _context.Halls
-                    .AsNoTracking()
-                    .Where(h => h.RootCode == rootCode)
-                    .Select(h => new { value = h.HallCode, text = h.HallName })
-                    .ToListAsync(),
-
                 eduYears = await _context.EduYears
                     .AsNoTracking()
                     .Where(e => e.RootCode == rootCode && e.IsActive)
@@ -893,18 +1030,22 @@ namespace centrny.Controllers
 
             if (isCenter)
             {
+                // CENTER USERS get: teachers, halls, and branches
                 return new
                 {
                     baseData.subjects,
                     baseData.years,
-                    baseData.halls,
                     baseData.eduYears,
+                    halls = await _context.Halls
+                        .AsNoTracking()
+                        .Where(h => h.RootCode == rootCode)
+                        .Select(h => new { value = h.HallCode, text = h.HallName })
+                        .ToListAsync(),
                     teachers = await _context.Teachers
                         .AsNoTracking()
                         .Where(t => t.RootCode == rootCode && t.IsActive)
                         .Select(t => new { value = t.TeacherCode, text = t.TeacherName })
                         .ToListAsync(),
-
                     branches = await _context.Branches
                         .AsNoTracking()
                         .Where(b => b.RootCode == rootCode && b.IsActive)
@@ -914,23 +1055,23 @@ namespace centrny.Controllers
             }
             else
             {
+                // TEACHER USERS get: centers and branches (NO HALLS)
                 return new
                 {
                     baseData.subjects,
                     baseData.years,
-                    baseData.halls,
                     baseData.eduYears,
                     centers = await _context.Centers
                         .AsNoTracking()
                         .Where(c => c.RootCode == rootCode && c.IsActive)
                         .Select(c => new { value = c.CenterCode, text = c.CenterName })
                         .ToListAsync(),
-
                     branches = await _context.Branches
                         .AsNoTracking()
                         .Where(b => b.RootCode == rootCode && b.IsActive)
                         .Select(b => new { value = b.BranchCode, text = b.BranchName })
                         .ToListAsync()
+                    // NO HALLS for teacher users
                 };
             }
         }
@@ -1238,7 +1379,7 @@ namespace centrny.Controllers
         public int? CenterCode { get; set; } // New field for teachers to select center
         public int? SubjectCode { get; set; }
         public int? BranchCode { get; set; }
-        public int? HallCode { get; set; }
+        public int? HallCode { get; set; } // Optional for teachers, required for centers
         public int? EduYearCode { get; set; }
         public int? YearCode { get; set; }
         // NoOfStudents removed - managed by attendance system

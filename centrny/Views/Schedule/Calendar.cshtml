@@ -64,6 +64,24 @@
                     </button>
                 </div>
 
+                @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
+{
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="branchFilter" class="form-label">Select Branch</label>
+            <select id="branchFilter" class="form-select" onchange="onBranchFilterChanged()">
+                <option value="">All Branches</option>
+                @if (ViewBag.Branches != null)
+                {
+                    foreach (dynamic branch in ViewBag.Branches)
+                    {
+                        <option value="@branch.value">@branch.text</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+}
                 <!-- Week Template Info -->
                 <div class="week-template-info">
                     <h5><i class="fas fa-repeat me-2"></i>Weekly Schedule Template</h5>
@@ -166,6 +184,7 @@
 
 @if (ViewBag.Error == null)
 {
+
     <!-- Floating Add Button -->
     <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#scheduleModal" title="Add New Schedule">
         <i class="fas fa-plus"></i>
@@ -239,58 +258,80 @@
 
                         <!-- Center and Branch dropdowns - Updated for both user types -->
                         <div class="row">
-                            @if (ViewBag.IsCenter == true)
-                            {
-                                <!-- For CENTER USERS: NO CENTER FIELD, just hidden input -->
-                                <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
-                                
-                                <!-- Only show Branch and Educational Year for center users -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Branch</label>
-                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
-                                        <option value="">Select Branch (Optional)</option>
-                                        <!-- Branches will be loaded via JavaScript -->
-                                    </select>
-                                    <small class="text-muted">Select branch for this schedule</small>
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Educational Year</label>
-                                    <select class="form-select" id="eduYearCode">
-                                        <option value="">Select Year (Optional)</option>
-                                        @if (ViewData["EduYearCode"] != null)
-                                        {
-                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        }
-                                    </select>
-                                </div>
-                            }
-                            else
-                            {
-                                <!-- For TEACHER USERS: Show center and branch fields -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Center</label>
-                                    <select class="form-select" id="centerCode" onchange="loadBranchesForCenter()">
-                                        <option value="">Select Center (Optional)</option>
-                                        @if (ViewData["CenterCode"] != null)
-                                        {
-                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        }
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Branch</label>
-                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
-                                        <option value="">Select Center First</option>
-                                    </select>
-                                </div>
-                            }
+                           @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
+{
+    <!-- For CENTER USERS with NO group/branch: show dropdown -->
+    <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
+    
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Branch</label>
+        <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+            <option value="">Select Branch (Optional)</option>
+            <!-- Branches will be loaded via JavaScript -->
+        </select>
+        <small class="text-muted">Select branch for this schedule</small>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Educational Year</label>
+        <select class="form-select" id="eduYearCode">
+            <option value="">Select Year (Optional)</option>
+            @if (ViewData["EduYearCode"] != null)
+            {
+                @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
+        </select>
+    </div>
+}
+else if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode != null)
+{
+    <!-- For CENTER USERS with a group/branch: auto-assign branch, no dropdown -->
+    <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
+    <input type="hidden" id="branchCode" name="branchCode" value="@ViewBag.GroupBranchCode" />
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Branch</label>
+        <input type="text" class="form-control" value="@ViewBag.BranchName" disabled />
+        <small class="text-muted">Branch is auto-assigned and cannot be changed</small>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Educational Year</label>
+        <select class="form-select" id="eduYearCode">
+            <option value="">Select Year (Optional)</option>
+            @if (ViewData["EduYearCode"] != null)
+            {
+                @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
+        </select>
+    </div>
+}
+else
+{
+    <!-- For TEACHER USERS: Show center and branch fields -->
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Center</label>
+        <select class="form-select" id="centerCode" onchange="loadBranchesForCenter()">
+            <option value="">Select Center (Optional)</option>
+            @if (ViewData["CenterCode"] != null)
+            {
+                @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Branch</label>
+        <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+            <option value="">Select Center First</option>
+        </select>
+    </div>
+}
                         </div>
 
                         <!-- Halls row - separate for both user types -->
@@ -493,7 +534,41 @@
 
 <!-- Include the common schedule management JavaScript -->
 <script src="~/js/schedule-common.js"></script>
+<script>
+// Branch filter for center admins
+window.selectedBranchCode = null;
+function onBranchFilterChanged() {
+    var dropdown = document.getElementById('branchFilter');
+    window.selectedBranchCode = dropdown ? dropdown.value : null;
+    if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
+        window.scheduleManager.loadSchedules();
+    }
+}
 
+// Patch scheduleManager to use selectedBranchCode in AJAX URL
+setTimeout(function() {
+    if (window.scheduleManager) {
+        const origLoad = window.scheduleManager.loadSchedules.bind(window.scheduleManager);
+        window.scheduleManager.loadSchedules = async function() {
+            this.showLoader && this.showLoader();
+            try {
+                let url = '/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31';
+                if (window.selectedBranchCode) {
+                    url += '&branchCode=' + encodeURIComponent(window.selectedBranchCode);
+                }
+                const res = await fetch(url);
+                const data = await res.json();
+                this.schedules = Array.isArray(data) ? data : [];
+                this.renderWeeklyGrid();
+            } catch (e) {
+                this.showToast && this.showToast('Failed to load schedules', 'error');
+            } finally {
+                this.hideLoader && this.hideLoader();
+            }
+        };
+    }
+}, 100);
+</script>
 <script>
     // Set up user context for the common script
     window.userContext = {
