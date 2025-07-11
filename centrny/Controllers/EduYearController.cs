@@ -56,6 +56,71 @@ namespace centrny.Controllers
             return Json(eduYears);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetLevelsAndYearsForActiveEduYear()
+        {
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+
+            if (user == null)
+                return Unauthorized();
+
+            int groupCode = user.GroupCode;
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+            if (group == null)
+                return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            var activeEduYear = await _context.EduYears
+                .Where(e => e.RootCode == rootCode && e.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (activeEduYear == null)
+                return Json(new { activeEduYear = (object)null, levels = new List<object>() });
+
+            var levels = await _context.Levels
+                .Where(l => l.RootCode == rootCode)
+                .OrderBy(l => l.LevelCode)
+                .Select(l => new
+                {
+                    levelCode = l.LevelCode,
+                    levelName = l.LevelName,
+                })
+                .ToListAsync();
+
+            var years = await _context.Years
+                .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                .Select(y => new
+                {
+                    yearCode = y.YearCode,
+                    yearName = y.YearName,
+                    yearSort = y.YearSort,
+                    levelCode = y.LevelCode
+                })
+                .ToListAsync();
+
+            // Group years by level code
+            var levelsWithYears = levels.Select(l => new
+            {
+                levelCode = l.levelCode,
+                levelName = l.levelName,
+                years = years.Where(y => y.levelCode == l.levelCode)
+                    .OrderBy(y => y.yearSort)
+                    .ToList()
+            }).ToList();
+
+            return Json(new
+            {
+                activeEduYear = new
+                {
+                    eduCode = activeEduYear.EduCode,
+                    eduName = activeEduYear.EduName
+                },
+                levels = levelsWithYears
+            });
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddEduYear([FromBody] AddEduYearDto dto)
         {
@@ -145,65 +210,6 @@ namespace centrny.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetLevelsForRoot()
-        {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            var levels = await _context.Levels
-                .Where(l => l.RootCode == rootCode)
-                .Select(l => new { levelCode = l.LevelCode, levelName = l.LevelName })
-                .ToListAsync();
-
-            return Json(levels);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetYearsForActiveEduYear()
-        {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-
-            if (user == null)
-                return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            var activeEduYear = await _context.EduYears
-                .Where(e => e.RootCode == rootCode && e.IsActive)
-                .FirstOrDefaultAsync();
-
-            if (activeEduYear == null)
-                return Json(new List<object>());
-
-            var years = await _context.Years
-                .Where(y => y.EduYearCode == activeEduYear.EduCode)
-                .Join(_context.Levels, y => y.LevelCode, l => l.LevelCode, (y, l) => new
-                {
-                    yearCode = y.YearCode,
-                    yearName = y.YearName,
-                    yearSort = y.YearSort,
-                    levelCode = y.LevelCode,
-                    levelName = l.LevelName
-                })
-                .ToListAsync();
-
-            return Json(years);
-        }
-
         [HttpPost]
         public async Task<IActionResult> AddYear([FromBody] AddYearDto dto)
         {
@@ -240,15 +246,12 @@ namespace centrny.Controllers
             _context.Years.Add(year);
             await _context.SaveChangesAsync();
 
-            var level = await _context.Levels.FirstOrDefaultAsync(l => l.LevelCode == dto.LevelCode);
-
             return Json(new
             {
                 yearCode = year.YearCode,
                 yearName = year.YearName,
                 yearSort = year.YearSort,
-                levelCode = year.LevelCode,
-                levelName = level?.LevelName
+                levelCode = year.LevelCode
             });
         }
 
@@ -267,15 +270,12 @@ namespace centrny.Controllers
 
             await _context.SaveChangesAsync();
 
-            var level = await _context.Levels.FirstOrDefaultAsync(l => l.LevelCode == dto.LevelCode);
-
             return Json(new
             {
                 yearCode = year.YearCode,
                 yearName = year.YearName,
                 yearSort = year.YearSort,
-                levelCode = year.LevelCode,
-                levelName = level?.LevelName
+                levelCode = year.LevelCode
             });
         }
 
@@ -293,6 +293,45 @@ namespace centrny.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddLevel([FromBody] AddLevelDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.LevelName))
+                return BadRequest("Invalid data.");
+
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+            if (user == null) return Unauthorized();
+
+            int groupCode = user.GroupCode;
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+            if (group == null) return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            // Optional: Check for duplicate level name under root
+            var exists = await _context.Levels.AnyAsync(l => l.RootCode == rootCode && l.LevelName == dto.LevelName);
+            if (exists)
+                return BadRequest("Level name already exists for this root.");
+
+            var level = new Level
+            {
+                LevelName = dto.LevelName,
+                RootCode = rootCode,
+                InsertUser = userId,
+                InsertTime = DateTime.Now
+            };
+
+            _context.Levels.Add(level);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                levelCode = level.LevelCode,
+                levelName = level.LevelName
+            });
         }
 
         // DTOs
@@ -328,6 +367,11 @@ namespace centrny.Controllers
         public class DeleteYearDto
         {
             public int YearCode { get; set; }
+        }
+
+        public class AddLevelDto
+        {
+            public string LevelName { get; set; }
         }
     }
 }

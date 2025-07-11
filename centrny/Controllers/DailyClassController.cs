@@ -777,7 +777,7 @@ namespace centrny.Controllers
         // ==================== WEEKLY CLASS GENERATION METHODS ====================
 
         /// <summary>
-        /// Generate classes for the current week (Saturday to Friday) from active schedules (OPTIMIZED)
+        /// Generate classes for the current week (Saturday to Friday) from active schedules (OPTIMIZED) AND reservations
         /// </summary>
         [HttpPost]
         [RequirePageAccess("DailyClass", "insert")]
@@ -793,6 +793,62 @@ namespace centrny.Controllers
                 }
 
                 var result = await GenerateClassesForCurrentWeek(userRootCode.Value);
+
+                // Also generate classes from reservations for each day in the week
+                var (weekStart, weekEnd) = GetCurrentWeekRange();
+                for (var date = weekStart; date <= weekEnd; date = date.AddDays(1))
+                {
+                    var dateOnly = DateOnly.FromDateTime(date);
+                    var reservations = await _context.Reservations
+                        .Where(r => r.RTime == dateOnly)
+                        .ToListAsync();
+
+                    foreach (var reservation in reservations)
+                    {
+                        // Look up branch to get root code for reservation
+                        var branch = await _context.Branches.FirstOrDefaultAsync(b => b.BranchCode == reservation.BranchCode);
+                        if (branch == null) continue;
+                        int reservationRootCode = branch.RootCode;
+
+                        // Only process reservations for this user's root
+                        if (reservationRootCode != userRootCode.Value) continue;
+
+                        // Check if a class for this reservation exists
+                        bool exists = await _context.Classes.AnyAsync(c =>
+                            c.ReservationCode == reservation.ReservationCode &&
+                            c.ClassDate == dateOnly);
+
+                        if (!exists)
+                        {
+                            var newClass = new Class
+                            {
+                                ClassName = $"Reservation - {reservation.Description ?? "Class"}",
+                                ClassDate = dateOnly,
+                                RootCode = reservationRootCode,
+                                TeacherCode = reservation.TeacherCode,
+                                SubjectCode = 0, // Set as needed
+                                BranchCode = reservation.BranchCode,
+                                HallCode = reservation.HallCode,
+                                EduYearCode = 0, // Set as needed
+                                YearCode = null,
+                                NoOfStudents = 0,
+                                TotalAmount = null,
+                                TeacherAmount = null,
+                                CenterAmount = null,
+                                InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1"),
+                                InsertTime = DateTime.Now,
+                                ReservationCode = reservation.ReservationCode,
+                                ScheduleCode = null,
+                                ClassStartTime = reservation.ReservationStartTime,
+                                ClassEndTime = reservation.ReservationEndTime
+                            };
+                            _context.Classes.Add(newClass);
+                            result.CreatedCount++;
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
 
                 // Clear relevant caches
                 ClearRelevantCaches(userRootCode.Value);
@@ -817,7 +873,6 @@ namespace centrny.Controllers
                 return Json(new { success = false, error = $"Error generating classes: {ex.Message}" });
             }
         }
-
         /// <summary>
         /// Get weekly class generation status for the UI (OPTIMIZED with caching)
         /// </summary>
