@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Title" xml:space="preserve"><value>حصص اليوم</value></data>
+	<data name="PageSubTitle" xml:space="preserve"><value>إدارة الحصص لكل يوم - عرض تقويم</value></data>
+	<data name="ErrorBanner" xml:space="preserve"><value>خطأ</value></data>
+	<data name="UserContextBanner" xml:space="preserve"><value>حصص اليوم لـ:</value></data>
+	<data name="RootCodeLabel" xml:space="preserve"><value>كود الجذر</value></data>
+	<data name="IsCenterLabel" xml:space="preserve"><value>مستخدم مركز</value></data>
+	<data name="IsTeacherLabel" xml:space="preserve"><value>مستخدم مدرس</value></data>
+	<data name="UserContextBannerSub" xml:space="preserve"><value>يمكنك عرض وإدارة الحصص للمؤسسة المخصصة فقط</value></data>
+	<data name="WeeklyGenerationBannerTitle" xml:space="preserve"><value>توليد الحصص الأسبوعية</value></data>
+	<data name="WeeklyGenerationBannerChecking" xml:space="preserve"><value>جارٍ التحقق من الحالة...</value></data>
+	<data name="WeeklyGenerationBannerGenerateBtn" xml:space="preserve"><value>توليد هذا الأسبوع</value></data>
+	<data name="WeeklyGenerationBannerViewBtn" xml:space="preserve"><value>عرض التفاصيل</value></data>
+	<data name="DateNavPrev" xml:space="preserve"><value>اليوم السابق</value></data>
+	<data name="DateNavNext" xml:space="preserve"><value>اليوم التالي</value></data>
+	<data name="LegendClasses" xml:space="preserve"><value>الحصص</value></data>
+	<data name="LegendSchedule" xml:space="preserve"><value>حسب الجدول (متكررة)</value></data>
+	<data name="LegendReservation" xml:space="preserve"><value>حسب الحجز (تاريخ محدد)</value></data>
+	<data name="LegendDirect" xml:space="preserve"><value>حصص مباشرة (مضافة من العرض اليومي)</value></data>
+	<data name="WeeklySchedulesBtn" xml:space="preserve"><value>جداول الأسبوع</value></data>
+	<data name="RefreshBtn" xml:space="preserve"><value>تحديث</value></data>
+	<data name="TodayBtn" xml:space="preserve"><value>اليوم</value></data>
+	<data name="GenerateWeeklyBtn" xml:space="preserve"><value>توليد الحصص الأسبوعية</value></data>
+	<data name="CalendarDayHeader" xml:space="preserve"><value>حصص اليوم</value></data>
+	<data name="AddClassBtn" xml:space="preserve"><value>إضافة حصة جديدة</value></data>
+	<data name="NoClassesScheduled" xml:space="preserve"><value>لا توجد حصص مجدولة</value></data>
+	<data name="NoClassesSubText" xml:space="preserve"><value>انقر &quot;إضافة حصة جديدة&quot; لجدولة أول حصة لهذا اليوم.</value></data>
+	<data name="WeeklyGenerationModalTitle" xml:space="preserve"><value>حالة توليد الحصص الأسبوعية</value></data>
+	<data name="WeeklyGenerationModalLoading" xml:space="preserve"><value>جارٍ تحميل حالة التوليد...</value></data>
+	<data name="WeeklyGenerationModalClose" xml:space="preserve"><value>إغلاق</value></data>
+	<data name="WeeklyGenerationModalGenerateBtn" xml:space="preserve"><value>توليد الحصص</value></data>
+	<data name="FloatingAddBtnTitle" xml:space="preserve"><value>إضافة حصة جديدة</value></data>
+	<data name="ClassDetailsModalTitle" xml:space="preserve"><value>تفاصيل الحصة</value></data>
+	<data name="ClassDetailsModalClose" xml:space="preserve"><value>إغلاق</value></data>
+	<data name="ClassDetailsModalEditBtn" xml:space="preserve"><value>تعديل</value></data>
+	<data name="ClassDetailsModalDeleteBtn" xml:space="preserve"><value>حذف</value></data>
+	<data name="FormClassName" xml:space="preserve"><value>اسم الحصة</value></data>
+	<data name="FormTeacher" xml:space="preserve"><value>المدرس</value></data>
+	<data name="FormCenter" xml:space="preserve"><value>المركز</value></data>
+	<data name="FormStartTime" xml:space="preserve"><value>وقت البداية</value></data>
+	<data name="FormEndTime" xml:space="preserve"><value>وقت النهاية</value></data>
+	<data name="FormSubject" xml:space="preserve"><value>المادة</value></data>
+	<data name="FormBranch" xml:space="preserve"><value>الفرع</value></data>
+	<data name="FormHall" xml:space="preserve"><value>القاعة</value></data>
+	<data name="FormEduYear" xml:space="preserve"><value>السنة الدراسية</value></data>
+	<data name="FormYear" xml:space="preserve"><value>السنة</value></data>
+	<data name="FormNoOfStudents" xml:space="preserve"><value>عدد الطلاب</value></data>
+	<data name="FormTotalAmount" xml:space="preserve"><value>المبلغ الكلي</value></data>
+	<data name="FormTeacherAmount" xml:space="preserve"><value>مبلغ المدرس</value></data>
+	<data name="FormCenterAmount" xml:space="preserve"><value>مبلغ المركز</value></data>
+	<data name="FormCancel" xml:space="preserve"><value>إلغاء</value></data>
+	<data name="FormSaveClass" xml:space="preserve"><value>حفظ الحصة</value></data>
+	<data name="SelectOption" xml:space="preserve"><value>اختر...</value></data>
+</root>
