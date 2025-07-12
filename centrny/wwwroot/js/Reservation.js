@@ -4,6 +4,7 @@
     let periods = [];
     let hallsCache = [];
 
+    // --- Helper to load branches filtered by root code (from controller/session) ---
     function loadBranches() {
         $.getJSON('/Reservation/GetBranchCodes', function (branches) {
             let options = '<option value="">Select Branch</option>';
@@ -18,9 +19,10 @@
         });
     }
 
+    // --- Teachers: load (isStaff==false) for dropdowns ---
     function loadTeachers(selectId, selectedVal) {
         $.getJSON('/Reservation/GetTeachers', function (teachers) {
-            let options = '';
+            let options = '<option value="">Select Teacher</option>';
             teachers.forEach(t => {
                 options += `<option value="${t.teacherCode}" ${(selectedVal == t.teacherCode ? "selected" : "")}>${t.teacherName}</option>`;
             });
@@ -28,6 +30,34 @@
         });
     }
 
+    // --- Add "First time?" link/teacher modal support ---
+    // Opens the add teacher modal
+    $(document).on('click', '#firstTimeTeacherBtn', function () {
+        $('#addTeacherForm')[0].reset();
+        $('#teacherAddMsg').addClass('d-none').text('');
+        $('#addTeacherModal').modal('show');
+    });
+
+    // Submits the add teacher modal
+    $('#addTeacherForm').on('submit', function (e) {
+        e.preventDefault();
+        $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
+            $('#teacherAddMsg').removeClass('d-none').addClass('text-success').removeClass('text-danger').text('Teacher added successfully!');
+            loadTeachers('#addTeacherSelect', data.teacherCode);
+            setTimeout(() => {
+                $('#addTeacherModal').modal('hide');
+            }, 1000);
+        }).fail(function () {
+            $('#teacherAddMsg').removeClass('d-none').removeClass('text-success').addClass('text-danger').text('Failed to add teacher.');
+        });
+    });
+
+    // When add reservation modal opens, reload teachers dropdown
+    $('#addReservationModal').on('show.bs.modal', function () {
+        loadTeachers('#addTeacherSelect');
+    });
+
+    // --- Load reservation grid (with session headers) ---
     function loadReservationGrid() {
         if (!selectedBranch) {
             $('#reservationGridTable thead').html('');
@@ -59,22 +89,41 @@
                                 tbody += `<th class="sticky-col bg-white align-middle">${cell}</th>`;
                             } else {
                                 tbody += `<td>`;
-                                if (cell && Array.isArray(cell) && cell.length) {
-                                    cell.forEach(res => {
-                                        tbody += `
+                                // --- UPDATED LOGIC: cell is either reservation object OR null ---
+                                if (cell && typeof cell === "object" && !Array.isArray(cell)) {
+                                    // Single reservation object
+                                    tbody += `
                                         <div class="reservation-slot bg-light rounded-3 shadow-sm p-2 mb-2">
-                                            <div class="fw-bold text-primary fs-6">${res.teacherName}</div>
-                                            <div class="small text-muted mb-1">${res.description}</div>
-                                            <span class="badge bg-primary mb-1">${res.start} - ${res.end}</span>
+                                            <div class="fw-bold text-primary fs-6">${cell.teacherName}</div>
+                                            <div class="small text-muted mb-1">${cell.description}</div>
+                                            <span class="badge bg-primary mb-1">${cell.start} - ${cell.end}</span>
                                             <div class="d-flex justify-content-center gap-2 mt-2">
-                                                <button class="btn btn-outline-warning btn-sm edit-res-btn" title="Edit" data-res='${JSON.stringify(res)}'>
+                                                <button class="btn btn-outline-warning btn-sm edit-res-btn" title="Edit" data-res='${JSON.stringify(cell)}'>
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger btn-sm delete-res-btn" title="Delete" data-res-code="${res.reservationCode}">
+                                                <button class="btn btn-outline-danger btn-sm delete-res-btn" title="Delete" data-res-code="${cell.reservationCode}">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
                                         </div>
+                                    `;
+                                } else if (cell && Array.isArray(cell) && cell.length) {
+                                    // Array of reservations (legacy/multiple per cell)
+                                    cell.forEach(res => {
+                                        tbody += `
+                                            <div class="reservation-slot bg-light rounded-3 shadow-sm p-2 mb-2">
+                                                <div class="fw-bold text-primary fs-6">${res.teacherName}</div>
+                                                <div class="small text-muted mb-1">${res.description}</div>
+                                                <span class="badge bg-primary mb-1">${res.start} - ${res.end}</span>
+                                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                                    <button class="btn btn-outline-warning btn-sm edit-res-btn" title="Edit" data-res='${JSON.stringify(res)}'>
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger btn-sm delete-res-btn" title="Delete" data-res-code="${res.reservationCode}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         `;
                                     });
                                 } else {
@@ -100,7 +149,8 @@
         });
     }
 
-    // All other logic is unchanged
+    // --- Reservation CRUD logic ---
+
     $(document).on('click', '.add-res-btn', function () {
         let hallCode = $(this).data('hall-code');
         let periodIdx = $(this).data('period-idx') || 1;
@@ -209,6 +259,21 @@
         loadReservationGrid();
     });
 
+    // --- Add "First time?" link after teacher dropdown in add reservation modal ---
+    // This ensures the button is only added once
+    function ensureFirstTimeTeacherBtn() {
+        if ($('#firstTimeTeacherBtn').length === 0) {
+            let $teacherDiv = $('#addTeacherSelect').parent();
+            if ($teacherDiv.find('#firstTimeTeacherBtn').length === 0) {
+                $('<button class="btn btn-link" type="button" id="firstTimeTeacherBtn" tabindex="-1">First time?</button>')
+                    .insertAfter('#addTeacherSelect');
+            }
+        }
+    }
+    // Call after modal is shown
+    $('#addReservationModal').on('shown.bs.modal', ensureFirstTimeTeacherBtn);
+
+    // --- Initial load ---
     loadBranches();
     setTimeout(() => {
         if (selectedBranch) loadHallsForBranch(selectedBranch);

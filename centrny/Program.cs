@@ -20,7 +20,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
-builder.Services.AddControllersWithViews();
+// ===== ADD VIEW LOCALIZATION =====
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
+// ================================
+
 builder.Services.AddLogging();
 
 // Session

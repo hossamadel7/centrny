@@ -88,7 +88,70 @@ namespace centrny.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Close.
+        ///   Looks up a localized string similar to Add Teacher.
+        /// </summary>
+        public static string Subject_AddTeacher {
+            get {
+                return ResourceManager.GetString("Subject_AddTeacher", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Assign Teacher.
+        /// </summary>
+        public static string Subject_AssignTeacher {
+            get {
+                return ResourceManager.GetString("Subject_AssignTeacher", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Assign Teacher to Subject.
+        /// </summary>
+        public static string Subject_AssignTeacherToSubjectTitle {
+            get {
+                return ResourceManager.GetString("Subject_AssignTeacherToSubjectTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Branch.
+        /// </summary>
+        public static string Subject_BranchLabel {
+            get {
+                return ResourceManager.GetString("Subject_BranchLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Branch not found..
+        /// </summary>
+        public static string Subject_BranchNotFound {
+            get {
+                return ResourceManager.GetString("Subject_BranchNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Center Amount.
+        /// </summary>
+        public static string Subject_CenterAmountLabel {
+            get {
+                return ResourceManager.GetString("Subject_CenterAmountLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Center Percentage.
+        /// </summary>
+        public static string Subject_CenterPercentageLabel {
+            get {
+                return ResourceManager.GetString("Subject_CenterPercentageLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delete.
         /// </summary>
         public static string Subject_Close {
             get {
@@ -106,11 +169,38 @@ namespace centrny.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not assign teacher.
+        /// </summary>
+        public static string Subject_CouldNotAssignTeacher {
+            get {
+                return ResourceManager.GetString("Subject_CouldNotAssignTeacher", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not assign teacher: {0}.
+        /// </summary>
+        public static string Subject_CouldNotAssignTeacher_Server {
+            get {
+                return ResourceManager.GetString("Subject_CouldNotAssignTeacher_Server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Could not delete subject.
         /// </summary>
         public static string Subject_CouldNotDelete {
             get {
                 return ResourceManager.GetString("Subject_CouldNotDelete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not determine EduYearCode for the selected year..
+        /// </summary>
+        public static string Subject_CouldNotDetermineEduYear {
+            get {
+                return ResourceManager.GetString("Subject_CouldNotDetermineEduYear", resourceCulture);
             }
         }
         
@@ -165,6 +255,15 @@ namespace centrny.Resources {
         public static string Subject_ErrorLoadingYears {
             get {
                 return ResourceManager.GetString("Subject_ErrorLoadingYears", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid data..
+        /// </summary>
+        public static string Subject_InvalidData {
+            get {
+                return ResourceManager.GetString("Subject_InvalidData", resourceCulture);
             }
         }
         
@@ -241,6 +340,15 @@ namespace centrny.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No teachers assigned..
+        /// </summary>
+        public static string Subject_NoTeachersAssigned {
+            get {
+                return ResourceManager.GetString("Subject_NoTeachersAssigned", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Your group or root was not found..
         /// </summary>
         public static string Subject_NotFound {
@@ -259,11 +367,65 @@ namespace centrny.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Processing....
+        /// </summary>
+        public static string Subject_Processing {
+            get {
+                return ResourceManager.GetString("Subject_Processing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show Teachers.
+        /// </summary>
+        public static string Subject_ShowTeachers {
+            get {
+                return ResourceManager.GetString("Subject_ShowTeachers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subject not found..
+        /// </summary>
+        public static string Subject_SubjectNotFound {
+            get {
+                return ResourceManager.GetString("Subject_SubjectNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Submit.
         /// </summary>
         public static string Subject_Submit {
             get {
                 return ResourceManager.GetString("Subject_Submit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Teacher assigned to subject successfully..
+        /// </summary>
+        public static string Subject_SuccessTeacherAssigned {
+            get {
+                return ResourceManager.GetString("Subject_SuccessTeacherAssigned", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Teacher.
+        /// </summary>
+        public static string Subject_TeacherLabel {
+            get {
+                return ResourceManager.GetString("Subject_TeacherLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Teacher not found..
+        /// </summary>
+        public static string Subject_TeacherNotFound {
+            get {
+                return ResourceManager.GetString("Subject_TeacherNotFound", resourceCulture);
             }
         }
         

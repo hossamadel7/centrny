@@ -1,9 +1,11 @@
 ﻿using centrny.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
 namespace centrny.Controllers
 {
+    [Authorize]
     public class TeacherManagementController : Controller
     {
         private readonly CenterContext _db;
@@ -154,14 +156,10 @@ namespace centrny.Controllers
             if (activeEduYear == null)
                 return Json(new { });
 
-            var year = _db.Years.FirstOrDefault(y => y.EduYearCode == activeEduYear.EduCode);
-
             return Json(new
             {
                 eduYearCode = activeEduYear.EduCode,
-                yearCode = year?.YearCode,
-                yearName = year?.YearName,
-                eduYearName = activeEduYear.EduCode
+                eduYearName = activeEduYear.EduName
             });
         }
 
@@ -183,22 +181,41 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetSubjectsByTeacher(int teacherCode, int rootCode)
         {
+            // Join Teach, Subject, Year to get subject name and year name
             var teachRecords = (from t in _db.Teaches
                                 join s in _db.Subjects on t.SubjectCode equals s.SubjectCode
+                                join y in _db.Years on t.YearCode equals y.YearCode
                                 where t.TeacherCode == teacherCode && t.RootCode == rootCode
                                 select new
                                 {
                                     teacherCode = t.TeacherCode,
                                     subjectCode = t.SubjectCode,
-                                    subjectName = s.SubjectName
+                                    subjectName = s.SubjectName,
+                                    yearCode = y.YearCode,
+                                    yearName = y.YearName
                                 }).ToList();
 
             return Json(teachRecords);
         }
 
+        [HttpGet]
+        public IActionResult GetSubjectsByRoot(int rootCode)
+        {
+            var subjects = _db.Subjects
+                .Where(s => s.RootCode == rootCode)
+                .Select(s => new
+                {
+                    subjectCode = s.SubjectCode,
+                    subjectName = s.SubjectName
+                })
+                .ToList();
+            return Json(subjects);
+        }
+
         [HttpPost]
         public IActionResult AddTeachingSubject([FromBody] AddTeachingSubjectInputModel model)
         {
+            // Validate year
             var year = _db.Years.FirstOrDefault(y => y.YearCode == model.YearCode);
             if (year == null)
                 return BadRequest("Year not found!");
@@ -206,25 +223,25 @@ namespace centrny.Controllers
             if (year.EduYearCode == null)
                 return BadRequest("Year does not have a valid EduYearCode.");
 
-            var subject = new Subject
-            {
-                SubjectName = model.SubjectName,
-                IsPrimary = model.IsPrimary,
-                RootCode = model.RootCode,
-                YearCode = model.YearCode,
-                InsertUser = model.InsertUser,
-                InsertTime = DateTime.Now
-            };
-            _db.Subjects.Add(subject);
-            _db.SaveChanges();
+            // Validate subject
+            var subject = _db.Subjects.FirstOrDefault(s => s.SubjectCode == model.SubjectCode && s.RootCode == model.RootCode);
+            if (subject == null)
+                return BadRequest("Subject not found for this root.");
 
+            // Validate teacher
+            var teacher = _db.Teachers.FirstOrDefault(t => t.TeacherCode == model.TeacherCode && t.RootCode == model.RootCode);
+            if (teacher == null)
+                return BadRequest("Teacher not found for this root.");
+
+            // Find corresponding EduYear
             var eduYear = _db.EduYears.FirstOrDefault(e => e.EduCode == year.EduYearCode.Value && e.RootCode == model.RootCode);
             if (eduYear == null)
                 return BadRequest("Education year not found for this year and root.");
 
+            // Create Teach record
             var teach = new Teach
             {
-                SubjectCode = subject.SubjectCode,
+                SubjectCode = model.SubjectCode,
                 TeacherCode = model.TeacherCode,
                 BranchCode = model.BranchCode,
                 RootCode = model.RootCode,
@@ -270,7 +287,7 @@ namespace centrny.Controllers
         }
         public class AddTeachingSubjectInputModel
         {
-            public string SubjectName { get; set; }
+            public int SubjectCode { get; set; }
             public bool IsPrimary { get; set; }
             public int RootCode { get; set; }
             public int YearCode { get; set; }

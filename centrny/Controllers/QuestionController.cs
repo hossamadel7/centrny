@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.Json;
 using centrny.Attributes; // Add this for RequirePageAccess
+using Microsoft.Extensions.Localization; // For localization
 
 namespace centrny.Controllers
 {
@@ -11,12 +12,17 @@ namespace centrny.Controllers
     public class QuestionController : Controller
     {
         private readonly CenterContext _context;
-        private readonly ILogger<QuestionController> _logger; // Add logging
+        private readonly ILogger<QuestionController> _logger;
+        private readonly IStringLocalizer<QuestionController> _localizer;
 
-        public QuestionController(CenterContext context, ILogger<QuestionController> logger)
+        public QuestionController(
+            CenterContext context,
+            ILogger<QuestionController> logger,
+            IStringLocalizer<QuestionController> localizer)
         {
             _context = context;
             _logger = logger;
+            _localizer = localizer;
         }
 
         public IActionResult Index()
@@ -25,7 +31,7 @@ namespace centrny.Controllers
 
             if (!userRootCode.HasValue)
             {
-                ViewBag.Error = "Unable to determine your root assignment. Please contact administrator.";
+                ViewBag.Error = _localizer["UnableToDetermineRootAssignment"];
                 return View();
             }
 
@@ -39,7 +45,7 @@ namespace centrny.Controllers
             return View();
         }
 
-        // --- CLAIMS-BASED USER RETRIEVAL HELPERS (Updated from Session-based) ---
+        // --- CLAIMS-BASED USER RETRIEVAL HELPERS ---
 
         private int? GetCurrentUserRootCode()
         {
@@ -181,15 +187,15 @@ namespace centrny.Controllers
             try
             {
                 if (AnswerContent == null || IsTrue == null || AnswerContent.Count != IsTrue.Count)
-                    return Json(new { success = false, message = "Invalid answer data." });
+                    return Json(new { success = false, message = _localizer["InvalidAnswerData"] });
 
                 int correctCount = IsTrue.Count(x => x);
                 if (correctCount > 1)
-                    return Json(new { success = false, message = "Only one correct answer is allowed per question." });
+                    return Json(new { success = false, message = _localizer["OnlyOneCorrectAnswer"] });
 
                 bool alreadyCorrectInDb = _context.Answers.Any(a => a.QuestionCode == QuestionCode && a.IsTrue);
                 if (alreadyCorrectInDb && correctCount > 0)
-                    return Json(new { success = false, message = "A correct answer already exists. Only one correct answer is allowed per question." });
+                    return Json(new { success = false, message = _localizer["CorrectAnswerAlreadyExists"] });
 
                 for (int i = 0; i < AnswerContent.Count; i++)
                 {
@@ -222,11 +228,11 @@ namespace centrny.Controllers
             {
                 var answer = _context.Answers.FirstOrDefault(a => a.AnswerCode == AnswerCode);
                 if (answer == null)
-                    return Json(new { success = false, message = "Answer not found." });
+                    return Json(new { success = false, message = _localizer["AnswerNotFound"] });
 
                 if (IsTrue && !_context.Answers.Where(a => a.QuestionCode == answer.QuestionCode && a.AnswerCode != AnswerCode).All(a => !a.IsTrue))
                 {
-                    return Json(new { success = false, message = "Only one correct answer is allowed per question." });
+                    return Json(new { success = false, message = _localizer["OnlyOneCorrectAnswer"] });
                 }
 
                 answer.AnswerContent = AnswerContent;
@@ -251,7 +257,7 @@ namespace centrny.Controllers
             {
                 var answer = _context.Answers.FirstOrDefault(a => a.AnswerCode == AnswerCode);
                 if (answer == null)
-                    return Json(new { success = false, message = "Answer not found." });
+                    return Json(new { success = false, message = _localizer["AnswerNotFound"] });
 
                 _context.Answers.Remove(answer);
                 _context.SaveChanges();
@@ -297,7 +303,7 @@ namespace centrny.Controllers
             {
                 var question = _context.Questions.FirstOrDefault(x => x.QuestionCode == QuestionCode);
                 if (question == null)
-                    return Json(new { success = false, message = "Question not found." });
+                    return Json(new { success = false, message = _localizer["QuestionNotFound"] });
 
                 question.QuestionContent = QuestionContent;
                 question.LessonCode = LessonCode;
@@ -322,7 +328,7 @@ namespace centrny.Controllers
             {
                 var question = _context.Questions.FirstOrDefault(x => x.QuestionCode == QuestionCode);
                 if (question == null)
-                    return Json(new { success = false, message = "Question not found." });
+                    return Json(new { success = false, message = _localizer["QuestionNotFound"] });
                 _context.Questions.Remove(question);
                 _context.SaveChanges();
                 return Json(new { success = true });
@@ -400,7 +406,6 @@ namespace centrny.Controllers
             return Json(new { isCenter = isCenter });
         }
 
-        // FIXED: Explicit conversion for value types when assigning to non-nullable fields
         [HttpPost]
         [RequirePageAccess("Question", "insert")]
         public JsonResult AddChapter(string LessonName, int? EduYearCode, int? TeacherCode, int SubjectCode, int? YearCode)
@@ -409,7 +414,7 @@ namespace centrny.Controllers
             {
                 int? userRootCode = GetCurrentUserRootCode();
                 if (!userRootCode.HasValue)
-                    return Json(new { success = false, message = "Unable to determine root assignment." });
+                    return Json(new { success = false, message = _localizer["UnableToDetermineRootAssignment"] });
 
                 int? yearCode = YearCode;
                 int? eduYearCode = EduYearCode;
@@ -426,12 +431,11 @@ namespace centrny.Controllers
                     if (teach != null)
                         yearCode = teach.YearCode;
                     else
-                        return Json(new { success = false, message = "Matching Teach record not found." });
+                        return Json(new { success = false, message = _localizer["MatchingTeachNotFound"] });
                 }
 
-                // Defensive: If any required value is missing, return error
                 if (!eduYearCode.HasValue || !TeacherCode.HasValue || !yearCode.HasValue)
-                    return Json(new { success = false, message = "Missing required field(s)" });
+                    return Json(new { success = false, message = _localizer["MissingRequiredFields"] });
 
                 var lesson = new Lesson
                 {
@@ -459,7 +463,6 @@ namespace centrny.Controllers
             }
         }
 
-        // FIXED: Defensive conversion for value types
         [HttpPost]
         [RequirePageAccess("Question", "insert")]
         public JsonResult AddLesson(string LessonName, int? RootCode, int? TeacherCode, int? SubjectCode, int EduYearCode, int? ChapterCode, int? YearCode)
@@ -467,7 +470,7 @@ namespace centrny.Controllers
             try
             {
                 if (!RootCode.HasValue || !TeacherCode.HasValue || !SubjectCode.HasValue)
-                    return Json(new { success = false, message = "Missing required field(s)" });
+                    return Json(new { success = false, message = _localizer["MissingRequiredFields"] });
 
                 var lesson = new Lesson
                 {
@@ -517,7 +520,6 @@ namespace centrny.Controllers
             return Json(questions);
         }
 
-        // ---- For Info Box (User, Root, Teacher) ----
         [HttpGet]
         public JsonResult GetUserRootTeacherInfo()
         {

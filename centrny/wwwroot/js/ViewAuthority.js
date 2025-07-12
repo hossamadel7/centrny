@@ -1,4 +1,33 @@
-﻿(function () {
+﻿// === Localized Group-Page Permissions Management JS ===
+
+function getJsString(key) {
+    key = key.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+    return $('#js-localization').data(key);
+}
+
+function setLabels() {
+    $('#user-info-select-root').text(getJsString('userInfoSelectRoot'));
+    $('#label-select-root').text(getJsString('labelSelectRoot'));
+    $('#dropdown-select-root-default').text(getJsString('dropdownSelectRootDefault'));
+    $('#groups-header').text(getJsString('groupsHeader'));
+    $('#pages-header').text(getJsString('pagesHeader'));
+    $('#button-add-selected-pages').text(getJsString('buttonAddSelectedPages'));
+    $('#permissions-set').text(getJsString('permissionsSet'));
+    $('#label-insert').text(getJsString('labelInsert'));
+    $('#label-update').text(getJsString('labelUpdate'));
+    $('#label-delete').text(getJsString('labelDelete'));
+    $('#button-save-permission').text(getJsString('buttonSavePermission'));
+    $('#existing-group-pages-header').text(getJsString('existingGroupPagesHeader'));
+    $('#table-page').text(getJsString('tablePage'));
+    $('#table-insert').text(getJsString('tableInsert'));
+    $('#table-update').text(getJsString('tableUpdate'));
+    $('#table-delete').text(getJsString('tableDelete'));
+    $('#table-delete-page').text(getJsString('tableDeletePage'));
+}
+
+$(document).ready(function () {
+    setLabels();
+
     var rootSelect = document.getElementById('rootSelect');
     var infoForms = document.getElementById('infoForms');
     var groupsList = document.getElementById('groupsList');
@@ -39,7 +68,6 @@
             return;
         }
 
-        // Load all necessary data
         Promise.all([
             fetch('/ViewAuthority/GetGroupsForRoot?rootId=' + encodeURIComponent(rootId)).then(res => res.json()),
             fetch('/ViewAuthority/GetPagesForRoot?rootId=' + encodeURIComponent(rootId)).then(res => res.json()),
@@ -50,9 +78,8 @@
                 allPages = pages;
                 existingGroupPages = groupPages;
 
-                // Render groups
                 if (groups.length === 0) {
-                    groupsList.innerHTML = '<li class="list-group-item text-muted">No groups found.</li>';
+                    groupsList.innerHTML = `<li class="list-group-item text-muted">${getJsString('noGroupsFound')}</li>`;
                 } else {
                     groupsList.innerHTML = '';
                     groups.forEach(g => {
@@ -64,17 +91,16 @@
                     });
                 }
 
-                // Render pages (as checkboxes for multi-select)
                 if (pages.length === 0) {
-                    pagesList.innerHTML = '<li class="list-group-item text-muted">No pages found.</li>';
+                    pagesList.innerHTML = `<li class="list-group-item text-muted">${getJsString('noPagesFound')}</li>`;
                 } else {
                     pagesList.innerHTML = '';
                     pages.forEach(p => {
                         var li = document.createElement('li');
                         li.className = "list-group-item";
                         li.innerHTML = `<label>
-                      <input type="checkbox" class="page-checkbox" value="${p.pageCode}" data-name="${p.pageName}"> ${p.pageName}
-                    </label>`;
+                          <input type="checkbox" class="page-checkbox" value="${p.pageCode}" data-name="${p.pageName}"> ${p.pageName}
+                        </label>`;
                         pagesList.appendChild(li);
                     });
                 }
@@ -83,14 +109,12 @@
             });
     });
 
-    // Delegate click for group +
     groupsList.addEventListener('click', function (e) {
         if (e.target.classList.contains('choose-btn')) {
             Array.from(groupsList.querySelectorAll('.choose-btn')).forEach(btn => btn.classList.remove('selected'));
             e.target.classList.add('selected');
             selectedGroup = e.target.getAttribute('data-code');
             selectedGroupName = e.target.getAttribute('data-name');
-            // After group select, filter out pages that are already mapped with this group
             filterAvailablePages();
             if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "";
             selectedPages = [];
@@ -99,10 +123,8 @@
         }
     });
 
-    // Listen for checkbox changes to track selected pages
     pagesList.addEventListener('change', function (e) {
         if (e.target.classList.contains('page-checkbox')) {
-            // Update selectedPages array
             selectedPages = Array.from(pagesList.querySelectorAll('.page-checkbox:checked')).map(cb => ({
                 pageCode: parseInt(cb.value),
                 pageName: cb.getAttribute('data-name')
@@ -113,14 +135,13 @@
     function filterAvailablePages() {
         if (!selectedGroup) return;
         pagesList.innerHTML = '';
-        // Get page codes already mapped to this group
         var takenPageCodes = existingGroupPages
             .filter(gp => gp.groupCode == selectedGroup)
             .map(gp => gp.pageCode);
 
         var availablePages = allPages.filter(p => !takenPageCodes.includes(p.pageCode));
         if (availablePages.length === 0) {
-            pagesList.innerHTML = '<li class="list-group-item text-muted">No pages available for this group.</li>';
+            pagesList.innerHTML = `<li class="list-group-item text-muted">${getJsString('noPagesAvailable')}</li>`;
             if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "none";
         } else {
             availablePages.forEach(p => {
@@ -137,7 +158,6 @@
         permissionForm.style.display = "none";
     }
 
-    // Show permission form when addSelectedPagesBtn is clicked
     if (addSelectedPagesBtn) {
         addSelectedPagesBtn.addEventListener('click', function () {
             if (!selectedGroup) return;
@@ -146,7 +166,7 @@
                 pageName: cb.getAttribute('data-name')
             }));
             if (selectedPages.length === 0) {
-                alert("Please select at least one page.");
+                alert(getJsString('alertSelectAtLeastOnePage'));
                 return;
             }
             permGroupName.textContent = selectedGroupName;
@@ -155,10 +175,13 @@
             canUpdate.checked = false;
             canDelete.checked = false;
             permissionForm.style.display = "";
+            permissionForm.style.display = "";
+            permissionForm.style.display = "";
+            permissionForm.style.display = "";
+            permissionForm.style.display = "block";
         });
     }
 
-    // Load the existing GroupPage records for the selected group
     function loadExistingGroupPagesTable() {
         if (!selectedGroup) {
             existingTableSection.style.display = "none";
@@ -169,7 +192,7 @@
             .then(function (records) {
                 existingTableBody.innerHTML = '';
                 if (records.length === 0) {
-                    existingTableBody.innerHTML = '<tr><td colspan="5" class="text-muted">No group-page permissions for this group.</td></tr>';
+                    existingTableBody.innerHTML = `<tr><td colspan="5" class="text-muted">${getJsString('noGroupPagePermissions')}</td></tr>`;
                 } else {
                     records.forEach(function (row) {
                         var tr = document.createElement('tr');
@@ -178,7 +201,7 @@
                             <td>${row.insertFlag ? "✔️" : ""}</td>
                             <td>${row.updateFlag ? "✔️" : ""}</td>
                             <td>${row.deleteFlag ? "✔️" : ""}</td>
-                            <td><button class="btn btn-danger btn-xs delete-gp-btn" data-pagecode="${row.pageCode}" title="Delete">🗑️</button></td>`;
+                            <td><button class="btn btn-danger btn-xs delete-gp-btn" data-pagecode="${row.pageCode}" title="${getJsString('tableDeletePage')}">🗑️</button></td>`;
                         existingTableBody.appendChild(tr);
                     });
                 }
@@ -186,11 +209,10 @@
             });
     }
 
-    // Event delegation for delete buttons
     existingTableBody.addEventListener('click', function (e) {
         if (e.target.classList.contains('delete-gp-btn')) {
             var pageCode = e.target.getAttribute('data-pagecode');
-            if (confirm("Are you sure you want to delete this permission?")) {
+            if (confirm(getJsString('confirmDeletePermission'))) {
                 fetch('/ViewAuthority/DeleteGroupPage', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -203,14 +225,13 @@
                     .then(data => {
                         if (data.success) {
                             loadExistingGroupPagesTable();
-                            // Also refresh the available pages list
                             if (currentRootId) rootSelect.dispatchEvent(new Event('change'));
                         } else {
-                            alert("Delete failed.");
+                            alert(getJsString('alertDeleteFailed'));
                         }
                     })
                     .catch(() => {
-                        alert("Delete failed.");
+                        alert(getJsString('alertDeleteFailed'));
                     });
             }
         }
@@ -240,7 +261,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        alert("Permissions saved!");
+                        alert(getJsString('alertPermissionsSaved'));
                         permissionForm.style.display = "none";
                         Array.from(groupsList.querySelectorAll('.choose-btn')).forEach(btn => btn.classList.remove('selected'));
                         Array.from(pagesList.querySelectorAll('.page-checkbox')).forEach(cb => cb.checked = false);
@@ -253,15 +274,15 @@
                         loadExistingGroupPagesTable();
                         if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "none";
                     } else {
-                        alert("Save failed.");
+                        alert(getJsString('alertSaveFailed'));
                     }
                 })
                 .catch(() => {
-                    alert("Save failed.");
+                    alert(getJsString('alertSaveFailed'));
                 })
                 .finally(() => {
                     if (saveBtn) saveBtn.disabled = false;
                 });
         });
     }
-})();
+});

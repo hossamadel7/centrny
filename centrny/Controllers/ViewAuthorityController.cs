@@ -15,12 +15,11 @@ namespace centrny.Controllers
         public bool DeleteFlag { get; set; }
     }
 
-    [Authorize] // Require authentication for the whole controller
+    [Authorize]
     public class ViewAuthorityController : Controller
     {
         private CenterContext db = new CenterContext();
 
-        // Helper method to check authority permission based on group-page database permission
         private bool UserHasAuthorityPermission()
         {
             var username = User.Identity.Name;
@@ -28,30 +27,22 @@ namespace centrny.Controllers
             if (user == null)
                 return false;
 
-            // Get all group codes for the user
             var userGroupCodes = db.Users
                 .Where(ug => ug.UserCode == user.UserCode)
                 .Select(ug => ug.GroupCode)
                 .ToList();
 
-            // Get the page code for ViewAuthority/Index
             var page = db.Pages.FirstOrDefault(p => p.PagePath == "ViewAuthority/Index");
             if (page == null)
                 return false;
 
-            // Check if any of the user's groups has permission for this page
             return db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
         }
 
         public IActionResult Index()
         {
-            // If user doesn't have permission, show the correct AccessDenied view
             if (!UserHasAuthorityPermission())
             {
-                // Option 1: If you moved the view to Views/Account/AccessDenied.cshtml, use RedirectToAction
-                // return RedirectToAction("AccessDenied", "Account");
-
-                // Option 2: If you want to use the view from Views/Login/AccessDenied.cshtml:
                 return View("~/Views/Login/AccessDenied.cshtml");
             }
 

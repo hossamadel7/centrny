@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>1.3</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Title" xml:space="preserve"><value>Teacher Management</value></data>
+	<data name="Teachers" xml:space="preserve"><value>Teachers</value></data>
+	<data name="AddTeacherBtn" xml:space="preserve"><value>Add Teacher</value></data>
+	<data name="TeacherName" xml:space="preserve"><value>Teacher Name</value></data>
+	<data name="Phone" xml:space="preserve"><value>Phone</value></data>
+	<data name="Address" xml:space="preserve"><value>Address</value></data>
+	<data name="AddTeacherModalTitle" xml:space="preserve"><value>Add Teacher</value></data>
+	<data name="EditTeacherModalTitle" xml:space="preserve"><value>Edit Teacher</value></data>
+	<data name="SaveChanges" xml:space="preserve"><value>Save Changes</value></data>
+	<data name="Submit" xml:space="preserve"><value>Submit</value></data>
+	<data name="Processing" xml:space="preserve"><value>Processing...</value></data>
+	<data name="ShowSubjectsBtn" xml:space="preserve"><value>Show Subjects</value></data>
+	<data name="AddTeachingSubjectBtn" xml:space="preserve"><value>Add Teaching Subject</value></data>
+	<data name="EditBtn" xml:space="preserve"><value>Edit</value></data>
+	<data name="DeleteBtn" xml:space="preserve"><value>Delete</value></data>
+	<data name="DeleteTeacherConfirm" xml:space="preserve"><value>Are you sure you want to delete this teacher? All their teaching subjects will also be deleted.</value></data>
+	<data name="DeleteTeachConfirm" xml:space="preserve"><value>Are you sure you want to delete this teaching subject?</value></data>
+	<data name="NoSubjectsFound" xml:space="preserve"><value>No subjects found.</value></data>
+	<data name="AddTeachingSubjectModalTitle" xml:space="preserve"><value>Add Teaching Subject</value></data>
+	<data name="Year" xml:space="preserve"><value>Year</value></data>
+	<data name="EducationalYear" xml:space="preserve"><value>Educational Year:</value></data>
+	<data name="Subject" xml:space="preserve"><value>Subject</value></data>
+	<data name="IsPrimary" xml:space="preserve"><value>Is Primary</value></data>
+	<data name="Yes" xml:space="preserve"><value>Yes</value></data>
+	<data name="No" xml:space="preserve"><value>No</value></data>
+	<data name="Branch" xml:space="preserve"><value>Branch</value></data>
+	<data name="AddTeachingSubjectSubmit" xml:space="preserve"><value>Add Teaching Subject</value></data>
+	<data name="FillAllFields" xml:space="preserve"><value>Please fill all fields</value></data>
+	<data name="TeacherAddedMsg" xml:space="preserve"><value>Teacher added successfully.</value></data>
+	<data name="TeacherEditSuccess" xml:space="preserve"><value>Teacher updated successfully.</value></data>
+	<data name="TeacherEditFail" xml:space="preserve"><value>Failed to edit teacher:</value></data>
+	<data name="TeachAddedMsg" xml:space="preserve"><value>Teaching subject added successfully.</value></data>
+	<data name="TeachAddedFail" xml:space="preserve"><value>Failed to add teaching subject:</value></data>
+	<data name="TeacherDeletedMsg" xml:space="preserve"><value>Teacher and associated teaching subjects deleted successfully.</value></data>
+	<data name="TeachDeletedMsg" xml:space="preserve"><value>Teaching subject deleted successfully.</value></data>
+	<data name="UserCode" xml:space="preserve"><value>User Code</value></data>
+	<data name="UserName" xml:space="preserve"><value>User Name</value></data>
+	<data name="RootName" xml:space="preserve"><value>Root Name</value></data>
+	<data name="NoEducationalYear" xml:space="preserve"><value>No educational year</value></data>
+</root>

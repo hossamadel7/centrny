@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft.resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<data name="Title_GroupPagePermissions" xml:space="preserve">
+    <value>إدارة صلاحيات الصفحات للمجموعات</value>
+  </data>
+	<data name="UserInfo_SelectRoot" xml:space="preserve">
+    <value>اختر جذرًا لإدارة صلاحيات الصفحات للمجموعات بواجهة حديثة.</value>
+  </data>
+	<data name="Label_SelectRoot" xml:space="preserve">
+    <value>اختر الجذر:</value>
+  </data>
+	<data name="Dropdown_SelectRootDefault" xml:space="preserve">
+    <value>-- اختر الجذر --</value>
+  </data>
+	<data name="Groups_Header" xml:space="preserve">
+    <value>المجموعات</value>
+  </data>
+	<data name="Pages_Header" xml:space="preserve">
+    <value>الصفحات</value>
+  </data>
+	<data name="Button_AddSelectedPages" xml:space="preserve">
+    <value>إضافة الصفحات المحددة</value>
+  </data>
+	<data name="Permissions_Set" xml:space="preserve">
+    <value>تعيين الصلاحيات لـ</value>
+  </data>
+	<data name="Label_Insert" xml:space="preserve">
+    <value>إدراج</value>
+  </data>
+	<data name="Label_Update" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+	<data name="Label_Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+	<data name="Button_SavePermission" xml:space="preserve">
+    <value>حفظ الصلاحية</value>
+  </data>
+	<data name="Existing_GroupPages_Header" xml:space="preserve">
+    <value>الصلاحيات الحالية للمجموعة المختارة</value>
+  </data>
+	<data name="Table_Page" xml:space="preserve">
+    <value>الصفحة</value>
+  </data>
+	<data name="Table_Insert" xml:space="preserve">
+    <value>إدراج</value>
+  </data>
+	<data name="Table_Update" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+	<data name="Table_Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+	<data name="Table_DeletePage" xml:space="preserve">
+    <value>حذف الصفحة</value>
+  </data>
+	<data name="NoGroupsFound" xml:space="preserve">
+    <value>لا توجد مجموعات.</value>
+  </data>
+	<data name="NoPagesFound" xml:space="preserve">
+    <value>لا توجد صفحات.</value>
+  </data>
+	<data name="NoPagesAvailable" xml:space="preserve">
+    <value>لا توجد صفحات متوفرة لهذه المجموعة.</value>
+  </data>
+	<data name="NoGroupPagePermissions" xml:space="preserve">
+    <value>لا توجد صلاحيات صفحات لهذه المجموعة.</value>
+  </data>
+	<data name="Alert_SelectAtLeastOnePage" xml:space="preserve">
+    <value>يرجى تحديد صفحة واحدة على الأقل.</value>
+  </data>
+	<data name="Alert_PermissionsSaved" xml:space="preserve">
+    <value>تم حفظ الصلاحيات!</value>
+  </data>
+	<data name="Alert_SaveFailed" xml:space="preserve">
+    <value>فشل الحفظ.</value>
+  </data>
+	<data name="Alert_DeleteFailed" xml:space="preserve">
+    <value>فشل الحذف.</value>
+  </data>
+	<data name="Confirm_DeletePermission" xml:space="preserve">
+    <value>هل أنت متأكد أنك تريد حذف هذه الصلاحية؟</value>
+  </data>
+</root>

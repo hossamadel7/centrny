@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="Title_ExamManagement" xml:space="preserve">
+    <value>إدارة الامتحانات</value>
+  </data>
+	<data name="AddExamBtn" xml:space="preserve">
+    <value>إضافة امتحان</value>
+  </data>
+	<data name="EditExamBtn" xml:space="preserve">
+    <value>تعديل الامتحان</value>
+  </data>
+	<data name="DeleteExamBtn" xml:space="preserve">
+    <value>حذف الامتحان</value>
+  </data>
+	<data name="SaveExamBtn" xml:space="preserve">
+    <value>حفظ الامتحان</value>
+  </data>
+	<data name="CancelBtn" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+	<data name="ExamNameLabel" xml:space="preserve">
+    <value>اسم الامتحان</value>
+  </data>
+	<data name="ExamNamePlaceholder" xml:space="preserve">
+    <value>أدخل اسم الامتحان</value>
+  </data>
+	<data name="ExamTimerLabel" xml:space="preserve">
+    <value>مدة الامتحان</value>
+  </data>
+	<data name="ExamTimerPlaceholder" xml:space="preserve">
+    <value>مثال: 02:30</value>
+  </data>
+	<data name="ExamTimerHelper" xml:space="preserve">
+    <value>أدخل المدة بصيغة 24 ساعة (ساعات:دقائق)</value>
+  </data>
+	<data name="EduYearLabel" xml:space="preserve">
+    <value>السنة الدراسية</value>
+  </data>
+	<data name="SelectEduYearOption" xml:space="preserve">
+    <value>-- اختر السنة الدراسية --</value>
+  </data>
+	<data name="SubjectLabel" xml:space="preserve">
+    <value>المادة</value>
+  </data>
+	<data name="SelectSubjectOption" xml:space="preserve">
+    <value>-- اختر المادة --</value>
+  </data>
+	<data name="YearLabel" xml:space="preserve">
+    <value>الصف</value>
+  </data>
+	<data name="SelectYearOption" xml:space="preserve">
+    <value>-- اختر الصف --</value>
+  </data>
+	<data name="TeacherLabel" xml:space="preserve">
+    <value>المعلم</value>
+  </data>
+	<data name="SelectTeacherOption" xml:space="preserve">
+    <value>-- اختر المعلم --</value>
+  </data>
+	<data name="BranchLabel" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+	<data name="SelectBranchOption" xml:space="preserve">
+    <value>-- اختر الفرع --</value>
+  </data>
+	<data name="CenterLabel" xml:space="preserve">
+    <value>المركز</value>
+  </data>
+	<data name="SelectCenterOption" xml:space="preserve">
+    <value>-- اختر المركز --</value>
+  </data>
+	<data name="IsExamLabel" xml:space="preserve">
+    <value>امتحان</value>
+  </data>
+	<data name="VsQuizLabel" xml:space="preserve">
+    <value>مقابل اختبار</value>
+  </data>
+	<data name="IsOnlineLabel" xml:space="preserve">
+    <value>أونلاين</value>
+  </data>
+	<data name="IsDoneLabel" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+	<data name="Actions" xml:space="preserve">
+    <value>الإجراءات</value>
+  </data>
+	<data name="Status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+	<data name="Type" xml:space="preserve">
+    <value>النوع</value>
+  </data>
+	<data name="Mode" xml:space="preserve">
+    <value>الوضع</value>
+  </data>
+	<data name="Degree" xml:space="preserve">
+    <value>الدرجة</value>
+  </data>
+	<data name="SuccessMsg" xml:space="preserve">
+    <value>تم تحديث الامتحان بنجاح!</value>
+  </data>
+	<data name="ErrorMsg" xml:space="preserve">
+    <value>حدث خطأ أثناء تحديث الامتحان.</value>
+  </data>
+	<data name="ConfirmDeleteTitle" xml:space="preserve">
+    <value>تأكيد الحذف</value>
+  </data>
+	<data name="ConfirmDeleteWarning" xml:space="preserve">
+    <value>هل أنت متأكد أنك تريد حذف هذا الامتحان؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+	<data name="CloseBtn" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+	<data name="ViewDetailsBtn" xml:space="preserve">
+    <value>عرض التفاصيل</value>
+  </data>
+	<data name="ExamStatisticsTitle" xml:space="preserve">
+    <value>إحصائيات الامتحان</value>
+  </data>
+	<data name="StudentsCompleted" xml:space="preserve">
+    <value>الطلاب المنتهون</value>
+  </data>
+	<data name="StudentsPending" xml:space="preserve">
+    <value>الطلاب المعلقون</value>
+  </data>
+	<data name="ManageQuestions" xml:space="preserve">
+    <value>إدارة أسئلة الامتحان</value>
+  </data>
+	<data name="SaveQuestionsBtn" xml:space="preserve">
+    <value>حفظ الأسئلة</value>
+  </data>
+	<data name="SearchQuestionsPlaceholder" xml:space="preserve">
+    <value>ابحث عن الأسئلة...</value>
+  </data>
+	<data name="SearchBtn" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+	<data name="ClearBtn" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+	<data name="AvailableQuestions" xml:space="preserve">
+    <value>الأسئلة المتاحة</value>
+  </data>
+	<data name="ChosenQuestions" xml:space="preserve">
+    <value>الأسئلة المختارة</value>
+  </data>
+	<data name="UpdateExamBtn" xml:space="preserve">
+    <value>تحديث الامتحان</value>
+  </data>
+	<data name="Loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+	<data name="NoExamsFound" xml:space="preserve">
+    <value>لا يوجد امتحانات</value>
+  </data>
+	<data name="GetStartedMsg" xml:space="preserve">
+    <value>اضغط "إضافة امتحان" لإنشاء أول امتحان.</value>
+  </data>
+	<data name="PageContext" xml:space="preserve">
+    <value>السياق الحالي:</value>
+  </data>
+	<data name="RootCodeLabel" xml:space="preserve">
+    <value>رمز الروت:</value>
+  </data>
+</root>

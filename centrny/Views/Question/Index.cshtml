@@ -1,174 +1,248 @@
-﻿@{
-    ViewData["Title"] = "Chapters and Lessons";
+﻿@using Microsoft.Extensions.Localization
+@using System.Globalization
+@inject IStringLocalizerFactory LocalizerFactory
+@{
+    var Localizer = LocalizerFactory.Create("Question", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title"];
     Layout = "_Layout";
+    var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
 }
+<!DOCTYPE html>
+<html lang="@htmlLang" dir="@htmlDir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    @if (isArabic)
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    }
+    else
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    }
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/Hamody.css" rel="stylesheet" />
+    <style>
+        html[dir="rtl"] body,
+        html[dir="rtl"] .container-fluid,
+        html[dir="rtl"] .profile-content,
+        html[dir="rtl"] #chapter-lesson-container,
+        html[dir="rtl"] .modal-content {
+            direction: rtl;
+            text-align: right;
+        }
+        /* Optionally override form, button, input alignment for RTL if needed */
+        html[dir="rtl"] .form-label,
+        html[dir="rtl"] .form-group,
+        html[dir="rtl"] .modal-actions {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <!-- Localized strings for JS -->
+    <div id="js-localization"
+         data-search-placeholder="@Localizer["SearchPlaceholder"]"
+         data-search-btn="@Localizer["SearchBtn"]"
+         data-clear-btn="@Localizer["ClearBtn"]"
+         data-teaching-label="@Localizer["TeachingLabel"]"
+         data-add-chapter-btn="@Localizer["AddChapterBtn"]"
+         data-add-lesson-btn="@Localizer["AddLessonBtn"]"
+         data-add-question-btn="@Localizer["AddQuestionBtn"]"
+         data-add-answers-btn="@Localizer["AddAnswersBtn"]"
+         data-show-answers-btn="@Localizer["ShowAnswersBtn"]"
+         data-edit-btn="@Localizer["EditBtn"]"
+         data-delete-btn="@Localizer["DeleteBtn"]"
+         data-no-teaching-subjects="@Localizer["NoTeachingSubjects"]"
+         data-no-chapters="@Localizer["NoChapters"]"
+         data-no-lessons="@Localizer["NoLessons"]"
+         data-no-questions="@Localizer["NoQuestions"]"
+         data-no-answers="@Localizer["NoAnswers"]"
+         data-select-option="@Localizer["SelectOption"]"
+         data-select="@Localizer["Select"]"
+         data-cancel-btn="@Localizer["CancelBtn"]"
+         data-processing="@Localizer["Processing"]"
+         data-saved="@Localizer["Saved"]"
+         data-failed="@Localizer["Failed"]"
+         data-error-occurred="@Localizer["ErrorOccurred"]"
+         data-please-fill-all-fields="@Localizer["PleaseFillAllFields"]"
+         data-please-fill-required-fields="@Localizer["PleaseFillRequiredFields"]"
+         data-add-another-answer="@Localizer["AddAnotherAnswer"]"
+         data-remove-answer="@Localizer["RemoveAnswer"]"
+         data-answer-content-placeholder="@Localizer["AnswerContentPlaceholder"]"
+         data-is-correct="@Localizer["IsCorrect"]"
+         data-is-correct-answer="@Localizer["IsCorrectAnswer"]"
+         data-only-one-correct-answer="@Localizer["OnlyOneCorrectAnswer"]"
+         data-add-at-least-one-answer="@Localizer["AddAtLeastOneAnswer"]"
+         data-lesson-name="@Localizer["LessonName"]"
+         data-chapter-name="@Localizer["ChapterName"]"
+         data-education-year="@Localizer["EducationYear"]"
+         data-teacher="@Localizer["Teacher"]"
+         data-subject="@Localizer["Subject"]"
+         data-question-content="@Localizer["QuestionContent"]"
+         data-exam-code="@Localizer["ExamCode"]"
+         data-back-btn="@Localizer["BackBtn"]"
+         data-page="@Localizer["Page"]"
+         data-of="@Localizer["Of"]"
+         data-previous="@Localizer["Previous"]"
+         data-next="@Localizer["Next"]"
+         data-delete-question-confirm="@Localizer["DeleteQuestionConfirm"]"
+         data-delete-answer-confirm="@Localizer["DeleteAnswerConfirm"]"
+         data-no-questions-found="@Localizer["NoQuestionsFound"]"
+         data-found-questions="@Localizer["FoundQuestions"]"
+         data-lesson="@Localizer["Lesson"]" />
 
-<!-- User/Root/Teacher Info Box (AJAX loaded) -->
-<div id="user-root-info-box" style="display:none;"></div>
+    <div id="user-root-info-box" style="display:none;"></div>
 
-<div id="chapter-lesson-container">
-    <h2 id="chapter-lesson-title">
-        <i class="fa-solid fa-book-open-reader" style="color:#4f8cff;margin-right:12px;"></i>
-        Questions
-    </h2>
+    <div id="chapter-lesson-container">
+        <h2 id="chapter-lesson-title">
+            <i class="fa-solid fa-book-open-reader" style="color:#4f8cff;margin-right:12px;"></i>
+            @Localizer["Questions"]
+        </h2>
 
-    <!-- ===== SEARCH BAR START ===== -->
-    <div id="question-search-bar" style="margin: 24px 0 16px 0; text-align: left;">
-        <input type="text" id="questionSearchInput" placeholder="Search questions..." class="modern-input" style="width:260px;max-width:100%;" />
-        <button id="questionSearchBtn" class="modern-btn" style="margin-left:8px;">Search</button>
-        <button id="questionSearchClearBtn" class="modern-btn btn-cancel" style="margin-left:6px;display:none;">Clear</button>
+        <div id="question-search-bar" style="margin: 24px 0 16px 0; text-align: left;">
+            <input type="text" id="questionSearchInput" class="modern-input" style="width:260px;max-width:100%;" />
+            <button id="questionSearchBtn" class="modern-btn" style="margin-left:8px;"></button>
+            <button id="questionSearchClearBtn" class="modern-btn btn-cancel" style="margin-left:6px;display:none;"></button>
+        </div>
+        <div id="question-search-results" style="display:none; margin-bottom: 30px;"></div>
+        <button class="modern-btn" id="add-chapter-btn" style="margin:16px 0;"></button>
+        <div id="subject-year-filter-bar" style="margin: 12px 0 16px 0; text-align: left; display:none;">
+            <label for="subjectYearFilter" style="margin-right: 6px;"><b></b></label>
+            <select id="subjectYearFilter" class="modern-input" style="width:280px;max-width:100%;"></select>
+        </div>
+        <div id="chapters-container"></div>
+        <div id="pagination-container" style="margin-top: 20px; text-align: center;"></div>
     </div>
-    <!-- ===== SEARCH BAR END ===== -->
-    <!-- ===== SEARCH RESULTS ===== -->
-    <div id="question-search-results" style="display:none; margin-bottom: 30px;"></div>
-    <!-- ========================= -->
-    <!-- 🟩 ADD CHAPTER BUTTON -->
-    <button class="modern-btn" id="add-chapter-btn" style="margin:16px 0;">Add Chapter</button>
 
-    <!-- 🟩 Subject-Year Filter Bar (inserted by JS) -->
-    <div id="subject-year-filter-bar" style="margin: 12px 0 16px 0; text-align: left; display:none;">
-        <label for="subjectYearFilter" style="margin-right: 6px;"><b>Teaching:</b></label>
-        <select id="subjectYearFilter" class="modern-input" style="width:280px;max-width:100%;"></select>
+    <!-- ADD CHAPTER MODAL -->
+    <div id="chapter-modal" class="modal-background" style="display:none;">
+        <div class="modal-content">
+            <h3 id="chapter-modal-title"></h3>
+            <form id="chapter-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="chapter-lessonname"><span id="chapter-name-label"></span><span style="color:red;">*</span></label>
+                    <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input" />
+                </div>
+                <div class="form-group">
+                    <label for="chapter-eduyearcode"><span id="education-year-label"></span><span style="color:red;">*</span></label>
+                    <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input"></select>
+                </div>
+                <div class="form-group" id="teacher-group" style="display:none;">
+                    <label for="chapter-teachercode"><span id="teacher-label"></span><span style="color:red;">*</span></label>
+                    <select id="chapter-teachercode" name="TeacherCode" class="modern-input"></select>
+                </div>
+                <input type="hidden" id="chapter-teachercode-hidden" name="TeacherCode" />
+                <div class="form-group">
+                    <label for="chapter-subjectcode"><span id="subject-label"></span><span style="color:red;">*</span></label>
+                    <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input"></select>
+                </div>
+                <input type="hidden" id="chapter-yearcode" name="YearCode" />
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn" id="save-chapter-btn"></button>
+                    <button type="button" id="cancel-chapter-btn" class="modern-btn btn-cancel"></button>
+                </div>
+                <div id="chapter-message"></div>
+            </form>
+        </div>
     </div>
 
-    <div id="chapters-container">
-        <!-- Dynamic content loaded here by JS -->
+    <!-- ADD LESSON MODAL -->
+    <div id="lesson-modal" class="modal-background" style="display:none;">
+        <div class="modal-content">
+            <h3 id="lesson-modal-title"></h3>
+            <form id="lesson-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="lesson-name"><span id="lesson-name-label"></span><span style="color:red;">*</span></label>
+                    <input type="text" id="lesson-name" name="LessonName" required class="modern-input" />
+                </div>
+                <input type="hidden" id="lesson-rootcode" name="RootCode" />
+                <input type="hidden" id="lesson-teachercode" name="TeacherCode" />
+                <input type="hidden" id="lesson-subjectcode" name="SubjectCode" />
+                <input type="hidden" id="lesson-eduyearcode" name="EduYearCode" />
+                <input type="hidden" id="lesson-chaptercode" name="ChapterCode" />
+                <input type="hidden" id="lesson-yearcode" name="YearCode" />
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn" id="save-lesson-btn"></button>
+                    <button type="button" id="cancel-lesson-btn" class="modern-btn btn-cancel"></button>
+                </div>
+                <div id="lesson-message"></div>
+            </form>
+        </div>
     </div>
-    <div id="pagination-container" style="margin-top: 20px; text-align: center;"></div>
-</div>
 
-<!-- ------------------ -->
-<!-- ADD CHAPTER MODAL -->
-<!-- ------------------ -->
-<div id="chapter-modal" class="modal-background" style="display:none;">
-    <div class="modal-content">
-        <h3>Add Chapter</h3>
-        <form id="chapter-form" autocomplete="off">
-            <div class="form-group">
-                <label for="chapter-lessonname">Chapter Name<span style="color:red;">*</span></label>
-                <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input" />
-            </div>
-            <div class="form-group">
-                <label for="chapter-eduyearcode">Education Year<span style="color:red;">*</span></label>
-                <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input"></select>
-            </div>
-            <div class="form-group" id="teacher-group" style="display:none;">
-                <label for="chapter-teachercode">Teacher<span style="color:red;">*</span></label>
-                <select id="chapter-teachercode" name="TeacherCode" class="modern-input"></select>
-            </div>
-            <input type="hidden" id="chapter-teachercode-hidden" name="TeacherCode" />
-            <div class="form-group">
-                <label for="chapter-subjectcode">Subject<span style="color:red;">*</span></label>
-                <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input"></select>
-            </div>
-            <!-- Hidden for yearcode when relevant -->
-            <input type="hidden" id="chapter-yearcode" name="YearCode" />
-            <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-chapter-btn">Add Chapter</button>
-                <button type="button" id="cancel-chapter-btn" class="modern-btn btn-cancel">Cancel</button>
-            </div>
-            <div id="chapter-message"></div>
-        </form>
+    <!-- Modals for adding and editing questions/answers -->
+    <div id="question-modal" class="modal-background" style="display:none;">
+        <div class="modal-content">
+            <h3 id="question-modal-title"></h3>
+            <form id="question-form" autocomplete="off">
+                <input type="hidden" id="question-id" name="QuestionCode" />
+                <input type="hidden" id="question-lessoncode" name="LessonCode" />
+                <div class="form-group">
+                    <label for="question-content"><span id="question-content-label"></span><span style="color:red;">*</span></label>
+                    <textarea id="question-content" name="QuestionContent" required class="modern-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="question-examcode"><span id="exam-code-label"></span></label>
+                    <input type="number" id="question-examcode" name="ExamCode" class="modern-input" />
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn" id="save-question-btn"></button>
+                    <button type="button" id="cancel-question-btn" class="modern-btn btn-cancel"></button>
+                </div>
+                <div id="question-message"></div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- ------------------ -->
-<!-- ADD LESSON MODAL -->
-<!-- ------------------ -->
-<div id="lesson-modal" class="modal-background" style="display:none;">
-    <div class="modal-content">
-        <h3>Add Lesson</h3>
-        <form id="lesson-form" autocomplete="off">
-            <div class="form-group">
-                <label for="lesson-name">Lesson Name<span style="color:red;">*</span></label>
-                <input type="text" id="lesson-name" name="LessonName" required class="modern-input" />
-            </div>
-            <input type="hidden" id="lesson-rootcode" name="RootCode" />
-            <input type="hidden" id="lesson-teachercode" name="TeacherCode" />
-            <input type="hidden" id="lesson-subjectcode" name="SubjectCode" />
-            <input type="hidden" id="lesson-eduyearcode" name="EduYearCode" />
-            <input type="hidden" id="lesson-chaptercode" name="ChapterCode" />
-            <input type="hidden" id="lesson-yearcode" name="YearCode" />
-            <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-lesson-btn">Add Lesson</button>
-                <button type="button" id="cancel-lesson-btn" class="modern-btn btn-cancel">Cancel</button>
-            </div>
-            <div id="lesson-message"></div>
-        </form>
+    <div id="answers-modal" class="modal-background" style="display:none;">
+        <div class="modal-content">
+            <h3 id="answers-modal-title"></h3>
+            <form id="answers-form" autocomplete="off">
+                <input type="hidden" id="answers-questioncode" name="QuestionCode" />
+                <div id="answers-fields">
+                    <!-- Dynamic answer fields here -->
+                </div>
+                <button type="button" id="add-more-answer-btn" class="modern-btn" style="margin-bottom:8px;"></button>
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn" id="save-answers-btn"></button>
+                    <button type="button" id="cancel-answers-btn" class="modern-btn btn-cancel"></button>
+                </div>
+                <div id="answers-message"></div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Modals for adding and editing questions/answers -->
-<div id="question-modal" class="modal-background" style="display:none;">
-    <div class="modal-content">
-        <h3 id="question-modal-title">Question</h3>
-        <form id="question-form" autocomplete="off">
-            <input type="hidden" id="question-id" name="QuestionCode" />
-            <input type="hidden" id="question-lessoncode" name="LessonCode" />
-            <div class="form-group">
-                <label for="question-content">Question Content<span style="color:red;">*</span></label>
-                <textarea id="question-content" name="QuestionContent" required class="modern-input"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="question-examcode">Exam Code (optional)</label>
-                <input type="number" id="question-examcode" name="ExamCode" class="modern-input" />
-            </div>
-            <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-question-btn">Add Question</button>
-                <button type="button" id="cancel-question-btn" class="modern-btn btn-cancel">Cancel</button>
-            </div>
-            <div id="question-message"></div>
-        </form>
+    <div id="edit-answer-modal" class="modal-background" style="display:none;">
+        <div class="modal-content">
+            <h3 id="edit-answer-modal-title"></h3>
+            <form id="edit-answer-form" autocomplete="off">
+                <input type="hidden" id="edit-answer-code" name="AnswerCode" />
+                <input type="hidden" id="edit-answer-questioncode" name="QuestionCode" />
+                <div class="form-group">
+                    <label for="edit-answer-content"><span id="edit-answer-content-label"></span><span style="color:red;">*</span></label>
+                    <input type="text" id="edit-answer-content" name="AnswerContent" required class="modern-input" />
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="edit-answer-istrue" name="IsTrue" />
+                        <span id="edit-answer-istrue-label"></span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn" id="save-edit-answer-btn"></button>
+                    <button type="button" id="cancel-edit-answer-btn" class="modern-btn btn-cancel"></button>
+                </div>
+                <div id="edit-answer-message"></div>
+            </form>
+        </div>
     </div>
-</div>
 
-<div id="answers-modal" class="modal-background" style="display:none;">
-    <div class="modal-content">
-        <h3 id="answers-modal-title">Add Answers</h3>
-        <form id="answers-form" autocomplete="off">
-            <input type="hidden" id="answers-questioncode" name="QuestionCode" />
-            <div id="answers-fields">
-                <!-- Dynamic answer fields here -->
-            </div>
-            <button type="button" id="add-more-answer-btn" class="modern-btn" style="margin-bottom:8px;">Add another answer</button>
-            <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-answers-btn">Add Answers</button>
-                <button type="button" id="cancel-answers-btn" class="modern-btn btn-cancel">Cancel</button>
-            </div>
-            <div id="answers-message"></div>
-        </form>
-    </div>
-</div>
-
-<div id="edit-answer-modal" class="modal-background" style="display:none;">
-    <div class="modal-content">
-        <h3>Edit Answer</h3>
-        <form id="edit-answer-form" autocomplete="off">
-            <input type="hidden" id="edit-answer-code" name="AnswerCode" />
-            <input type="hidden" id="edit-answer-questioncode" name="QuestionCode" />
-            <div class="form-group">
-                <label for="edit-answer-content">Answer Content<span style="color:red;">*</span></label>
-                <input type="text" id="edit-answer-content" name="AnswerContent" required class="modern-input" />
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="edit-answer-istrue" name="IsTrue" />
-                    Is Correct Answer
-                </label>
-            </div>
-            <div class="modal-actions">
-                <button type="submit" class="modern-btn" id="save-edit-answer-btn">Save</button>
-                <button type="button" id="cancel-edit-answer-btn" class="modern-btn btn-cancel">Cancel</button>
-            </div>
-            <div id="edit-answer-message"></div>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/css/Hamody.css" />
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="~/js/Question.js"></script>
-}
+    @section Scripts {
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="~/js/Question.js"></script>
+    }
+</body>
+</html>

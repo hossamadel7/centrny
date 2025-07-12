@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="StudentProfile" xml:space="preserve"><value>ملف الطالب</value></data>
+	<data name="AcademicYear" xml:space="preserve"><value>السنة الدراسية</value></data>
+	<data name="Branch" xml:space="preserve"><value>الفرع</value></data>
+	<data name="Student" xml:space="preserve"><value>طالب</value></data>
+	<data name="ActiveStudent" xml:space="preserve"><value>طالب نشط</value></data>
+	<data name="InactiveStudent" xml:space="preserve"><value>طالب غير نشط</value></data>
+	<data name="ParentPhone" xml:space="preserve"><value>هاتف ولي الأمر</value></data>
+	<data name="StudentPhone" xml:space="preserve"><value>هاتف الطالب</value></data>
+	<data name="UpcomingExams" xml:space="preserve"><value>الامتحانات القادمة</value></data>
+	<data name="LoadingUpcomingExams" xml:space="preserve"><value>جاري تحميل الامتحانات القادمة...</value></data>
+	<data name="AttendedExams" xml:space="preserve"><value>الامتحانات التي تم حضورها</value></data>
+	<data name="LoadingAttendedExams" xml:space="preserve"><value>جاري تحميل الامتحانات المُحضرة...</value></data>
+	<data name="Assignments" xml:space="preserve"><value>الواجبات</value></data>
+	<data name="LoadingAssignments" xml:space="preserve"><value>جاري تحميل الواجبات...</value></data>
+	<data name="TodaysClasses" xml:space="preserve"><value>حصص اليوم</value></data>
+	<data name="AdminView" xml:space="preserve"><value>عرض الإدارة</value></data>
+	<data name="ViewingTodaysClassesOnlyAdmins" xml:space="preserve"><value>عرض حصص اليوم. فقط المسؤولون يمكنهم تسجيل الحضور.</value></data>
+	<data name="LoadingTodaysClasses" xml:space="preserve"><value>جاري تحميل حصص اليوم...</value></data>
+	<data name="EnrolledSubjects" xml:space="preserve"><value>المواد المسجلة</value></data>
+	<data name="SearchSubjects" xml:space="preserve"><value>ابحث في المواد...</value></data>
+	<data name="LoadingSubjects" xml:space="preserve"><value>جاري تحميل المواد...</value></data>
+	<data name="WeeklyClasses" xml:space="preserve"><value>حصص الأسبوع</value></data>
+	<data name="NoUpcomingExams" xml:space="preserve"><value>لا توجد امتحانات قادمة</value></data>
+	<data name="NoUpcomingExamsMsg" xml:space="preserve"><value>لا توجد امتحانات قادمة لهذا الطالب حاليا.</value></data>
+	<data name="NoAssignments" xml:space="preserve"><value>لا توجد واجبات</value></data>
+	<data name="NoAssignmentsMsg" xml:space="preserve"><value>لا توجد واجبات لهذا الطالب حاليا.</value></data>
+	<data name="NoAttendedExams" xml:space="preserve"><value>لا توجد امتحانات تم حضورها</value></data>
+	<data name="NoAttendedExamsMsg" xml:space="preserve"><value>لم يحضر هذا الطالب أي امتحانات بعد.</value></data>
+	<data name="NoSubjectsFound" xml:space="preserve"><value>لا توجد مواد</value></data>
+	<data name="NoSubjectsFoundMsg" xml:space="preserve"><value>هذا الطالب غير مسجل في أي مواد بعد.</value></data>
+	<data name="NoClassesAvailable" xml:space="preserve"><value>لا توجد حصص متاحة</value></data>
+	<data name="NoClassesAvailableMsg" xml:space="preserve"><value>لا توجد حصص متاحة للحضور حاليا.</value></data>
+	<data name="NoClassesThisWeek" xml:space="preserve"><value>لا توجد حصص هذا الأسبوع</value></data>
+	<data name="NoClassesThisWeekMsg" xml:space="preserve"><value>لا توجد حصص مجدولة لهذا الأسبوع.</value></data>
+	<data name="LoadingWeeklyClasses" xml:space="preserve"><value>جاري تحميل حصص الأسبوع...</value></data>
+	<data name="Error" xml:space="preserve"><value>خطأ</value></data>
+	<data name="FailedToLoadExams" xml:space="preserve"><value>فشل في تحميل الامتحانات.</value></data>
+	<data name="FailedToLoadAssignments" xml:space="preserve"><value>فشل في تحميل الواجبات.</value></data>
+	<data name="FailedToLoadSubjects" xml:space="preserve"><value>فشل في تحميل المواد.</value></data>
+	<data name="FailedToLoadClasses" xml:space="preserve"><value>فشل في تحميل الحصص القادمة.</value></data>
+	<data name="Attended" xml:space="preserve"><value>تم الحضور</value></data>
+	<data name="AlreadyAttended" xml:space="preserve"><value>تم الحضور بالفعل</value></data>
+	<data name="AttendAssignment" xml:space="preserve"><value>حضور الواجب</value></data>
+	<data name="AttendExam" xml:space="preserve"><value>حضور الامتحان</value></data>
+	<data name="MarkAttendance" xml:space="preserve"><value>تسجيل الحضور</value></data>
+	<data name="NotAvailableForAttendance" xml:space="preserve"><value>غير متاح للتسجيل الآن</value></data>
+	<data name="OnlyAdminsAttendance" xml:space="preserve"><value>فقط المسؤولون يمكنهم تسجيل الحضور</value></data>
+	<data name="AttendanceMarkedSuccessfully" xml:space="preserve"><value>تم تسجيل الحضور بنجاح!</value></data>
+	<data name="FailedToMarkAttendance" xml:space="preserve"><value>فشل في تسجيل الحضور.</value></data>
+	<data name="AttendanceError" xml:space="preserve"><value>حدث خطأ أثناء تسجيل الحضور.</value></data>
+	<data name="Marking" xml:space="preserve"><value>جاري التسجيل...</value></data>
+	<data name="StartTime" xml:space="preserve"><value>وقت البداية</value></data>
+	<data name="EndTime" xml:space="preserve"><value>وقت النهاية</value></data>
+	<data name="Free" xml:space="preserve"><value>مجاني</value></data>
+	<data name="Online" xml:space="preserve"><value>أونلاين</value></data>
+	<data name="InPerson" xml:space="preserve"><value>حضوري</value></data>
+	<data name="Degree" xml:space="preserve"><value>الدرجة</value></data>
+	<data name="NA" xml:space="preserve"><value>غير متوفر</value></data>
+</root>
