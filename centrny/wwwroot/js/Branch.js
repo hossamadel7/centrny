@@ -1,36 +1,63 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-    // Show correct UI based on userRootCode
+﻿// === Localized Branch Management JS ===
+
+// Helper to access localized strings from #js-localization
+function getJsString(key) {
+    // Convert dash-case to camelCase
+    key = key.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+    return $('#js-localization').data(key);
+}
+
+function setBranchLabels() {
+    $('#branch-title').text(getJsString('titleManageBranches'));
+    $('#label-select-root').text(getJsString('labelSelectRoot'));
+    $('#dropdown-select-root-default').text(getJsString('dropdownSelectRootDefault'));
+    $('#alert-center').text(getJsString('alertCenter'));
+    $('#alert-user').text(getJsString('alertUser'));
+    $('#section-centers').text(getJsString('sectionCenters'));
+    $('#section-branches').text(getJsString('sectionBranches'));
+
+    $('#addHallModalLabel').text(getJsString('modalTitleAddHall'));
+    $('#label-hall-name').text(getJsString('labelHallName'));
+    $('#label-hall-capacity').text(getJsString('labelHallCapacity'));
+    $('#button-cancel').text(getJsString('buttonCancel'));
+    $('#button-add-hall').text(getJsString('buttonAddHall'));
+
+    $('#editHallModalLabel').text(getJsString('modalTitleEditHall'));
+    $('#label-hall-name-edit').text(getJsString('labelHallName'));
+    $('#label-hall-capacity-edit').text(getJsString('labelHallCapacity'));
+    $('#button-cancel-edit').text(getJsString('buttonCancel'));
+    $('#button-save-changes').text(getJsString('buttonSaveChanges'));
+}
+
+$(document).ready(function () {
+    setBranchLabels();
+
+    // Branch JS logic (all UI strings are localized)
     if (typeof userRootCode === 'undefined') {
-        // fallback: show nothing
-        document.getElementById('centerBranchSection').style.display = "none";
+        $('#centerBranchSection').hide();
         return;
     }
 
     if (userRootCode === 1) {
-        // Admin-like: select root
         loadRoots();
-
-        document.getElementById('rootDropdown').addEventListener('change', async function () {
+        $('#rootDropdown').on('change', async function () {
             const rootCode = this.value;
             if (!rootCode) {
-                document.getElementById('centerBranchSection').style.display = "none";
+                $('#centerBranchSection').hide();
                 return;
             }
             await loadCentersAndBranches(rootCode);
         });
     } else {
-        // Restricted user: only see their root
-        const fixedRootCode = document.getElementById('fixedRootCode').value;
+        const fixedRootCode = $('#fixedRootCode').val();
         loadCentersAndBranches(parseInt(fixedRootCode));
     }
 
-    // Form submission for Add Hall
-    document.getElementById('addHallForm').addEventListener('submit', async function (e) {
+    $('#addHallForm').on('submit', async function (e) {
         e.preventDefault();
         await submitAddHall();
     });
-    // Form submission for Edit Hall
-    document.getElementById('editHallForm').addEventListener('submit', async function (e) {
+    $('#editHallForm').on('submit', async function (e) {
         e.preventDefault();
         await submitEditHall();
     });
@@ -41,10 +68,10 @@ let currentRootCode = null;
 async function loadRoots() {
     const res = await fetch('/Branch/GetRootsIsCenterTrue');
     const roots = await res.json();
-    const dropdown = document.getElementById('rootDropdown');
-    dropdown.innerHTML = '<option value="">-- Select Root --</option>';
+    const dropdown = $('#rootDropdown');
+    dropdown.html(`<option value="">${getJsString('dropdownSelectRootDefault')}</option>`);
     roots.forEach(root => {
-        dropdown.innerHTML += `<option value="${root.rootCode}">${root.rootName}</option>`;
+        dropdown.append(`<option value="${root.rootCode}">${root.rootName}</option>`);
     });
 }
 
@@ -57,27 +84,25 @@ async function loadCentersAndBranches(rootCode) {
     const branchRes = await fetch(`/Branch/GetBranchesByRootCode?rootCode=${rootCode}`);
     const branches = await branchRes.json();
 
-    // For each branch, also fetch its halls
     for (const branch of branches) {
         branch.halls = await fetchHalls(branch.branchCode);
         branch.rootCode = rootCode;
     }
 
-    const centerList = document.getElementById('centerList');
-    centerList.innerHTML = '';
+    const centerList = $('#centerList');
+    centerList.html('');
     if (centers.length > 0) {
         centers.forEach(center => {
-            centerList.innerHTML += `<li class="list-group-item">${center.centerName}</li>`;
+            centerList.append(`<li class="list-group-item">${center.centerName}</li>`);
         });
     } else {
-        centerList.innerHTML = '<li class="list-group-item text-muted">No centers found.</li>';
+        centerList.html(`<li class="list-group-item text-muted">${getJsString('listNoCentersFound')}</li>`);
     }
 
-    const branchList = document.getElementById('branchList');
-    branchList.innerHTML = '';
+    const branchList = $('#branchList');
+    branchList.html('');
     if (branches.length > 0) {
         branches.forEach(branch => {
-            // List halls under each branch
             let hallHtml = '';
             if (branch.halls.length > 0) {
                 hallHtml = `<ul class="list-group mt-2 ms-3">` +
@@ -91,161 +116,135 @@ async function loadCentersAndBranches(rootCode) {
                                     data-hall-code="${hall.hallCode}" 
                                     data-hall-name="${hall.hallName}" 
                                     data-hall-capacity="${hall.hallCapacity}">
-                                    Edit
+                                    ${getJsString('buttonEditHall')}
                                 </button>
                                 <button class="btn btn-sm delete-hall-btn ms-2" 
                                     data-hall-code="${hall.hallCode}">
-                                    Delete
+                                    ${getJsString('buttonDeleteHall')}
                                 </button>
                             </span>
                         </li>`
                     ).join('') +
                     `</ul>`;
             } else {
-                hallHtml = `<div class="text-muted ms-3">No halls</div>`;
+                hallHtml = `<div class="text-muted ms-3">${getJsString('listNoHalls')}</div>`;
             }
 
-            branchList.innerHTML += `
+            branchList.append(`
                 <li class="list-group-item d-flex flex-column align-items-start">
                     <div class="d-flex w-100 justify-content-between align-items-center">
                         <span>${branch.branchName}</span>
                         <button class="btn btn-sm btn-outline-primary ms-2 add-hall-btn"
                             data-branch-code="${branch.branchCode}"
                             data-root-code="${rootCode}">
-                            Add Hall
+                            ${getJsString('buttonAddHall')}
                         </button>
                     </div>
                     ${hallHtml}
-                </li>`;
+                </li>`);
         });
     } else {
-        branchList.innerHTML = '<li class="list-group-item text-muted">No branches found.</li>';
+        branchList.html(`<li class="list-group-item text-muted">${getJsString('listNoBranchesFound')}</li>`);
     }
 
-    // Attach click event for Add Hall buttons
-    document.querySelectorAll('.add-hall-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const branchCode = this.getAttribute('data-branch-code');
-            const rootCode = this.getAttribute('data-root-code');
-            openAddHallModal(rootCode, branchCode);
-        });
+    $('.add-hall-btn').off().on('click', function () {
+        const branchCode = $(this).attr('data-branch-code');
+        const rootCode = $(this).attr('data-root-code');
+        openAddHallModal(rootCode, branchCode);
     });
 
-    // Attach click event for Edit Hall buttons
-    document.querySelectorAll('.edit-hall-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            openEditHallModal(this);
-        });
+    $('.edit-hall-btn').off().on('click', function () {
+        openEditHallModal(this);
     });
 
-    // Attach click event for Delete Hall buttons
-    document.querySelectorAll('.delete-hall-btn').forEach(btn => {
-        btn.addEventListener('click', async function () {
-            const hallCode = this.getAttribute('data-hall-code');
-            if (confirm('Are you sure you want to delete this hall?')) {
-                await deleteHall(hallCode);
-            }
-        });
+    $('.delete-hall-btn').off().on('click', async function () {
+        const hallCode = $(this).attr('data-hall-code');
+        if (confirm(getJsString('confirmDeleteHall'))) {
+            await deleteHall(hallCode);
+        }
     });
 
-    document.getElementById('centerBranchSection').style.display = "";
+    $('#centerBranchSection').show();
 }
 
 function openAddHallModal(rootCode, branchCode) {
-    document.getElementById('hallRootCode').value = rootCode;
-    document.getElementById('hallBranchCode').value = branchCode;
-    document.getElementById('HallName').value = '';
-    document.getElementById('HallCapacity').value = '';
-    // Always reset button when opening the modal
-    const submitBtn = document.querySelector('#addHallForm button[type="submit"]');
-    submitBtn.innerHTML = 'Add Hall';
-    submitBtn.disabled = false;
+    $('#hallRootCode').val(rootCode);
+    $('#hallBranchCode').val(branchCode);
+    $('#HallName').val('');
+    $('#HallCapacity').val('');
+    const submitBtn = $('#addHallForm button[type="submit"]');
+    submitBtn.text(getJsString('buttonAddHall'));
+    submitBtn.prop('disabled', false);
     var myModal = new bootstrap.Modal(document.getElementById('addHallModal'));
     myModal.show();
 }
 
 function openEditHallModal(btn) {
-    document.getElementById('editHallCode').value = btn.getAttribute('data-hall-code');
-    document.getElementById('editHallName').value = btn.getAttribute('data-hall-name');
-    document.getElementById('editHallCapacity').value = btn.getAttribute('data-hall-capacity');
-    const submitBtn = document.querySelector('#editHallForm button[type="submit"]');
-    submitBtn.innerHTML = 'Save Changes';
-    submitBtn.disabled = false;
+    $('#editHallCode').val($(btn).attr('data-hall-code'));
+    $('#editHallName').val($(btn).attr('data-hall-name'));
+    $('#editHallCapacity').val($(btn).attr('data-hall-capacity'));
+    const submitBtn = $('#editHallForm button[type="submit"]');
+    submitBtn.text(getJsString('buttonSaveChanges'));
+    submitBtn.prop('disabled', false);
     var myModal = new bootstrap.Modal(document.getElementById('editHallModal'));
     myModal.show();
 }
 
 async function submitAddHall() {
-    const hallName = document.getElementById('HallName').value;
-    const hallCapacity = parseInt(document.getElementById('HallCapacity').value, 10);
-    const rootCode = parseInt(document.getElementById('hallRootCode').value, 10);
-    const branchCode = parseInt(document.getElementById('hallBranchCode').value, 10);
+    const hallName = $('#HallName').val();
+    const hallCapacity = parseInt($('#HallCapacity').val(), 10);
+    const rootCode = parseInt($('#hallRootCode').val(), 10);
+    const branchCode = parseInt($('#hallBranchCode').val(), 10);
 
     if (!hallName || isNaN(hallCapacity) || isNaN(rootCode) || isNaN(branchCode)) {
-        alert('Please fill all fields.');
+        alert(getJsString('alertFillAllFields'));
         return;
     }
 
-    // Get the submit button in the modal
-    const submitBtn = document.querySelector('#addHallForm button[type="submit"]');
-    const originalText = 'Add Hall';
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = 'Processing...';
+    const submitBtn = $('#addHallForm button[type="submit"]');
+    const originalText = getJsString('buttonAddHall');
+    submitBtn.prop('disabled', true).text('...');
 
     try {
         const res = await fetch('/Branch/AddHall', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                hallName,
-                hallCapacity,
-                rootCode,
-                branchCode
+                hallName, hallCapacity, rootCode, branchCode
             })
         });
 
         if (res.ok) {
-            // Hide modal
             var myModalEl = document.getElementById('addHallModal');
             var modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
-            // Refresh branches and halls
             await loadCentersAndBranches(currentRootCode);
-            alert('Hall added successfully!');
+            alert(getJsString('alertHallAddSuccess'));
         } else {
-            alert('Failed to add hall.');
+            alert(getJsString('alertHallAddFailed'));
         }
     } catch (err) {
-        alert('Failed to add hall due to an error.');
+        alert(getJsString('alertHallAddError'));
     } finally {
-        // Always re-enable the button and restore text
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.prop('disabled', false).text(originalText);
     }
 }
 
 async function submitEditHall() {
-    const hallCode = document.getElementById('editHallCode').value;
-    const hallName = document.getElementById('editHallName').value;
-    const hallCapacity = parseInt(document.getElementById('editHallCapacity').value, 10);
+    const hallCode = $('#editHallCode').val();
+    const hallName = $('#editHallName').val();
+    const hallCapacity = parseInt($('#editHallCapacity').val(), 10);
 
-    const submitBtn = document.querySelector('#editHallForm button[type="submit"]');
-    const originalText = 'Save Changes';
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = 'Processing...';
+    const submitBtn = $('#editHallForm button[type="submit"]');
+    const originalText = getJsString('buttonSaveChanges');
+    submitBtn.prop('disabled', true).text('...');
 
     try {
         const res = await fetch('/Branch/EditHall', {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                hallCode,
-                hallName,
-                hallCapacity
+                hallCode, hallName, hallCapacity
             })
         });
 
@@ -254,15 +253,14 @@ async function submitEditHall() {
             var modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
             await loadCentersAndBranches(currentRootCode);
-            alert('Hall updated successfully!');
+            alert(getJsString('alertHallUpdateSuccess'));
         } else {
-            alert('Failed to update hall.');
+            alert(getJsString('alertHallUpdateFailed'));
         }
     } catch (err) {
-        alert('Failed to update hall due to an error.');
+        alert(getJsString('alertHallUpdateError'));
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.prop('disabled', false).text(originalText);
     }
 }
 
@@ -271,12 +269,12 @@ async function deleteHall(hallCode) {
         const res = await fetch(`/Branch/DeleteHall?hallCode=${hallCode}`, { method: 'DELETE' });
         if (res.ok) {
             await loadCentersAndBranches(currentRootCode);
-            alert('Hall deleted successfully!');
+            alert(getJsString('alertHallDeleteSuccess'));
         } else {
-            alert('Failed to delete hall.');
+            alert(getJsString('alertHallDeleteFailed'));
         }
     } catch (err) {
-        alert('Failed to delete hall due to an error.');
+        alert(getJsString('alertHallDeleteError'));
     }
 }
 

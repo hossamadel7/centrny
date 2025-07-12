@@ -1,110 +1,176 @@
-﻿@{
-    ViewData["Title"] = "Manage Branches";
+﻿@using Microsoft.Extensions.Localization
+@using System.Globalization
+@inject IStringLocalizerFactory LocalizerFactory
+@{
+    var Localizer = LocalizerFactory.Create("Branch", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title_ManageBranches"];
+    Layout = "_Layout";
     var userRootCode = (int)ViewBag.UserRootCode;
     var userName = (string)ViewBag.CurrentUserName;
     var centerName = (string)ViewBag.CenterName;
+    var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
 }
+<!DOCTYPE html>
+<html lang="@htmlLang" dir="@htmlDir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    @if (isArabic)
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    }
+    else
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/css/Hamody.css" />
+    <style>
+        html[dir="rtl"] body,
+        html[dir="rtl"] .container-fluid,
+        html[dir="rtl"] .profile-content {
+            direction: rtl;
+            text-align: right;
+        }
+        /* Any additional RTL adjustments for your branch view can go here */
+    </style>
+</head>
+<body>
+    <!-- Localized strings for JS -->
+    <div id="js-localization"
+         data-title-manage-branches="@Localizer["Title_ManageBranches"]"
+         data-label-select-root="@Localizer["Label_SelectRoot"]"
+         data-dropdown-select-root-default="@Localizer["Dropdown_SelectRootDefault"]"
+         data-alert-center="@Localizer["Alert_Center"]"
+         data-alert-user="@Localizer["Alert_User"]"
+         data-section-centers="@Localizer["Section_Centers"]"
+         data-section-branches="@Localizer["Section_Branches"]"
+         data-list-no-centers-found="@Localizer["List_NoCentersFound"]"
+         data-list-no-branches-found="@Localizer["List_NoBranchesFound"]"
+         data-list-no-halls="@Localizer["List_NoHalls"]"
+         data-button-add-hall="@Localizer["Button_AddHall"]"
+         data-button-edit-hall="@Localizer["Button_EditHall"]"
+         data-button-delete-hall="@Localizer["Button_DeleteHall"]"
+         data-modal-title-add-hall="@Localizer["ModalTitle_AddHall"]"
+         data-modal-title-edit-hall="@Localizer["ModalTitle_EditHall"]"
+         data-label-hall-name="@Localizer["Label_HallName"]"
+         data-label-hall-capacity="@Localizer["Label_HallCapacity"]"
+         data-button-cancel="@Localizer["Button_Cancel"]"
+         data-button-save-changes="@Localizer["Button_SaveChanges"]"
+         data-alert-fill-all-fields="@Localizer["Alert_FillAllFields"]"
+         data-alert-hall-add-success="@Localizer["Alert_HallAddSuccess"]"
+         data-alert-hall-add-failed="@Localizer["Alert_HallAddFailed"]"
+         data-alert-hall-add-error="@Localizer["Alert_HallAddError"]"
+         data-alert-hall-update-success="@Localizer["Alert_HallUpdateSuccess"]"
+         data-alert-hall-update-failed="@Localizer["Alert_HallUpdateFailed"]"
+         data-alert-hall-update-error="@Localizer["Alert_HallUpdateError"]"
+         data-confirm-delete-hall="@Localizer["Confirm_DeleteHall"]"
+         data-alert-hall-delete-success="@Localizer["Alert_HallDeleteSuccess"]"
+         data-alert-hall-delete-failed="@Localizer["Alert_HallDeleteFailed"]"
+         data-alert-hall-delete-error="@Localizer["Alert_HallDeleteError"]" />
 
-<h2 class="mb-4">Manage Branches</h2>
+    <h2 class="mb-4" id="branch-title"></h2>
 
-@if (userRootCode == 1)
-{
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <label for="rootDropdown" class="form-label fw-bold">Select Root (Centers Only):</label>
-            <select class="form-select" id="rootDropdown">
-                <option value="">-- Select Root --</option>
-            </select>
+    @if (userRootCode == 1)
+    {
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label for="rootDropdown" class="form-label fw-bold" id="label-select-root"></label>
+                <select class="form-select" id="rootDropdown">
+                    <option value="" id="dropdown-select-root-default"></option>
+                </select>
+            </div>
         </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <strong id="alert-center"></strong> <span id="centerName">@centerName</span><br />
+                    <strong id="alert-user"></strong> <span id="userName">@userName</span>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="fixedRootCode" value="@userRootCode" />
+    }
+
+    <div id="centerBranchSection" style="display:none;">
+        <h4 id="section-centers"></h4>
+        <ul class="list-group mb-4" id="centerList"></ul>
+
+        <h4 id="section-branches"></h4>
+        <ul class="list-group" id="branchList"></ul>
     </div>
-}
-else
-{
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="alert alert-info">
-                <strong>Center:</strong> <span id="centerName">@centerName</span><br />
-                <strong>User:</strong> <span id="userName">@userName</span>
+
+    <!-- Add Hall Modal -->
+    <div class="modal fade" id="addHallModal" tabindex="-1" aria-labelledby="addHallModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addHallForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addHallModalLabel"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="hallRootCode" name="RootCode" />
+                        <input type="hidden" id="hallBranchCode" name="BranchCode" />
+                        <div class="mb-3">
+                            <label for="HallName" class="form-label" id="label-hall-name"></label>
+                            <input type="text" class="form-control" id="HallName" name="HallName" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="HallCapacity" class="form-label" id="label-hall-capacity"></label>
+                            <input type="number" class="form-control" id="HallCapacity" name="HallCapacity" required min="1" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="button-cancel"></button>
+                        <button type="submit" class="btn btn-primary" id="button-add-hall"></button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <input type="hidden" id="fixedRootCode" value="@userRootCode" />
-}
 
-<div id="centerBranchSection" style="display:none;">
-    <h4>Centers</h4>
-    <ul class="list-group mb-4" id="centerList"></ul>
-
-    <h4>Branches</h4>
-    <ul class="list-group" id="branchList">
-        <!-- Dynamically populated -->
-    </ul>
-</div>
-
-<!-- Add Hall Modal -->
-<div class="modal fade" id="addHallModal" tabindex="-1" aria-labelledby="addHallModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="addHallForm">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addHallModalLabel">Add Hall</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="hallRootCode" name="RootCode" />
-                    <input type="hidden" id="hallBranchCode" name="BranchCode" />
-                    <div class="mb-3">
-                        <label for="HallName" class="form-label">Hall Name</label>
-                        <input type="text" class="form-control" id="HallName" name="HallName" required />
+    <!-- Edit Hall Modal -->
+    <div class="modal fade" id="editHallModal" tabindex="-1" aria-labelledby="editHallModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="editHallForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editHallModalLabel"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="mb-3">
-                        <label for="HallCapacity" class="form-label">Hall Capacity</label>
-                        <input type="number" class="form-control" id="HallCapacity" name="HallCapacity" required min="1" />
+                    <div class="modal-body">
+                        <input type="hidden" id="editHallCode" name="HallCode" />
+                        <div class="mb-3">
+                            <label for="editHallName" class="form-label" id="label-hall-name-edit"></label>
+                            <input type="text" class="form-control" id="editHallName" name="HallName" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editHallCapacity" class="form-label" id="label-hall-capacity-edit"></label>
+                            <input type="number" class="form-control" id="editHallCapacity" name="HallCapacity" required min="1" />
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Hall</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="button-cancel-edit"></button>
+                        <button type="submit" class="btn btn-primary" id="button-save-changes"></button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Edit Hall Modal -->
-<div class="modal fade" id="editHallModal" tabindex="-1" aria-labelledby="editHallModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="editHallForm">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editHallModalLabel">Edit Hall</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editHallCode" name="HallCode" />
-                    <div class="mb-3">
-                        <label for="editHallName" class="form-label">Hall Name</label>
-                        <input type="text" class="form-control" id="editHallName" name="HallName" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="editHallCapacity" class="form-label">Hall Capacity</label>
-                        <input type="number" class="form-control" id="editHallCapacity" name="HallCapacity" required min="1" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<link rel="stylesheet" href="/css/Hamody.css" />
-
-@section Scripts {
-    <script>
-        const userRootCode = @userRootCode;
-        const userName = '@userName';
-    </script>
-    <script src="~/js/branch.js"></script>
-}
+    @section Scripts {
+        <script>
+            // Inject userRootCode and userName for JS logic
+            const userRootCode = @userRootCode;
+            const userName = '@userName';
+        </script>
+        <script src="~/js/Branch.js"></script>
+    }
+</body>
+</html>

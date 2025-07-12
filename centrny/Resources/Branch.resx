@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft.resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<data name="Title_ManageBranches" xml:space="preserve">
+    <value>Manage Branches</value>
+  </data>
+	<data name="Label_SelectRoot" xml:space="preserve">
+    <value>Select Root (Centers Only):</value>
+  </data>
+	<data name="Dropdown_SelectRootDefault" xml:space="preserve">
+    <value>-- Select Root --</value>
+  </data>
+	<data name="Alert_Center" xml:space="preserve">
+    <value>Center:</value>
+  </data>
+	<data name="Alert_User" xml:space="preserve">
+    <value>User:</value>
+  </data>
+	<data name="Section_Centers" xml:space="preserve">
+    <value>Centers</value>
+  </data>
+	<data name="Section_Branches" xml:space="preserve">
+    <value>Branches</value>
+  </data>
+	<data name="List_NoCentersFound" xml:space="preserve">
+    <value>No centers found.</value>
+  </data>
+	<data name="List_NoBranchesFound" xml:space="preserve">
+    <value>No branches found.</value>
+  </data>
+	<data name="List_NoHalls" xml:space="preserve">
+    <value>No halls</value>
+  </data>
+	<data name="Button_AddHall" xml:space="preserve">
+    <value>Add Hall</value>
+  </data>
+	<data name="Button_EditHall" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+	<data name="Button_DeleteHall" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+	<data name="ModalTitle_AddHall" xml:space="preserve">
+    <value>Add Hall</value>
+  </data>
+	<data name="ModalTitle_EditHall" xml:space="preserve">
+    <value>Edit Hall</value>
+  </data>
+	<data name="Label_HallName" xml:space="preserve">
+    <value>Hall Name</value>
+  </data>
+	<data name="Label_HallCapacity" xml:space="preserve">
+    <value>Hall Capacity</value>
+  </data>
+	<data name="Button_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+	<data name="Button_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+	<data name="Alert_FillAllFields" xml:space="preserve">
+    <value>Please fill all fields.</value>
+  </data>
+	<data name="Alert_HallAddSuccess" xml:space="preserve">
+    <value>Hall added successfully!</value>
+  </data>
+	<data name="Alert_HallAddFailed" xml:space="preserve">
+    <value>Failed to add hall.</value>
+  </data>
+	<data name="Alert_HallAddError" xml:space="preserve">
+    <value>Failed to add hall due to an error.</value>
+  </data>
+	<data name="Alert_HallUpdateSuccess" xml:space="preserve">
+    <value>Hall updated successfully!</value>
+  </data>
+	<data name="Alert_HallUpdateFailed" xml:space="preserve">
+    <value>Failed to update hall.</value>
+  </data>
+	<data name="Alert_HallUpdateError" xml:space="preserve">
+    <value>Failed to update hall due to an error.</value>
+  </data>
+	<data name="Confirm_DeleteHall" xml:space="preserve">
+    <value>Are you sure you want to delete this hall?</value>
+  </data>
+	<data name="Alert_HallDeleteSuccess" xml:space="preserve">
+    <value>Hall deleted successfully!</value>
+  </data>
+	<data name="Alert_HallDeleteFailed" xml:space="preserve">
+    <value>Failed to delete hall.</value>
+  </data>
+	<data name="Alert_HallDeleteError" xml:space="preserve">
+    <value>Failed to delete hall due to an error.</value>
+  </data>
+</root>

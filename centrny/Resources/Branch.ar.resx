@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft.resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<data name="Title_ManageBranches" xml:space="preserve">
+    <value>إدارة الفروع</value>
+  </data>
+	<data name="Label_SelectRoot" xml:space="preserve">
+    <value>اختر المركز (المراكز فقط):</value>
+  </data>
+	<data name="Dropdown_SelectRootDefault" xml:space="preserve">
+    <value>-- اختر المركز --</value>
+  </data>
+	<data name="Alert_Center" xml:space="preserve">
+    <value>المركز:</value>
+  </data>
+	<data name="Alert_User" xml:space="preserve">
+    <value>المستخدم:</value>
+  </data>
+	<data name="Section_Centers" xml:space="preserve">
+    <value>المراكز</value>
+  </data>
+	<data name="Section_Branches" xml:space="preserve">
+    <value>الفروع</value>
+  </data>
+	<data name="List_NoCentersFound" xml:space="preserve">
+    <value>لا توجد مراكز.</value>
+  </data>
+	<data name="List_NoBranchesFound" xml:space="preserve">
+    <value>لا توجد فروع.</value>
+  </data>
+	<data name="List_NoHalls" xml:space="preserve">
+    <value>لا توجد قاعات</value>
+  </data>
+	<data name="Button_AddHall" xml:space="preserve">
+    <value>إضافة قاعة</value>
+  </data>
+	<data name="Button_EditHall" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+	<data name="Button_DeleteHall" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+	<data name="ModalTitle_AddHall" xml:space="preserve">
+    <value>إضافة قاعة</value>
+  </data>
+	<data name="ModalTitle_EditHall" xml:space="preserve">
+    <value>تعديل القاعة</value>
+  </data>
+	<data name="Label_HallName" xml:space="preserve">
+    <value>اسم القاعة</value>
+  </data>
+	<data name="Label_HallCapacity" xml:space="preserve">
+    <value>سعة القاعة</value>
+  </data>
+	<data name="Button_Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+	<data name="Button_SaveChanges" xml:space="preserve">
+    <value>حفظ التغييرات</value>
+  </data>
+	<data name="Alert_FillAllFields" xml:space="preserve">
+    <value>يرجى تعبئة جميع الحقول.</value>
+  </data>
+	<data name="Alert_HallAddSuccess" xml:space="preserve">
+    <value>تمت إضافة القاعة بنجاح!</value>
+  </data>
+	<data name="Alert_HallAddFailed" xml:space="preserve">
+    <value>فشل في إضافة القاعة.</value>
+  </data>
+	<data name="Alert_HallAddError" xml:space="preserve">
+    <value>فشل في إضافة القاعة بسبب خطأ.</value>
+  </data>
+	<data name="Alert_HallUpdateSuccess" xml:space="preserve">
+    <value>تم تحديث القاعة بنجاح!</value>
+  </data>
+	<data name="Alert_HallUpdateFailed" xml:space="preserve">
+    <value>فشل في تحديث القاعة.</value>
+  </data>
+	<data name="Alert_HallUpdateError" xml:space="preserve">
+    <value>فشل في تحديث القاعة بسبب خطأ.</value>
+  </data>
+	<data name="Confirm_DeleteHall" xml:space="preserve">
+    <value>هل أنت متأكد أنك تريد حذف هذه القاعة؟</value>
+  </data>
+	<data name="Alert_HallDeleteSuccess" xml:space="preserve">
+    <value>تم حذف القاعة بنجاح!</value>
+  </data>
+	<data name="Alert_HallDeleteFailed" xml:space="preserve">
+    <value>فشل في حذف القاعة.</value>
+  </data>
+	<data name="Alert_HallDeleteError" xml:space="preserve">
+    <value>فشل في حذف القاعة بسبب خطأ.</value>
+  </data>
+</root>

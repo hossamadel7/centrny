@@ -1,382 +1,481 @@
-﻿@{
-    ViewData["Title"] = "Exam Management";
+﻿@using System.Globalization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
+@{
+    var Localizer = LocalizerFactory.Create("Exam", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title_ExamManagement"];
     var isCenter = ViewBag.IsCenter ?? false;
     var rootCode = ViewBag.CurrentUserRootCode ?? 0;
     var rootName = ViewBag.UserRootName ?? "Unknown";
     Layout = "_Layout";
+    var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
 }
+<!DOCTYPE html>
+<html lang="@htmlLang" dir="@htmlDir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    @if (isArabic)
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    }
+    else
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    }
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        html[dir="rtl"] body,
+        html[dir="rtl"] .container-fluid,
+        html[dir="rtl"] .profile-content,
+        html[dir="rtl"] .exam-index-card,
+        html[dir="rtl"] .modal-content,
+        html[dir="rtl"] .card,
+        html[dir="rtl"] .table,
+        html[dir="rtl"] .form-label,
+        html[dir="rtl"] .form-group,
+        html[dir="rtl"] .modal-actions {
+            direction: rtl;
+            text-align: right;
+        }
 
-<link rel="stylesheet" href="/css/Hamody.css" />
+        html[dir="rtl"] .btn-group, html[dir="rtl"] .btn-group-actions {
+            float: left !important;
+        }
 
-<div class="container-fluid">
-    <!-- Header Section -->
-    <div class="d-flex align-items-center justify-content-between mb-3">
+        html[dir="rtl"] .me-2, html[dir="rtl"] .me-1 {
+            margin-left: 0.5rem !important;
+            margin-right: 0 !important;
+        }
+
+        html[dir="rtl"] .text-start {
+            text-align: right !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Localized strings for JS -->
+    <div id="js-localization"
+         data-title-exam-management="@Localizer["Title_ExamManagement"]"
+         data-add-exam-btn="@Localizer["AddExamBtn"]"
+         data-edit-exam-btn="@Localizer["EditExamBtn"]"
+         data-delete-exam-btn="@Localizer["DeleteExamBtn"]"
+         data-save-exam-btn="@Localizer["SaveExamBtn"]"
+         data-cancel-btn="@Localizer["CancelBtn"]"
+         data-exam-name-label="@Localizer["ExamNameLabel"]"
+         data-exam-timer-label="@Localizer["ExamTimerLabel"]"
+         data-edu-year-label="@Localizer["EduYearLabel"]"
+         data-subject-label="@Localizer["SubjectLabel"]"
+         data-year-label="@Localizer["YearLabel"]"
+         data-teacher-label="@Localizer["TeacherLabel"]"
+         data-branch-label="@Localizer["BranchLabel"]"
+         data-is-exam-label="@Localizer["IsExamLabel"]"
+         data-is-online-label="@Localizer["IsOnlineLabel"]"
+         data-is-done-label="@Localizer["IsDoneLabel"]"
+         data-actions="@Localizer["Actions"]"
+         data-status="@Localizer["Status"]"
+         data-type="@Localizer["Type"]"
+         data-mode="@Localizer["Mode"]"
+         data-degree="@Localizer["Degree"]"
+         data-success-msg="@Localizer["SuccessMsg"]"
+         data-error-msg="@Localizer["ErrorMsg"]"
+         data-confirm-delete-title="@Localizer["ConfirmDeleteTitle"]"
+         data-confirm-delete-warning="@Localizer["ConfirmDeleteWarning"]"
+         data-close-btn="@Localizer["CloseBtn"]"
+         data-view-details-btn="@Localizer["ViewDetailsBtn"]"
+         data-exam-statistics-title="@Localizer["ExamStatisticsTitle"]"
+         data-students-completed="@Localizer["StudentsCompleted"]"
+         data-students-pending="@Localizer["StudentsPending"]"
+         data-manage-questions="@Localizer["ManageQuestions"]"
+         data-save-questions-btn="@Localizer["SaveQuestionsBtn"]"
+         data-search-questions-placeholder="@Localizer["SearchQuestionsPlaceholder"]"
+         data-search-btn="@Localizer["SearchBtn"]"
+         data-clear-btn="@Localizer["ClearBtn"]"
+         data-available-questions="@Localizer["AvailableQuestions"]"
+         data-chosen-questions="@Localizer["ChosenQuestions"]"
+         data-update-exam-btn="@Localizer["UpdateExamBtn"]"
+         data-loading="@Localizer["Loading"]"
+         data-no-exams-found="@Localizer["NoExamsFound"]"
+         data-get-started-msg="@Localizer["GetStartedMsg"]"
+         data-page-context="@Localizer["PageContext"]" />
+
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            @if (isCenter)
+            {
+                <h2 class="mb-0">@Localizer["Title_ExamManagement"]</h2>
+            }
+            else
+            {
+                <div id="exam-for-teacher" class="mb-0"></div>
+            }
+            <button id="addExamBtn" class="exam-index-btn-add">
+                <i class="bi bi-plus-circle"></i>
+                <span>@Localizer["AddExamBtn"]</span>
+            </button>
+        </div>
+
         @if (isCenter)
         {
-            <h2 class="mb-0">Exam Management</h2>
+            <div id="exam-for-teacher" class="mb-2" style="display:none"></div>
         }
-        else
+
+        <div class="card mb-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px solid #dee2e6;">
+            <div class="card-body py-2">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <small class="text-muted">@Localizer["PageContext"]</small>
+                        <strong>@rootName</strong>
+                        <span class="badge bg-@(isCenter ? "primary" : "success") ms-2">
+                            @(isCenter ? @Localizer["Center"] : @Localizer["Teacher"])
+                        </span>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <small class="text-muted">@Localizer["RootCodeLabel"] @rootCode</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ViewBag.Error as string))
         {
-            <div id="exam-for-teacher" class="mb-0"></div>
+            <div class="alert alert-danger">
+                @ViewBag.Error
+            </div>
         }
-        <button id="addExamBtn" class="exam-index-btn-add">
-            <i class="bi bi-plus-circle"></i>
-            <span>Add Exam</span>
-        </button>
-    </div>
 
-    @if (isCenter)
-    {
-        <div id="exam-for-teacher" class="mb-2" style="display:none"></div>
-    }
-
-    <!-- User Context Info -->
-    <div class="card mb-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px solid #dee2e6;">
-        <div class="card-body py-2">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <small class="text-muted">Current Context:</small>
-                    <strong>@rootName</strong>
-                    <span class="badge bg-@(isCenter ? "primary" : "success") ms-2">
-                        @(isCenter ? "Center" : "Teacher")
-                    </span>
-                </div>
-                <div class="col-md-4 text-end">
-                    <small class="text-muted">Root Code: @rootCode</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Error Display -->
-    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
-    {
-        <div class="alert alert-danger">
-            @ViewBag.Error
-        </div>
-    }
-
-    <!-- Exams Table -->
-    <div class="card exam-index-card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <div id="exam-details">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+        <div class="card exam-index-card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <div id="exam-details">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">@Localizer["Loading"]</span>
+                            </div>
+                            <p class="mt-2 text-muted">@Localizer["Loading"]</p>
                         </div>
-                        <p class="mt-2 text-muted">Loading exams...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Exam Stats Modal -->
-<div class="modal fade" id="examStatsModal" tabindex="-1" aria-labelledby="examStatsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="examStatsModalLabel">
-                    <i class="bi bi-bar-chart-line me-2"></i>Exam Statistics
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="examStatsContent">
-                <!-- Stats will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    <!-- Exam Stats Modal -->
+    <div class="modal fade" id="examStatsModal" tabindex="-1" aria-labelledby="examStatsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="examStatsModalLabel">
+                        <i class="bi bi-bar-chart-line me-2"></i>@Localizer["ExamStatisticsTitle"]
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["CloseBtn"]"></button>
+                </div>
+                <div class="modal-body" id="examStatsContent">
+                    <!-- Stats will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CloseBtn"]</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Add Exam Modal -->
-<div class="modal fade" id="examModal" tabindex="-1" aria-labelledby="examModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <form id="examForm" class="modal-content" autocomplete="off">
-            <div class="modal-header">
-                <h5 class="modal-title" id="examModalLabel">
-                    <i class="bi bi-plus-circle me-2"></i>Add Exam
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="examError" class="alert alert-danger" style="display:none"></div>
+    <!-- Add Exam Modal -->
+    <div class="modal fade" id="examModal" tabindex="-1" aria-labelledby="examModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <form id="examForm" class="modal-content" autocomplete="off">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="examModalLabel">
+                        <i class="bi bi-plus-circle me-2"></i>@Localizer["AddExamBtn"]
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["CancelBtn"]"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="examError" class="alert alert-danger" style="display:none"></div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <!-- Teacher Selection -->
-                        <div id="teacherDropdownGroup" style="display:none">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Teacher Selection -->
+                            <div id="teacherDropdownGroup" style="display:none">
+                                <div class="mb-3">
+                                    <label for="TeacherCode" class="form-label">@Localizer["TeacherLabel"] <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="TeacherCode" id="TeacherCode" required>
+                                        <option value="">@Localizer["SelectTeacherOption"]</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Teacher Display for Teacher Users -->
+                            <div id="teacherDisplayGroup" style="display:none">
+                                <div id="teacherDisplayContainer"></div>
+                                <input type="hidden" id="AddExamTeacherCode" name="AddExamTeacherCode" />
+                            </div>
+
+                            <!-- Center Selection for Teacher Users -->
+                            <div id="centerDropdownGroup" style="display:none">
+                                <div class="mb-3">
+                                    <label for="AddExamCenterCode" class="form-label">@Localizer["CenterLabel"] <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="AddExamCenterCode" name="AddExamCenterCode" required>
+                                        <option value="">@Localizer["SelectCenterOption"]</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Branch Selection -->
+                            <div id="branchDropdownGroup" style="display:none">
+                                <div class="mb-3">
+                                    <label for="BranchCode" class="form-label">@Localizer["BranchLabel"]</label>
+                                    <select class="form-select" name="BranchCode" id="BranchCode">
+                                        <option value="">@Localizer["SelectBranchOption"]</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="rootBranchDropdownGroup" style="display:none">
+                                <div class="mb-3">
+                                    <label for="AddExamBranchCode" class="form-label">@Localizer["BranchLabel"]</label>
+                                    <select class="form-select" id="AddExamBranchCode" name="AddExamBranchCode">
+                                        <option value="">@Localizer["SelectBranchOption"]</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Exam Name -->
                             <div class="mb-3">
-                                <label for="TeacherCode" class="form-label">Teacher <span class="text-danger">*</span></label>
-                                <select class="form-select" name="TeacherCode" id="TeacherCode" required>
-                                    <option value="">-- Select Teacher --</option>
-                                </select>
+                                <label for="ExamName" class="form-label">@Localizer["ExamNameLabel"] <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ExamName" id="ExamName" required
+                                       placeholder="@Localizer["ExamNamePlaceholder"]">
+                            </div>
+
+                            <!-- Exam Timer -->
+                            <div class="mb-3">
+                                <label for="ExamTimer" class="form-label">@Localizer["ExamTimerLabel"] <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ExamTimer" id="ExamTimer"
+                                       pattern="^([0-1]?\d|2[0-3]):[0-5]\d$" placeholder="@Localizer["ExamTimerPlaceholder"]"
+                                       autocomplete="off" inputmode="numeric" maxlength="5" required>
+                                <div class="form-text">@Localizer["ExamTimerHelper"]</div>
                             </div>
                         </div>
 
-                        <!-- Teacher Display for Teacher Users -->
-                        <div id="teacherDisplayGroup" style="display:none">
-                            <div id="teacherDisplayContainer"></div>
-                            <input type="hidden" id="AddExamTeacherCode" name="AddExamTeacherCode" />
-                        </div>
-
-                        <!-- Center Selection for Teacher Users -->
-                        <div id="centerDropdownGroup" style="display:none">
+                        <div class="col-md-6">
+                            <!-- Educational Year -->
                             <div class="mb-3">
-                                <label for="AddExamCenterCode" class="form-label">Center <span class="text-danger">*</span></label>
-                                <select class="form-select" id="AddExamCenterCode" name="AddExamCenterCode" required>
-                                    <option value="">-- Select Center --</option>
+                                <label for="EduYearCode" class="form-label">@Localizer["EduYearLabel"] <span class="text-danger">*</span></label>
+                                <select class="form-select" name="EduYearCode" id="EduYearCode" required>
+                                    <option value="">@Localizer["SelectEduYearOption"]</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <!-- Branch Selection -->
-                        <div id="branchDropdownGroup" style="display:none">
+                            <!-- Subject -->
                             <div class="mb-3">
-                                <label for="BranchCode" class="form-label">Branch <span class="text-danger">*</span></label>
-                                <select class="form-select" name="BranchCode" id="BranchCode" required>
-                                    <option value="">-- Select Branch --</option>
+                                <label for="SubjectCode" class="form-label">@Localizer["SubjectLabel"] <span class="text-danger">*</span></label>
+                                <select class="form-select" name="SubjectCode" id="SubjectCode" required>
+                                    <option value="">@Localizer["SelectSubjectOption"]</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <div id="rootBranchDropdownGroup" style="display:none">
+                            <!-- Year -->
                             <div class="mb-3">
-                                <label for="AddExamBranchCode" class="form-label">Branch <span class="text-danger">*</span></label>
-                                <select class="form-select" id="AddExamBranchCode" name="AddExamBranchCode" required>
-                                    <option value="">-- Select Branch --</option>
+                                <label for="YearCode" class="form-label">@Localizer["YearLabel"] <span class="text-danger">*</span></label>
+                                <select class="form-select" name="YearCode" id="YearCode" required>
+                                    <option value="">@Localizer["SelectYearOption"]</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <!-- Exam Name -->
-                        <div class="mb-3">
-                            <label for="ExamName" class="form-label">Exam Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="ExamName" id="ExamName" required
-                                   placeholder="Enter exam name">
-                        </div>
+                            <!-- Checkboxes -->
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="IsExam" id="IsExam">
+                                    <label class="form-check-label" for="IsExam">
+                                        @Localizer["IsExamLabel"] <small class="text-muted">(@Localizer["VsQuizLabel"])</small>
+                                    </label>
+                                </div>
+                            </div>
 
-                        <!-- Exam Timer -->
-                        <div class="mb-3">
-                            <label for="ExamTimer" class="form-label">Exam Duration <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="ExamTimer" id="ExamTimer"
-                                   pattern="^([0-1]?\d|2[0-3]):[0-5]\d$" placeholder="e.g. 02:30"
-                                   autocomplete="off" inputmode="numeric" maxlength="5" required>
-                            <div class="form-text">Enter duration in 24-hour format (hh:mm)</div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="IsOnline" id="IsOnline">
+                                    <label class="form-check-label" for="IsOnline">
+                                        @Localizer["IsOnlineLabel"]
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>@Localizer["CancelBtn"]
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveExamBtn">
+                        <i class="bi bi-check-circle me-2"></i>@Localizer["SaveExamBtn"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Exam Modal -->
+    <div class="modal fade" id="editExamModal" tabindex="-1" aria-labelledby="editExamModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="editExamForm" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editExamModalLabel">
+                        <i class="bi bi-pencil me-2"></i>@Localizer["EditExamBtn"]
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["CancelBtn"]"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editExamError" class="alert alert-danger" style="display:none"></div>
+
+                    <!-- Hidden fields for required properties -->
+                    <input type="hidden" name="ExamCode" id="EditExamCode" />
+                    <input type="hidden" name="TeacherCode" id="EditTeacherCode" />
+                    <input type="hidden" name="SubjectCode" id="EditSubjectCode" />
+                    <input type="hidden" name="YearCode" id="EditYearCode" />
+                    <input type="hidden" name="BranchCode" id="EditBranchCode" />
+                    <input type="hidden" name="EduYearCode" id="EditEduYearCode" />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="EditExamName" class="form-label">@Localizer["ExamNameLabel"] <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ExamName" id="EditExamName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="EditExamTimer" class="form-label">@Localizer["ExamTimerLabel"] <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ExamTimer" id="EditExamTimer"
+                                       pattern="^([0-1]?\d|2[0-3]):[0-5]\d$" placeholder="@Localizer["ExamTimerPlaceholder"]"
+                                       autocomplete="off" inputmode="numeric" maxlength="5" required>
+                                <div class="form-text">@Localizer["ExamTimerHelper"]</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <!-- Educational Year -->
-                        <div class="mb-3">
-                            <label for="EduYearCode" class="form-label">Educational Year <span class="text-danger">*</span></label>
-                            <select class="form-select" name="EduYearCode" id="EduYearCode" required>
-                                <option value="">-- Select Educational Year --</option>
-                            </select>
-                        </div>
-
-                        <!-- Subject -->
-                        <div class="mb-3">
-                            <label for="SubjectCode" class="form-label">Subject <span class="text-danger">*</span></label>
-                            <select class="form-select" name="SubjectCode" id="SubjectCode" required>
-                                <option value="">-- Select Subject --</option>
-                            </select>
-                        </div>
-
-                        <!-- Year -->
-                        <div class="mb-3">
-                            <label for="YearCode" class="form-label">Year <span class="text-danger">*</span></label>
-                            <select class="form-select" name="YearCode" id="YearCode" required>
-                                <option value="">-- Select Year --</option>
-                            </select>
-                        </div>
-
-                        <!-- Checkboxes -->
-                        <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" name="IsExam" id="IsExam">
-                                <label class="form-check-label" for="IsExam">
-                                    Is Exam <small class="text-muted">(vs Quiz)</small>
-                                </label>
+                                <input type="checkbox" class="form-check-input" name="IsExam" id="EditIsExam">
+                                <label class="form-check-label" for="EditIsExam">@Localizer["IsExamLabel"]</label>
                             </div>
                         </div>
-
-                        <div class="mb-3">
+                        <div class="col-md-6">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" name="IsOnline" id="IsOnline">
-                                <label class="form-check-label" for="IsOnline">
-                                    Is Online
-                                </label>
+                                <input type="checkbox" class="form-check-input" name="IsOnline" id="EditIsOnline">
+                                <label class="form-check-label" for="EditIsOnline">@Localizer["IsOnlineLabel"]</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="IsDone" id="EditIsDone">
+                                <label class="form-check-label" for="EditIsDone">@Localizer["IsDoneLabel"]</label>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-2"></i>Cancel
-                </button>
-                <button type="submit" class="btn btn-primary" id="saveExamBtn">
-                    <i class="bi bi-check-circle me-2"></i>Save Exam
-                </button>
-            </div>
-        </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>@Localizer["CancelBtn"]
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>@Localizer["UpdateExamBtn"]
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Edit Exam Modal -->
-<div class="modal fade" id="editExamModal" tabindex="-1" aria-labelledby="editExamModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form id="editExamForm" class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editExamModalLabel">
-                    <i class="bi bi-pencil me-2"></i>Edit Exam
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="editExamError" class="alert alert-danger" style="display:none"></div>
+    <!-- Questions Management Modal -->
+    <div class="modal fade" id="questionsModal" tabindex="-1" aria-labelledby="questionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <form id="questionsForm" class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="questionsModalLabel">
+                        <i class="bi bi-list-check me-2"></i>@Localizer["ManageQuestions"]
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="@Localizer["CloseBtn"]"></button>
+                </div>
+                <div class="modal-body p-3" style="min-height: 80vh; max-height: 80vh; overflow: hidden;">
+                    <input type="hidden" id="questionsExamCode" name="ExamCode">
 
-                <!-- Hidden fields for required properties -->
-                <input type="hidden" name="ExamCode" id="EditExamCode" />
-                <input type="hidden" name="TeacherCode" id="EditTeacherCode" />
-                <input type="hidden" name="SubjectCode" id="EditSubjectCode" />
-                <input type="hidden" name="YearCode" id="EditYearCode" />
-                <input type="hidden" name="BranchCode" id="EditBranchCode" />
-                <input type="hidden" name="EduYearCode" id="EditEduYearCode" />
+                    <div class="row g-3 h-100">
+                        <div class="col-lg-6 d-flex flex-column">
+                            <!-- Question Search Bar -->
+                            <div id="exam-question-search-bar" class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" id="examQuestionSearchInput" class="form-control"
+                                           placeholder="@Localizer["SearchQuestionsPlaceholder"]">
+                                    <button id="examQuestionSearchBtn" class="btn btn-primary" type="button">
+                                        <i class="bi bi-search"></i> @Localizer["SearchBtn"]
+                                    </button>
+                                    <button id="examQuestionSearchClearBtn" class="btn btn-secondary" type="button" style="display:none;">
+                                        <i class="bi bi-x-circle"></i> @Localizer["ClearBtn"]
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="exam-question-search-results" class="mb-2" style="display:none;"></div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="EditExamName" class="form-label">Exam Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="ExamName" id="EditExamName" required>
+                            <div class="questions-section h-100 d-flex flex-column">
+                                <div id="availablePaginationTop" class="mb-2"></div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-primary mb-0">
+                                        <i class="bi bi-collection me-2"></i>@Localizer["AvailableQuestions"]
+                                    </h6>
+                                    <span id="availableInfo" class="badge bg-info fs-6"></span>
+                                </div>
+                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
+                                    <ul id="availableQuestions" class="list-group question-list flex-grow-1"></ul>
+                                </div>
+                                <div id="availablePagination" class="mt-2"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="EditExamTimer" class="form-label">Exam Duration <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="ExamTimer" id="EditExamTimer"
-                                   pattern="^([0-1]?\d|2[0-3]):[0-5]\d$" placeholder="e.g. 02:30"
-                                   autocomplete="off" inputmode="numeric" maxlength="5" required>
-                            <div class="form-text">Enter duration in 24-hour format (hh:mm)</div>
+                        <div class="col-lg-6 d-flex flex-column">
+                            <div class="questions-section h-100 d-flex flex-column">
+                                <div id="chosenPaginationTop" class="mb-2"></div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-success mb-0">
+                                        <i class="bi bi-check-square me-2"></i>@Localizer["ChosenQuestions"]
+                                    </h6>
+                                    <span id="chosenInfo" class="badge bg-success fs-6"></span>
+                                </div>
+                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
+                                    <ul id="chosenQuestions" class="list-group question-list flex-grow-1"></ul>
+                                </div>
+                                <div id="chosenPagination" class="mt-2"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="IsExam" id="EditIsExam">
-                            <label class="form-check-label" for="EditIsExam">Is Exam</label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="IsOnline" id="EditIsOnline">
-                            <label class="form-check-label" for="EditIsOnline">Is Online</label>
-                        </div>
-                    </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>@Localizer["CancelBtn"]
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-2"></i>@Localizer["SaveQuestionsBtn"]
+                    </button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-2"></i>Cancel
-                </button>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-2"></i>Update Exam
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Questions Management Modal -->
-<div class="modal fade" id="questionsModal" tabindex="-1" aria-labelledby="questionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen">
-        <form id="questionsForm" class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="questionsModalLabel">
-                    <i class="bi bi-list-check me-2"></i>Manage Exam Questions
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-3" style="min-height: 80vh; max-height: 80vh; overflow: hidden;">
-                <input type="hidden" id="questionsExamCode" name="ExamCode">
-
-                <div class="row g-3 h-100">
-                    <div class="col-lg-6 d-flex flex-column">
-                        <!-- Question Search Bar -->
-                        <div id="exam-question-search-bar" class="mb-3">
-                            <div class="input-group">
-                                <input type="text" id="examQuestionSearchInput" class="form-control"
-                                       placeholder="Search for questions...">
-                                <button id="examQuestionSearchBtn" class="btn btn-primary" type="button">
-                                    <i class="bi bi-search"></i> Search
-                                </button>
-                                <button id="examQuestionSearchClearBtn" class="btn btn-secondary" type="button" style="display:none;">
-                                    <i class="bi bi-x-circle"></i> Clear
-                                </button>
-                            </div>
-                        </div>
-                        <div id="exam-question-search-results" class="mb-2" style="display:none;"></div>
-
-                        <div class="questions-section h-100 d-flex flex-column">
-                            <div id="availablePaginationTop" class="mb-2"></div>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-primary mb-0">
-                                    <i class="bi bi-collection me-2"></i>Available Questions
-                                </h6>
-                                <span id="availableInfo" class="badge bg-info fs-6"></span>
-                            </div>
-                            <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
-                                <ul id="availableQuestions" class="list-group question-list flex-grow-1"></ul>
-                            </div>
-                            <div id="availablePagination" class="mt-2"></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 d-flex flex-column">
-                        <div class="questions-section h-100 d-flex flex-column">
-                            <div id="chosenPaginationTop" class="mb-2"></div>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-success mb-0">
-                                    <i class="bi bi-check-square me-2"></i>Chosen Questions
-                                </h6>
-                                <span id="chosenInfo" class="badge bg-success fs-6"></span>
-                            </div>
-                            <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
-                                <ul id="chosenQuestions" class="list-group question-list flex-grow-1"></ul>
-                            </div>
-                            <div id="chosenPagination" class="mt-2"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer bg-light py-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-2"></i>Close
-                </button>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle me-2"></i>Save Questions
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        window.examPageData = {
-            isCenterUser: @Json.Serialize(isCenter),
-            rootCode: @Json.Serialize(rootCode),
-            rootName: @Json.Serialize(rootName),
-            userName: '@User.Identity?.Name'
-        };
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
-    <script src="~/js/Exam.js"></script>
-}
+    @section Scripts {
+        <script>
+            window.examPageData = {
+                isCenterUser: @Json.Serialize(isCenter),
+                rootCode: @Json.Serialize(rootCode),
+                rootName: @Json.Serialize(rootName),
+                userName: '@User.Identity?.Name'
+            };
+        </script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
+        <script src="~/js/Exam.js"></script>
+    }
+</body>
+</html>

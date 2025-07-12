@@ -529,7 +529,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Exams)
                 .HasForeignKey(d => d.BranchCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Exam_Branch");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Exams)
@@ -1829,6 +1828,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.UserCode)
                 .ValueGeneratedNever()
                 .HasColumnName("User_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.GroupCode).HasColumnName("Group_Code");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")

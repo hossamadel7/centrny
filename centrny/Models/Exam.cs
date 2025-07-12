@@ -29,7 +29,7 @@ public partial class Exam
 
     public int SubjectCode { get; set; }
 
-    public int BranchCode { get; set; }
+    public int? BranchCode { get; set; }
 
     public int? YearCode { get; set; }
 
@@ -45,7 +45,7 @@ public partial class Exam
 
     public DateTime? LastUpdateTime { get; set; }
 
-    public virtual Branch BranchCodeNavigation { get; set; } = null!;
+    public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 

@@ -512,6 +512,8 @@
                 $editForm.find('[name="ExamTimer"]').val(exam.examTimer);
                 $editForm.find('[name="IsExam"]').prop('checked', exam.isExam);
                 $editForm.find('[name="IsOnline"]').prop('checked', exam.isOnline);
+                $editForm.find('[name="IsDone"]').prop('checked', exam.isDone);
+
 
                 // Set hidden fields
                 $editForm.find('[name="TeacherCode"]').val(exam.teacherCode);
@@ -542,7 +544,8 @@
             SubjectCode: parseInt($editForm.find('[name="SubjectCode"]').val()),
             YearCode: parseInt($editForm.find('[name="YearCode"]').val()),
             BranchCode: parseInt($editForm.find('[name="BranchCode"]').val()),
-            EduYearCode: parseInt($editForm.find('[name="EduYearCode"]').val())
+            EduYearCode: parseInt($editForm.find('[name="EduYearCode"]').val()),
+                IsDone: $editForm.find('[name="IsDone"]').is(':checked')
         };
 
         const $submitBtn = $(this).find('button[type="submit"]');

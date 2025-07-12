@@ -1920,6 +1920,168 @@ namespace centrny.Controllers
                 return Json(new { error = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("Student/GetUpcomingExams/{item_key}")]
+        public async Task<IActionResult> GetUpcomingExams(string item_key)
+        {
+            try
+            {
+                var student = await GetStudentByItemKey(item_key);
+                if (student == null)
+                    return Json(new { error = "Student not found." });
+
+                var learns = await _context.Learns
+                    .Where(l => l.StudentCode == student.StudentCode && l.IsActive == true)
+                    .ToListAsync();
+
+                var exams = await _context.Exams
+                    .Where(ex => ex.IsActive == true && ex.IsExam == true)
+                    .Include(ex => ex.SubjectCodeNavigation)
+                    .Include(ex => ex.TeacherCodeNavigation)
+                    .ToListAsync();
+
+                var attendedExamCodes = await _context.StudentExams
+                    .Where(se => se.StudentCode == student.StudentCode && se.IsActive == true)
+                    .Select(se => se.ExamCode)
+                    .ToListAsync();
+
+                var upcoming = new List<object>();
+                foreach (var exam in exams)
+                {
+                    bool hasMatchingLearn = exam.BranchCode == null
+                        ? learns.Any(learn =>
+                            learn.EduYearCode == exam.EduYearCode &&
+                            learn.TeacherCode == exam.TeacherCode &&
+                            learn.SubjectCode == exam.SubjectCode &&
+                            learn.YearCode == exam.YearCode)
+                        : learns.Any(learn =>
+                            learn.EduYearCode == exam.EduYearCode &&
+                            learn.TeacherCode == exam.TeacherCode &&
+                            learn.SubjectCode == exam.SubjectCode &&
+                            learn.YearCode == exam.YearCode &&
+                            learn.BranchCode == exam.BranchCode);
+
+                    if (hasMatchingLearn)
+                    {
+                        upcoming.Add(new
+                        {
+                            examCode = exam.ExamCode,
+                            examName = exam.ExamName,
+                            subjectName = exam.SubjectCodeNavigation != null ? exam.SubjectCodeNavigation.SubjectName : "N/A",
+                            teacherName = exam.TeacherCodeNavigation != null ? exam.TeacherCodeNavigation.TeacherName : "N/A",
+                            attended = attendedExamCodes.Contains(exam.ExamCode)
+                        });
+                    }
+                }
+
+                return Json(upcoming);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving upcoming exams for item key {ItemKey}", item_key);
+                return Json(new { error = ex.Message });
+            }
+        }
+        [HttpGet]
+        [Route("Student/GetAssignments/{item_key}")]
+        public async Task<IActionResult> GetAssignments(string item_key)
+        {
+            try
+            {
+                var student = await GetStudentByItemKey(item_key);
+                if (student == null)
+                    return Json(new { error = "Student not found." });
+
+                var learns = await _context.Learns
+                    .Where(l => l.StudentCode == student.StudentCode && l.IsActive == true)
+                    .ToListAsync();
+
+                var assignments = await _context.Exams
+                    .Where(ex => ex.IsActive == true && ex.IsExam == false)
+                    .Include(ex => ex.SubjectCodeNavigation)
+                    .Include(ex => ex.TeacherCodeNavigation)
+                    .ToListAsync();
+
+                var attendedExamCodes = await _context.StudentExams
+                    .Where(se => se.StudentCode == student.StudentCode && se.IsActive == true)
+                    .Select(se => se.ExamCode)
+                    .ToListAsync();
+
+                var result = new List<object>();
+                foreach (var exam in assignments)
+                {
+                    bool hasMatchingLearn = exam.BranchCode == null
+                        ? learns.Any(learn =>
+                            learn.EduYearCode == exam.EduYearCode &&
+                            learn.TeacherCode == exam.TeacherCode &&
+                            learn.SubjectCode == exam.SubjectCode &&
+                            learn.YearCode == exam.YearCode)
+                        : learns.Any(learn =>
+                            learn.EduYearCode == exam.EduYearCode &&
+                            learn.TeacherCode == exam.TeacherCode &&
+                            learn.SubjectCode == exam.SubjectCode &&
+                            learn.YearCode == exam.YearCode &&
+                            learn.BranchCode == exam.BranchCode);
+
+                    if (hasMatchingLearn)
+                    {
+                        result.Add(new
+                        {
+                            examCode = exam.ExamCode,
+                            examName = exam.ExamName,
+                            subjectName = exam.SubjectCodeNavigation != null ? exam.SubjectCodeNavigation.SubjectName : "N/A",
+                            teacherName = exam.TeacherCodeNavigation != null ? exam.TeacherCodeNavigation.TeacherName : "N/A",
+                            attended = attendedExamCodes.Contains(exam.ExamCode)
+                        });
+                    }
+                }
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving assignments for item key {ItemKey}", item_key);
+                return Json(new { error = ex.Message });
+            }
+        }
+        [HttpGet]
+        [Route("Student/GetAttendedExams/{item_key}")]
+        public async Task<IActionResult> GetAttendedExams(string item_key)
+        {
+            try
+            {
+                var student = await GetStudentByItemKey(item_key);
+                if (student == null)
+                    return Json(new { error = "Student not found." });
+
+                var attended = await _context.StudentExams
+                    .Where(se => se.StudentCode == student.StudentCode
+                                 && se.IsActive == true
+                                 && se.ExamCodeNavigation.IsExam == true) // <-- Only real exams!
+                    .Include(se => se.ExamCodeNavigation)
+                        .ThenInclude(e => e.SubjectCodeNavigation)
+                    .Include(se => se.ExamCodeNavigation)
+                        .ThenInclude(e => e.TeacherCodeNavigation)
+                    .OrderByDescending(se => se.InsertTime)
+                    .Select(se => new
+                    {
+                        examName = se.ExamCodeNavigation.ExamName,
+                        subjectName = se.ExamCodeNavigation.SubjectCodeNavigation != null ? se.ExamCodeNavigation.SubjectCodeNavigation.SubjectName : "N/A",
+                        teacherName = se.ExamCodeNavigation.TeacherCodeNavigation != null ? se.ExamCodeNavigation.TeacherCodeNavigation.TeacherName : "N/A",
+                        degree = se.StudentResult,
+                        examDegree = se.ExamDegree,
+                        examDate = se.InsertTime.HasValue ? se.InsertTime.Value.ToString("yyyy-MM-dd") : null,
+                    })
+                    .ToListAsync();
+
+                return Json(attended);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving attended exams for item key {ItemKey}", item_key);
+                return Json(new { error = ex.Message });
+            }
+        }
 
         // ==================== HELPER METHODS ====================
 

@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft.resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<data name="Title_GroupPagePermissions" xml:space="preserve">
+    <value>Group-Page Permissions</value>
+  </data>
+	<data name="UserInfo_SelectRoot" xml:space="preserve">
+    <value>Select a root to manage group-page permissions in a modern UI.</value>
+  </data>
+	<data name="Label_SelectRoot" xml:space="preserve">
+    <value>Select Root:</value>
+  </data>
+	<data name="Dropdown_SelectRootDefault" xml:space="preserve">
+    <value>-- Choose Root --</value>
+  </data>
+	<data name="Groups_Header" xml:space="preserve">
+    <value>Groups</value>
+  </data>
+	<data name="Pages_Header" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+	<data name="Button_AddSelectedPages" xml:space="preserve">
+    <value>Add Selected Pages</value>
+  </data>
+	<data name="Permissions_Set" xml:space="preserve">
+    <value>Set Permissions for</value>
+  </data>
+	<data name="Label_Insert" xml:space="preserve">
+    <value>Insert</value>
+  </data>
+	<data name="Label_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+	<data name="Label_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+	<data name="Button_SavePermission" xml:space="preserve">
+    <value>Save Permission</value>
+  </data>
+	<data name="Existing_GroupPages_Header" xml:space="preserve">
+    <value>Existing Group-Page Permissions for Selected Group</value>
+  </data>
+	<data name="Table_Page" xml:space="preserve">
+    <value>Page</value>
+  </data>
+	<data name="Table_Insert" xml:space="preserve">
+    <value>Insert</value>
+  </data>
+	<data name="Table_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+	<data name="Table_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+	<data name="Table_DeletePage" xml:space="preserve">
+    <value>Delete Page</value>
+  </data>
+	<data name="NoGroupsFound" xml:space="preserve">
+    <value>No groups found.</value>
+  </data>
+	<data name="NoPagesFound" xml:space="preserve">
+    <value>No pages found.</value>
+  </data>
+	<data name="NoPagesAvailable" xml:space="preserve">
+    <value>No pages available for this group.</value>
+  </data>
+	<data name="NoGroupPagePermissions" xml:space="preserve">
+    <value>No group-page permissions for this group.</value>
+  </data>
+	<data name="Alert_SelectAtLeastOnePage" xml:space="preserve">
+    <value>Please select at least one page.</value>
+  </data>
+	<data name="Alert_PermissionsSaved" xml:space="preserve">
+    <value>Permissions saved!</value>
+  </data>
+	<data name="Alert_SaveFailed" xml:space="preserve">
+    <value>Save failed.</value>
+  </data>
+	<data name="Alert_DeleteFailed" xml:space="preserve">
+    <value>Delete failed.</value>
+  </data>
+	<data name="Confirm_DeletePermission" xml:space="preserve">
+    <value>Are you sure you want to delete this permission?</value>
+  </data>
+</root>

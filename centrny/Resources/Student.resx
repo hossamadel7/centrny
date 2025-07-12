@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="StudentProfile" xml:space="preserve"><value>Student Profile</value></data>
+	<data name="AcademicYear" xml:space="preserve"><value>Academic Year</value></data>
+	<data name="Branch" xml:space="preserve"><value>Branch</value></data>
+	<data name="Student" xml:space="preserve"><value>Student</value></data>
+	<data name="ActiveStudent" xml:space="preserve"><value>Active Student</value></data>
+	<data name="InactiveStudent" xml:space="preserve"><value>Inactive Student</value></data>
+	<data name="ParentPhone" xml:space="preserve"><value>Parent Phone</value></data>
+	<data name="StudentPhone" xml:space="preserve"><value>Student Phone</value></data>
+	<data name="UpcomingExams" xml:space="preserve"><value>Upcoming Exams</value></data>
+	<data name="LoadingUpcomingExams" xml:space="preserve"><value>Loading upcoming exams...</value></data>
+	<data name="AttendedExams" xml:space="preserve"><value>Attended Exams</value></data>
+	<data name="LoadingAttendedExams" xml:space="preserve"><value>Loading attended exams...</value></data>
+	<data name="Assignments" xml:space="preserve"><value>Assignments</value></data>
+	<data name="LoadingAssignments" xml:space="preserve"><value>Loading assignments...</value></data>
+	<data name="TodaysClasses" xml:space="preserve"><value>Today's Classes</value></data>
+	<data name="AdminView" xml:space="preserve"><value>Admin View</value></data>
+	<data name="ViewingTodaysClassesOnlyAdmins" xml:space="preserve"><value>Viewing today's classes. Only administrators can mark attendance.</value></data>
+	<data name="LoadingTodaysClasses" xml:space="preserve"><value>Loading today's classes...</value></data>
+	<data name="EnrolledSubjects" xml:space="preserve"><value>Enrolled Subjects</value></data>
+	<data name="SearchSubjects" xml:space="preserve"><value>Search subjects...</value></data>
+	<data name="LoadingSubjects" xml:space="preserve"><value>Loading subjects...</value></data>
+	<data name="WeeklyClasses" xml:space="preserve"><value>Weekly Classes</value></data>
+	<data name="NoUpcomingExams" xml:space="preserve"><value>No Upcoming Exams</value></data>
+	<data name="NoUpcomingExamsMsg" xml:space="preserve"><value>No upcoming exams for this student at the moment.</value></data>
+	<data name="NoAssignments" xml:space="preserve"><value>No Assignments</value></data>
+	<data name="NoAssignmentsMsg" xml:space="preserve"><value>No assignments for this student at the moment.</value></data>
+	<data name="NoAttendedExams" xml:space="preserve"><value>No Attended Exams</value></data>
+	<data name="NoAttendedExamsMsg" xml:space="preserve"><value>This student has not attended any exams yet.</value></data>
+	<data name="NoSubjectsFound" xml:space="preserve"><value>No Subjects Found</value></data>
+	<data name="NoSubjectsFoundMsg" xml:space="preserve"><value>This student is not enrolled in any subjects yet.</value></data>
+	<data name="NoClassesAvailable" xml:space="preserve"><value>No Classes Available</value></data>
+	<data name="NoClassesAvailableMsg" xml:space="preserve"><value>There are no classes available for attendance right now.</value></data>
+	<data name="NoClassesThisWeek" xml:space="preserve"><value>No Classes This Week</value></data>
+	<data name="NoClassesThisWeekMsg" xml:space="preserve"><value>There are no classes scheduled for this week.</value></data>
+	<data name="LoadingWeeklyClasses" xml:space="preserve"><value>Loading weekly classes...</value></data>
+	<data name="Error" xml:space="preserve"><value>Error</value></data>
+	<data name="FailedToLoadExams" xml:space="preserve"><value>Failed to load exams.</value></data>
+	<data name="FailedToLoadAssignments" xml:space="preserve"><value>Failed to load assignments.</value></data>
+	<data name="FailedToLoadSubjects" xml:space="preserve"><value>Failed to load subjects.</value></data>
+	<data name="FailedToLoadClasses" xml:space="preserve"><value>Failed to load upcoming classes.</value></data>
+	<data name="Attended" xml:space="preserve"><value>Attended</value></data>
+	<data name="AlreadyAttended" xml:space="preserve"><value>Already Attended</value></data>
+	<data name="AttendAssignment" xml:space="preserve"><value>Attend Assignment</value></data>
+	<data name="AttendExam" xml:space="preserve"><value>Attend Exam</value></data>
+	<data name="MarkAttendance" xml:space="preserve"><value>Mark Attendance</value></data>
+	<data name="NotAvailableForAttendance" xml:space="preserve"><value>Not available for attendance</value></data>
+	<data name="OnlyAdminsAttendance" xml:space="preserve"><value>Only administrators can mark attendance</value></data>
+	<data name="AttendanceMarkedSuccessfully" xml:space="preserve"><value>Attendance marked successfully!</value></data>
+	<data name="FailedToMarkAttendance" xml:space="preserve"><value>Failed to mark attendance.</value></data>
+	<data name="AttendanceError" xml:space="preserve"><value>An error occurred while marking attendance.</value></data>
+	<data name="Marking" xml:space="preserve"><value>Marking...</value></data>
+	<data name="StartTime" xml:space="preserve"><value>Start Time</value></data>
+	<data name="EndTime" xml:space="preserve"><value>End Time</value></data>
+	<data name="Free" xml:space="preserve"><value>Free</value></data>
+	<data name="Online" xml:space="preserve"><value>Online</value></data>
+	<data name="InPerson" xml:space="preserve"><value>In-Person</value></data>
+	<data name="Degree" xml:space="preserve"><value>Degree</value></data>
+	<data name="NA" xml:space="preserve"><value>N/A</value></data>
+</root>

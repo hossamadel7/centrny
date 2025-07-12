@@ -558,6 +558,7 @@ namespace centrny.Controllers
                 dbExam.EduYearCode = exam.EduYearCode;
                 dbExam.IsExam = exam.IsExam;
                 dbExam.IsOnline = exam.IsOnline;
+                dbExam.IsDone = exam.IsDone;
                 dbExam.LastUpdateUser = GetCurrentUserId();
                 dbExam.LastUpdateTime = DateTime.Now;
 
