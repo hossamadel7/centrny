@@ -1,18 +1,30 @@
-﻿﻿
+﻿@{
+    var culture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+    var isRtl = culture.Name.StartsWith("ar");
+    var dir = isRtl ? "rtl" : "ltr";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@culture.Name" dir="@(isRtl ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - centrny</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/centrny.styles.css" asp-append-version="true" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Poppins Bold for sidebar -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
     <style>
+        body[dir="rtl"], html[dir="rtl"] {
+            direction: rtl;
+            text-align: right;
+        }
+
+        body[dir="ltr"], html[dir="ltr"] {
+            direction: ltr;
+            text-align: left;
+        }
+
         :root {
             --sidebar-width: 280px;
             --sidebar-bg: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
@@ -148,9 +160,6 @@
             background: rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             padding: 0.5rem 0.75rem;
-            border-left: 0px solid var(--primary-color);
-            border-right: 0px solid var(--border-color);
-            border-bottom: 0px solid var(--border-color);
             font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
@@ -162,7 +171,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
             letter-spacing: 0.01em;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
         .user-role {
@@ -175,7 +183,14 @@
             font-weight: 700;
             letter-spacing: 0.01em;
             opacity: 0.95;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .user-root {
+            font-size: 0.90rem;
+            color: #cbd5e1;
+            margin-top: 2px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
         }
 
         .sidebar-user-profile:hover {
@@ -195,10 +210,6 @@
             list-style: none;
             margin: 0;
             padding: 0;
-        }
-
-        .nav-item {
-            margin: 0.3rem 0;
         }
 
         .nav-link {
@@ -307,22 +318,6 @@
             padding: 2rem 1.7rem;
             background: #f8fafc;
         }
-        /* Gradient section header for admin/user info */
-        .gradient-section-header {
-            background: linear-gradient(90deg, #7b61ff 0%, #5e60ce 100%);
-            color: #fff;
-            font-size: 1.45rem;
-            font-weight: 700;
-            padding: 1.2rem 2rem;
-            border-radius: 16px 16px 0 0;
-            box-shadow: 0 4px 16px 0 rgba(123,97,255,0.06);
-            letter-spacing: 0.01em;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        }
 
         @@media (max-width: 992px) {
             .modern-sidebar {
@@ -374,16 +369,6 @@
                 padding: 0 0.5rem;
             }
         }
-
-        ::-webkit-scrollbar {
-            width: 7px;
-            background: #e0e7ef;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #c1c8d6;
-            border-radius: 5px;
-        }
     </style>
 </head>
 <body>
@@ -411,119 +396,30 @@
                     <div class="user-role">
                         @User.FindFirst("GroupName")?.Value ?? "User"
                     </div>
+                    <div class="user-root">
+                        @User.FindFirst("RootName")?.Value ?? "No Root"
+                    </div>
                 </div>
             </div>
         }
         <div class="sidebar-nav">
-            <div class="sidebar-nav">
-                <ul class="nav-list">
-                    <li>
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">
-                            <i class="fas fa-home nav-icon"></i> <span class="nav-text">Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Root" asp-action="Index">
-                            <i class="fas fa-sitemap nav-icon"></i> <span class="nav-text">Roots</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Group" asp-action="Index">
-                            <i class="fas fa-users nav-icon"></i> <span class="nav-text">Groups</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="User" asp-action="Index">
-                            <i class="fas fa-user nav-icon"></i> <span class="nav-text">Users</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="EduYear" asp-action="Index">
-                            <i class="fas fa-calendar-alt nav-icon"></i> <span class="nav-text">Edu Years & Years</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Level" asp-action="Index">
-                            <i class="fas fa-layer-group nav-icon"></i> <span class="nav-text">Levels</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Subject" asp-action="Index">
-                            <i class="fas fa-book nav-icon"></i> <span class="nav-text">Subjects</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Student" asp-action="Index">
-                            <i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Students</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Year" asp-action="Index">
-                            <i class="fas fa-calendar nav-icon"></i> <span class="nav-text">Years</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Teacher" asp-action="Index">
-                            <i class="fas fa-user-tie nav-icon"></i> <span class="nav-text">Teachers</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Exam" asp-action="Index">
-                            <i class="fas fa-file-alt nav-icon"></i> <span class="nav-text">Exams</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Schedule" asp-action="Index">
-                            <i class="fas fa-clock nav-icon"></i> <span class="nav-text">Schedules</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Reservation" asp-action="Index">
-                            <i class="fas fa-calendar-check nav-icon"></i> <span class="nav-text">Reservations</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="TeacherManagement" asp-action="Index">
-                            <i class="fas fa-cogs nav-icon"></i> <span class="nav-text">Teacher Management</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Item" asp-action="Index">
-                            <i class="fas fa-boxes nav-icon"></i> <span class="nav-text">Items</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Security" asp-action="Index">
-                            <i class="fas fa-shield-alt nav-icon"></i> <span class="nav-text">Security</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="DailyClass" asp-action="Index">
-                            <i class="fas fa-chalkboard nav-icon"></i> <span class="nav-text">Classes</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="TeacherClass" asp-action="Teacher">
-                            <i class="fas fa-user-tie nav-icon"></i> <span class="nav-text">Teacher Schedule</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="Question" asp-action="Index">
-                            <i class="fas fa-question-circle nav-icon"></i> <span class="nav-text">Questions</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="StudentExam" asp-action="Index">
-                            <i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Student Exam</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" asp-controller="ViewAuthority" asp-action="Index">
-                            <i class="fas fa-users-cog nav-icon"></i> <span class="nav-text">Page Permissions</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
+            <ul class="nav-list">
+                <li><a class="nav-link" asp-controller="Root" asp-action="Index"><i class="fas fa-sitemap nav-icon"></i> <span class="nav-text">Roots</span></a></li>
+                <li><a class="nav-link" asp-controller="Security" asp-action="Index"><i class="fas fa-users nav-icon"></i> <span class="nav-text">Groups Management</span></a></li>
+                <li><a class="nav-link" asp-controller="EduYear" asp-action="Index"><i class="fas fa-calendar-alt nav-icon"></i> <span class="nav-text">Edu Years & Years</span></a></li>
+                <li><a class="nav-link" asp-controller="Expenses" asp-action="Index"><i class="fas fa-home nav-icon"></i> <span class="nav-text">Dashboard</span></a></li>
+                <li><a class="nav-link" asp-controller="Subject" asp-action="Index"><i class="fas fa-book nav-icon"></i> <span class="nav-text">Subjects</span></a></li>
+                <li><a class="nav-link" asp-controller="Student" asp-action="Index"><i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Students</span></a></li>
+                <li><a class="nav-link" asp-controller="Exam" asp-action="Index"><i class="fas fa-file-alt nav-icon"></i> <span class="nav-text">Exams</span></a></li>
+                <li><a class="nav-link" asp-controller="Schedule" asp-action="Index"><i class="fas fa-clock nav-icon"></i> <span class="nav-text">Schedules</span></a></li>
+                <li><a class="nav-link" asp-controller="Reservation" asp-action="Index"><i class="fas fa-calendar-check nav-icon"></i> <span class="nav-text">Reservations</span></a></li>
+                <li><a class="nav-link" asp-controller="TeacherManagement" asp-action="Index"><i class="fas fa-cogs nav-icon"></i> <span class="nav-text">Teacher Management</span></a></li>
+                <li><a class="nav-link" asp-controller="Item" asp-action="Index"><i class="fas fa-boxes nav-icon"></i> <span class="nav-text">Items</span></a></li>
+                <li><a class="nav-link" asp-controller="DailyClass" asp-action="Index"><i class="fas fa-chalkboard nav-icon"></i> <span class="nav-text">Classes</span></a></li>
+                <li><a class="nav-link" asp-controller="Question" asp-action="Index"><i class="fas fa-question-circle nav-icon"></i> <span class="nav-text">Questions</span></a></li>
+                <li><a class="nav-link" asp-controller="StudentExam" asp-action="Index"><i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Student Exam</span></a></li>
+                <li><a class="nav-link" asp-controller="ViewAuthority" asp-action="Index"><i class="fas fa-users-cog nav-icon"></i> <span class="nav-text">Page Permissions</span></a></li>
+            </ul>
         </div>
         <div class="sidebar-footer">
             @if (User.Identity.IsAuthenticated)
@@ -550,6 +446,28 @@
                 </button>
                 <span class="page-title">@ViewData["Title"]</span>
             </div>
+            <div class="header-right">
+                <form id="langForm" method="post" asp-controller="Home" asp-action="SetLanguage" style="display:inline;">
+                    <select name="culture" onchange="document.getElementById('langForm').submit();" class="form-select form-select-sm" style="width: auto; display:inline;">
+                        @if (culture.Name.StartsWith("en"))
+                        {
+                            <option value="en" selected>English</option>
+                        }
+                        else
+                        {
+                            <option value="en">English</option>
+                        }
+                        @if (culture.Name.StartsWith("ar"))
+                        {
+                            <option value="ar" selected>العربية</option>
+                        }
+                        else
+                        {
+                            <option value="ar">العربية</option>
+                        }
+                    </select>
+                </form>
+            </div>
         </header>
         <main class="main-content">
             @RenderBody()
@@ -561,8 +479,8 @@
             @Html.AntiForgeryToken()
         </form>
     }
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         function toggleSidebar(open) {
@@ -576,7 +494,6 @@
                 overlay.classList.remove('active');
             }
         }
-        // Wait for DOMContentLoaded to avoid null refs
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.modern-sidebar .nav-link').forEach(link => {
                 link.addEventListener('click', () => toggleSidebar(false));
