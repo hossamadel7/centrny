@@ -3,7 +3,7 @@
 @inject IStringLocalizerFactory LocalizerFactory
 @{
     var Localizer = LocalizerFactory.Create("Exam", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
-    ViewData["Title"] = Localizer["Title_ExamManagement"];
+    ViewData["Title"] = Localizer["Title_ExamManagement"].Value;
     var isCenter = ViewBag.IsCenter ?? false;
     var rootCode = ViewBag.CurrentUserRootCode ?? 0;
     var rootName = ViewBag.UserRootName ?? "Unknown";
@@ -53,6 +53,15 @@
         html[dir="rtl"] .text-start {
             text-align: right !important;
         }
+
+        .badge.bg-assignment {
+            background-color: #5bc0de !important; /* Change to any color you want */
+            color: #fff !important;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            padding: 0.35em 0.7em;
+        }
+
     </style>
 </head>
 <body>
@@ -99,7 +108,31 @@
          data-loading="@Localizer["Loading"]"
          data-no-exams-found="@Localizer["NoExamsFound"]"
          data-get-started-msg="@Localizer["GetStartedMsg"]"
-         data-page-context="@Localizer["PageContext"]" />
+         data-page-context="@Localizer["PageContext"]"
+         data-actions-header="@Localizer["ActionsHeader"]"
+         data-mode-header="@Localizer["ModeHeader"]"
+         data-type-header="@Localizer["TypeHeader"]"
+         data-status-header="@Localizer["StatusHeader"]"
+         data-branch-header="@Localizer["BranchHeader"]"
+         data-subject-header="@Localizer["SubjectHeader"]"
+         data-year-header="@Localizer["YearHeader"]"
+         data-edu-year-header="@Localizer["EduYearHeader"]"
+         data-duration-header="@Localizer["DurationHeader"]"
+         data-success-header="@Localizer["SuccessHeader"]"
+         data-avg-marks-header="@Localizer["AvgMarksHeader"]"
+         data-degree-header="@Localizer["DegreeHeader"]"
+         data-name-header="@Localizer["NameHeader"]"
+         data-code-header="@Localizer["CodeHeader"]"
+         data-questions-btn="@Localizer["QuestionsBtn"]"
+         data-edit-btn="@Localizer["EditBtn"]"
+         data-delete-btn="@Localizer["DeleteBtn"]"
+         data-stats-btn="@Localizer["StatsBtn"]"
+         data-exam="@Localizer["Exam"]"
+         data-assignment="@Localizer["Assignment"]"
+         data-done="@Localizer["Done"]"
+         data-pending="@Localizer["Pending"]"
+         data-online="@Localizer["Online"]"
+         data-offline="@Localizer["Offline"]" />
 
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -111,7 +144,7 @@
             {
                 <div id="exam-for-teacher" class="mb-0"></div>
             }
-            <button id="addExamBtn" class="exam-index-btn-add">
+            <button id="addExamBtn" class="exam-index-btn-add btn btn-primary">
                 <i class="bi bi-plus-circle"></i>
                 <span>@Localizer["AddExamBtn"]</span>
             </button>

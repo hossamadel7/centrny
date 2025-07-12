@@ -1,165 +1,138 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <data name="Title_ExamManagement" xml:space="preserve">
-    <value>Exam Management</value>
-  </data>
-  <data name="AddExamBtn" xml:space="preserve">
-    <value>Add Exam</value>
-  </data>
-  <data name="EditExamBtn" xml:space="preserve">
-    <value>Edit Exam</value>
-  </data>
-  <data name="DeleteExamBtn" xml:space="preserve">
-    <value>Delete Exam</value>
-  </data>
-  <data name="SaveExamBtn" xml:space="preserve">
-    <value>Save Exam</value>
-  </data>
-  <data name="CancelBtn" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="ExamNameLabel" xml:space="preserve">
-    <value>Exam Name</value>
-  </data>
-  <data name="ExamNamePlaceholder" xml:space="preserve">
-    <value>Enter exam name</value>
-  </data>
-  <data name="ExamTimerLabel" xml:space="preserve">
-    <value>Exam Duration</value>
-  </data>
-  <data name="ExamTimerPlaceholder" xml:space="preserve">
-    <value>e.g. 02:30</value>
-  </data>
-  <data name="ExamTimerHelper" xml:space="preserve">
-    <value>Enter duration in 24-hour format (hh:mm)</value>
-  </data>
-  <data name="EduYearLabel" xml:space="preserve">
-    <value>Educational Year</value>
-  </data>
-  <data name="SelectEduYearOption" xml:space="preserve">
-    <value>-- Select Educational Year --</value>
-  </data>
-  <data name="SubjectLabel" xml:space="preserve">
-    <value>Subject</value>
-  </data>
-  <data name="SelectSubjectOption" xml:space="preserve">
-    <value>-- Select Subject --</value>
-  </data>
-  <data name="YearLabel" xml:space="preserve">
-    <value>Year</value>
-  </data>
-  <data name="SelectYearOption" xml:space="preserve">
-    <value>-- Select Year --</value>
-  </data>
-  <data name="TeacherLabel" xml:space="preserve">
-    <value>Teacher</value>
-  </data>
-  <data name="SelectTeacherOption" xml:space="preserve">
-    <value>-- Select Teacher --</value>
-  </data>
-  <data name="BranchLabel" xml:space="preserve">
-    <value>Branch</value>
-  </data>
-  <data name="SelectBranchOption" xml:space="preserve">
-    <value>-- Select Branch --</value>
-  </data>
-  <data name="CenterLabel" xml:space="preserve">
-    <value>Center</value>
-  </data>
-  <data name="SelectCenterOption" xml:space="preserve">
-    <value>-- Select Center --</value>
-  </data>
-  <data name="IsExamLabel" xml:space="preserve">
-    <value>Is Exam</value>
-  </data>
-  <data name="VsQuizLabel" xml:space="preserve">
-    <value>vs Quiz</value>
-  </data>
-  <data name="IsOnlineLabel" xml:space="preserve">
-    <value>Is Online</value>
-  </data>
-  <data name="IsDoneLabel" xml:space="preserve">
-    <value>Is Done</value>
-  </data>
-  <data name="Actions" xml:space="preserve">
-    <value>Actions</value>
-  </data>
-  <data name="Status" xml:space="preserve">
-    <value>Status</value>
-  </data>
-  <data name="Type" xml:space="preserve">
-    <value>Type</value>
-  </data>
-  <data name="Mode" xml:space="preserve">
-    <value>Mode</value>
-  </data>
-  <data name="Degree" xml:space="preserve">
-    <value>Degree</value>
-  </data>
-  <data name="SuccessMsg" xml:space="preserve">
-    <value>Exam updated successfully!</value>
-  </data>
-  <data name="ErrorMsg" xml:space="preserve">
-    <value>Error updating exam.</value>
-  </data>
-  <data name="ConfirmDeleteTitle" xml:space="preserve">
-    <value>Confirm Delete</value>
-  </data>
-  <data name="ConfirmDeleteWarning" xml:space="preserve">
-    <value>Are you sure you want to delete this exam? This action cannot be undone.</value>
-  </data>
-  <data name="CloseBtn" xml:space="preserve">
-    <value>Close</value>
-  </data>
-  <data name="ViewDetailsBtn" xml:space="preserve">
-    <value>View Details</value>
-  </data>
-  <data name="ExamStatisticsTitle" xml:space="preserve">
-    <value>Exam Statistics</value>
-  </data>
-  <data name="StudentsCompleted" xml:space="preserve">
-    <value>Students Completed</value>
-  </data>
-  <data name="StudentsPending" xml:space="preserve">
-    <value>Students Pending</value>
-  </data>
-  <data name="ManageQuestions" xml:space="preserve">
-    <value>Manage Exam Questions</value>
-  </data>
-  <data name="SaveQuestionsBtn" xml:space="preserve">
-    <value>Save Questions</value>
-  </data>
-  <data name="SearchQuestionsPlaceholder" xml:space="preserve">
-    <value>Search for questions...</value>
-  </data>
-  <data name="SearchBtn" xml:space="preserve">
-    <value>Search</value>
-  </data>
-  <data name="ClearBtn" xml:space="preserve">
-    <value>Clear</value>
-  </data>
-  <data name="AvailableQuestions" xml:space="preserve">
-    <value>Available Questions</value>
-  </data>
-  <data name="ChosenQuestions" xml:space="preserve">
-    <value>Chosen Questions</value>
-  </data>
-  <data name="UpdateExamBtn" xml:space="preserve">
-    <value>Update Exam</value>
-  </data>
-  <data name="Loading" xml:space="preserve">
-    <value>Loading...</value>
-  </data>
-  <data name="NoExamsFound" xml:space="preserve">
-    <value>No exams found</value>
-  </data>
-  <data name="GetStartedMsg" xml:space="preserve">
-    <value>Click "Add Exam" to create your first exam.</value>
-  </data>
-  <data name="PageContext" xml:space="preserve">
-    <value>Current Context:</value>
-  </data>
-  <data name="RootCodeLabel" xml:space="preserve">
-    <value>Root Code:</value>
-  </data>
+  <data name="Title_ExamManagement" xml:space="preserve"><value>Exam Management</value></data>
+  <data name="AddExamBtn" xml:space="preserve"><value>Add Exam</value></data>
+  <data name="EditExamBtn" xml:space="preserve"><value>Edit Exam</value></data>
+  <data name="DeleteExamBtn" xml:space="preserve"><value>Delete Exam</value></data>
+  <data name="SaveExamBtn" xml:space="preserve"><value>Save Exam</value></data>
+  <data name="CancelBtn" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ExamNameLabel" xml:space="preserve"><value>Exam Name</value></data>
+  <data name="ExamTimerLabel" xml:space="preserve"><value>Exam Timer</value></data>
+  <data name="ExamTimerHelper" xml:space="preserve"><value>Format HH:mm</value></data>
+  <data name="ExamNamePlaceholder" xml:space="preserve"><value>Enter exam name</value></data>
+  <data name="ExamTimerPlaceholder" xml:space="preserve"><value>HH:mm</value></data>
+  <data name="EduYearLabel" xml:space="preserve"><value>Educational Year</value></data>
+  <data name="SubjectLabel" xml:space="preserve"><value>Subject</value></data>
+  <data name="YearLabel" xml:space="preserve"><value>Year</value></data>
+  <data name="TeacherLabel" xml:space="preserve"><value>Teacher</value></data>
+  <data name="BranchLabel" xml:space="preserve"><value>Branch</value></data>
+  <data name="IsExamLabel" xml:space="preserve"><value>Is Exam</value></data>
+  <data name="IsOnlineLabel" xml:space="preserve"><value>Is Online</value></data>
+  <data name="IsDoneLabel" xml:space="preserve"><value>Is Done</value></data>
+  <data name="VsQuizLabel" xml:space="preserve"><value>vs Quiz</value></data>
+  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Mode" xml:space="preserve"><value>Mode</value></data>
+  <data name="Degree" xml:space="preserve"><value>Degree</value></data>
+  <data name="SuccessMsg" xml:space="preserve"><value>Success</value></data>
+  <data name="ErrorMsg" xml:space="preserve"><value>Error</value></data>
+  <data name="ConfirmDeleteTitle" xml:space="preserve"><value>Delete Exam</value></data>
+  <data name="ConfirmDeleteWarning" xml:space="preserve"><value>Are you sure you want to delete this exam?</value></data>
+  <data name="CloseBtn" xml:space="preserve"><value>Close</value></data>
+  <data name="ViewDetailsBtn" xml:space="preserve"><value>View Details</value></data>
+  <data name="ExamStatisticsTitle" xml:space="preserve"><value>Exam Statistics</value></data>
+  <data name="StudentsCompleted" xml:space="preserve"><value>Students Completed</value></data>
+  <data name="StudentsPending" xml:space="preserve"><value>Students Pending</value></data>
+  <data name="ManageQuestions" xml:space="preserve"><value>Manage Questions</value></data>
+  <data name="SaveQuestionsBtn" xml:space="preserve"><value>Save Questions</value></data>
+  <data name="SearchQuestionsPlaceholder" xml:space="preserve"><value>Search questions...</value></data>
+  <data name="SearchBtn" xml:space="preserve"><value>Search</value></data>
+  <data name="ClearBtn" xml:space="preserve"><value>Clear</value></data>
+  <data name="AvailableQuestions" xml:space="preserve"><value>Available Questions</value></data>
+  <data name="ChosenQuestions" xml:space="preserve"><value>Chosen Questions</value></data>
+  <data name="UpdateExamBtn" xml:space="preserve"><value>Update Exam</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="NoExamsFound" xml:space="preserve"><value>No exams found</value></data>
+  <data name="GetStartedMsg" xml:space="preserve"><value>Click "Add Exam" to get started.</value></data>
+  <data name="PageContext" xml:space="preserve"><value>Page Context</value></data>
+  <data name="RootCodeLabel" xml:space="preserve"><value>RootCode</value></data>
+  <data name="Center" xml:space="preserve"><value>Center</value></data>
+  <data name="Teacher" xml:space="preserve"><value>Teacher</value></data>
+  <data name="ActionsHeader" xml:space="preserve"><value>Actions</value></data>
+  <data name="ModeHeader" xml:space="preserve"><value>Mode</value></data>
+  <data name="TypeHeader" xml:space="preserve"><value>Type</value></data>
+  <data name="StatusHeader" xml:space="preserve"><value>Status</value></data>
+  <data name="BranchHeader" xml:space="preserve"><value>Branch</value></data>
+  <data name="SubjectHeader" xml:space="preserve"><value>Subject</value></data>
+  <data name="YearHeader" xml:space="preserve"><value>Year</value></data>
+  <data name="EduYearHeader" xml:space="preserve"><value>Edu Year</value></data>
+  <data name="DurationHeader" xml:space="preserve"><value>Duration</value></data>
+  <data name="SuccessHeader" xml:space="preserve"><value>% Success</value></data>
+  <data name="AvgMarksHeader" xml:space="preserve"><value>Avg Marks</value></data>
+  <data name="DegreeHeader" xml:space="preserve"><value>Degree</value></data>
+  <data name="NameHeader" xml:space="preserve"><value>Name</value></data>
+  <data name="CodeHeader" xml:space="preserve"><value>Code</value></data>
+  <data name="QuestionsBtn" xml:space="preserve"><value>Questions</value></data>
+  <data name="EditBtn" xml:space="preserve"><value>Edit</value></data>
+  <data name="DeleteBtn" xml:space="preserve"><value>Delete</value></data>
+  <data name="StatsBtn" xml:space="preserve"><value>Stats</value></data>
+  <data name="Assignment" xml:space="preserve"><value>Assignment</value></data>
+  <data name="Exam" xml:space="preserve"><value>Exam</value></data>
+  <data name="Done" xml:space="preserve"><value>Done</value></data>
+  <data name="Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Online" xml:space="preserve"><value>Online</value></data>
+  <data name="Offline" xml:space="preserve"><value>Offline</value></data>
+  <data name="ExamNameRequired" xml:space="preserve"><value>Exam name is required.</value></data>
+  <data name="ExamTimerRequired" xml:space="preserve"><value>Please enter a valid time in HH:MM format.</value></data>
+  <data name="EduYearRequired" xml:space="preserve"><value>Educational year is required.</value></data>
+  <data name="SubjectRequired" xml:space="preserve"><value>Subject is required.</value></data>
+  <data name="YearRequired" xml:space="preserve"><value>Year is required.</value></data>
+  <data name="TeacherRequired" xml:space="preserve"><value>Teacher is required.</value></data>
+  <data name="BranchRequired" xml:space="preserve"><value>Branch is required.</value></data>
+  <data name="NoTeacherFound" xml:space="preserve"><value>No teacher found for your root.</value></data>
+  <data name="CenterRequired" xml:space="preserve"><value>Center is required.</value></data>
+  <data name="SelectCenterOption" xml:space="preserve"><value>-- Select Center --</value></data>
+  <data name="SelectBranchOption" xml:space="preserve"><value>-- Select Branch --</value></data>
+  <data name="FailedToLoadCenters" xml:space="preserve"><value>Failed to load centers</value></data>
+  <data name="FailedToLoadBranches" xml:space="preserve"><value>Failed to load branches</value></data>
+  <data name="ErrorLoadingTeacher" xml:space="preserve"><value>Error loading teacher information.</value></data>
+  <data name="SelectEduYearOption" xml:space="preserve"><value>-- Select Educational Year --</value></data>
+  <data name="FailedToLoadEduYears" xml:space="preserve"><value>Failed to load education years</value></data>
+  <data name="ErrorLoadingExams" xml:space="preserve"><value>Error loading exams</value></data>
+  <data name="UnknownError" xml:space="preserve"><value>Unknown error</value></data>
+  <data name="ExamsFor" xml:space="preserve"><value>Exams for:</value></data>
+  <data name="Saving" xml:space="preserve"><value>Saving...</value></data>
+  <data name="ExamCreatedSuccess" xml:space="preserve"><value>Exam created successfully!</value></data>
+  <data name="ErrorAddingExam" xml:space="preserve"><value>Error adding exam</value></data>
+  <data name="ServerErrorOccurred" xml:space="preserve"><value>Server error occurred</value></data>
+  <data name="FailedToLoadExamDetails" xml:space="preserve"><value>Failed to load exam details</value></data>
+  <data name="Updating" xml:space="preserve"><value>Updating...</value></data>
+  <data name="ExamUpdatedSuccess" xml:space="preserve"><value>Exam updated successfully!</value></data>
+  <data name="ErrorUpdatingExam" xml:space="preserve"><value>Error updating exam</value></data>
+  <data name="ConfirmDeleteExam" xml:space="preserve"><value>Are you sure you want to delete this exam? This action cannot be undone.</value></data>
+  <data name="ExamDeletedSuccess" xml:space="preserve"><value>Exam deleted successfully!</value></data>
+  <data name="ErrorDeletingExam" xml:space="preserve"><value>Error deleting exam</value></data>
+  <data name="Error" xml:space="preserve"><value>Error</value></data>
+  <data name="SelectOption" xml:space="preserve"><value>-- Select --</value></data>
+  <data name="SelectSubjectOption" xml:space="preserve"><value>-- Select Subject --</value></data>
+  <data name="SelectYearOption" xml:space="preserve"><value>-- Select Year --</value></data>
+  <data name="SelectTeacherOption" xml:space="preserve"><value>-- Select Teacher --</value></data>
+  <data name="FailedToLoadTeachers" xml:space="preserve"><value>Failed to load teachers</value></data>
+  <data name="FailedToLoadSubjects" xml:space="preserve"><value>Failed to load subjects</value></data>
+  <data name="FailedToLoadYears" xml:space="preserve"><value>Failed to load years</value></data>
+  <data name="FailedToLoadExamQuestions" xml:space="preserve"><value>Failed to load exam questions.</value></data>
+  <data name="Searching" xml:space="preserve"><value>Searching...</value></data>
+  <data name="NoQuestionsFoundFor" xml:space="preserve"><value>No questions found for</value></data>
+  <data name="LessonLabel" xml:space="preserve"><value>Lesson</value></data>
+  <data name="AddBtn" xml:space="preserve"><value>Add</value></data>
+  <data name="BackBtn" xml:space="preserve"><value>Back</value></data>
+  <data name="ErrorSearchingQuestions" xml:space="preserve"><value>Error searching questions.</value></data>
+  <data name="SelectAtLeastOneQuestion" xml:space="preserve"><value>Please select at least one question for the exam.</value></data>
+  <data name="QuestionsSavedSuccess" xml:space="preserve"><value>Questions saved successfully!</value></data>
+  <data name="UpdateFailed" xml:space="preserve"><value>Update failed</value></data>
+  <data name="ErrorSavingQuestions" xml:space="preserve"><value>Error saving questions</value></data>
+  <data name="Chapter" xml:space="preserve"><value>Chapter</value></data>
+  <data name="Lesson" xml:space="preserve"><value>Lesson</value></data>
+  <data name="DegreeLabel" xml:space="preserve"><value>Degree</value></data>
+  <data name="Page" xml:space="preserve"><value>Page</value></data>
+  <data name="Of" xml:space="preserve"><value>of</value></data>
+  <data name="Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="Next" xml:space="preserve"><value>Next</value></data>
+  <data name="ExamManagementInitializedFor" xml:space="preserve"><value>Exam management initialized for:</value></data>
+  <data name="LoadingStatistics" xml:space="preserve"><value>Loading statistics...</value></data>
+  <data name="StudentsCompleted" xml:space="preserve"><value>Students Completed</value></data>
+  <data name="StudentsPending" xml:space="preserve"><value>Students Pending</value></data>
+  <data name="ErrorLoadingStatistics" xml:space="preserve"><value>Error loading statistics</value></data>
+  <data name="FailedToLoadExamStatistics" xml:space="preserve"><value>Failed to load exam statistics.</value></data>
 </root>

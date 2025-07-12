@@ -34,6 +34,21 @@
     var lessonExpanded = {};
 
     // =============================
+    // Localization Helper
+    // =============================
+
+    function getJsString(key) {
+        // The Razor localization keys in data attributes use kebab-case, so we convert the camelCase key to kebab-case
+        const kebabKey = key.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+        let val = $('#js-localization').data(kebabKey);
+        // Fallback to the original key if not found
+        if (typeof val === 'undefined' || val === null) {
+            val = key;
+        }
+        return val;
+    }
+
+    // =============================
     // Utility Functions
     // =============================
 
@@ -44,9 +59,6 @@
     }
 
     function showSuccess(message) {
-        // You can integrate with your existing notification system
-        console.log('Success:', message);
-        // Or use a toast notification if available
         if (typeof showToast === 'function') {
             showToast('success', message);
         } else {
@@ -62,27 +74,27 @@
         const yearCode = $('#YearCode').val();
 
         if (!examName) {
-            showError('examError', 'Exam name is required.');
+            showError('examError', getJsString('ExamNameRequired'));
             return false;
         }
 
         if (!examTimer || !examTimer.match(/^([0-1]?\d|2[0-3]):[0-5]\d$/)) {
-            showError('examError', 'Please enter a valid time in HH:MM format.');
+            showError('examError', getJsString('ExamTimerRequired'));
             return false;
         }
 
         if (!eduYearCode) {
-            showError('examError', 'Educational year is required.');
+            showError('examError', getJsString('EduYearRequired'));
             return false;
         }
 
         if (!subjectCode) {
-            showError('examError', 'Subject is required.');
+            showError('examError', getJsString('SubjectRequired'));
             return false;
         }
 
         if (!yearCode) {
-            showError('examError', 'Year is required.');
+            showError('examError', getJsString('YearRequired'));
             return false;
         }
 
@@ -91,11 +103,11 @@
             const branchCode = $('#BranchCode').val();
 
             if (!teacherCode) {
-                showError('examError', 'Teacher is required.');
+                showError('examError', getJsString('TeacherRequired'));
                 return false;
             }
             if (!branchCode) {
-                showError('examError', 'Branch is required.');
+                showError('examError', getJsString('BranchRequired'));
                 return false;
             }
         } else {
@@ -104,15 +116,15 @@
             const branchCode = $('#AddExamBranchCode').val();
 
             if (!teacherCode) {
-                showError('examError', 'No teacher found for your root.');
+                showError('examError', getJsString('NoTeacherFound'));
                 return false;
             }
             if (!centerCode) {
-                showError('examError', 'Center is required.');
+                showError('examError', getJsString('CenterRequired'));
                 return false;
             }
             if (!branchCode) {
-                showError('examError', 'Branch is required.');
+                showError('examError', getJsString('BranchRequired'));
                 return false;
             }
         }
@@ -120,7 +132,6 @@
         return true;
     }
 
-    // Patch: Helper to set/remove required for select/input in a group
     function setRequiredInGroup(groupSelector, required) {
         $(groupSelector).find('select, input').each(function () {
             if (required) {
@@ -136,8 +147,7 @@
     // =============================
 
     function fetchAndPopulateCenters($centerDropdown, callback) {
-        $centerDropdown.empty().append($('<option>').val('').text('-- Select Center --'));
-
+        $centerDropdown.empty().append($('<option>').val('').text(getJsString('SelectCenterOption')));
         $.get('/Exam/GetCentersByRootCode')
             .done(function (centers) {
                 centers.forEach(function (c) {
@@ -146,12 +156,12 @@
                 if (callback) callback();
             })
             .fail(function () {
-                console.error('Failed to load centers');
+                console.error(getJsString('FailedToLoadCenters'));
             });
     }
 
     function fetchAndPopulateBranches($branchDropdown, centerCode) {
-        $branchDropdown.empty().append($('<option>').val('').text('-- Select Branch --'));
+        $branchDropdown.empty().append($('<option>').val('').text(getJsString('SelectBranchOption')));
         if (!centerCode) return;
 
         $.get(`/Exam/GetBranchesByCenter?centerCode=${centerCode}`)
@@ -161,7 +171,7 @@
                 });
             })
             .fail(function () {
-                console.error('Failed to load branches');
+                console.error(getJsString('FailedToLoadBranches'));
             });
     }
 
@@ -171,14 +181,14 @@
                 if (teacher && teacher.value) {
                     $teacherContainer.html(`
                         <div class="alert alert-info mb-3">
-                            <strong><i class="bi bi-person-badge me-2"></i>Teacher:</strong> ${teacher.text}
+                            <strong><i class="bi bi-person-badge me-2"></i>${getJsString('TeacherLabel')}:</strong> ${teacher.text}
                         </div>
                     `);
                     $('#AddExamTeacherCode').val(teacher.value);
                 } else {
                     $teacherContainer.html(`
                         <div class="alert alert-warning mb-3">
-                            <i class="bi bi-exclamation-triangle me-2"></i>No teacher found for this root.
+                            <i class="bi bi-exclamation-triangle me-2"></i>${getJsString('NoTeacherFound')}
                         </div>
                     `);
                     $('#AddExamTeacherCode').val('');
@@ -187,7 +197,7 @@
             .fail(function () {
                 $teacherContainer.html(`
                     <div class="alert alert-danger mb-3">
-                        <i class="bi bi-x-circle me-2"></i>Error loading teacher information.
+                        <i class="bi bi-x-circle me-2"></i>${getJsString('ErrorLoadingTeacher')}
                     </div>
                 `);
             });
@@ -197,7 +207,7 @@
         $.get(`/Exam/GetEduYears?rootCode=${rootCode}`)
             .done(function (data) {
                 var $eduYear = $('#EduYearCode');
-                $eduYear.empty().append($('<option>').val('').text('-- Select Educational Year --'));
+                $eduYear.empty().append($('<option>').val('').text(getJsString('SelectEduYearOption')));
 
                 data.forEach(function (item) {
                     $eduYear.append($('<option>').val(item.value).text(item.text));
@@ -210,7 +220,7 @@
                 }
             })
             .fail(function () {
-                console.error('Failed to load education years');
+                console.error(getJsString('FailedToLoadEduYears'));
             });
     }
 
@@ -222,9 +232,9 @@
         $('#exam-details').html(`
             <div class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="visually-hidden">${getJsString('Loading')}</span>
                 </div>
-                <p class="mt-2 text-muted">Loading exams...</p>
+                <p class="mt-2 text-muted">${getJsString('Loading')}</p>
             </div>
         `);
 
@@ -236,7 +246,7 @@
                 $('#exam-details').html(`
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        Error loading exams: ${xhr.responseJSON?.error || 'Unknown error'}
+                        ${getJsString('ErrorLoadingExams')}: ${xhr.responseJSON?.error || getJsString('UnknownError')}
                     </div>
                 `);
             });
@@ -246,7 +256,7 @@
         if (!isCenterUser && data.length > 0) {
             var teacherName = data[0].teacherName || '';
             $('#exam-for-teacher').show().html(
-                `<h2 class="mb-0"><strong>Exams for: </strong><span class="text-primary">${teacherName}</span></h2>`
+                `<h2 class="mb-0"><strong>${getJsString('ExamsFor')}</strong><span class="text-primary">${teacherName}</span></h2>`
             );
         } else {
             $('#exam-for-teacher').hide();
@@ -256,8 +266,8 @@
             $('#exam-details').html(`
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-1 text-muted"></i>
-                    <h5 class="mt-3 text-muted">No exams found</h5>
-                    <p class="text-muted">Click "Add Exam" to create your first exam.</p>
+                    <h5 class="mt-3 text-muted">${getJsString('NoExamsFound')}</h5>
+                    <p class="text-muted">${getJsString('GetStartedMsg')}</p>
                 </div>
             `);
             return;
@@ -265,53 +275,57 @@
 
         var html = '<table class="table exam-index-table align-middle mb-0">';
         html += '<thead><tr>';
-        html += '<th>Code</th><th>Name</th><th>Degree</th><th>Avg Marks</th><th>Success %</th>';
-        html += '<th>Duration</th><th>Edu Year</th>';
-        if (isCenterUser) html += '<th>Teacher</th>';
-        html += '<th>Year</th><th>Subject</th><th>Branch</th>';
-        html += '<th>Status</th><th>Type</th><th>Mode</th><th>Actions</th>';
+        html += `<th>${getJsString('ActionsHeader')}</th>`;
+        html += `<th>${getJsString('ModeHeader')}</th>`;
+        html += `<th>${getJsString('TypeHeader')}</th>`;
+        html += `<th>${getJsString('StatusHeader')}</th>`;
+        html += `<th>${getJsString('BranchHeader')}</th>`;
+        html += `<th>${getJsString('SubjectHeader')}</th>`;
+        html += `<th>${getJsString('YearHeader')}</th>`;
+        html += `<th>${getJsString('EduYearHeader')}</th>`;
+        html += `<th>${getJsString('DurationHeader')}</th>`;
+        html += `<th>${getJsString('SuccessHeader')}</th>`;
+        html += `<th>${getJsString('AvgMarksHeader')}</th>`;
+        html += `<th>${getJsString('DegreeHeader')}</th>`;
+        html += `<th>${getJsString('NameHeader')}</th>`;
+        html += `<th>${getJsString('CodeHeader')}</th>`;
         html += '</tr></thead><tbody>';
 
         data.forEach(function (exam) {
             html += `<tr>
-                <td class="fw-bold text-primary">${exam.examCode ?? ''}</td>
-                <td class="fw-semibold">${exam.examName ?? ''}</td>
-                <td><span class="badge bg-secondary">${exam.examDegree ?? '0'}</span></td>
-                <td>${exam.averageMarks !== undefined ? exam.averageMarks.toFixed(1) : '0.0'}</td>
-                <td>${exam.examPercentage ?? '0'}%</td>
-                <td><span class="badge bg-info">${exam.examTimer ?? '00:00'}</span></td>
-                <td>${exam.eduYearName ?? ''}</td>`;
-
-            if (isCenterUser) {
-                html += `<td>${exam.teacherName ?? ''}</td>`;
-            }
-
-            html += `<td>${exam.yearName ?? ''}</td>
-                <td>${exam.subjectName ?? ''}</td>
-                <td>${exam.branchName ?? ''}</td>
-                <td><span class="badge bg-${exam.isDone ? 'success' : 'warning'}">${exam.isDone ? 'Done' : 'Pending'}</span></td>
-                <td><span class="badge bg-${exam.isExam ? 'primary' : 'secondary'}">${exam.isExam ? 'Exam' : 'Quiz'}</span></td>
-                <td><span class="badge bg-${exam.isOnline ? 'info' : 'dark'}">${exam.isOnline ? 'Online' : 'Offline'}</span></td>
                 <td>
                     <div class="d-flex flex-column gap-1">
                         <button class="btn exam-index-btn-questions btn-sm shadow-sm add-questions" 
-                                data-id="${exam.examCode}" title="Manage Questions">
-                            <i class="bi bi-list-check"></i> Questions
+                                data-id="${exam.examCode}" title="${getJsString('QuestionsBtn')}">
+                            <i class="bi bi-list-check"></i> ${getJsString('QuestionsBtn')}
                         </button>
                         <button class="btn exam-index-btn-edit btn-sm shadow-sm edit-exam" 
-                                data-id="${exam.examCode}" title="Edit Exam">
-                            <i class="bi bi-pencil"></i> Edit
+                                data-id="${exam.examCode}" title="${getJsString('EditBtn')}">
+                            <i class="bi bi-pencil"></i> ${getJsString('EditBtn')}
                         </button>
                         <button class="btn exam-index-btn-delete btn-sm shadow-sm delete-exam" 
-                                data-id="${exam.examCode}" title="Delete Exam">
-                            <i class="bi bi-trash"></i> Delete
+                                data-id="${exam.examCode}" title="${getJsString('DeleteBtn')}">
+                            <i class="bi bi-trash"></i> ${getJsString('DeleteBtn')}
                         </button>
                         <button class="btn btn-info btn-sm view-exam-stats" 
-                                data-id="${exam.examCode}" title="View Statistics">
-                            <i class="bi bi-bar-chart-line"></i> Stats
+                                data-id="${exam.examCode}" title="${getJsString('StatsBtn')}">
+                            <i class="bi bi-bar-chart-line"></i> ${getJsString('StatsBtn')}
                         </button>
                     </div>
                 </td>
+                <td><span class="badge bg-${exam.isOnline ? 'info' : 'dark'}">${exam.isOnline ? getJsString('Online') : getJsString('Offline')}</span></td>
+                <td><span class="badge bg-${exam.isExam ? 'primary' : 'assignment'}">${exam.isExam ? getJsString('Exam') : getJsString('Assignment')}</span></td>
+                <td><span class="badge bg-${exam.isDone ? 'success' : 'warning'}">${exam.isDone ? getJsString('Done') : getJsString('Pending')}</span></td>
+                <td>${exam.branchName ?? ''}</td>
+                <td>${exam.subjectName ?? ''}</td>
+                <td>${exam.yearName ?? ''}</td>
+                <td>${exam.eduYearName ?? ''}</td>
+                <td><span class="badge bg-info">${exam.examTimer ?? '00:00'}</span></td>
+                <td>${exam.examPercentage ?? '0'}%</td>
+                <td>${exam.averageMarks !== undefined ? exam.averageMarks.toFixed(1) : '0.0'}</td>
+                <td><span class="badge bg-secondary">${exam.examDegree ?? '0'}</span></td>
+                <td>${exam.examName ?? ''}</td>
+                <td class="fw-bold text-primary">${exam.examCode ?? ''}</td>
             </tr>`;
         });
 
@@ -323,7 +337,7 @@
         $('#examStatsContent').html(`
             <div class="text-center py-4">
                 <div class="spinner-border text-primary"></div>
-                <p class="mt-2">Loading statistics...</p>
+                <p class="mt-2">${getJsString('LoadingStatistics')}</p>
             </div>
         `);
 
@@ -349,7 +363,7 @@
                                     <div class="card-body text-center">
                                         <i class="bi bi-check-circle display-4 text-success"></i>
                                         <h4 class="mt-2 text-success">${res.numberTookExam}</h4>
-                                        <p class="text-muted mb-0">Students Completed</p>
+                                        <p class="text-muted mb-0">${getJsString('StudentsCompleted')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -358,7 +372,7 @@
                                     <div class="card-body text-center">
                                         <i class="bi bi-clock display-4 text-warning"></i>
                                         <h4 class="mt-2 text-warning">${res.numberDidNotTakeExam}</h4>
-                                        <p class="text-muted mb-0">Students Pending</p>
+                                        <p class="text-muted mb-0">${getJsString('StudentsPending')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -368,7 +382,7 @@
                     $('#examStatsContent').html(`
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            ${res.error || 'Error loading statistics'}
+                            ${res.error || getJsString('ErrorLoadingStatistics')}
                         </div>
                     `);
                 }
@@ -377,7 +391,7 @@
                 $('#examStatsContent').html(`
                     <div class="alert alert-danger">
                         <i class="bi bi-x-circle me-2"></i>
-                        Failed to load exam statistics.
+                        ${getJsString('FailedToLoadExamStatistics')}
                     </div>
                 `);
             });
@@ -397,9 +411,9 @@
     $('#addExamBtn').on('click', function () {
         $('#examError').hide();
         $form[0].reset();
-        $form.find('select').val('').empty().append($('<option>').val('').text('-- Select --'));
+        $form.find('select').val('').empty().append($('<option>').val('').text(getJsString('SelectOption')));
 
-        // Patch: Hide all groups and remove required, then show needed and re-add required
+        // Hide all groups and remove required, then show needed and re-add required
         ['#teacherDropdownGroup', '#teacherDisplayGroup', '#centerDropdownGroup', '#branchDropdownGroup', '#rootBranchDropdownGroup'].forEach(function (sel) {
             $(sel).hide();
             setRequiredInGroup(sel, false);
@@ -422,7 +436,7 @@
         }
 
         loadEduYears();
-        $('#examModalLabel').text('Add Exam');
+        $('#examModalLabel').text(getJsString('AddExamBtn'));
         addModal.show();
     });
 
@@ -435,7 +449,6 @@
     // Form submission
     $(document).off('submit', '#examForm');
     $(document).on('submit', '#examForm', function (e) {
-        console.log('Form submitted!');
         e.preventDefault();
         $('#examError').hide();
 
@@ -464,7 +477,7 @@
         // Disable submit button
         const $submitBtn = $(this).find('button[type="submit"]');
         const originalText = $submitBtn.html();
-        $submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>Saving...').prop('disabled', true);
+        $submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>' + getJsString('Saving')).prop('disabled', true);
 
         $.ajax({
             url: '/Exam/AddExam',
@@ -475,20 +488,20 @@
                 if (res.success) {
                     addModal.hide();
                     loadExams();
-                    showSuccess('Exam created successfully!');
+                    showSuccess(getJsString('ExamCreatedSuccess'));
                 } else {
-                    showError('examError', res.error || 'Error adding exam');
+                    showError('examError', res.error || getJsString('ErrorAddingExam'));
                 }
             },
             error: function (xhr) {
-                var err = "Unknown error";
+                var err = getJsString('UnknownError');
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     err = xhr.responseJSON.error;
                 } else if (xhr.responseText) {
                     try {
                         err = JSON.parse(xhr.responseText).error;
                     } catch (e) {
-                        err = 'Server error occurred';
+                        err = getJsString('ServerErrorOccurred');
                     }
                 }
                 showError('examError', err);
@@ -514,8 +527,6 @@
                 $editForm.find('[name="IsOnline"]').prop('checked', exam.isOnline);
                 $editForm.find('[name="IsDone"]').prop('checked', exam.isDone);
 
-
-                // Set hidden fields
                 $editForm.find('[name="TeacherCode"]').val(exam.teacherCode);
                 $editForm.find('[name="SubjectCode"]').val(exam.subjectCode);
                 $editForm.find('[name="YearCode"]').val(exam.yearCode);
@@ -525,7 +536,7 @@
                 editModal.show();
             })
             .fail(function () {
-                showError('editExamError', 'Failed to load exam details');
+                showError('editExamError', getJsString('FailedToLoadExamDetails'));
             });
     });
 
@@ -545,12 +556,12 @@
             YearCode: parseInt($editForm.find('[name="YearCode"]').val()),
             BranchCode: parseInt($editForm.find('[name="BranchCode"]').val()),
             EduYearCode: parseInt($editForm.find('[name="EduYearCode"]').val()),
-                IsDone: $editForm.find('[name="IsDone"]').is(':checked')
+            IsDone: $editForm.find('[name="IsDone"]').is(':checked')
         };
 
         const $submitBtn = $(this).find('button[type="submit"]');
         const originalText = $submitBtn.html();
-        $submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>Updating...').prop('disabled', true);
+        $submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>' + getJsString('Updating')).prop('disabled', true);
 
         $.ajax({
             url: '/Exam/EditExam',
@@ -561,13 +572,13 @@
                 if (res.success) {
                     editModal.hide();
                     loadExams();
-                    showSuccess('Exam updated successfully!');
+                    showSuccess(getJsString('ExamUpdatedSuccess'));
                 } else {
-                    showError('editExamError', res.error || 'Error updating exam');
+                    showError('editExamError', res.error || getJsString('ErrorUpdatingExam'));
                 }
             },
             error: function (xhr) {
-                var err = xhr.responseJSON?.error || 'Error updating exam';
+                var err = xhr.responseJSON?.error || getJsString('ErrorUpdatingExam');
                 showError('editExamError', err);
             },
             complete: function () {
@@ -579,7 +590,7 @@
     // Delete exam
     $(document).on('click', '.delete-exam', function () {
         var id = $(this).data('id');
-        if (!confirm('Are you sure you want to delete this exam? This action cannot be undone.')) return;
+        if (!confirm(getJsString('ConfirmDeleteExam'))) return;
 
         $.ajax({
             url: '/Exam/DeleteExam',
@@ -589,13 +600,13 @@
             success: function (res) {
                 if (res.success) {
                     loadExams();
-                    showSuccess('Exam deleted successfully!');
+                    showSuccess(getJsString('ExamDeletedSuccess'));
                 } else {
-                    alert('Error: ' + (res.error || 'Error deleting exam'));
+                    alert(getJsString('Error') + ': ' + (res.error || getJsString('ErrorDeletingExam')));
                 }
             },
             error: function (xhr) {
-                alert('Error: ' + (xhr.responseJSON?.error || 'Error deleting exam'));
+                alert(getJsString('Error') + ': ' + (xhr.responseJSON?.error || getJsString('ErrorDeletingExam')));
             }
         });
     });
@@ -607,14 +618,14 @@
     $form.on('change', '[name="EduYearCode"]', function () {
         var eduYearCode = $(this).val();
 
-        $form.find('[name="SubjectCode"]').empty().append($('<option>').val('').text('-- Select Subject --'));
-        $form.find('[name="YearCode"]').empty().append($('<option>').val('').text('-- Select Year --'));
+        $form.find('[name="SubjectCode"]').empty().append($('<option>').val('').text(getJsString('SelectSubjectOption')));
+        $form.find('[name="YearCode"]').empty().append($('<option>').val('').text(getJsString('SelectYearOption')));
 
         if (!eduYearCode) return;
 
         if (isCenterUser) {
             var $teacher = $form.find('[name="TeacherCode"]');
-            $teacher.empty().append($('<option>').val('').text('-- Select Teacher --'));
+            $teacher.empty().append($('<option>').val('').text(getJsString('SelectTeacherOption')));
 
             $.get(`/Exam/GetTeachersByEduYear?eduYearCode=${eduYearCode}`)
                 .done(function (data) {
@@ -624,7 +635,7 @@
                     $teacher.prop('disabled', false);
                 })
                 .fail(function () {
-                    console.error('Failed to load teachers');
+                    console.error(getJsString('FailedToLoadTeachers'));
                 });
         } else {
             var teacherCode = $('#AddExamTeacherCode').val();
@@ -633,14 +644,14 @@
             $.get(`/Exam/GetSubjectsByTeacherAndEduYear?teacherCode=${teacherCode}&eduYearCode=${eduYearCode}`)
                 .done(function (data) {
                     var $subject = $form.find('[name="SubjectCode"]');
-                    $subject.empty().append($('<option>').val('').text('-- Select Subject --'));
+                    $subject.empty().append($('<option>').val('').text(getJsString('SelectSubjectOption')));
                     data.forEach(function (item) {
                         $subject.append($('<option>').val(item.value).text(item.text));
                     });
                     $subject.prop('disabled', false);
                 })
                 .fail(function () {
-                    console.error('Failed to load subjects');
+                    console.error(getJsString('FailedToLoadSubjects'));
                 });
         }
     });
@@ -650,8 +661,8 @@
         var teacherCode = $(this).val();
         var $subject = $form.find('[name="SubjectCode"]');
 
-        $subject.empty().append($('<option>').val('').text('-- Select Subject --'));
-        $form.find('[name="YearCode"]').empty().append($('<option>').val('').text('-- Select Year --'));
+        $subject.empty().append($('<option>').val('').text(getJsString('SelectSubjectOption')));
+        $form.find('[name="YearCode"]').empty().append($('<option>').val('').text(getJsString('SelectYearOption')));
 
         if (!teacherCode || !eduYearCode) return;
 
@@ -663,7 +674,7 @@
                 $subject.prop('disabled', false);
             })
             .fail(function () {
-                console.error('Failed to load subjects');
+                console.error(getJsString('FailedToLoadSubjects'));
             });
     });
 
@@ -673,7 +684,7 @@
         var subjectCode = $(this).val();
         var $year = $form.find('[name="YearCode"]');
 
-        $year.empty().append($('<option>').val('').text('-- Select Year --'));
+        $year.empty().append($('<option>').val('').text(getJsString('SelectYearOption')));
 
         if (!subjectCode || !teacherCode || !eduYearCode) return;
 
@@ -685,7 +696,7 @@
                 $year.prop('disabled', false);
             })
             .fail(function () {
-                console.error('Failed to load years');
+                console.error(getJsString('FailedToLoadYears'));
             });
     });
 
@@ -697,7 +708,7 @@
 
         if (isCenterUser) {
             var $branch = $('#BranchCode');
-            $branch.empty().append($('<option>').val('').text('-- Select Branch --'));
+            $branch.empty().append($('<option>').val('').text(getJsString('SelectBranchOption')));
 
             if (!yearCode || !teacherCode || !eduYearCode || !subjectCode) return;
 
@@ -709,7 +720,7 @@
                     $branch.prop('disabled', false);
                 })
                 .fail(function () {
-                    console.error('Failed to load branches');
+                    console.error(getJsString('FailedToLoadBranches'));
                 });
         }
     });
@@ -767,7 +778,7 @@
                 questionsModal.show();
             })
             .fail(function () {
-                alert('Failed to load exam questions.');
+                alert(getJsString('FailedToLoadExamQuestions'));
             });
     });
 
@@ -791,7 +802,7 @@
     });
 
     function doExamQuestionSearch(term) {
-        $('#exam-question-search-results').html('<div class="p-2">Searching...</div>').show();
+        $('#exam-question-search-results').html('<div class="p-2">' + getJsString('Searching') + '</div>').show();
         $('#availableQuestions, #availablePaginationTop, #availablePagination').hide();
         $('#examQuestionSearchClearBtn').show();
 
@@ -799,30 +810,30 @@
             .done(function (data) {
                 let html = '';
                 if (!data || data.length === 0) {
-                    html = `<div class="p-2 text-muted">No questions found for "<b>${$('<div/>').text(term).html()}</b>".</div>`;
+                    html = `<div class="p-2 text-muted">${getJsString('NoQuestionsFoundFor')} "<b>${$('<div/>').text(term).html()}</b>".</div>`;
                 } else {
                     html = '<ul class="list-group">';
                     data.forEach(function (q) {
                         html += `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span>
                                 <b>${$('<div/>').text(q.questionContent).html()}</b><br>
-                                <small class="text-secondary">Lesson: ${q.lessonName || '-'}</small>
+                                <small class="text-secondary">${getJsString('LessonLabel')}: ${q.lessonName || '-'}</small>
                             </span>
                             <button type="button" class="btn btn-success btn-sm add-question-from-search" 
                                     data-id="${q.questionCode}" 
                                     data-content="${$('<div/>').text(q.questionContent).html()}" 
                                     data-lessonname="${$('<div/>').text(q.lessonName).html()}">
-                                Add
+                                ${getJsString('AddBtn')}
                             </button>
                         </li>`;
                     });
                     html += '</ul>';
                 }
-                html += '<button id="examQuestionSearchBackBtn" type="button" class="btn btn-secondary btn-sm mt-2">Back</button>';
+                html += `<button id="examQuestionSearchBackBtn" type="button" class="btn btn-secondary btn-sm mt-2">${getJsString('BackBtn')}</button>`;
                 $('#exam-question-search-results').html(html);
             })
             .fail(function () {
-                $('#exam-question-search-results').html('<div class="alert alert-danger">Error searching questions.</div>');
+                $('#exam-question-search-results').html('<div class="alert alert-danger">' + getJsString('ErrorSearchingQuestions') + '</div>');
             });
     }
 
@@ -862,7 +873,7 @@
         });
 
         if (!chosenQuestions.length) {
-            alert('Please select at least one question for the exam.');
+            alert(getJsString('SelectAtLeastOneQuestion'));
             return;
         }
 
@@ -878,7 +889,7 @@
 
         const $submitBtn = $(this).find('button[type="submit"]');
         const originalText = $submitBtn.html();
-        $submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>Saving...').prop('disabled', true);
+        $submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>' + getJsString('Saving')).prop('disabled', true);
 
         $.ajax({
             url: '/Exam/SetExamQuestions',
@@ -889,13 +900,13 @@
                 if (res.success) {
                     bootstrap.Modal.getInstance(document.getElementById('questionsModal')).hide();
                     loadExams();
-                    showSuccess(res.message || 'Questions saved successfully!');
+                    showSuccess(res.message || getJsString('QuestionsSavedSuccess'));
                 } else {
-                    alert('Error: ' + (res.error || 'Update failed'));
+                    alert(getJsString('Error') + ': ' + (res.error || getJsString('UpdateFailed')));
                 }
             },
             error: function (xhr) {
-                alert('Error saving questions: ' + (xhr.responseJSON?.error || 'Unknown error'));
+                alert(getJsString('ErrorSavingQuestions') + ': ' + (xhr.responseJSON?.error || getJsString('UnknownError')));
             },
             complete: function () {
                 $submitBtn.html(originalText).prop('disabled', false);
@@ -918,7 +929,7 @@
             if (!grouped[chapterCode]) {
                 grouped[chapterCode] = {
                     chapterCode: chapterCode,
-                    chapterName: question.chapterName || `Chapter ${chapterCode}`,
+                    chapterName: question.chapterName || getJsString('Chapter') + ` ${chapterCode}`,
                     lessons: {}
                 };
             }
@@ -926,7 +937,7 @@
             if (!grouped[chapterCode].lessons[lessonCode]) {
                 grouped[chapterCode].lessons[lessonCode] = {
                     lessonCode: lessonCode,
-                    lessonName: question.lessonName || `Lesson ${lessonCode}`,
+                    lessonName: question.lessonName || getJsString('Lesson') + ` ${lessonCode}`,
                     questions: []
                 };
             }
@@ -1015,13 +1026,13 @@
         var ul = pagination.find('ul');
 
         var prevDisabled = currentPage === 1 ? 'disabled' : '';
-        ul.append(`<li class="page-item ${prevDisabled}"><a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a></li>`);
+        ul.append(`<li class="page-item ${prevDisabled}"><a class="page-link" href="#" data-page="${currentPage - 1}">${getJsString('Previous')}</a></li>`);
 
         var startPage = Math.max(1, currentPage - 2);
         var endPage = Math.min(totalPages, currentPage + 2);
 
         if (startPage > 1) {
-            ul.append('<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>');
+            ul.append(`<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`);
             if (startPage > 2) {
                 ul.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
             }
@@ -1040,7 +1051,7 @@
         }
 
         var nextDisabled = currentPage === totalPages ? 'disabled' : '';
-        ul.append(`<li class="page-item ${nextDisabled}"><a class="page-link" href="#" data-page="${currentPage + 1}">Next</a></li>`);
+        ul.append(`<li class="page-item ${nextDisabled}"><a class="page-link" href="#" data-page="${currentPage + 1}">${getJsString('Next')}</a></li>`);
 
         container.append(pagination);
 
@@ -1131,7 +1142,7 @@
                         data-lesson="${item.lessonCode}" style="${show ? "" : "display:none;"}">
                         <span class="flex-grow-1">${item.questionContent}</span>
                         <input type="number" class="form-control form-control-sm ms-2 question-degree" 
-                               style="width:90px" placeholder="Degree" value="${item.questionDegree || 1}" 
+                               style="width:90px" placeholder="${getJsString('DegreeLabel')}" value="${item.questionDegree || 1}" 
                                min="1" max="100" required>
                     </li>
                 `);
@@ -1166,8 +1177,8 @@
             $('#chosenQuestions').parent().scrollTop(0);
         });
 
-        $('#availableInfo').text(`Available Questions: ${availableQuestions.length} (Page ${availableCurrentPage} of ${availableTotalPages})`);
-        $('#chosenInfo').text(`Chosen Questions: ${chosenQuestions.length} (Page ${chosenCurrentPage} of ${chosenTotalPages})`);
+        $('#availableInfo').text(`${getJsString('AvailableQuestions')}: ${availableQuestions.length} (${getJsString('Page')} ${availableCurrentPage} ${getJsString('Of')} ${availableTotalPages})`);
+        $('#chosenInfo').text(`${getJsString('ChosenQuestions')}: ${chosenQuestions.length} (${getJsString('Page')} ${chosenCurrentPage} ${getJsString('Of')} ${chosenTotalPages})`);
 
         // Initialize Dragula for drag and drop
         if (drake && drake.destroy) drake.destroy();
@@ -1251,7 +1262,7 @@
     // Load exams on page load
     loadExams();
 
-    console.log('Exam management initialized for:', {
+    console.log(getJsString('ExamManagementInitializedFor'), {
         isCenter: isCenterUser,
         rootCode: rootCode,
         rootName: rootName,
