@@ -28,16 +28,15 @@ builder.Services.AddControllersWithViews()
 
 builder.Services.AddLogging();
 
-// ===== ADD THIS FOR SESSION =====
+// Session
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-// ===== END SESSION CONFIG =======
 
-// ===== ADD THIS FOR LOCALIZATION =====
+// Localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 var supportedCultures = new[] { new CultureInfo("en"), new CultureInfo("ar") };
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -45,14 +44,14 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.DefaultRequestCulture = new RequestCulture("en");
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
-    // Accept-Language from browser
-    options.RequestCultureProviders.Insert(0, new AcceptLanguageHeaderRequestCultureProvider());
+    // FIX: Do NOT insert AcceptLanguageHeaderRequestCultureProvider first, keep default order!
+    // This ensures CookieRequestCultureProvider is checked before AcceptLanguageHeaderRequestCultureProvider.
+    // If you want to customize providers, do so only after cookie provider,
+    // but usually the default order is best for your scenario.
 });
-// ===== END LOCALIZATION CONFIG =======
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -64,21 +63,17 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ===== ENABLE LOCALIZATION =====
+// Localization (only call ONCE)
 var locOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(locOptions);
-// ===== END LOCALIZATION =======
 
-// ===== ENABLE SESSION =====
 app.UseSession();
-// ===== END SESSION CONFIG =======
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Root}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

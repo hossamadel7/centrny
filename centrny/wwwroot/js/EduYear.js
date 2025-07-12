@@ -1,5 +1,27 @@
 ﻿console.log('EduYearManagment.js loaded');
 
+// Resource strings from Razor
+const resxEdit = document.getElementById("resxEdit").value;
+const resxDelete = document.getElementById("resxDelete").value;
+const resxSubmit = document.getElementById("resxSubmit").value;
+const resxAddEduYear = document.getElementById("resxAddEduYear").value;
+const resxAddYear = document.getElementById("resxAddYear").value;
+const resxAddLevel = document.getElementById("resxAddLevel")?.value || "Add Level";
+const resxYes = document.getElementById("resxYes").value;
+const resxNo = document.getElementById("resxNo").value;
+const resxEduYearCode = document.getElementById("resxEduYearCode")?.value || "Edu Year Code";
+const resxEduYearName = document.getElementById("resxEduYearName")?.value || "Edu Year Name";
+const resxIsActive = document.getElementById("resxIsActive")?.value || "Active";
+const resxActions = document.getElementById("resxActions")?.value || "Actions";
+const resxYearCode = document.getElementById("resxYearCode")?.value || "Year Code";
+const resxYearName = document.getElementById("resxYearName")?.value || "Year Name";
+const resxYearSort = document.getElementById("resxYearSort")?.value || "Sort";
+const resxLevelName = document.getElementById("resxLevelName")?.value || "Level";
+const resxLoading = document.getElementById("resxLoading")?.value || "Loading...";
+const resxNoYears = document.getElementById("resxNoYears")?.value || "No years found for this level";
+const resxNoLevels = document.getElementById("resxNoLevels")?.value || "No levels found for this root.";
+const resxNoActiveEduYear = document.getElementById("resxNoActiveEduYear")?.value || "No active Educational Year found. Please activate an Edu Year first.";
+
 // DOM elements
 const eduModal = document.getElementById('addEduYearModal');
 const openEduBtn = document.getElementById('add-eduyear-btn');
@@ -11,9 +33,33 @@ const eduMsg = document.getElementById('eduyear-message');
 const eduModalTitle = document.getElementById('eduModalTitle');
 const eduCodeInput = document.getElementById('eduCode');
 
+const levelsContainer = document.getElementById('levels-years-container');
+
+// Modal for adding year
+const yearModal = document.getElementById('addYearModal');
+const yearForm = document.getElementById('addYearForm');
+const closeYearBtn = document.getElementById('closeYearModal');
+const yearModalTitle = document.getElementById('yearModalTitle');
+const yearErrorDiv = document.getElementById('addYearError');
+const yearCodeInput = document.getElementById('yearCode');
+const yearNameInput = document.getElementById('yearName');
+const yearSortInput = document.getElementById('yearSort');
+const yearLevelCodeInput = document.getElementById('yearLevelCode'); // hidden input to hold level for add
+
+// Modal for adding level
+const levelModal = document.getElementById('addLevelModal');
+const levelForm = document.getElementById('addLevelForm');
+const closeLevelBtn = document.getElementById('closeLevelModal');
+const levelModalTitle = document.getElementById('levelModalTitle');
+const levelErrorDiv = document.getElementById('addLevelError');
+const levelNameInput = document.getElementById('levelName');
+
 // State
 let eduEditMode = false;
 let activeEduYear = null;
+let yearEditMode = false;
+let editingYearLevelCode = null;
+let editingYearObj = null;
 
 // ----------- EduYear Functions -----------
 
@@ -22,11 +68,11 @@ function openEduModal(isEdit = false, eduYear = null) {
     eduErrorDiv.textContent = "";
     eduForm.reset();
     eduEditMode = isEdit;
-    eduModalTitle.textContent = isEdit ? "Edit Edu Year" : "Add Edu Year";
+    eduModalTitle.textContent = isEdit ? resxEdit + " " + resxAddEduYear : resxAddEduYear;
     eduCodeInput.value = '';
     const submitBtn = eduForm.querySelector('button[type="submit"]');
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit';
+    submitBtn.textContent = resxSubmit;
     if (isEdit && eduYear) {
         eduCodeInput.value = eduYear.eduCode;
         eduForm.eduName.value = eduYear.eduName;
@@ -52,14 +98,14 @@ eduForm.onsubmit = function (e) {
     const submitBtn = eduForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Processing...';
+    submitBtn.textContent = resxLoading;
 
     const eduName = eduForm.eduName.value.trim();
     const isActive = eduForm.isActive.value === "true";
     const eduCode = eduCodeInput.value;
 
     if (!eduName) {
-        eduErrorDiv.textContent = "Please fill in all fields.";
+        eduErrorDiv.textContent = resxLoading;
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
         return;
@@ -88,7 +134,7 @@ eduForm.onsubmit = function (e) {
             loadEduYears();
         })
         .catch(err => {
-            eduErrorDiv.textContent = "Could not " + (eduEditMode ? "edit" : "add") + " edu year: " + (err.message || "Unknown error");
+            eduErrorDiv.textContent = resxAddEduYear + ": " + (err.message || resxLoading);
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -98,11 +144,12 @@ eduForm.onsubmit = function (e) {
 
 function eduYearRowHTML(eduYear) {
     return `
+        <td>${eduYear.eduCode ?? ''}</td>
         <td>${eduYear.eduName ?? ''}</td>
-        <td>${eduYear.isActive ? 'Yes' : 'No'}</td>
+        <td>${eduYear.isActive ? resxYes : resxNo}</td>
         <td>
-            <button class="action-btn edit-btn" data-code="${eduYear.eduCode}">Edit</button>
-            <button class="action-btn delete-btn" data-code="${eduYear.eduCode}">Delete</button>
+            <button class="action-btn edit-btn" data-code="${eduYear.eduCode}">${resxEdit}</button>
+            <button class="action-btn delete-btn" data-code="${eduYear.eduCode}">${resxDelete}</button>
         </td>
     `;
 }
@@ -117,7 +164,7 @@ function addEduYearActionListeners(tr, eduYear) {
     }
     if (deleteBtn) {
         deleteBtn.onclick = function () {
-            if (confirm('Are you sure you want to delete this edu year?')) {
+            if (confirm(resxDelete + ": " + resxEduYearName + "?")) {
                 fetch('/EduYear/DeleteEduYear', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -127,7 +174,7 @@ function addEduYearActionListeners(tr, eduYear) {
                         if (!r.ok) return r.text().then(t => { throw new Error(t); });
                         loadEduYears();
                     })
-                    .catch(err => alert("Could not delete edu year: " + (err.message || "Unknown error")));
+                    .catch(err => alert(resxDelete + ": " + (err.message || resxLoading)));
             }
         };
     }
@@ -137,11 +184,11 @@ function loadEduYears() {
     fetch('/EduYear/GetEduYears')
         .then(response => {
             if (response.status === 401) {
-                if (eduMsg) eduMsg.textContent = "Unauthorized. Please log in.";
+                if (eduMsg) eduMsg.textContent = resxLoading;
                 return [];
             }
             if (response.status === 404) {
-                if (eduMsg) eduMsg.textContent = "Your group or root was not found.";
+                if (eduMsg) eduMsg.textContent = resxLoading;
                 return [];
             }
             return response.json();
@@ -153,7 +200,7 @@ function loadEduYears() {
             activeEduYear = null;
 
             if (!data || data.length === 0) {
-                if (eduMsg) eduMsg.textContent = "No edu years found for your root.";
+                if (eduMsg) eduMsg.textContent = resxLoading;
                 loadLevelsAndYears(); // clear years panel
                 return;
             }
@@ -171,30 +218,13 @@ function loadEduYears() {
             loadLevelsAndYears();
         })
         .catch(error => {
-            if (eduMsg) eduMsg.textContent = "An error occurred loading edu years.";
+            if (eduMsg) eduMsg.textContent = resxLoading;
             console.error('Error fetching edu years:', error);
             loadLevelsAndYears(); // clear years panel
         });
 }
 
 // ----------- Levels & Years Section -----------
-
-const levelsContainer = document.getElementById('levels-years-container');
-
-// Modal for adding year
-const yearModal = document.getElementById('addYearModal');
-const yearForm = document.getElementById('addYearForm');
-const closeYearBtn = document.getElementById('closeYearModal');
-const yearModalTitle = document.getElementById('yearModalTitle');
-const yearErrorDiv = document.getElementById('addYearError');
-const yearCodeInput = document.getElementById('yearCode');
-const yearNameInput = document.getElementById('yearName');
-const yearSortInput = document.getElementById('yearSort');
-const yearLevelCodeInput = document.getElementById('yearLevelCode'); // hidden input to hold level for add
-
-let yearEditMode = false;
-let editingYearLevelCode = null;
-let editingYearObj = null;
 
 function openYearModal(levelCode, isEdit = false, year = null) {
     yearModal.style.display = "flex";
@@ -204,7 +234,7 @@ function openYearModal(levelCode, isEdit = false, year = null) {
     yearLevelCodeInput.value = levelCode;
     editingYearLevelCode = levelCode;
     editingYearObj = year;
-    yearModalTitle.textContent = isEdit ? "Edit Year" : "Add Year";
+    yearModalTitle.textContent = isEdit ? resxEdit + " " + resxAddYear : resxAddYear;
     yearCodeInput.value = '';
     if (isEdit && year) {
         yearCodeInput.value = year.yearCode;
@@ -220,19 +250,11 @@ function closeYearModalFunc() {
 }
 if (closeYearBtn) closeYearBtn.onclick = closeYearModalFunc;
 
-// Modal for adding level
-const levelModal = document.getElementById('addLevelModal');
-const levelForm = document.getElementById('addLevelForm');
-const closeLevelBtn = document.getElementById('closeLevelModal');
-const levelModalTitle = document.getElementById('levelModalTitle');
-const levelErrorDiv = document.getElementById('addLevelError');
-const levelNameInput = document.getElementById('levelName');
-
 function openLevelModal() {
     levelModal.style.display = "flex";
     levelErrorDiv.textContent = "";
     levelForm.reset();
-    levelModalTitle.textContent = "Add New Educational Stage";
+    levelModalTitle.textContent = resxAddLevel;
 }
 function closeLevelModalFunc() {
     levelModal.style.display = "none";
@@ -247,7 +269,7 @@ yearForm.onsubmit = function (e) {
     const submitBtn = yearForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Processing...';
+    submitBtn.textContent = resxLoading;
 
     const yearName = yearNameInput.value.trim();
     const yearSort = parseInt(yearSortInput.value);
@@ -255,7 +277,7 @@ yearForm.onsubmit = function (e) {
     const levelCode = parseInt(yearLevelCodeInput.value);
 
     if (!yearName || isNaN(yearSort) || isNaN(levelCode)) {
-        yearErrorDiv.textContent = "Please fill in all fields.";
+        yearErrorDiv.textContent = resxLoading;
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
         return;
@@ -284,7 +306,7 @@ yearForm.onsubmit = function (e) {
             loadLevelsAndYears();
         })
         .catch(err => {
-            yearErrorDiv.textContent = "Could not " + (yearEditMode ? "edit" : "add") + " year: " + (err.message || "Unknown error");
+            yearErrorDiv.textContent = resxAddYear + ": " + (err.message || resxLoading);
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -300,12 +322,12 @@ levelForm.onsubmit = function (e) {
     const submitBtn = levelForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Processing...';
+    submitBtn.textContent = resxLoading;
 
     const levelName = levelNameInput.value.trim();
 
     if (!levelName) {
-        levelErrorDiv.textContent = "Please enter the level name.";
+        levelErrorDiv.textContent = resxLoading;
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
         return;
@@ -325,7 +347,7 @@ levelForm.onsubmit = function (e) {
             loadLevelsAndYears();
         })
         .catch(err => {
-            levelErrorDiv.textContent = "Could not add level: " + (err.message || "Unknown error");
+            levelErrorDiv.textContent = resxAddLevel + ": " + (err.message || resxLoading);
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -338,13 +360,13 @@ function levelBoxHTML(level, years) {
         <table class="years-table">
             <thead>
                 <tr>
-                    <th>Year Name</th>
-                    <th>Year Sort</th>
-                    <th>Actions</th>
+                    <th>${resxYearName}</th>
+                    <th>${resxYearSort}</th>
+                    <th>${resxActions}</th>
                 </tr>
             </thead>
             <tbody>
-            ${years && years.length > 0 ? years.map(yearRowHTML).join('') : `<tr><td colspan="3" style="text-align:center;color:#888;">No years found for this level</td></tr>`}
+            ${years && years.length > 0 ? years.map(yearRowHTML).join('') : `<tr><td colspan="3" style="text-align:center;color:#888;">${resxNoYears}</td></tr>`}
             </tbody>
         </table>
     `;
@@ -352,11 +374,11 @@ function levelBoxHTML(level, years) {
         <div class="level-box" data-level-code="${level.levelCode}">
             <div class="level-header">
                 <h3 style="display:inline-block;margin-right:16px;">${level.levelName}</h3>
-                <button class="modern-btn add-year-btn" data-level-code="${level.levelCode}" style="margin-right:8px;">Add Year</button>
+                <button class="modern-btn add-year-btn" data-level-code="${level.levelCode}" style="margin-right:8px;">${resxAddYear}</button>
             </div>
             <div class="years-list">${yearsHTML}</div>
             <div style="text-align:right;margin-top:8px;">
-                <button class="modern-btn add-level-btn">New Educational Stage</button>
+                <button class="modern-btn add-level-btn">${resxAddLevel}</button>
             </div>
         </div>
     `;
@@ -367,8 +389,8 @@ function yearRowHTML(year) {
             <td>${year.yearName ?? ''}</td>
             <td>${year.yearSort ?? ''}</td>
             <td>
-                <button class="action-btn edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">Edit</button>
-                <button class="action-btn delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">Delete</button>
+                <button class="action-btn edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">${resxEdit}</button>
+                <button class="action-btn delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">${resxDelete}</button>
             </td>
         </tr>
     `;
@@ -381,24 +403,23 @@ function loadLevelsAndYears() {
         .then(r => r.json())
         .then(data => {
             if (!data.activeEduYear) {
-                levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">No active Educational Year found. Please activate an Edu Year first.</div>`;
+                levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">${resxNoActiveEduYear}</div>`;
                 return;
             }
             if (!data.levels || data.levels.length === 0) {
-                levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">No levels found for this root. Add a new stage below.</div>
-                <div style="margin-top:16px;"><button class="modern-btn add-level-btn">New Educational Stage</button></div>`;
+                levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">${resxNoLevels}</div>
+                <div style="margin-top:16px;"><button class="modern-btn add-level-btn">${resxAddLevel}</button></div>`;
                 return;
             }
             data.levels.forEach(level => {
                 const box = document.createElement('div');
                 box.innerHTML = levelBoxHTML(level, level.years);
-                // Add listeners after adding to DOM
                 levelsContainer.appendChild(box.firstElementChild);
             });
             addLevelsAndYearsListeners();
         })
         .catch(err => {
-            levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">An error occurred loading levels and years.</div>`;
+            levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">${resxLoading}</div>`;
         });
 }
 
@@ -445,7 +466,7 @@ function addLevelsAndYearsListeners() {
     document.querySelectorAll('.delete-year-btn').forEach(btn => {
         btn.onclick = function () {
             const yearCode = parseInt(this.getAttribute('data-year-code'));
-            if (confirm('Are you sure you want to delete this year?')) {
+            if (confirm(resxDelete + ": " + resxYearName + "?")) {
                 fetch('/EduYear/DeleteYear', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -455,7 +476,7 @@ function addLevelsAndYearsListeners() {
                         if (!r.ok) return r.text().then(t => { throw new Error(t); });
                         loadLevelsAndYears();
                     })
-                    .catch(err => alert("Could not delete year: " + (err.message || "Unknown error")));
+                    .catch(err => alert(resxDelete + ": " + (err.message || resxLoading)));
             }
         };
     });

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="EduYearsList" xml:space="preserve"><value>قائمة سنوات التعليم</value></data>
+	<data name="AddEduYear" xml:space="preserve"><value>إضافة سنة تعليمية</value></data>
+	<data name="EduYearName" xml:space="preserve"><value>اسم السنة التعليمية</value></data>
+	<data name="IsActive" xml:space="preserve"><value>نشط</value></data>
+	<data name="Yes" xml:space="preserve"><value>نعم</value></data>
+	<data name="No" xml:space="preserve"><value>لا</value></data>
+	<data name="Submit" xml:space="preserve"><value>حفظ</value></data>
+	<data name="EduYearCode" xml:space="preserve"><value>كود السنة التعليمية</value></data>
+	<data name="Actions" xml:space="preserve"><value>إجراءات</value></data>
+	<data name="YearsForActiveEduYear" xml:space="preserve"><value>السنوات للسنة التعليمية النشطة</value></data>
+	<data name="AddYear" xml:space="preserve"><value>إضافة سنة</value></data>
+	<data name="YearName" xml:space="preserve"><value>اسم السنة</value></data>
+	<data name="YearSort" xml:space="preserve"><value>ترتيب السنة</value></data>
+	<data name="Level" xml:space="preserve"><value>المستوى</value></data>
+	<data name="Loading" xml:space="preserve"><value>جاري التحميل...</value></data>
+	<data name="YearCode" xml:space="preserve"><value>كود السنة</value></data>
+	<data name="LevelName" xml:space="preserve"><value>اسم المستوى</value></data>
+	<data name="Edit" xml:space="preserve"><value>تعديل</value></data>
+	<data name="Delete" xml:space="preserve"><value>حذف</value></data>
+	<data name="AddLevel" xml:space="preserve"><value>إضافة مرحلة</value></data>
+	<data name="NoActiveEduYear" xml:space="preserve"> <value>لم يتم العثور على سنة تعليمية نشطة. يرجى تفعيل سنة تعليمية أولاً.</value></data>
+	<data name="NoLevelsFound" xml:space="preserve"><value>لم يتم العثور على مستويات لهذا الجذر.</value></data>
+	<data name="NoYearsFound" xml:space="preserve"><value>لم يتم العثور على سنوات لهذه المرحلة</value></data>
+</root>
