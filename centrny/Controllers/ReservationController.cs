@@ -21,6 +21,27 @@ namespace centrny1.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasReservationPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            // Use your page path as stored in Pages (adjust as needed)
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Reservation/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         // Helper to get logged-in user's info from claims & DB (like EduYear)
         private async Task<(int userCode, int groupCode, int rootCode)> GetUserInfoAsync()
         {
@@ -45,6 +66,10 @@ namespace centrny1.Controllers
         [HttpGet("")]
         public IActionResult Index()
         {
+            if (!UserHasReservationPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
             return View();
         }
 
@@ -52,6 +77,10 @@ namespace centrny1.Controllers
         [HttpGet("GetBranchCodes")]
         public async Task<IActionResult> GetBranchCodes()
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var (_, _, rootCode) = await GetUserInfoAsync();
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode)
@@ -64,6 +93,10 @@ namespace centrny1.Controllers
         [HttpGet("GetReservationGrid")]
         public async Task<IActionResult> GetReservationGrid(DateTime? reservationDate, int? branchCode)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             if (!branchCode.HasValue)
                 return Json(new { periods = new List<string>(), grid = new List<List<object>>() });
 
@@ -140,6 +173,11 @@ namespace centrny1.Controllers
         [HttpGet("GetTeachers")]
         public async Task<IActionResult> GetTeachers()
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var teachers = await _context.Teachers
                 .Where(t => !t.IsStaff)
                 .Select(t => new { teacherCode = t.TeacherCode, teacherName = t.TeacherName })
@@ -150,6 +188,11 @@ namespace centrny1.Controllers
         [HttpGet("GetHalls")]
         public async Task<IActionResult> GetHalls(int branchCode)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var halls = await _context.Halls
                 .Where(h => h.BranchCode == branchCode)
                 .OrderBy(h => h.HallCode)
@@ -161,6 +204,11 @@ namespace centrny1.Controllers
         [HttpPost("AddReservation")]
         public async Task<IActionResult> AddReservation([FromForm] Reservation reservation)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             if (string.IsNullOrWhiteSpace(reservation.Description)) reservation.Description = null;
             await _context.Reservations.AddAsync(reservation);
             await _context.SaveChangesAsync();
@@ -170,6 +218,11 @@ namespace centrny1.Controllers
         [HttpPost("EditReservation")]
         public async Task<IActionResult> EditReservation([FromForm] int ReservationCode, [FromForm] string Description, [FromForm] int TeacherCode, [FromForm] TimeOnly ReservationStartTime, [FromForm] TimeOnly ReservationEndTime)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var reservation = await _context.Reservations.FindAsync(ReservationCode);
             if (reservation == null) return NotFound();
             reservation.Description = Description;
@@ -183,6 +236,11 @@ namespace centrny1.Controllers
         [HttpPost("DeleteReservation")]
         public async Task<IActionResult> DeleteReservation([FromForm] int reservationCode)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var reservation = await _context.Reservations.FindAsync(reservationCode);
             if (reservation == null) return NotFound();
             _context.Reservations.Remove(reservation);
@@ -194,6 +252,11 @@ namespace centrny1.Controllers
         [HttpPost("AddTeacher")]
         public async Task<IActionResult> AddTeacher([FromForm] string TeacherName, [FromForm] string TeacherPhone, [FromForm] string? TeacherAddress)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var (userCode, _, rootCode) = await GetUserInfoAsync();
             var newTeacher = new Teacher
             {

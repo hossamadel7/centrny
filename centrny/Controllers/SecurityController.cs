@@ -19,14 +19,43 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasSecurityPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            // Use your page path as stored in Pages (adjust as needed)
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Security/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         public IActionResult Index()
         {
+            if (!UserHasSecurityPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
             return View();
         }
 
         [HttpGet]
         public JsonResult GetRoots(bool? isCenter = null)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var query = _context.Roots.AsQueryable();
             if (isCenter.HasValue)
             {
@@ -41,6 +70,10 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetGroupsByRoot(int rootCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var groups = _context.Groups
                 .Where(g => g.RootCode == rootCode)
                 .Select(g => new { g.GroupCode, g.GroupName, g.GroupDesc, g.RootCode })
@@ -55,6 +88,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult CreateGroup(string groupName, string groupDesc, int rootCode, int insertUser)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             try
             {
                 if (string.IsNullOrWhiteSpace(groupName))
@@ -89,6 +126,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult EditGroup(int groupCode, string groupName, string groupDesc)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var group = _context.Groups.FirstOrDefault(g => g.GroupCode == groupCode);
             if (group == null)
                 return Json(new { success = false, message = "Group not found" });
@@ -105,6 +146,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult DeleteGroup(int groupCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var group = _context.Groups.FirstOrDefault(g => g.GroupCode == groupCode);
             if (group == null)
                 return Json(new { success = false, message = "Group not found" });
@@ -122,6 +167,10 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetUsersByGroup(int groupCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var users = _context.Users
                 .Where(u => u.GroupCode == groupCode && u.IsActive)
                 .Select(u => new { u.UserCode, u.Name, u.Username, u.IsActive })
@@ -133,6 +182,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult EditUser(int userCode, string name, bool isActive)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var user = _context.Users.FirstOrDefault(u => u.UserCode == userCode);
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
@@ -148,6 +201,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult ResetUserPassword(int userCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var user = _context.Users.FirstOrDefault(u => u.UserCode == userCode);
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
@@ -170,6 +227,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult DeleteUser(int userCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var user = _context.Users.FirstOrDefault(u => u.UserCode == userCode);
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
@@ -183,6 +244,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult CreateUser(string name, string username, string password, int groupCode, bool isActive, int insertUserCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             try
             {
                 string usernameToCheck = (username ?? "").Trim().ToLower();
@@ -246,6 +311,10 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult IsUsernameTaken(string username)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             username = (username ?? "").Trim().ToLower();
             bool taken = _context.Users.Any(u => u.Username.ToLower() == username);
             return Json(new { taken });

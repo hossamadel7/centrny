@@ -26,8 +26,32 @@ namespace centrny1.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasItemPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Item/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         public IActionResult Index()
         {
+            if (!UserHasItemPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
             return View();
         }
 
@@ -35,6 +59,9 @@ namespace centrny1.Controllers
         [HttpGet]
         public IActionResult GetAllItems(int page = 1, int pageSize = 10, int? rootCode = null)
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             var query = (from i in _context.Items
                          where i.IsActive
                          join s in _context.Students on i.StudentCode equals s.StudentCode into studentJoin
@@ -67,6 +94,9 @@ namespace centrny1.Controllers
         [HttpGet]
         public IActionResult GetItemTypes()
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             var types = _context.ItemTypes
                 .Select(t => new { code = t.ItemTypeCode, name = t.ItemTypeName })
                 .ToList();
@@ -76,6 +106,9 @@ namespace centrny1.Controllers
         [HttpGet]
         public IActionResult GetFreeItemCount(int? rootCode = null)
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             var query = _context.Items
                 .Where(i => i.IsActive && (i.StudentCode == null || i.StudentCode == 0));
 
@@ -91,6 +124,9 @@ namespace centrny1.Controllers
         [HttpGet]
         public IActionResult GetRootCodes()
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             var roots = _context.Roots
                 .Select(r => new { code = r.RootCode, name = r.RootName })
                 .ToList();
@@ -100,6 +136,9 @@ namespace centrny1.Controllers
         [HttpGet]
         public IActionResult GetLoggedInUserCode()
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int? userCode = null;
 
             // Use claim "UserCode" if available
@@ -123,6 +162,9 @@ namespace centrny1.Controllers
         [HttpPost]
         public IActionResult UpdateItem([FromBody] Item model)
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (model == null || model.ItemCode <= 0)
                 return BadRequest("Invalid data");
 
@@ -140,6 +182,9 @@ namespace centrny1.Controllers
         [Route("Item/InsertItems")]
         public IActionResult InsertItems([FromBody] InsertItemsRequest request)
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -184,6 +229,9 @@ namespace centrny1.Controllers
         [Route("Item/SoftDeleteItem")]
         public IActionResult SoftDeleteItem([FromBody] int itemCode)
         {
+            if (!UserHasItemPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (itemCode <= 0)
                 return BadRequest("Invalid item code.");
 

@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="Title_ItemManagement" xml:space="preserve"><value>إدارة العناصر</value></data>
+	<data name="FilterByRootLabel" xml:space="preserve"><value>تصفية حسب الجذر</value></data>
+	<data name="AllRootsOption" xml:space="preserve"><value>كل الجذور</value></data>
+	<data name="FreeItemsLabel" xml:space="preserve"><value>العناصر المجانية</value></data>
+	<data name="DownloadLastGeneratedBtn" xml:space="preserve"><value>تنزيل العناصر المُنشأة حديثاً</value></data>
+	<data name="AddItemBtn" xml:space="preserve"><value>+ إضافة عنصر</value></data>
+	<data name="Table_ItemCodeHeader" xml:space="preserve"><value>كود العنصر</value></data>
+	<data name="Table_StudentNameHeader" xml:space="preserve"><value>اسم الطالب</value></data>
+	<data name="Table_ItemTypeHeader" xml:space="preserve"><value>نوع العنصر</value></data>
+	<data name="Table_ItemKeyHeader" xml:space="preserve"><value>مفتاح العنصر</value></data>
+	<data name="Table_ActionsHeader" xml:space="preserve"><value>الإجراءات</value></data>
+	<data name="AddItemsTitle" xml:space="preserve"><value>إضافة عناصر</value></data>
+	<data name="RootLabel" xml:space="preserve"><value>الجذر</value></data>
+	<data name="SelectRootOption" xml:space="preserve"><value>اختر الجذر...</value></data>
+	<data name="ItemTypeLabel" xml:space="preserve"><value>نوع العنصر</value></data>
+	<data name="SelectItemTypeOption" xml:space="preserve"><value>اختر نوع العنصر...</value></data>
+	<data name="RecordCountLabel" xml:space="preserve"><value>عدد العناصر</value></data>
+	<data name="RecordCountPlaceholder" xml:space="preserve"><value>أدخل عدد العناصر</value></data>
+	<data name="AddBtn" xml:space="preserve"><value>إضافة</value></data>
+	<data name="CancelBtn" xml:space="preserve"><value>إلغاء</value></data>
+	<data name="EditItemTitle" xml:space="preserve"><value>تعديل العنصر</value></data>
+	<data name="SaveChangesBtn" xml:space="preserve"><value>حفظ التغييرات</value></data>
+	<data name="StudentCodeLabel" xml:space="preserve"><value>كود الطالب</value></data>
+	<data name="QRModalTitle" xml:space="preserve"><value>رمز الاستجابة السريعة للعنصر</value></data>
+	<data name="DownloadQRBtn" xml:space="preserve"><value>تنزيل الرمز</value></data>
+	<data name="EditBtn" xml:space="preserve"><value>تعديل</value></data>
+	<data name="DeleteBtn" xml:space="preserve"><value>حذف</value></data>
+	<data name="DownloadQRActionBtn" xml:space="preserve"><value>تنزيل الرمز</value></data>
+	<data name="PaginationPrevious" xml:space="preserve"><value>السابق</value></data>
+	<data name="PaginationNext" xml:space="preserve"><value>التالي</value></data>
+	<data name="Processing" xml:space="preserve"><value>جارٍ المعالجة...</value></data>
+	<data name="PleaseFillAllFields" xml:space="preserve"><value>يرجى ملء جميع الحقول المطلوبة.</value></data>
+	<data name="FailedToGetLoggedInUser" xml:space="preserve"><value>فشل في جلب المستخدم الحالي.</value></data>
+	<data name="FailedToLoadRoots" xml:space="preserve"><value>فشل في تحميل الجذور.</value></data>
+	<data name="NoRootsFound" xml:space="preserve"><value>لم يتم العثور على جذور</value></data>
+	<data name="FailedToLoadItemTypes" xml:space="preserve"><value>فشل في تحميل أنواع العناصر.</value></data>
+	<data name="FailedToLoadItemTypesForMapping" xml:space="preserve"><value>فشل في تحميل أنواع العناصر للعرض.</value></data>
+	<data name="FailedToRetrieveItems" xml:space="preserve"><value>فشل في تحميل بيانات العناصر.</value></data>
+	<data name="ErrorLoadingItems" xml:space="preserve"><value>حدث خطأ أثناء تحميل العناصر.</value></data>
+	<data name="Error" xml:space="preserve"><value>خطأ</value></data>
+	<data name="NoGeneratedItemsFound" xml:space="preserve"><value>لا توجد عناصر منشأة حديثاً للتنزيل.</value></data>
+	<data name="NoQRCodeFound" xml:space="preserve"><value>لا يوجد رمز QR للتنزيل!</value></data>
+	<data name="DeleteConfirm" xml:space="preserve"><value>هل أنت متأكد أنك تريد حذف هذا العنصر؟</value></data>
+	<data name="ErrorDeletingItem" xml:space="preserve"><value>حدث خطأ أثناء حذف العنصر: </value></data>
+	<data name="ErrorUpdatingItem" xml:space="preserve"><value>حدث خطأ أثناء تعديل العنصر: </value></data>
+	<data name="Success" xml:space="preserve"><value>نجاح</value></data>
+	<data name="Loading" xml:space="preserve"><value>جاري التحميل...</value></data>
+</root>

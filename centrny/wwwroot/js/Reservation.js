@@ -1,13 +1,52 @@
-﻿$(document).ready(function () {
+﻿// --- Localization Helper ---
+// Use .attr() instead of .data() to support keys like data-session-1, not camelCase
+function getJsString(key) {
+    // Convert underscores to dashes for attribute lookup
+    return $('#js-localization').attr('data-' + key.replace(/_/g, '-'));
+}
+
+$(document).ready(function () {
     let selectedBranch = null;
     let selectedDate = new Date().toISOString().slice(0, 10);
     let periods = [];
     let hallsCache = [];
 
+    // --- Set static labels ---
+    function setLabels() {
+        $('#reservationsTitle').text(getJsString('reservations-title'));
+        $('#branchLabel').text(getJsString('branch-label'));
+        $('#dateLabel').text(getJsString('date-label'));
+        $('#branchSelect').html(`<option value="">${getJsString('select-branch-option')}</option>`);
+        $('#addReservationModalLabel').text(getJsString('add-reservation-title'));
+        $('#addTeacherLabel').text(getJsString('teacher-label'));
+        $('#firstTimeTeacherBtn').text(getJsString('first-time-btn'));
+        $('#addDescriptionLabel').text(getJsString('description-label'));
+        $('#addCapacityLabel').text(getJsString('capacity-label'));
+        $('#addCostLabel').text(getJsString('cost-label'));
+        $('#addStartTimeLabel').text(getJsString('start-time-label'));
+        $('#addEndTimeLabel').text(getJsString('end-time-label'));
+        $('#addPeriodLabel').text(getJsString('period-label'));
+        $('#addDepositLabel').text(getJsString('deposit-label'));
+        $('#addFinalCostLabel').text(getJsString('final-cost-label'));
+        $('#addTeacherModalLabel').text(getJsString('add-teacher-title'));
+        $('#teacherNameLabel').text(getJsString('teacher-name-label'));
+        $('#teacherPhoneLabel').text(getJsString('teacher-phone-label'));
+        $('#teacherAddressLabel').text(getJsString('teacher-address-label'));
+        $('#addTeacherBtn').text(getJsString('add-teacher-btn'));
+        $('#closeTeacherBtn').text(getJsString('close-btn'));
+        $('#editReservationModalLabel').text(getJsString('edit-reservation-title'));
+        $('#editTeacherLabel').text(getJsString('teacher-label'));
+        $('#editDescriptionLabel').text(getJsString('description-label'));
+        $('#editStartTimeLabel').text(getJsString('start-time-label'));
+        $('#editEndTimeLabel').text(getJsString('end-time-label'));
+        $('#saveChangesBtn').text(getJsString('save-changes-btn'));
+    }
+    setLabels();
+
     // --- Helper to load branches filtered by root code (from controller/session) ---
     function loadBranches() {
         $.getJSON('/Reservation/GetBranchCodes', function (branches) {
-            let options = '<option value="">Select Branch</option>';
+            let options = `<option value="">${getJsString('select-branch-option')}</option>`;
             branches.forEach(b => options += `<option value="${b.branchCode}">${b.branchName}</option>`);
             $('#branchSelect').html(options);
         });
@@ -22,7 +61,7 @@
     // --- Teachers: load (isStaff==false) for dropdowns ---
     function loadTeachers(selectId, selectedVal) {
         $.getJSON('/Reservation/GetTeachers', function (teachers) {
-            let options = '<option value="">Select Teacher</option>';
+            let options = `<option value="">${getJsString('select-teacher-option')}</option>`;
             teachers.forEach(t => {
                 options += `<option value="${t.teacherCode}" ${(selectedVal == t.teacherCode ? "selected" : "")}>${t.teacherName}</option>`;
             });
@@ -42,13 +81,13 @@
     $('#addTeacherForm').on('submit', function (e) {
         e.preventDefault();
         $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
-            $('#teacherAddMsg').removeClass('d-none').addClass('text-success').removeClass('text-danger').text('Teacher added successfully!');
+            $('#teacherAddMsg').removeClass('d-none').addClass('text-success').removeClass('text-danger').text(getJsString('success-add-teacher'));
             loadTeachers('#addTeacherSelect', data.teacherCode);
             setTimeout(() => {
                 $('#addTeacherModal').modal('hide');
             }, 1000);
         }).fail(function () {
-            $('#teacherAddMsg').removeClass('d-none').removeClass('text-success').addClass('text-danger').text('Failed to add teacher.');
+            $('#teacherAddMsg').removeClass('d-none').removeClass('text-success').addClass('text-danger').text(getJsString('failed-add-teacher'));
         });
     });
 
@@ -61,7 +100,7 @@
     function loadReservationGrid() {
         if (!selectedBranch) {
             $('#reservationGridTable thead').html('');
-            $('#reservationGridTable tbody').html('<tr><td colspan="12" class="text-center text-muted">Please select a branch.</td></tr>');
+            $('#reservationGridTable tbody').html(`<tr><td colspan="12" class="text-center text-muted">${getJsString('no-branch-selected')}</td></tr>`);
             return;
         }
         $.ajax({
@@ -71,9 +110,12 @@
             success: function (data) {
                 periods = data.periods;
                 // Table head, with sticky first column
-                let thead = '<tr><th class="sticky-col bg-white">Hall</th>';
+                let thead = `<tr><th class="sticky-col bg-white">${getJsString('hall-header')}</th>`;
                 if (periods && periods.length)
-                    periods.forEach(p => thead += `<th>${p}</th>`);
+                    periods.forEach((p, idx) => {
+                        // Use session_1 ... session_10 keys for localization
+                        thead += `<th>${getJsString('session_' + (idx + 1))}</th>`;
+                    });
                 thead += '</tr>';
                 $('#reservationGridTable thead').html(thead);
 
@@ -98,10 +140,10 @@
                                             <div class="small text-muted mb-1">${cell.description}</div>
                                             <span class="badge bg-primary mb-1">${cell.start} - ${cell.end}</span>
                                             <div class="d-flex justify-content-center gap-2 mt-2">
-                                                <button class="btn btn-outline-warning btn-sm edit-res-btn" title="Edit" data-res='${JSON.stringify(cell)}'>
+                                                <button class="btn btn-outline-warning btn-sm edit-res-btn" title="${getJsString('edit-btn')}" data-res='${JSON.stringify(cell)}'>
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger btn-sm delete-res-btn" title="Delete" data-res-code="${cell.reservationCode}">
+                                                <button class="btn btn-outline-danger btn-sm delete-res-btn" title="${getJsString('delete-btn')}" data-res-code="${cell.reservationCode}">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
@@ -116,10 +158,10 @@
                                                 <div class="small text-muted mb-1">${res.description}</div>
                                                 <span class="badge bg-primary mb-1">${res.start} - ${res.end}</span>
                                                 <div class="d-flex justify-content-center gap-2 mt-2">
-                                                    <button class="btn btn-outline-warning btn-sm edit-res-btn" title="Edit" data-res='${JSON.stringify(res)}'>
+                                                    <button class="btn btn-outline-warning btn-sm edit-res-btn" title="${getJsString('edit-btn')}" data-res='${JSON.stringify(res)}'>
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button class="btn btn-outline-danger btn-sm delete-res-btn" title="Delete" data-res-code="${res.reservationCode}">
+                                                    <button class="btn btn-outline-danger btn-sm delete-res-btn" title="${getJsString('delete-btn')}" data-res-code="${res.reservationCode}">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -128,7 +170,7 @@
                                     });
                                 } else {
                                     tbody += `
-                                    <button class="btn btn-outline-success btn-sm w-100 add-res-btn mt-1" data-hall-idx="${hallIdx}" data-hall-code="${hallCode}" data-period-idx="${idx}" title="Add">
+                                    <button class="btn btn-outline-success btn-sm w-100 add-res-btn mt-1" data-hall-idx="${hallIdx}" data-hall-code="${hallCode}" data-period-idx="${idx}" title="${getJsString('add-reservation-btn')}">
                                         <i class="bi bi-plus"></i>
                                     </button>`;
                                 }
@@ -138,13 +180,13 @@
                         tbody += '</tr>';
                     });
                 } else {
-                    tbody = `<tr><td colspan="${(periods && periods.length ? periods.length + 1 : 12)}" class="text-center text-muted">No data found for this branch and date.</td></tr>`;
+                    tbody = `<tr><td colspan="${(periods && periods.length ? periods.length + 1 : 12)}" class="text-center text-muted">${getJsString('no-data-found')}</td></tr>`;
                 }
                 $('#reservationGridTable tbody').html(tbody);
             },
             error: function () {
                 $('#reservationGridTable thead').html('');
-                $('#reservationGridTable tbody').html('<tr><td colspan="12" class="text-danger text-center">Failed to load grid.</td></tr>');
+                $('#reservationGridTable tbody').html(`<tr><td colspan="12" class="text-danger text-center">${getJsString('failed-to-load-grid')}</td></tr>`);
             }
         });
     }
@@ -201,7 +243,7 @@
                 loadReservationGrid();
             },
             error: function (xhr) {
-                alert('Failed to add reservation: ' + (xhr.responseText || 'Unknown error'));
+                alert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'));
             }
         });
     });
@@ -227,13 +269,13 @@
                 loadReservationGrid();
             },
             error: function (xhr) {
-                alert('Failed to edit reservation: ' + (xhr.responseText || 'Unknown error'));
+                alert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'));
             }
         });
     });
 
     $(document).on('click', '.delete-res-btn', function () {
-        if (!confirm('Are you sure you want to delete this reservation?')) return;
+        if (!confirm(getJsString('delete-confirm'))) return;
         let code = $(this).data('res-code');
         $.ajax({
             url: '/Reservation/DeleteReservation',
@@ -243,7 +285,7 @@
                 loadReservationGrid();
             },
             error: function () {
-                alert('Failed to delete reservation.');
+                alert(getJsString('failed-delete-reservation'));
             }
         });
     });
@@ -253,6 +295,7 @@
         loadHallsForBranch(selectedBranch);
         loadReservationGrid();
     });
+
     $('#dateSelect').val(selectedDate);
     $('#dateSelect').on('change', function () {
         selectedDate = $(this).val();
@@ -265,12 +308,11 @@
         if ($('#firstTimeTeacherBtn').length === 0) {
             let $teacherDiv = $('#addTeacherSelect').parent();
             if ($teacherDiv.find('#firstTimeTeacherBtn').length === 0) {
-                $('<button class="btn btn-link" type="button" id="firstTimeTeacherBtn" tabindex="-1">First time?</button>')
+                $('<button class="btn btn-link" type="button" id="firstTimeTeacherBtn" tabindex="-1">' + getJsString('first-time-btn') + '</button>')
                     .insertAfter('#addTeacherSelect');
             }
         }
     }
-    // Call after modal is shown
     $('#addReservationModal').on('shown.bs.modal', ensureFirstTimeTeacherBtn);
 
     // --- Initial load ---

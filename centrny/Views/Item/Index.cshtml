@@ -1,44 +1,99 @@
-﻿@{
-    ViewData["Title"] = "Item Management";
-    Layout = "_Layout";
-}
+﻿@using Microsoft.Extensions.Localization
+@using System.Globalization
+@inject IStringLocalizerFactory LocalizerFactory
 
+@{
+    var Localizer = LocalizerFactory.Create("Item", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title_ItemManagement"];
+    var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
+}
 <!DOCTYPE html>
-<html>
+<html lang="@htmlLang" dir="@htmlDir">
 <head>
+    <link rel="stylesheet" href="~/css/Hamody.css" />
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
-
-    <!-- jQuery -->
+    @if (isArabic)
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    }
+    else
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    }
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bootstrap CSS and JS Bundle -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- QRCode.js (for QR generation) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <!-- JSZip for zipping QR images -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="@Url.Content("~/css/Hamody.css")" />
-
-    <!-- Custom JS -->
-    <script src="@Url.Content("~/js/item.js")"></script>
+    <style>
+        html[dir="rtl"] body,
+        html[dir="rtl"] .container,
+        html[dir="rtl"] .modal-content {
+            direction: rtl;
+            text-align: right;
+        }
+    </style>
 </head>
 <body>
+    <!-- Localization Data -->
+    <div id="js-localization"
+         data-title-item-management="@Localizer["Title_ItemManagement"]"
+         data-filter-by-root-label="@Localizer["FilterByRootLabel"]"
+         data-all-roots-option="@Localizer["AllRootsOption"]"
+         data-free-items-label="@Localizer["FreeItemsLabel"]"
+         data-download-last-generated-btn="@Localizer["DownloadLastGeneratedBtn"]"
+         data-add-item-btn="@Localizer["AddItemBtn"]"
+         data-table-item-code-header="@Localizer["Table_ItemCodeHeader"]"
+         data-table-student-name-header="@Localizer["Table_StudentNameHeader"]"
+         data-table-item-type-header="@Localizer["Table_ItemTypeHeader"]"
+         data-table-item-key-header="@Localizer["Table_ItemKeyHeader"]"
+         data-table-actions-header="@Localizer["Table_ActionsHeader"]"
+         data-add-items-title="@Localizer["AddItemsTitle"]"
+         data-root-label="@Localizer["RootLabel"]"
+         data-select-root-option="@Localizer["SelectRootOption"]"
+         data-item-type-label="@Localizer["ItemTypeLabel"]"
+         data-select-item-type-option="@Localizer["SelectItemTypeOption"]"
+         data-record-count-label="@Localizer["RecordCountLabel"]"
+         data-record-count-placeholder="@Localizer["RecordCountPlaceholder"]"
+         data-add-btn="@Localizer["AddBtn"]"
+         data-cancel-btn="@Localizer["CancelBtn"]"
+         data-edit-item-title="@Localizer["EditItemTitle"]"
+         data-save-changes-btn="@Localizer["SaveChangesBtn"]"
+         data-student-code-label="@Localizer["StudentCodeLabel"]"
+         data-qr-modal-title="@Localizer["QRModalTitle"]"
+         data-download-qr-btn="@Localizer["DownloadQRBtn"]"
+         data-edit-btn="@Localizer["EditBtn"]"
+         data-delete-btn="@Localizer["DeleteBtn"]"
+         data-download-qr-action-btn="@Localizer["DownloadQRActionBtn"]"
+         data-pagination-previous="@Localizer["PaginationPrevious"]"
+         data-pagination-next="@Localizer["PaginationNext"]"
+         data-processing="@Localizer["Processing"]"
+         data-please-fill-all-fields="@Localizer["PleaseFillAllFields"]"
+         data-failed-to-get-logged-in-user="@Localizer["FailedToGetLoggedInUser"]"
+         data-failed-to-load-roots="@Localizer["FailedToLoadRoots"]"
+         data-no-roots-found="@Localizer["NoRootsFound"]"
+         data-failed-to-load-item-types="@Localizer["FailedToLoadItemTypes"]"
+         data-failed-to-load-item-types-for-mapping="@Localizer["FailedToLoadItemTypesForMapping"]"
+         data-failed-to-retrieve-items="@Localizer["FailedToRetrieveItems"]"
+         data-error-loading-items="@Localizer["ErrorLoadingItems"]"
+         data-error="@Localizer["Error"]"
+         data-no-generated-items-found="@Localizer["NoGeneratedItemsFound"]"
+         data-no-qrcode-found="@Localizer["NoQRCodeFound"]"
+         data-delete-confirm="@Localizer["DeleteConfirm"]"
+         data-error-deleting-item="@Localizer["ErrorDeletingItem"]"
+         data-error-updating-item="@Localizer["ErrorUpdatingItem"]"
+         data-success="@Localizer["Success"]"
+         data-loading="@Localizer["Loading"]"></div>
 
     <div class="container mt-4">
-
         <!-- Root Filter -->
         <div class="row mb-3">
             <div class="col-md-4">
-                <label for="filterRootCode" class="form-label">Filter by Root</label>
+                <label for="filterRootCode" class="form-label" id="filterRootLabel"></label>
                 <select id="filterRootCode" class="form-select">
-                    <option value="">All Roots</option>
                     <!-- JS will fill options -->
                 </select>
             </div>
@@ -47,15 +102,11 @@
         <!-- Header and Counter Row -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div id="freeItemCounter" class="alert alert-info m-0">
-                Free Items: <span id="freeItemCount">0</span>
+                <span id="freeItemsLabel"></span>: <span id="freeItemCount">0</span>
             </div>
             <div>
-                <button id="downloadLastGeneratedBtn" type="button" class="btn btn-outline-success px-4 py-2 me-2" disabled>
-                    Download Last Generated Items
-                </button>
-                <button type="button" class="btn btn-outline-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                    + Add Item
-                </button>
+                <button id="downloadLastGeneratedBtn" type="button" class="btn btn-outline-success px-4 py-2 me-2" disabled></button>
+                <button id="addItemBtn" type="button" class="btn btn-outline-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addItemModal"></button>
             </div>
         </div>
 
@@ -63,11 +114,11 @@
         <table id="itemsTable" class="table table-bordered table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Item Code</th>
-                    <th>Student Name</th>
-                    <th>Item Type</th>
-                    <th>Item Key</th>
-                    <th>Actions</th>
+                    <th id="itemCodeHeader"></th>
+                    <th id="studentNameHeader"></th>
+                    <th id="itemTypeHeader"></th>
+                    <th id="itemKeyHeader"></th>
+                    <th id="actionsHeader"></th>
                 </tr>
             </thead>
             <tbody>
@@ -84,37 +135,26 @@
             <div class="modal-content">
                 <form id="insertItemsForm">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addItemModalLabel">Add Items</h5>
+                        <h5 class="modal-title" id="addItemModalLabel"></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <!-- Dropdown for Root Code -->
                         <div class="mb-3">
-                            <label for="rootCode" class="form-label">Root</label>
-                            <select id="rootCode" class="form-select" required>
-                                <option value="">Select Root...</option>
-                                <!-- Populated by JS -->
-                            </select>
+                            <label for="rootCode" class="form-label" id="rootLabel"></label>
+                            <select id="rootCode" class="form-select" required></select>
                         </div>
-
-                        <!-- Item Type -->
                         <div class="mb-3">
-                            <label for="itemTypeCode" class="form-label">Item Type</label>
-                            <select id="itemTypeCode" class="form-select" required>
-                                <option value="">Select Item Type...</option>
-                                <!-- Filled via JS -->
-                            </select>
+                            <label for="itemTypeCode" class="form-label" id="itemTypeLabelAdd"></label>
+                            <select id="itemTypeCode" class="form-select" required></select>
                         </div>
-
-                        <!-- Input for Record Count -->
                         <div class="mb-3">
-                            <label for="RecordCount" class="form-label">Number of Items</label>
-                            <input type="number" id="RecordCount" class="form-control" required placeholder="Enter number of items" />
+                            <label for="RecordCount" class="form-label" id="numberOfItemsLabel"></label>
+                            <input type="number" id="RecordCount" class="form-control" required placeholder="" />
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="addItemsBtn" class="btn btn-primary">Add</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="addItemsBtn" class="btn btn-primary"></button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn"></button>
                     </div>
                 </form>
             </div>
@@ -127,19 +167,19 @@
             <div class="modal-content">
                 <form id="editItemForm">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="editItemModalLabel">Edit Item</h5>
+                        <h5 class="modal-title" id="editItemModalLabel"></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="editItemCode" />
                         <div class="mb-3">
-                            <label for="editStudentCode" class="form-label">Student Code</label>
+                            <label for="editStudentCode" class="form-label" id="studentCodeLabel"></label>
                             <input type="text" class="form-control" id="editStudentCode" required />
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="saveChangesBtn" class="btn btn-primary"></button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn2"></button>
                     </div>
                 </form>
             </div>
@@ -151,17 +191,18 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="qrModalLabel">Item QR Code</h5>
+                    <h5 class="modal-title" id="qrModalLabel"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body d-flex flex-column align-items-center">
                     <div id="qrCodeContainer"></div>
                     <div class="mt-3 text-break" id="qrCodeValue"></div>
-                    <button id="downloadQRBtn" class="btn btn-success mt-3">Download QR</button>
+                    <button id="downloadQRBtn" class="btn btn-success mt-3"></button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="~/js/Item.js"></script>
 </body>
 </html>

@@ -11,6 +11,26 @@ namespace centrny.Controllers
     {
         private readonly CenterContext db = new CenterContext();
 
+        // --- Authority Check ---
+        private bool UserHasExpensesPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = db.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = db.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            var page = db.Pages.FirstOrDefault(p => p.PagePath == "Expenses/Index");
+            if (page == null)
+                return false;
+
+            return db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         private User GetCurrentUser()
         {
             var username = User.Identity.Name;
@@ -19,6 +39,11 @@ namespace centrny.Controllers
 
         public IActionResult Index()
         {
+            if (!UserHasExpensesPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
+
             var user = GetCurrentUser();
             if (user == null)
                 return Unauthorized();
@@ -48,6 +73,11 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetExpensesByRoot(int rootCode)
         {
+            if (!UserHasExpensesPermission())
+            {
+                return Content("<div class='alert alert-danger'>Access denied.</div>", "text/html");
+            }
+
             try
             {
                 var expenses = db.Expenses.Where(e => e.RootCode == rootCode).ToList();

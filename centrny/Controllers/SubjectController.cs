@@ -18,6 +18,27 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasSubjectPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            // Use your page path as stored in Pages (adjust as needed)
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Subject/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -26,6 +47,11 @@ namespace centrny.Controllers
 
         public async Task<IActionResult> Index()
         {
+            if (!UserHasSubjectPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
 
@@ -49,6 +75,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubjects()
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
 
@@ -86,6 +115,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTeachersForSubject(int subjectCode)
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             var teachJoin = await (from t in _context.Teaches
                                    join teacher in _context.Teachers on t.TeacherCode equals teacher.TeacherCode
                                    where t.SubjectCode == subjectCode
@@ -101,6 +133,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetActiveYears()
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
             if (user == null) return Unauthorized();
@@ -127,6 +162,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTeachersByRoot()
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
             if (user == null) return Unauthorized();
@@ -148,6 +186,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBranchesByRoot()
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
             if (user == null) return Unauthorized();
@@ -169,6 +210,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTeacherToSubject([FromBody] AddTeacherToSubjectDto dto)
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || dto.TeacherCode == 0 || dto.SubjectCode == 0 || dto.BranchCode == 0 || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
@@ -215,6 +259,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddSubject([FromBody] AddSubjectDto dto)
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
@@ -259,6 +306,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> EditSubject([FromBody] EditSubjectDto dto)
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
             var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode);
@@ -290,6 +340,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteSubject([FromBody] DeleteSubjectDto dto)
         {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || dto.SubjectCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 

@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="ReservationsTitle" xml:space="preserve"><value>الحجوزات</value></data>
+	<data name="BranchLabel" xml:space="preserve"><value>الفرع</value></data>
+	<data name="DateLabel" xml:space="preserve"><value>التاريخ</value></data>
+	<data name="SelectBranchOption" xml:space="preserve"><value>اختر الفرع</value></data>
+	<data name="SelectTeacherOption" xml:space="preserve"><value>اختر المدرس</value></data>
+	<data name="NoBranchSelected" xml:space="preserve"><value>يرجى اختيار الفرع.</value></data>
+	<data name="NoDataFound" xml:space="preserve"><value>لا توجد بيانات لهذا الفرع والتاريخ.</value></data>
+	<data name="FailedToLoadGrid" xml:space="preserve"><value>فشل في تحميل الجدول.</value></data>
+	<data name="HallHeader" xml:space="preserve"><value>القاعة</value></data>
+	<data name="AddReservationBtn" xml:space="preserve"><value>إضافة حجز</value></data>
+	<data name="EditReservationBtn" xml:space="preserve"><value>تعديل الحجز</value></data>
+	<data name="AddReservationTitle" xml:space="preserve"><value>إضافة حجز</value></data>
+	<data name="EditReservationTitle" xml:space="preserve"><value>تعديل الحجز</value></data>
+	<data name="TeacherLabel" xml:space="preserve"><value>المدرس</value></data>
+	<data name="FirstTimeBtn" xml:space="preserve"><value>لأول مرة؟</value></data>
+	<data name="DescriptionLabel" xml:space="preserve"><value>الوصف</value></data>
+	<data name="CapacityLabel" xml:space="preserve"><value>السعة</value></data>
+	<data name="CostLabel" xml:space="preserve"><value>التكلفة</value></data>
+	<data name="StartTimeLabel" xml:space="preserve"><value>وقت البدء</value></data>
+	<data name="EndTimeLabel" xml:space="preserve"><value>وقت الانتهاء</value></data>
+	<data name="PeriodLabel" xml:space="preserve"><value>الفترة (محسوبة)</value></data>
+	<data name="DepositLabel" xml:space="preserve"><value>العربون</value></data>
+	<data name="FinalCostLabel" xml:space="preserve"><value>التكلفة النهائية</value></data>
+	<data name="AddTeacherTitle" xml:space="preserve"><value>إضافة مدرس جديد</value></data>
+	<data name="TeacherNameLabel" xml:space="preserve"><value>الاسم</value></data>
+	<data name="TeacherPhoneLabel" xml:space="preserve"><value>الهاتف</value></data>
+	<data name="TeacherAddressLabel" xml:space="preserve"><value>العنوان</value></data>
+	<data name="AddTeacherBtn" xml:space="preserve"><value>إضافة مدرس</value></data>
+	<data name="CloseBtn" xml:space="preserve"><value>إغلاق</value></data>
+	<data name="SuccessAddTeacher" xml:space="preserve"><value>تمت إضافة المدرس بنجاح!</value></data>
+	<data name="FailedAddTeacher" xml:space="preserve"><value>فشل في إضافة المدرس.</value></data>
+	<data name="SaveChangesBtn" xml:space="preserve"><value>حفظ التغييرات</value></data>
+	<data name="EditBtn" xml:space="preserve"><value>تعديل</value></data>
+	<data name="DeleteBtn" xml:space="preserve"><value>حذف</value></data>
+	<data name="DeleteConfirm" xml:space="preserve"><value>هل أنت متأكد أنك تريد حذف هذا الحجز؟</value></data>
+	<data name="FailedAddReservation" xml:space="preserve"><value>فشل في إضافة الحجز: </value></data>
+	<data name="FailedEditReservation" xml:space="preserve"><value>فشل في تعديل الحجز: </value></data>
+	<data name="FailedDeleteReservation" xml:space="preserve"><value>فشل في حذف الحجز.</value></data>
+	<data name="Session_1" xml:space="preserve"><value>الحصة الأولى</value></data>
+	<data name="Session_2" xml:space="preserve"><value>الحصة الثانية</value></data>
+	<data name="Session_3" xml:space="preserve"><value>الحصة الثالثة</value></data>
+	<data name="Session_4" xml:space="preserve"><value>الحصة الرابعة</value></data>
+	<data name="Session_5" xml:space="preserve"><value>الحصة الخامسة</value></data>
+	<data name="Session_6" xml:space="preserve"><value>الحصة السادسة</value></data>
+	<data name="Session_7" xml:space="preserve"><value>الحصة السابعة</value></data>
+	<data name="Session_8" xml:space="preserve"><value>الحصة الثامنة</value></data>
+	<data name="Session_9" xml:space="preserve"><value>الحصة التاسعة</value></data>
+	<data name="Session_10" xml:space="preserve"><value>الحصة العاشرة</value></data>
+</root>

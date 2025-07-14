@@ -14,6 +14,26 @@ namespace centrny.Controllers
             _db = db;
         }
 
+        // --- Authority Check ---
+        private bool UserHasTeacherManagementPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _db.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _db.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            var page = _db.Pages.FirstOrDefault(p => p.PagePath == "TeacherManagement/Index");
+            if (page == null)
+                return false;
+
+            return _db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         public int GetUserRootCode()
         {
             string username = User.Identity.Name;
@@ -24,11 +44,22 @@ namespace centrny.Controllers
             return group.RootCode;
         }
 
-        public IActionResult Index() => View();
+        public IActionResult Index()
+        {
+            if (!UserHasTeacherManagementPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
+            return View();
+        }
 
         [HttpGet]
         public IActionResult GetUserRootInfo()
         {
+            if (!UserHasTeacherManagementPermission())
+            {
+                return Json(new { error = "Access denied." });
+            }
             string username = User.Identity.Name;
             var user = _db.Users.FirstOrDefault(u => u.Username == username);
             if (user == null) return Json(new { error = "User not found" });
@@ -51,6 +82,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetTeachersByRoot(int rootCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var teachers = _db.Teachers
                 .Where(t => t.RootCode == rootCode)
                 .Select(t => new
@@ -68,6 +102,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetTeacherById(int teacherCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var t = _db.Teachers.FirstOrDefault(x => x.TeacherCode == teacherCode);
             if (t == null) return NotFound();
             return Json(new
@@ -82,6 +119,9 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult AddTeacher([FromBody] TeacherInputModel teacher)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             if (teacher == null) return BadRequest("Invalid data.");
 
             var user = _db.Users.FirstOrDefault(u => u.UserCode == teacher.InsertUser);
@@ -110,6 +150,9 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult EditTeacher([FromBody] TeacherEditModel model)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var teacher = _db.Teachers.FirstOrDefault(t => t.TeacherCode == model.TeacherCode);
             if (teacher == null) return BadRequest("Teacher not found.");
             teacher.TeacherName = model.TeacherName;
@@ -122,6 +165,9 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult DeleteTeacher([FromBody] int teacherCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var teacher = _db.Teachers.FirstOrDefault(t => t.TeacherCode == teacherCode);
             if (teacher == null) return BadRequest("Teacher not found.");
             var teaches = _db.Teaches.Where(t => t.TeacherCode == teacherCode).ToList();
@@ -136,6 +182,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetYearsByRoot(int rootCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var eduYearCodes = _db.EduYears
                 .Where(e => e.RootCode == rootCode)
                 .Select(e => e.EduCode)
@@ -152,6 +201,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetActiveEduYearByRoot(int rootCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var activeEduYear = _db.EduYears.FirstOrDefault(e => e.RootCode == rootCode && e.IsActive);
             if (activeEduYear == null)
                 return Json(new { });
@@ -166,6 +218,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetBranchesForRootWithCenters(int rootCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var centers = _db.Centers.Where(c => c.RootCode == rootCode).ToList();
             var centerCodes = centers.Select(c => c.CenterCode).ToList();
             var branches = _db.Branches
@@ -181,6 +236,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetSubjectsByTeacher(int teacherCode, int rootCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             // Join Teach, Subject, Year to get subject name and year name
             var teachRecords = (from t in _db.Teaches
                                 join s in _db.Subjects on t.SubjectCode equals s.SubjectCode
@@ -201,6 +259,9 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetSubjectsByRoot(int rootCode)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var subjects = _db.Subjects
                 .Where(s => s.RootCode == rootCode)
                 .Select(s => new
@@ -215,6 +276,9 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult AddTeachingSubject([FromBody] AddTeachingSubjectInputModel model)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             // Validate year
             var year = _db.Years.FirstOrDefault(y => y.YearCode == model.YearCode);
             if (year == null)
@@ -261,6 +325,9 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult DeleteTeach([FromBody] DeleteTeachInputModel model)
         {
+            if (!UserHasTeacherManagementPermission())
+                return Json(new { error = "Access denied." });
+
             var teach = _db.Teaches.FirstOrDefault(t => t.TeacherCode == model.TeacherCode && t.SubjectCode == model.SubjectCode);
             if (teach == null) return BadRequest("Teach record not found.");
             _db.Teaches.Remove(teach);

@@ -20,78 +20,98 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Custom Styling -->
     <link rel="stylesheet" href="@Url.Content("~/css/Hamody.css")" />
+
+    <!-- SortableJS for drag & drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
-   
-        <!-- ROOT MANAGEMENT CARD -->
-        <div class="card root-index-card">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-sitemap me-2"></i>
-                    Root Management System
-                </h4>
-            </div>
-            <div class="card-body">
-                <!-- Filter Controls -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="filter-section p-3 border rounded">
-                            <label class="form-label fw-bold mb-3">
-                                <i class="fas fa-filter me-2"></i>Filter by Center:
-                            </label>
-                            <div class="d-flex gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="centerFilter" id="centerAll" value="" checked>
-                                    <label class="form-check-label fw-semibold" for="centerAll">All</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="centerFilter" id="centerTrue" value="true">
-                                    <label class="form-check-label fw-semibold" for="centerTrue">Center</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="centerFilter" id="centerFalse" value="false">
-                                    <label class="form-check-label fw-semibold" for="centerFalse">Teacher</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <button id="addRootBtn" class="btn root-index-btn-primary">
-                            <i class="fas fa-plus me-2"></i>Add New Root
-                        </button>
-                    </div>
-                </div>
+    <!-- ROOT MANAGEMENT HEADER -->
+    <div class="root-header mb-0">
+        <h1>
+            <i class="fas fa-sitemap me-2"></i>
+            Root Management System
+        </h1>
+    </div>
 
-                <!-- ROOTS TABLE -->
-                <div class="table-responsive">
-                    <table id="rootTable" class="table root-index-table">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Owner</th>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Email</th>
-                                <th>Fees</th>
-                                <th>Address</th>
-                                <th>Centers</th>
-                                <th>Users</th>
-                                <th>Type</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Dynamic rows will be appended here -->
-                        </tbody>
-                    </table>
+    <!-- ROOT MANAGEMENT CARD -->
+    <div class="table-card" style="max-width:1400px;width:98vw;">
+        <!-- Filter Controls -->
+        <div class="filter-panel mb-4">
+            <label class="form-label fw-bold mb-3">
+                <i class="fas fa-filter me-2"></i>Filter by Center:
+            </label>
+            <div class="d-flex gap-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="centerFilter" id="centerAll" value="" checked>
+                    <label class="form-check-label fw-semibold" for="centerAll">All</label>
                 </div>
-
-                <!-- Pagination Controls -->
-                <nav id="pagination" aria-label="Page navigation" class="mt-4"></nav>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="centerFilter" id="centerTrue" value="true">
+                    <label class="form-check-label fw-semibold" for="centerTrue">Center</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="centerFilter" id="centerFalse" value="false">
+                    <label class="form-check-label fw-semibold" for="centerFalse">Teacher</label>
+                </div>
             </div>
         </div>
+        <div class="d-flex justify-content-end mb-3">
+            <button id="addRootBtn" class="btn-table edit">
+                <i class="fas fa-plus me-2"></i>Add New Root
+            </button>
+        </div>
+
+        <!-- ROOTS TABLE -->
+        <div class="table-responsive">
+            <table id="rootTable" class="gradient-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Owner</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Fees</th>
+                        <th>Address</th>
+                        <th>Centers</th>
+                        <th>Users</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Example dynamic rows, replace with server-side code -->
+                    <tr>
+                        <td>1</td>
+                        <td>smsm</td>
+                        <td>System Admin</td>
+                        <td>01014423015</td>
+                        <td>hamody@gmail.com</td>
+                        <td>$1000</td>
+                        <td>dfkodf</td>
+                        <td>0</td>
+                        <td>2</td>
+                        <td>
+                            <span class="badge">Teacher</span>
+                        </td>
+                        <td>
+                            <button class="btn-table edit"><i class="fas fa-edit"></i> Edit</button>
+                            <button class="btn-table delete"><i class="fas fa-trash"></i> Delete</button>
+                            <button class="btn-table modules"><i class="fas fa-puzzle-piece"></i> Modules</button>
+                        </td>
+                    </tr>
+                    <!-- More dynamic rows -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav id="pagination" aria-label="Page navigation" class="mt-4"></nav>
     </div>
 
     <!-- ROOT MODAL -->
@@ -99,7 +119,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <form id="rootForm">
-                    <div class="modal-header bg-primary text-white">
+                    <div class="modal-header">
                         <h5 class="modal-title" id="rootModalLabel">
                             <i class="fas fa-user-cog me-2"></i>Add/Edit Root
                         </h5>
@@ -195,7 +215,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn root-index-btn-edit">
+                        <button type="submit" class="btn-table edit">
                             <i class="fas fa-save me-2"></i>Save
                         </button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -209,10 +229,10 @@
 
     <!-- MODULE ASSIGNMENT MODAL -->
     <div class="modal fade" id="moduleAssignmentModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog ">
+        <div class="modal-dialog modal-xl" style="max-width:1200;">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
+                <div class="modal-header gradient-table" style="border-radius:18px 18px 0 0;">
+                    <h5 class="modal-title" style="color:#fff;">
                         <i class="fas fa-puzzle-piece me-2"></i>Assign Modules to Root
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -242,14 +262,30 @@
                     </div>
 
                     <!-- Module Assignment Section -->
-                    <div class="row">
+                    <div class="row g-4">
                         <div class="col-md-6">
                             <div class="modules-section">
                                 <h5 class="text-success mb-3">
                                     <i class="fas fa-check-circle me-2"></i>Assigned Modules
                                 </h5>
                                 <div id="assignedModules" class="modules-container assigned-modules-container">
-                                    <!-- Dynamic content -->
+                                    <!-- Example module items -->
+                                    <div class="module-item">
+                                        <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                                        <span class="module-info">core Access</span>
+                                        <span class="module-code">Code: 5</span>
+                                    </div>
+                                    <div class="module-item">
+                                        <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                                        <span class="module-info">Schedule &amp; Classes</span>
+                                        <span class="module-code">Code: 6</span>
+                                    </div>
+                                    <div class="module-item">
+                                        <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                                        <span class="module-info">Exams &amp; Questions</span>
+                                        <span class="module-code">Code: 7</span>
+                                    </div>
+                                    <!-- More module items ... -->
                                 </div>
                             </div>
                         </div>
@@ -259,14 +295,18 @@
                                     <i class="fas fa-list me-2"></i>Available Modules
                                 </h5>
                                 <div id="availableModules" class="modules-container available-modules-container">
-                                    <!-- Dynamic content -->
+                                    <div class="module-item">
+                                        <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                                        <span class="module-info">No available modules</span>
+                                    </div>
+                                    <!-- More module items ... -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn root-index-btn-edit" id="saveModuleAssignments">
+                    <button type="button" class="btn-table edit" id="saveModuleAssignments">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -277,10 +317,18 @@
         </div>
     </div>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <!-- Custom JavaScript -->
     <script src="@Url.Content("~/js/root.js")"></script>
+    <script>
+        // Enable drag-and-drop for assigned/available modules
+        new Sortable(document.getElementById('assignedModules'), {
+            animation: 150,
+            handle: '.drag-handle',
+        });
+        new Sortable(document.getElementById('availableModules'), {
+            animation: 150,
+            handle: '.drag-handle',
+        });
+    </script>
 </body>
 </html>
