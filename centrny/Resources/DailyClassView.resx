@@ -64,4 +64,25 @@
 	<data name="FormCancel" xml:space="preserve"><value>Cancel</value></data>
 	<data name="FormSaveClass" xml:space="preserve"><value>Save Class</value></data>
 	<data name="SelectOption" xml:space="preserve"><value>Select...</value></data>
+	<!-- Additional keys for JS localization -->
+	<data name="Loading" xml:space="preserve"><value>Loading...</value></data>
+	<data name="LoadError" xml:space="preserve"><value>Error loading data</value></data>
+	<data name="ErrorLoadingBranch" xml:space="preserve"><value>Error loading branch</value></data>
+	<data name="IsRequired" xml:space="preserve"><value>is required</value></data>
+	<data name="SaveError" xml:space="preserve"><value>Unable to save class. Please contact administrator.</value></data>
+	<data name="SaveSuccess" xml:space="preserve"><value>Class created successfully!</value></data>
+	<data name="UpdateSuccess" xml:space="preserve"><value>Class updated successfully!</value></data>
+	<data name="UpdateError" xml:space="preserve"><value>Error updating class: </value></data>
+	<data name="CreateError" xml:space="preserve"><value>Error creating class: </value></data>
+	<data name="UnknownError" xml:space="preserve"><value>Unknown error</value></data>
+	<data name="NetworkError" xml:space="preserve"><value>Network error occurred: </value></data>
+	<data name="EndTimeError" xml:space="preserve"><value>End time must be after start time</value></data>
+	<data name="Updating" xml:space="preserve"><value>Updating...</value></data>
+	<data name="Saving" xml:space="preserve"><value>Saving...</value></data>
+	<data name="PM" xml:space="preserve"><value>PM</value></data>
+	<data name="AM" xml:space="preserve"><value>AM</value></data>
+	<data name="CapacityLabel" xml:space="preserve"><value>Capacity</value></data>
+	<data name="CostLabel" xml:space="preserve"><value>Cost</value></data>
+	<data name="ForUser" xml:space="preserve"><value>for</value></data>
+	<data name="Locale" xml:space="preserve"><value>en-US</value></data>
 </root>

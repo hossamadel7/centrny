@@ -37,7 +37,7 @@
 	<data name="CalendarDayHeader" xml:space="preserve"><value>حصص اليوم</value></data>
 	<data name="AddClassBtn" xml:space="preserve"><value>إضافة حصة جديدة</value></data>
 	<data name="NoClassesScheduled" xml:space="preserve"><value>لا توجد حصص مجدولة</value></data>
-	<data name="NoClassesSubText" xml:space="preserve"><value>انقر &quot;إضافة حصة جديدة&quot; لجدولة أول حصة لهذا اليوم.</value></data>
+	<data name="NoClassesSubText" xml:space="preserve"><value>انقر "إضافة حصة جديدة" لجدولة أول حصة لهذا اليوم.</value></data>
 	<data name="WeeklyGenerationModalTitle" xml:space="preserve"><value>حالة توليد الحصص الأسبوعية</value></data>
 	<data name="WeeklyGenerationModalLoading" xml:space="preserve"><value>جارٍ تحميل حالة التوليد...</value></data>
 	<data name="WeeklyGenerationModalClose" xml:space="preserve"><value>إغلاق</value></data>
@@ -64,4 +64,25 @@
 	<data name="FormCancel" xml:space="preserve"><value>إلغاء</value></data>
 	<data name="FormSaveClass" xml:space="preserve"><value>حفظ الحصة</value></data>
 	<data name="SelectOption" xml:space="preserve"><value>اختر...</value></data>
+	<!-- Additional keys for JS localization -->
+	<data name="Loading" xml:space="preserve"><value>جارٍ التحميل...</value></data>
+	<data name="LoadError" xml:space="preserve"><value>خطأ في تحميل البيانات</value></data>
+	<data name="ErrorLoadingBranch" xml:space="preserve"><value>خطأ في تحميل الفرع</value></data>
+	<data name="IsRequired" xml:space="preserve"><value>مطلوب</value></data>
+	<data name="SaveError" xml:space="preserve"><value>تعذر حفظ الحصة. يرجى التواصل مع المسؤول.</value></data>
+	<data name="SaveSuccess" xml:space="preserve"><value>تم إنشاء الحصة بنجاح!</value></data>
+	<data name="UpdateSuccess" xml:space="preserve"><value>تم تحديث الحصة بنجاح!</value></data>
+	<data name="UpdateError" xml:space="preserve"><value>خطأ في تحديث الحصة:</value></data>
+	<data name="CreateError" xml:space="preserve"><value>خطأ في إنشاء الحصة:</value></data>
+	<data name="UnknownError" xml:space="preserve"><value>خطأ غير معروف</value></data>
+	<data name="NetworkError" xml:space="preserve"><value>حدث خطأ في الشبكة:</value></data>
+	<data name="EndTimeError" xml:space="preserve"><value>يجب أن يكون وقت النهاية بعد وقت البداية</value></data>
+	<data name="Updating" xml:space="preserve"><value>جاري التحديث...</value></data>
+	<data name="Saving" xml:space="preserve"><value>جاري الحفظ...</value></data>
+	<data name="PM" xml:space="preserve"><value>م</value></data>
+	<data name="AM" xml:space="preserve"><value>ص</value></data>
+	<data name="CapacityLabel" xml:space="preserve"><value>السعة</value></data>
+	<data name="CostLabel" xml:space="preserve"><value>التكلفة</value></data>
+	<data name="ForUser" xml:space="preserve"><value>لـ</value></data>
+	<data name="Locale" xml:space="preserve"><value>ar-EG</value></data>
 </root>

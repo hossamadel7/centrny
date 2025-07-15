@@ -1,5 +1,4 @@
-﻿// CALENDAR DAY VIEW JAVASCRIPT WITH PER-FIELD DROPDOWNS AND USER-TYPE LOGIC
-// FULLY FIXED VERSION: prevents infinite loading, chains async properly, robust dropdown population
+﻿// LOCALIZED CALENDAR DAY VIEW JAVASCRIPT
 
 let currentDate = new Date();
 let dailyClasses = [];
@@ -14,11 +13,15 @@ const userContext = {
     groupBranchCode: null
 };
 
-// --- FIX: Parse date input as LOCAL time, not UTC ---
+// Use localized strings from window.DailyClassResx
+function L(key, fallback = "") {
+    return (window.DailyClassResx && window.DailyClassResx[key]) ? window.DailyClassResx[key] : fallback;
+}
+
+// --- FIX: Parse date input as LOCAL time
 function parseLocalDateFromInput(input) {
-    // input: "YYYY-MM-DD"
     const [year, month, day] = input.split('-').map(Number);
-    return new Date(year, month - 1, day); // month is 0-based
+    return new Date(year, month - 1, day);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -48,24 +51,16 @@ function initializeUserContext() {
     }
     userContext.userRootName = document.getElementById('formSelectedDate')?.dataset?.username || '';
     userContext.hasError = !!document.querySelector('.error-banner');
-
-    // Add this block to see actual values in console:
-    console.log("[DEBUG] userContext:", userContext);
-    console.log("[DEBUG] rootCodeElement.value:", rootCodeElement ? rootCodeElement.value : null);
-    console.log("[DEBUG] isCenterElement.value:", isCenterElement ? isCenterElement.value : null);
-    console.log("[DEBUG] userRootName:", userContext.userRootName);
 }
+
 function setupEventListeners() {
-    // Date navigation
     document.getElementById('prevDayBtn')?.addEventListener('click', () => navigateDate(-1));
     document.getElementById('nextDayBtn')?.addEventListener('click', () => navigateDate(1));
     document.getElementById('datePicker')?.addEventListener('change', onDatePickerChange);
 
-    // Modal actions
     document.getElementById('addClassModal')?.addEventListener('hidden.bs.modal', resetModalForCreate);
     document.getElementById('saveClassBtn')?.addEventListener('click', saveClass);
 
-    // Teacher dropdown -- reload subjects and years when teacher changes
     document.getElementById('teacherCode')?.addEventListener('change', function () {
         const teacherId = this.value;
         let branchId = userContext.isCenter ? userContext.groupBranchCode : document.getElementById('branchCode')?.value;
@@ -81,20 +76,12 @@ function setupEventListeners() {
         }
     });
 
-    // Branch dropdown -- reload halls, subjects, years when branch changes
     document.getElementById('branchCode')?.addEventListener('change', function () {
         const branchId = this.value;
-        // For halls
         loadHallsForBranch(branchId);
-
-        // For teacher users, reload teachers for branch
-        if (userContext.isCenter) {
-            // Centers do not change branch; handled elsewhere
-        } else {
+        if (!userContext.isCenter) {
             loadTeachersForBranch(branchId);
         }
-
-        // For subjects and years
         const teacherId = document.getElementById('teacherCode')?.value;
         if (teacherId && branchId) {
             loadSubjectsForTeacherAndBranch(teacherId, branchId);
@@ -108,7 +95,6 @@ function setupEventListeners() {
         }
     });
 
-    // Subject dropdown -- reload years when subject changes
     document.getElementById('subjectCode')?.addEventListener('change', function () {
         const subjectId = this.value;
         let branchId = userContext.isCenter ? userContext.groupBranchCode : document.getElementById('branchCode')?.value;
@@ -120,51 +106,44 @@ function setupEventListeners() {
         }
     });
 
-    // Center dropdown (for teacher users) -- reload branches when center changes
     document.getElementById('centerCode')?.addEventListener('change', function () {
         const centerId = this.value;
         if (centerId) loadBranchesByCenter(centerId);
     });
 
-    // Education Year dropdown -- reload years when edu year changes
     document.getElementById('eduYearCode')?.addEventListener('change', function () {
         loadYearsByEduYear(this.value);
     });
 }
-function navigateDate(days) {
-    currentDate.setDate(currentDate.getDate() + days); // always use JS variable as base
 
-    // FIX: Format date as local date string instead of using toISOString()
+function navigateDate(days) {
+    currentDate.setDate(currentDate.getDate() + days);
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     const day = String(currentDate.getDate()).padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
-
-    document.getElementById('datePicker').value = dateStr; // update picker value from JS variable
+    document.getElementById('datePicker').value = dateStr;
     updateDateDisplay();
     loadDayContent();
-    console.log('NAVIGATE: currentDate', currentDate, 'datePicker.value', dateStr);
 }
 
 function onDatePickerChange() {
     const datePickerValue = document.getElementById('datePicker').value;
-    currentDate = parseLocalDateFromInput(datePickerValue); // FIX: use local date parser
+    currentDate = parseLocalDateFromInput(datePickerValue);
     updateDateDisplay();
     loadDayContent();
 }
 
 function updateDateDisplay() {
-    const formattedDate = currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedDate = currentDate.toLocaleDateString(L("Locale") || 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('displayDate').textContent = formattedDate;
     document.getElementById('calendarDate').textContent = formattedDate;
     document.getElementById('formSelectedDate').textContent = formattedDate;
 
-    // FIX: Format date as local date string instead of using toISOString()
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     const day = String(currentDate.getDate()).padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
-
     document.getElementById('classDate').value = dateStr;
 }
 
@@ -181,15 +160,12 @@ function hideInitialLoader() {
 }
 
 function loadDayContent() {
-    // FIX: Format date as local date string instead of using toISOString()
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     const day = String(currentDate.getDate()).padStart(2, '0');
     const selectedDate = `${year}-${month}-${day}`;
-
-    console.log('LOAD DAY: selectedDate', selectedDate, 'currentDate', currentDate);
     const container = document.getElementById('dayContent');
-    container.innerHTML = `<div class="text-center py-3"><div class="spinner"></div> Loading...</div>`;
+    container.innerHTML = `<div class="text-center py-3"><div class="spinner"></div> ${L("Loading") || "Loading..."}</div>`;
 
     Promise.all([
         fetch(`/DailyClass/GetDailyClasses?date=${selectedDate}`).then(r => r.ok ? r.json() : []),
@@ -200,16 +176,14 @@ function loadDayContent() {
             hideInitialLoader();
         })
         .catch((e) => {
-            console.error("Error loading data:", e);
-            container.innerHTML = `<div class="alert alert-danger">Error loading data: ${e.message}</div>`;
+            container.innerHTML = `<div class="alert alert-danger">${L("LoadError") || "Error loading data"}: ${e.message}</div>`;
             hideInitialLoader();
         });
 }
+
 function renderDayContent(classes, reservations) {
     const container = document.getElementById('dayContent');
     container.innerHTML = '';
-
-    // FIX: Format date as local date string instead of using toISOString()
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     const day = String(currentDate.getDate()).padStart(2, '0');
@@ -221,7 +195,7 @@ function renderDayContent(classes, reservations) {
 
     let html = `<div class="classes-grid">`;
     if (classes.length === 0 && reservations.length === 0) {
-        html += `<div class="empty-day-state"><i class="fas fa-calendar-times"></i><h4>No classes scheduled</h4><p>Click "Add New Class" to schedule your first class for this day.</p></div>`;
+        html += `<div class="empty-day-state"><i class="fas fa-calendar-times"></i><h4>${L("NoClassesScheduled")}</h4><p>${L("NoClassesSubText")}</p></div>`;
     } else {
         classes.forEach(cls => html += renderClassCard(cls));
         reservations.forEach(r => html += renderReservationCard(r));
@@ -231,9 +205,10 @@ function renderDayContent(classes, reservations) {
 }
 
 function renderClassCard(cls) {
+    let typeLabel = cls.classType === 'schedule' ? L("RecurringLabel") : (cls.classType === 'reservation' ? L("ReservationLabel") : L("DirectLabel"));
     return `
         <div class="class-card position-relative">
-            <div class="class-type-badge badge-${cls.classType}">${cls.classType === 'schedule' ? 'RECURRING' : (cls.classType === 'reservation' ? 'RESERVATION' : 'DIRECT')}</div>
+            <div class="class-type-badge badge-${cls.classType}">${typeLabel}</div>
             <div class="class-card-header">
                 <div class="class-title">
                     <i class="fas fa-chalkboard-teacher"></i> ${cls.title || cls.ClassName} - ${cls.classDate ? formatDate(cls.classDate) : ''}
@@ -244,10 +219,10 @@ function renderClassCard(cls) {
                 </div>
             </div>
             <div class="class-card-body">
-                ${cls.hallName ? `<div class="class-detail-item"><i class="fas fa-map-marker-alt class-detail-icon"></i> <span class="class-detail-label">Hall:</span> <span class="class-detail-value">${cls.hallName}</span></div>` : ''}
-                ${cls.subjectName ? `<div class="class-detail-item"><i class="fas fa-book class-detail-icon"></i> <span class="class-detail-label">Subject:</span> <span class="class-detail-value">${cls.subjectName}</span></div>` : ''}
-                <div class="class-detail-item"><i class="fas fa-users class-detail-icon"></i> <span class="class-detail-label">Students:</span> <span class="class-detail-value">${cls.noOfStudents || '0'}</span></div>
-                ${cls.totalAmount ? `<div class="class-detail-item"><i class="fas fa-dollar-sign class-detail-icon"></i> <span class="class-detail-label">Amount:</span> <span class="class-detail-value">${cls.totalAmount}</span></div>` : ''}
+                ${cls.hallName ? `<div class="class-detail-item"><i class="fas fa-map-marker-alt class-detail-icon"></i> <span class="class-detail-label">${L("HallLabel")}:</span> <span class="class-detail-value">${cls.hallName}</span></div>` : ''}
+                ${cls.subjectName ? `<div class="class-detail-item"><i class="fas fa-book class-detail-icon"></i> <span class="class-detail-label">${L("SubjectLabel")}:</span> <span class="class-detail-value">${cls.subjectName}</span></div>` : ''}
+                <div class="class-detail-item"><i class="fas fa-users class-detail-icon"></i> <span class="class-detail-label">${L("StudentsLabel")}:</span> <span class="class-detail-value">${cls.noOfStudents || '0'}</span></div>
+                ${cls.totalAmount ? `<div class="class-detail-item"><i class="fas fa-dollar-sign class-detail-icon"></i> <span class="class-detail-label">${L("AmountLabel")}:</span> <span class="class-detail-value">${cls.totalAmount}</span></div>` : ''}
             </div>
         </div>
     `;
@@ -256,7 +231,7 @@ function renderClassCard(cls) {
 function renderReservationCard(r) {
     return `
         <div class="class-card reservation-card position-relative">
-            <div class="reservation-type-badge">RESERVATION</div>
+            <div class="reservation-type-badge">${L("ReservationLabel")}</div>
             <div class="class-card-header">
                 <div class="class-title" style="color: #f7b731;">
                     <i class="fas fa-bookmark me-2"></i>${r.description || ''} - ${r.rTime || ''}
@@ -267,29 +242,26 @@ function renderReservationCard(r) {
                 </div>
             </div>
             <div class="class-card-body">
-                <div class="class-detail-item"><i class="fas fa-user-tie class-detail-icon"></i><span class="class-detail-label">Teacher:</span><span class="class-detail-value">${r.teacherName || ''}</span></div>
-                <div class="class-detail-item"><i class="fas fa-map-marker-alt class-detail-icon"></i><span class="class-detail-label">Hall:</span><span class="class-detail-value">${r.hallName || ''}</span></div>
-                <div class="class-detail-item"><i class="fas fa-users class-detail-icon"></i><span class="class-detail-label">Capacity:</span><span class="class-detail-value">${r.capacity || ''}</span></div>
-                <div class="class-detail-item"><i class="fas fa-dollar-sign class-detail-icon"></i><span class="class-detail-label">Cost:</span><span class="class-detail-value">${r.cost || ''}</span></div>
+                <div class="class-detail-item"><i class="fas fa-user-tie class-detail-icon"></i><span class="class-detail-label">${L("TeacherLabel")}:</span><span class="class-detail-value">${r.teacherName || ''}</span></div>
+                <div class="class-detail-item"><i class="fas fa-map-marker-alt class-detail-icon"></i><span class="class-detail-label">${L("HallLabel")}:</span><span class="class-detail-value">${r.hallName || ''}</span></div>
+                <div class="class-detail-item"><i class="fas fa-users class-detail-icon"></i><span class="class-detail-label">${L("CapacityLabel")}:</span><span class="class-detail-value">${r.capacity || ''}</span></div>
+                <div class="class-detail-item"><i class="fas fa-dollar-sign class-detail-icon"></i><span class="class-detail-label">${L("CostLabel")}:</span><span class="class-detail-value">${r.cost || ''}</span></div>
             </div>
         </div>
     `;
 }
 
 // --- Modal and Dropdown Management ---
-
 function resetModalForCreate() {
     isEditMode = false;
     editingClassId = null;
     setupModalFields();
     resetFormFields();
     document.querySelector('#addClassModal .modal-title').innerHTML =
-        '<i class="fas fa-plus-circle me-2"></i>Add New Class' +
-        (userContext.userRootName ? `<small class="text-muted">for ${userContext.userRootName}</small>` : '');
+        `<i class="fas fa-plus-circle me-2"></i>${L("AddClassBtn")}` +
+        (userContext.userRootName ? `<small class="text-muted">${L("ForUser") || "for"} ${userContext.userRootName}</small>` : '');
 
-    // Always load edu years for root!
     loadEduYearsForRoot();
-
     if (userContext.isCenter) {
         loadUserBranch().then(() => {
             if (userContext.groupBranchCode) {
@@ -317,16 +289,13 @@ function resetFormFields() {
     });
 }
 function setupModalFields() {
-
     if (userContext.isCenter) {
-        // Center user: show teacher dropdown, branch as readonly, hall dropdown, HIDE center and branch dropdowns
         document.getElementById('teacherField').style.display = '';
         document.getElementById('centerField').style.display = 'none';
         document.getElementById('branchNameReadonly').style.display = '';
         document.getElementById('branchCode').style.display = 'none';
         document.getElementById('hallField').style.display = '';
     } else {
-        // Teacher user: show center and branch dropdowns, HIDE branch readonly and hall field
         document.getElementById('teacherField').style.display = 'none';
         document.getElementById('centerField').style.display = '';
         document.getElementById('branchNameReadonly').style.display = 'none';
@@ -343,7 +312,7 @@ async function loadUserBranch() {
         document.getElementById('branchNameReadonly').value = branch.text;
         userContext.groupBranchCode = branch.value;
     } catch (e) {
-        document.getElementById('branchNameReadonly').value = 'Error loading branch';
+        document.getElementById('branchNameReadonly').value = L("ErrorLoadingBranch");
         userContext.groupBranchCode = null;
     }
 }
@@ -408,20 +377,15 @@ async function loadEduYearsForRoot() {
         const data = await res.json();
         const eduYears = data.eduYears || [];
         populateSelectAsync('eduYearCode', eduYears);
-
-        // Auto-select the first active educational year
         if (eduYears.length > 0) {
             const select = document.getElementById('eduYearCode');
             select.value = eduYears[0].value;
-
-            // Optionally trigger change event if you want dependent dropdowns to update
             select.dispatchEvent(new Event('change'));
         }
     } catch {
         populateSelectAsync('eduYearCode', []);
     }
 }
-
 async function loadYearsForTeach(branchCode, teacherCode, subjectCode) {
     if (!branchCode || !teacherCode || !subjectCode) {
         populateSelectAsync('yearCode', []);
@@ -439,7 +403,7 @@ async function loadYearsForTeach(branchCode, teacherCode, subjectCode) {
 function populateSelectAsync(selectId, options) {
     const select = document.getElementById(selectId);
     if (!select) return;
-    select.innerHTML = `<option value="">Select...</option>`;
+    select.innerHTML = `<option value="">${L("SelectOption")}</option>`;
     if (!Array.isArray(options)) return;
     options.forEach(option => {
         if (option) {
@@ -454,30 +418,30 @@ function populateSelectAsync(selectId, options) {
 // --- Save Logic ---
 function saveClass() {
     if (userContext.hasError) {
-        showErrorToast('Unable to save class. Please contact administrator.');
+        showErrorToast(L("SaveError"));
         return;
     }
     const submitBtn = document.getElementById('saveClassBtn');
     const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = `<div class="spinner-border spinner-border-sm me-2"></div>${isEditMode ? 'Updating...' : 'Saving...'}`;
+    submitBtn.innerHTML = `<div class="spinner-border spinner-border-sm me-2"></div>${isEditMode ? L("Updating") : L("Saving")}`;
     submitBtn.disabled = true;
 
     const requiredFields = [
-        { id: 'className', name: 'Class Name' },
-        { id: 'startTime', name: 'Start Time' },
-        { id: 'endTime', name: 'End Time' },
-        { id: 'subjectCode', name: 'Subject' },
-        { id: 'eduYearCode', name: 'Education Year' }
+        { id: 'className', name: L("FormClassName") },
+        { id: 'startTime', name: L("FormStartTime") },
+        { id: 'endTime', name: L("FormEndTime") },
+        { id: 'subjectCode', name: L("FormSubject") },
+        { id: 'eduYearCode', name: L("FormEduYear") }
     ];
     if (userContext.isCenter) {
-        requiredFields.push({ id: 'teacherCode', name: 'Teacher' }, { id: 'hallCode', name: 'Hall' });
+        requiredFields.push({ id: 'teacherCode', name: L("FormTeacher") }, { id: 'hallCode', name: L("FormHall") });
     } else {
-        requiredFields.push({ id: 'centerCode', name: 'Center' }, { id: 'branchCode', name: 'Branch' });
+        requiredFields.push({ id: 'centerCode', name: L("FormCenter") }, { id: 'branchCode', name: L("FormBranch") });
     }
     for (const field of requiredFields) {
         const element = document.getElementById(field.id);
         if (!element || !element.value || element.value.trim() === '') {
-            showErrorToast(`${field.name} is required`);
+            showErrorToast(`${field.name} ${L("IsRequired")}`);
             if (element) element.focus();
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
@@ -487,13 +451,12 @@ function saveClass() {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     if (startTime >= endTime) {
-        showErrorToast('End time must be after start time');
+        showErrorToast(L("EndTimeError"));
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
         return;
     }
 
-    // Gather form data
     const formData = {
         className: document.getElementById('className').value,
         startTime: startTime,
@@ -505,7 +468,7 @@ function saveClass() {
         teacherAmount: parseFloat(document.getElementById('teacherAmount').value) || null,
         centerAmount: parseFloat(document.getElementById('centerAmount').value) || null,
         rootCode: userContext.currentUserRootCode,
-        classDate: currentDate // This is always local!
+        classDate: currentDate
     };
     if (userContext.isCenter) {
         formData.teacherCode = parseInt(document.getElementById('teacherCode').value);
@@ -528,18 +491,17 @@ function saveClass() {
         })
         .then(data => {
             if (data.success) {
-                showSuccessToast(isEditMode ? 'Class updated successfully!' : 'Class created successfully!');
+                showSuccessToast(isEditMode ? L("UpdateSuccess") : L("SaveSuccess"));
                 bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
                 resetFormFields();
                 resetModalForCreate();
                 loadDayContent();
             } else {
-                showErrorToast((isEditMode ? 'Error updating class: ' : 'Error creating class: ') + (data.error || 'Unknown error'));
+                showErrorToast((isEditMode ? L("UpdateError") : L("CreateError")) + (data.error || L("UnknownError")));
             }
         })
         .catch(error => {
-            console.error('Fetch error:', error);
-            showErrorToast('Network error occurred: ' + error.message);
+            showErrorToast(L("NetworkError") + error.message);
         })
         .finally(() => {
             submitBtn.innerHTML = originalText;
@@ -574,7 +536,7 @@ function to12Hr(timeStr) {
     if (!timeStr) return "";
     let [h, m] = timeStr.split(':');
     h = parseInt(h, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
+    const ampm = h >= 12 ? L("PM") : L("AM");
     h = h % 12;
     if (h === 0) h = 12;
     return `${h}:${m} ${ampm}`;
@@ -582,7 +544,7 @@ function to12Hr(timeStr) {
 function formatDate(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString(L("Locale") || 'en-US', { month: 'short', day: 'numeric' });
 }
 
 async function loadTeachersForBranch(branchCode) {
