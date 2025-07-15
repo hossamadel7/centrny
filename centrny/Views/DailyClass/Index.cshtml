@@ -15,7 +15,6 @@
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/dailyclass.css" rel="stylesheet" />
@@ -37,22 +36,51 @@
         html[dir="rtl"] .add-class-btn-main {
             float: left;
         }
+        .reservation-type-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(253, 203, 110, 0.20);
+            color: var(--warning-color);
+            border: 1px solid rgba(253, 203, 110, 0.3);
+        }
+        .class-card.reservation-card {
+            border-left: 4px solid var(--warning-color);
+            background: #fffde8;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .class-card.reservation-card:hover {
+            border-left-color: #f7b731;
+            box-shadow: var(--shadow-lg);
+        }
+        .class-card.reservation-card .class-title {
+            color: var(--warning-color);
+        }
+        .classes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
     </style>
 </head>
 <body>
-    <!-- Resource strings for JS -->
     <input type="hidden" id="resxSelectOption" value="@DailyClassView.SelectOption" />
-    @* All other resource strings as before, omitted for brevity *@
+    <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
+   <input type="hidden" id="isCenter" value="@(ViewBag.IsCenter ? "True" : "False")">
+    <span id="formSelectedDate" data-username="@ViewBag.UserRootName"></span>
 
     <div class="container-fluid daily-classes-page">
         <div class="daily-container">
-            <!-- Page Header -->
             <div class="page-header">
                 <h1><i class="fas fa-calendar-day me-3"></i>@DailyClassView.Title</h1>
                 <p>@DailyClassView.PageSubTitle</p>
             </div>
 
-            <!-- User Context Banner or Error Message -->
             @if (ViewBag.Error != null)
             {
                 <div class="error-banner">
@@ -84,7 +112,7 @@
 
             @if (ViewBag.Error == null)
             {
-                <!-- Weekly Class Generation Status Banner -->
+                <!-- Weekly Generation Banner -->
                 <div class="weekly-generation-banner" id="weeklyGenerationBanner" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div class="generation-info">
@@ -95,9 +123,9 @@
                             <small id="generationStatusDetails">@DailyClassView.WeeklyGenerationBannerChecking</small>
                         </div>
                         <div class="generation-actions d-flex gap-2">
-                            <button type="button" class="btn btn-success btn-sm" id="generateWeeklyBtn" style="display: none;" onclick="generateWeeklyClasses()">
-                                <i class="fas fa-magic me-1"></i>@DailyClassView.WeeklyGenerationBannerGenerateBtn
-                            </button>
+                            <button type="button" class="btn btn-success btn-sm" id="generateWeeklyBtn" onclick="generateWeeklyClasses()">
+    <i class="fas fa-magic me-1"></i>@DailyClassView.WeeklyGenerationBannerGenerateBtn
+</button>
                             <button type="button" class="btn btn-outline-info btn-sm" id="viewStatusBtn" onclick="showWeeklyGenerationStatus()">
                                 <i class="fas fa-info-circle me-1"></i>@DailyClassView.WeeklyGenerationBannerViewBtn
                             </button>
@@ -183,17 +211,16 @@
                             </button>
                         </div>
 
-                        <!-- Classes Content -->
-                        <div id="classesContent">
-                            <!-- Classes will be populated here by JavaScript -->
-                            <div class="empty-day-state">
-                                <i class="fas fa-calendar-times"></i>
-                                <h4>@DailyClassView.NoClassesScheduled</h4>
-                                <p>@DailyClassView.NoClassesSubText</p>
-                            </div>
-                        </div>
+                        <!-- Unified day content for classes & reservations as cards -->
+                        <div id="dayContent" class="classes-grid"></div>
                     </div>
                 </div>
+
+                <!-- Reservation Section -->
+                <div class="reservation-section-header">
+                    <i class="fas fa-calendar-day me-2"></i> Reservations for the Current Week
+                </div>
+                <div id="reservationsContent"></div>
 
                 <!-- Weekly Generation Status Modal -->
                 <div class="modal fade" id="weeklyGenerationModal" tabindex="-1">
@@ -222,213 +249,165 @@
                         </div>
                     </div>
                 </div>
-            }
+
+                <!-- Floating Add Button -->
+                <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addClassModal" title="@DailyClassView.FloatingAddBtnTitle">
+                    <i class="fas fa-plus"></i>
+                </button>
+
+                <!-- Add Class Modal -->
+                <div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Class
+                    <small class="text-muted" id="modalUserName"></small>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="classForm">
+                    <input type="hidden" id="rootCode">
+                    <input type="hidden" id="classDate">
+                    <input type="hidden" id="isCenter">
+
+                    <div class="row">
+                        <!-- Class Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Class Name *</label>
+                            <input type="text" class="form-control" id="className" required placeholder="Class Name">
+                        </div>
+                        <!-- Teacher Dropdown (center users only, JS shows/hides) -->
+                        <div class="col-md-6 mb-3" id="teacherField" style="display:none;">
+                            <label class="form-label">Teacher *</label>
+                            <select class="form-select" id="teacherCode" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                        <!-- Center Dropdown (teacher users only, JS shows/hides) -->
+                        <div class="col-md-6 mb-3" id="centerField" style="display:none;">
+                            <label class="form-label">Center *</label>
+                            <select class="form-select" id="centerCode" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                        <!-- Branch (readonly for center, dropdown for teacher, JS shows/hides) -->
+                        <div class="col-md-6 mb-3" id="branchField">
+                            <label class="form-label">Branch *</label>
+                            <input type="text" class="form-control" id="branchNameReadonly" readonly style="display:none;">
+                            <select class="form-select" id="branchCode" required style="display:none;">
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Start Time -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Time *</label>
+                            <input type="time" class="form-control" id="startTime" required>
+                        </div>
+                        <!-- End Time -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Time *</label>
+                            <input type="time" class="form-control" id="endTime" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Subject Dropdown -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subject *</label>
+                            <select class="form-select" id="subjectCode" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                        <!-- Hall Dropdown (center only, JS shows/hides) -->
+                        <div class="col-md-6 mb-3" id="hallField">
+                            <label class="form-label">Hall *</label>
+                            <select class="form-select" id="hallCode" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Education Year (dropdown) -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Education Year *</label>
+                            <select class="form-select" id="eduYearCode" required>
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                        <!-- Year Dropdown -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Year</label>
+                            <select class="form-select" id="yearCode">
+                                <option value="">Select...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- No. of Students (readonly) -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">No. of Students</label>
+                            <input type="text" class="form-control" id="noOfStudents" readonly style="background-color: #f8f9fa; cursor: not-allowed;" value="0">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Amounts -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" class="form-control" id="totalAmount" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Teacher Amount</label>
+                            <input type="number" class="form-control" id="teacherAmount" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Center Amount</label>
+                            <input type="number" class="form-control" id="centerAmount" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-modern btn-success" id="saveClassBtn">
+                    <i class="fas fa-save me-2"></i>Save Class
+                </button>
+            </div>
         </div>
     </div>
-
-    @if (ViewBag.Error == null)
-    {
-        <!-- Floating Add Button -->
-        <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addClassModal" title="@DailyClassView.FloatingAddBtnTitle">
-            <i class="fas fa-plus"></i>
-        </button>
-
-        <!-- Add Class Modal -->
-        <div class="modal fade" id="addClassModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-plus-circle me-2"></i>@DailyClassView.AddClassBtn
-                            @if (ViewBag.UserRootName != null)
-                            {
-                                <small class="text-muted">for @ViewBag.UserRootName</small>
-                            }
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="classForm">
-                            @if (ViewBag.CurrentUserRootCode != null)
-                            {
-                                <div class="alert alert-info mb-3">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    <strong>Note:</strong> This class will be created for <strong>@ViewBag.UserRootName</strong>
-                                    (@DailyClassView.RootCodeLabel: @ViewBag.CurrentUserRootCode)
-                                    @if (ViewBag.IsCenter == true)
-                                    {
-                                        <span class="badge bg-success ms-2">@DailyClassView.IsCenterLabel</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning ms-2">@DailyClassView.IsTeacherLabel</span>
-                                    }
-                                    on <strong id="formSelectedDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</strong>
-                                </div>
-                            }
-
-                            <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
-                            <input type="hidden" id="classDate" value="@ViewBag.SelectedDateFormatted">
-                            <input type="hidden" id="isCenter" value="@ViewBag.IsCenter">
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormClassName *</label>
-                                    <input type="text" class="form-control" id="className" required placeholder="@DailyClassView.FormClassName">
-                                </div>
-                                @if (ViewBag.IsCenter == true)
-                                {
-                                    <div class="col-md-6 mb-3" id="teacherField">
-                                        <label class="form-label">@DailyClassView.FormTeacher *</label>
-                                        <select class="form-select" id="teacherCode" required>
-                                            <option value="">@DailyClassView.SelectOption</option>
-                                        </select>
-                                    </div>
-                                }
-                                @if (ViewBag.IsCenter != true)
-                                {
-                                    <div class="col-md-6 mb-3" id="centerField">
-                                        <label class="form-label">@DailyClassView.FormCenter *</label>
-                                        <select class="form-select" id="centerCode" required onchange="loadBranchesByCenter()">
-                                            <option value="">@DailyClassView.SelectOption</option>
-                                        </select>
-                                    </div>
-                                }
+</div>
+                <!-- Class Details Modal -->
+                <div class="modal fade" id="classDetailsModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-info-circle me-2"></i>@DailyClassView.ClassDetailsModalTitle
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormStartTime *</label>
-                                    <input type="time" class="form-control" id="startTime" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormEndTime *</label>
-                                    <input type="time" class="form-control" id="endTime" required>
-                                </div>
+                            <div class="modal-body">
+                                <div id="classDetailsContent"></div>
                             </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormSubject *</label>
-                                    <select class="form-select" id="subjectCode" required>
-                                        <option value="">@DailyClassView.SelectOption</option>
-                                    </select>
-                                </div>
-                                @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
-                                {
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">@DailyClassView.FormBranch *</label>
-                                        <select class="form-select" id="branchCode" required>
-                                            <option value="">@DailyClassView.SelectOption</option>
-                                        </select>
-                                    </div>
-                                }
-                                else if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode != null)
-                                {
-                                    <input type="hidden" id="branchCode" name="branchCode" value="@ViewBag.GroupBranchCode" />
-                                    <div class="mb-3">
-                                        <label class="form-label">@DailyClassView.FormBranch *</label>
-                                        <input type="text" class="form-control" value="@ViewBag.BranchName" disabled />
-                                        <small class="text-muted">@((isArabic ? "لا يمكن تغيير الفرع. يتم تعيينه تلقائيًا." : "Branch is auto-assigned and cannot be changed"))</small>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">@DailyClassView.FormBranch *</label>
-                                        <select class="form-select" id="branchCode" required>
-                                            <option value="">@DailyClassView.SelectOption</option>
-                                        </select>
-                                    </div>
-                                }
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormHall *</label>
-                                    <select class="form-select" id="hallCode" required>
-                                        <option value="">@DailyClassView.SelectOption</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormEduYear *</label>
-                                    <select class="form-select" id="eduYearCode" required>
-                                        <option value="">@DailyClassView.SelectOption</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormYear</label>
-                                    <select class="form-select" id="yearCode">
-                                        <option value="">@DailyClassView.SelectOption</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">@DailyClassView.FormNoOfStudents <small class="text-muted">@((isArabic ? "يتم التحديث آلياً من الحضور" : "Auto-updated from attendance"))</small></label>
-                                    <input type="text" class="form-control" id="noOfStudents" readonly style="background-color: #f8f9fa; cursor: not-allowed;" value="0">
-                                    <small class="form-text text-muted">@((isArabic ? "يتم زيادة هذا العدد تلقائياً عند حضور الطلاب" : "This count increases automatically when students attend the class"))</small>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">@DailyClassView.FormTotalAmount</label>
-                                    <input type="number" class="form-control" id="totalAmount" step="0.01" min="0" placeholder="0.00">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">@DailyClassView.FormTeacherAmount</label>
-                                    <input type="number" class="form-control" id="teacherAmount" step="0.01" min="0" placeholder="0.00">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">@DailyClassView.FormCenterAmount</label>
-                                    <input type="number" class="form-control" id="centerAmount" step="0.01" min="0" placeholder="0.00">
-                                </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@DailyClassView.ClassDetailsModalClose</button>
+                                <button type="button" class="btn-modern btn-info" id="editClassBtn">
+                                    <i class="fas fa-edit me-2"></i>@DailyClassView.ClassDetailsModalEditBtn
+                                </button>
+                                <button type="button" class="btn-modern" style="background: var(--danger-gradient);" id="deleteClassBtn">
+                                    <i class="fas fa-trash me-2"></i>@DailyClassView.ClassDetailsModalDeleteBtn
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@DailyClassView.FormCancel</button>
-                        <button type="button" class="btn-modern btn-success" id="saveClassBtn">
-                            <i class="fas fa-save me-2"></i>@DailyClassView.FormSaveClass
-                        </button>
-                    </div>
                 </div>
-            </div>
+            }
         </div>
-
-        <!-- Class Details Modal -->
-        <div class="modal fade" id="classDetailsModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-info-circle me-2"></i>@DailyClassView.ClassDetailsModalTitle
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="classDetailsContent"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@DailyClassView.ClassDetailsModalClose</button>
-                        <button type="button" class="btn-modern btn-info" id="editClassBtn">
-                            <i class="fas fa-edit me-2"></i>@DailyClassView.ClassDetailsModalEditBtn
-                        </button>
-                        <button type="button" class="btn-modern" style="background: var(--danger-gradient);" id="deleteClassBtn">
-                            <i class="fas fa-trash me-2"></i>@DailyClassView.ClassDetailsModalDeleteBtn
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- Toast Container -->
+    </div>
     <div class="toast-container"></div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/dailyclass.js"></script>
+    <script src="~/js/DailyClass.js"></script>
 </body>
 </html>
