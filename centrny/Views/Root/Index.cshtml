@@ -28,10 +28,61 @@
 
     <!-- SortableJS for drag & drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+            --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+            --primary-color: #6c5ce7;
+            --border-radius-lg: 28px;
+            --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+        }
+        /* Gradient centered header for Root view */
+        .root-gradient-header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2.2rem;
+            padding: 2rem 0 1.2rem 0;
+            background: transparent;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .root-gradient-header h1 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.3rem;
+                letter-spacing: -.01em;
+                background: var(--primary-gradient-horizontal);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                color: transparent;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .root-gradient-header i {
+                margin-right: 12px;
+                color: #4f8cff;
+            }
+        @@media (max-width: 900px) {
+            .root-gradient-header h1
+
+        {
+            font-size: 1.6rem;
+        }
+
+        }
+    </style>
 </head>
 <body>
     <!-- ROOT MANAGEMENT HEADER -->
-    <div class="root-header mb-0">
+    <div class="root-gradient-header mb-0">
         <h1>
             <i class="fas fa-sitemap me-2"></i>
             Root Management System
