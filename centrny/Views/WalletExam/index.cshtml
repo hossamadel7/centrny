@@ -32,14 +32,13 @@
         </div>
     </div>
 
-    <!-- New: Center/Teacher Selection -->
+    <!-- Center/Teacher Selection for filtering roots -->
     <div class="row mb-4 align-items-center">
         <div class="col-md-3">
             <label class="form-label">Select Type:</label>
             <div>
                 <input type="radio" id="typeCenter" name="rootType" value="center" checked>
                 <label for="typeCenter">Center</label>
-
                 <input type="radio" id="typeTeacher" name="rootType" value="teacher" class="ms-3">
                 <label for="typeTeacher">Teacher</label>
             </div>
@@ -58,13 +57,12 @@
             <tr>
                 <th>WalletExamCode</th>
                 <th>Amount</th>
-                <th>Count</th>
-                <th>OriginalCount</th>
                 <th>DateStart</th>
                 <th>ExpireDate</th>
                 <th>Days Left</th>
                 <th>Status</th>
                 <th>RootCode</th>
+                <th>RootType</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -74,17 +72,19 @@
                 var daysLeft = (item.ExpireDate.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
                 var daysLeftText = daysLeft < 0 ? "Expired" : $"{daysLeft} days";
                 var statusText = item.IsActive ? "Active" : "Inactive";
+                var rootTypeText = item.RootCodeNavigation != null
+                ? (item.RootCodeNavigation.IsCenter ? "center" : "teacher")
+                : "";
 
                 <tr data-id="@item.WalletExamCode">
                     <td class="walletExamCode">@item.WalletExamCode</td>
                     <td class="amount">@item.Amount</td>
-                    <td class="count">@item.Count</td>
-                    <td class="originalCount">@item.OriginalCount</td>
                     <td class="dateStart">@FormatDate(item.DateStart)</td>
                     <td class="expireDate">@FormatDate(item.ExpireDate)</td>
                     <td class="daysLeft">@daysLeftText</td>
                     <td class="status">@statusText</td>
                     <td class="rootCode">@item.RootCode</td>
+                    <td class="rootType">@rootTypeText</td>
                     <td>
                         <button class="btn btn-sm btn-primary btn-edit">Edit</button>
                         <button class="btn btn-sm btn-danger btn-delete">Delete</button>
@@ -117,16 +117,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Count</label>
-                        <input type="number" name="count" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Original Count</label>
-                        <input type="number" name="originalCount" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
                         <label class="form-label">Date Start</label>
                         <input type="date" name="dateStart" class="form-control" required>
                     </div>
@@ -145,8 +135,10 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Root Code</label>
-                        <input type="number" name="rootCode" class="form-control" required>
+                        <label class="form-label">Root Name</label>
+                        <select id="modalRootSelect" name="modalRootSelect" class="form-select" required>
+                            <option value="">-- Select Root --</option>
+                        </select>
                     </div>
 
                 </div>
@@ -163,6 +155,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     window.updateWalletExamUrl = '@Url.Action("UpdateWalletExam", "WalletExam")';
+    window.addWalletExamUrl = '@Url.Action("AddWalletExam", "WalletExam")';
 </script>
 <script src="~/js/Wallet.js"></script>
 
