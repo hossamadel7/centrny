@@ -1,14 +1,7 @@
-﻿// ===================
-// Security.js
-// ===================
-
-let selectedRootCode = null;
+﻿let selectedRootCode = null;
 let isUsernameTaken = false;
 let loggedInUserCode = window.loggedInUserCode || 1; // Set this globally on login for group/user creation
 
-// ===================
-// ROOTS LOGIC
-// ===================
 function loadRoots(userType) {
     if (!userType) return;
     var isCenter = (userType === 'center');
@@ -50,9 +43,29 @@ function loadRoots(userType) {
     });
 }
 
-// ===================
-// GROUPS LOGIC (CRUD)
-// ===================
+function loadBranchesForRoot(rootCode, $select) {
+    $select.html('<option value="">Loading branches...</option>');
+    $.ajax({
+        url: '/Security/GetBranchesByRoot',
+        type: 'GET',
+        data: { rootCode: rootCode },
+        success: function (branches) {
+            if (!Array.isArray(branches)) branches = [];
+            if (branches.length === 0) {
+                $select.html('<option value="">No branches found for this root</option>');
+            } else {
+                $select.html('<option value="">Select branch</option>');
+                $.each(branches, function (i, branch) {
+                    $select.append(`<option value="${branch.branchCode}">${branch.branchName}</option>`);
+                });
+            }
+        },
+        error: function () {
+            $select.html('<option value="">Error loading branches</option>');
+        }
+    });
+}
+
 function loadGroups(rootCode) {
     $.ajax({
         url: '/Security/GetGroupsByRoot',
@@ -83,17 +96,17 @@ function renderGroupsList(groups, $container) {
             <li class="list-group-item" data-group-code="${group.groupCode}">
                 <div class="d-flex align-items-center mb-2">
                     <span class="fw-bold me-auto">${group.groupName}</span>
-                    <button class="btn btn-sm btn-warning ms-2 edit-group-btn" data-group-code="${group.groupCode}" data-group-name="${group.groupName}" data-group-desc="${group.groupDesc || ''}">
-                        Edit
+                    <button class="modern-btn edit-btn edit-group-btn ms-2" data-group-code="${group.groupCode}" data-group-name="${group.groupName}" data-group-desc="${group.groupDesc || ''}" data-branch-code="${group.branchCode || ''}">
+                        <i class="bi bi-pencil"></i> Edit
                     </button>
-                    <button class="btn btn-sm btn-danger ms-2 delete-group-btn" data-group-code="${group.groupCode}">
-                        Delete
+                    <button class="modern-btn delete-btn delete-group-btn ms-2" data-group-code="${group.groupCode}">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
-                    <button class="btn btn-sm btn-success ms-2 create-user-btn" data-group-code="${group.groupCode}" data-group-name="${group.groupName}">
-                        + Create User
+                    <button class="modern-btn success-btn create-user-btn ms-2" data-group-code="${group.groupCode}" data-group-name="${group.groupName}">
+                        <i class="bi bi-person-plus"></i> + Create User
                     </button>
-                    <button class="btn btn-sm btn-outline-primary ms-2 toggle-users" data-group-code="${group.groupCode}">
-                        <span class="plus-minus">+</span>
+                    <button class="modern-btn secondary-btn toggle-users ms-2" data-group-code="${group.groupCode}">
+                        <span class="plus-minus">▼</span>
                     </button>
                 </div>
                 <div class="users-list mt-2" style="display:none"></div>
@@ -103,9 +116,6 @@ function renderGroupsList(groups, $container) {
     $container.html(html);
 }
 
-// ===================
-// USERS LOGIC (CRUD)
-// ===================
 function loadUsers(groupCode, $usersList, $plusMinus) {
     $usersList.html('<em>Loading users...</em>').slideDown();
     $.ajax({
@@ -123,18 +133,18 @@ function loadUsers(groupCode, $usersList, $plusMinus) {
                         <li class="list-group-item py-1 d-flex align-items-center justify-content-between">
                             <span>${user.userCode} - ${user.name}</span>
                             <span>
-                                <button class="btn btn-sm btn-outline-secondary edit-user-btn"
+                                <button class="modern-btn edit-btn edit-user-btn"
                                     data-user-code="${user.userCode}"
                                     data-group-code="${groupCode}"
                                     data-name="${user.name || ''}"
                                     data-username="${user.username || ''}"
                                     data-is-active="${user.isActive ? 'true' : 'false'}">
-                                    Edit
+                                    <i class="bi bi-pencil"></i> Edit
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger delete-user-btn"
+                                <button class="modern-btn delete-btn delete-user-btn"
                                     data-user-code="${user.userCode}"
                                     data-group-code="${groupCode}">
-                                    Delete
+                                    <i class="bi bi-trash"></i> Delete
                                 </button>
                             </span>
                         </li>
@@ -143,7 +153,7 @@ function loadUsers(groupCode, $usersList, $plusMinus) {
                 $usersList.html(ul);
             }
             $usersList.data('loaded', true);
-            if ($plusMinus) $plusMinus.text('-');
+            if ($plusMinus) $plusMinus.text('▲');
         },
         error: function (xhr, status, error) {
             $usersList.html('<span class="text-danger">Error loading users.</span>');
@@ -152,9 +162,6 @@ function loadUsers(groupCode, $usersList, $plusMinus) {
     });
 }
 
-// ===================
-// USERNAME CHECK LOGIC
-// ===================
 function checkUsernameAvailable(usernameBase, $input, $msg) {
     if (!usernameBase) {
         $msg.text('');
@@ -195,16 +202,11 @@ function checkUsernameAvailable(usernameBase, $input, $msg) {
     });
 }
 
-// ===================
-// DOCUMENT READY - ALL EVENT HANDLERS
-// ===================
 $(document).ready(function () {
-    // Initial setup
     $('#rootDropdownButton').attr('disabled', true).text('Select root type first');
     $('#rootDropdownMenu').empty().append('<li><span class="dropdown-item disabled">Select root type first</span></li>');
     $('#groupsActionsContainer').empty();
 
-    // User Type Change
     $('input[name="userType"]').on('change', function () {
         var userType = $('input[name="userType"]:checked').val();
         if (userType === "center" || userType === "teacher") {
@@ -220,7 +222,6 @@ $(document).ready(function () {
         selectedRootCode = null;
     });
 
-    // Root selection (Dropdown)
     $('#rootDropdownMenu').on('click', '.root-item', function (e) {
         e.preventDefault();
         var rootCode = $(this).data('root-code');
@@ -229,29 +230,32 @@ $(document).ready(function () {
         selectedRootCode = rootCode;
 
         $('#groupsActionsContainer').html(
-            `<button class="btn btn-success" id="createGroupBtn">+ Create Group</button>`
+            `<button class="modern-btn success-btn" id="createGroupBtn"><i class="bi bi-plus-circle"></i> + Create Group</button>`
         );
 
         loadGroups(rootCode);
     });
 
-    // Create Group Modal Show
+    // Create Group Modal open
     $('#groupsActionsContainer').on('click', '#createGroupBtn', function () {
         if (!selectedRootCode) return;
         $('#createGroupRootCode').val(selectedRootCode);
         $('#createGroupName').val('');
         $('#createGroupDesc').val('');
+        let $branchSelect = $('#createGroupBranch');
+        loadBranchesForRoot(selectedRootCode, $branchSelect);
         var groupModal = new bootstrap.Modal(document.getElementById('createGroupModal'));
         groupModal.show();
     });
 
-    // Create Group Submit
+    // Create Group submit
     $('#createGroupForm').on('submit', function (e) {
         e.preventDefault();
         var groupName = $('#createGroupName').val();
         var groupDesc = $('#createGroupDesc').val();
         var rootCode = $('#createGroupRootCode').val();
-        var insertUser = window.loggedInUserCode || 1; // Set this correctly!
+        var branchCode = $('#createGroupBranch').val();
+        var insertUser = window.loggedInUserCode || 1;
         $.ajax({
             url: '/Security/CreateGroup',
             type: 'POST',
@@ -259,6 +263,7 @@ $(document).ready(function () {
                 groupName: groupName,
                 groupDesc: groupDesc,
                 rootCode: rootCode,
+                branchCode: branchCode,
                 insertUser: insertUser
             },
             success: function (res) {
@@ -277,28 +282,36 @@ $(document).ready(function () {
         });
     });
 
-    // Edit Group Modal Show
+    // Edit Group Modal open
     $('#groupsContainer').on('click', '.edit-group-btn', function () {
         $('#editGroupCode').val($(this).data('group-code'));
         $('#editGroupName').val($(this).data('group-name'));
         $('#editGroupDesc').val($(this).data('group-desc'));
+        let branchCode = $(this).data('branch-code');
+        let $branchSelect = $('#editGroupBranch');
+        loadBranchesForRoot(selectedRootCode, $branchSelect);
+        setTimeout(function () {
+            $branchSelect.val(branchCode || '');
+        }, 400);
         var editGroupModal = new bootstrap.Modal(document.getElementById('editGroupModal'));
         editGroupModal.show();
     });
 
-    // Edit Group Submit
+    // Edit Group submit
     $('#editGroupForm').on('submit', function (e) {
         e.preventDefault();
         var groupCode = $('#editGroupCode').val();
         var groupName = $('#editGroupName').val();
         var groupDesc = $('#editGroupDesc').val();
+        var branchCode = $('#editGroupBranch').val();
         $.ajax({
             url: '/Security/EditGroup',
             type: 'POST',
             data: {
                 groupCode: groupCode,
                 groupName: groupName,
-                groupDesc: groupDesc
+                groupDesc: groupDesc,
+                branchCode: branchCode
             },
             success: function (res) {
                 if (res.success) {
@@ -319,7 +332,7 @@ $(document).ready(function () {
     // Delete Group
     $('#groupsContainer').on('click', '.delete-group-btn', function () {
         var groupCode = $(this).data('group-code');
-        if (confirm('Are you sure you want to delete this group?')) {
+        if (confirm('Deleting the group means deleting all users in this group. Do you want to continue?')) {
             $.ajax({
                 url: '/Security/DeleteGroup',
                 type: 'POST',
@@ -339,7 +352,6 @@ $(document).ready(function () {
         }
     });
 
-    // Toggle users in a group
     $('#groupsContainer').on('click', '.toggle-users', function () {
         var $btn = $(this);
         var $usersList = $btn.closest('li').find('.users-list');
@@ -348,18 +360,17 @@ $(document).ready(function () {
 
         if ($usersList.is(':visible')) {
             $usersList.slideUp();
-            $plusMinus.text('+');
+            $plusMinus.text('▼');
         } else {
             if ($usersList.data('loaded')) {
                 $usersList.slideDown();
-                $plusMinus.text('-');
+                $plusMinus.text('▲');
                 return;
             }
             loadUsers(groupCode, $usersList, $plusMinus);
         }
     });
 
-    // Show Create User Modal
     $('#groupsContainer').on('click', '.create-user-btn', function () {
         var groupCode = $(this).data('group-code');
         $('#createUserGroupCode').val(groupCode);
@@ -375,7 +386,6 @@ $(document).ready(function () {
         createUserModal.show();
     });
 
-    // Username check
     $('#createUserUsername').on('blur', function () {
         var usernameBase = $(this).val().trim();
         var $input = $(this);
@@ -383,7 +393,6 @@ $(document).ready(function () {
         checkUsernameAvailable(usernameBase, $input, $msg);
     });
 
-    // Create User Submit
     $('#createUserForm').on('submit', function (e) {
         if (isUsernameTaken) {
             $('#usernameCheckMsg')
@@ -436,10 +445,10 @@ $(document).ready(function () {
         });
     });
 
-    // Show Edit User Modal
     $('body').on('click', '.edit-user-btn', function () {
         $('#editUserCode').val($(this).data('user-code'));
         $('#editUserName').val($(this).data('name'));
+        $('#editUserPassword').val('');
         $('#editUserIsActive').prop('checked', $(this).data('is-active') === true || $(this).data('is-active') === 'true');
         $('#resetPasswordBtn').data('user-code', $(this).data('user-code'));
         var editUserModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'))
@@ -447,11 +456,11 @@ $(document).ready(function () {
         editUserModal.show();
     });
 
-    // Edit User Submit
     $('#editUserForm').on('submit', function (e) {
         e.preventDefault();
         var userCode = $('#editUserCode').val();
         var name = $('#editUserName').val();
+        var password = $('#editUserPassword').val();
         var isActive = $('#editUserIsActive').is(':checked');
         $.ajax({
             url: '/Security/EditUser',
@@ -459,7 +468,8 @@ $(document).ready(function () {
             data: {
                 userCode: userCode,
                 name: name,
-                isActive: isActive
+                isActive: isActive,
+                password: password // pass password for change
             },
             success: function (result) {
                 var $toggleBtn = $(`.toggle-users[data-group-code]`).filter(function () {
@@ -480,7 +490,6 @@ $(document).ready(function () {
         });
     });
 
-    // Reset Password
     $('body').on('click', '.reset-password-btn', function () {
         var userCode = $(this).data('user-code');
         if (confirm('Are you sure you want to reset the password for this user?')) {
@@ -499,7 +508,6 @@ $(document).ready(function () {
         }
     });
 
-    // Delete User (Deactivate)
     $('body').on('click', '.delete-user-btn', function () {
         var userCode = $(this).data('user-code');
         var groupCode = $(this).data('group-code');
@@ -523,5 +531,4 @@ $(document).ready(function () {
             });
         }
     });
-
 });

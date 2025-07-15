@@ -35,6 +35,46 @@
             direction: rtl;
             text-align: right;
         }
+
+        .qr-code-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 90px;
+            min-height: 90px;
+            background: #fafbff;
+            border-radius: 12px;
+            box-shadow: 0 1px 8px #a29bfe22;
+            padding: 5px 2px;
+        }
+
+        .modal-content {
+            border-radius: var(--border-radius) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .modal-header {
+            background: var(--primary-gradient) !important;
+            color: #fff !important;
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        }
+
+        .modal-title {
+            font-weight: 700 !important;
+        }
+
+        .modal-footer {
+            border-top: none;
+        }
+
+        .table-card {
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem 1.2rem;
+            margin: 2.5rem auto;
+            max-width: 1200px;
+        }
     </style>
 </head>
 <body>
@@ -88,43 +128,44 @@
          data-success="@Localizer["Success"]"
          data-loading="@Localizer["Loading"]"></div>
 
-    <div class="container mt-4">
-        <!-- Root Filter -->
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label for="filterRootCode" class="form-label" id="filterRootLabel"></label>
-                <select id="filterRootCode" class="form-select">
-                    <!-- JS will fill options -->
-                </select>
-            </div>
-        </div>
+    <!-- Header Block -->
+    <div class="page-header">
+        <h2 id="headerTitle">@Localizer["Title_ItemManagement"]</h2>
+        <p>@Localizer["FreeItemsLabel"]: <span id="freeItemCount">0</span></p>
+    </div>
 
-        <!-- Header and Counter Row -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div id="freeItemCounter" class="alert alert-info m-0">
-                <span id="freeItemsLabel"></span>: <span id="freeItemCount">0</span>
-            </div>
-            <div>
-                <button id="downloadLastGeneratedBtn" type="button" class="btn btn-outline-success px-4 py-2 me-2" disabled></button>
-                <button id="addItemBtn" type="button" class="btn btn-outline-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addItemModal"></button>
+    <div class="table-card">
+        <!-- Root Filter -->
+        <div class="filter-panel mb-4">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <label for="filterRootCode" class="form-label fw-bold" id="filterRootLabel"></label>
+                    <select id="filterRootCode" class="form-select"></select>
+                </div>
+                <div class="col-md-8 d-flex justify-content-end gap-2">
+                    <button id="downloadLastGeneratedBtn" type="button" class="btn-table add" disabled><i class="fas fa-download"></i> <span></span></button>
+                    <button id="addItemBtn" type="button" class="btn-table add" data-bs-toggle="modal" data-bs-target="#addItemModal"><i class="fas fa-plus"></i> <span></span></button>
+                </div>
             </div>
         </div>
 
         <!-- Items Table -->
-        <table id="itemsTable" class="table table-bordered table-striped table-hover">
-            <thead>
-                <tr>
-                    <th id="itemCodeHeader"></th>
-                    <th id="studentNameHeader"></th>
-                    <th id="itemTypeHeader"></th>
-                    <th id="itemKeyHeader"></th>
-                    <th id="actionsHeader"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- AJAX will load rows here -->
-            </tbody>
-        </table>
+        <div class="gradient-table-container mb-4">
+            <table id="itemsTable" class="gradient-table">
+                <thead>
+                    <tr>
+                        <th id="itemCodeHeader"></th>
+                        <th id="studentNameHeader"></th>
+                        <th id="itemTypeHeader"></th>
+                        <th id="itemKeyHeader"></th>
+                        <th id="actionsHeader"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- AJAX will load rows here -->
+                </tbody>
+            </table>
+        </div>
         <!-- Paging Controls -->
         <nav id="pagination" aria-label="Page navigation"></nav>
     </div>
@@ -153,8 +194,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="addItemsBtn" class="btn btn-primary"></button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn"></button>
+                        <button type="submit" id="addItemsBtn" class="btn-table add" style="width: 140px;"><i class="fas fa-plus"></i> <span></span></button>
+                        <button type="button" class="btn-table delete" data-bs-dismiss="modal" id="cancelBtn" style="width: 120px;"><i class="fas fa-times"></i> <span></span></button>
                     </div>
                 </form>
             </div>
@@ -178,8 +219,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="saveChangesBtn" class="btn btn-primary"></button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn2"></button>
+                        <button type="submit" id="saveChangesBtn" class="btn-table edit" style="width: 150px;"><i class="fas fa-save"></i> <span></span></button>
+                        <button type="button" class="btn-table delete" data-bs-dismiss="modal" id="cancelBtn2" style="width: 120px;"><i class="fas fa-times"></i> <span></span></button>
                     </div>
                 </form>
             </div>
@@ -197,7 +238,7 @@
                 <div class="modal-body d-flex flex-column align-items-center">
                     <div id="qrCodeContainer"></div>
                     <div class="mt-3 text-break" id="qrCodeValue"></div>
-                    <button id="downloadQRBtn" class="btn btn-success mt-3"></button>
+                    <button id="downloadQRBtn" class="btn-table add mt-3"><i class="fas fa-download"></i> <span></span></button>
                 </div>
             </div>
         </div>

@@ -27,15 +27,17 @@
      data-delete-btn="@Localizer["DeleteBtn"]"
      data-no-educational-year="@Localizer["NoEducationalYear"]"></div>
 
+<!-- Gradient and Centered Header -->
+<div class="questions-header" style="margin-bottom: 0;">
+    <h2>
+        <i class="fas fa-chalkboard-teacher"></i>
+        @Localizer["Title"]
+    </h2>
+</div>
+
 <div class="container mt-4">
-    <div class="d-flex align-items-center mb-4">
-        <i class="fas fa-chalkboard-teacher fa-2x me-2"></i>
-        <h2 class="mb-0">@Localizer["Title"]</h2>
-    </div>
-    <div class="user-info mb-3" id="user-info"></div>
     <div id="teachers-section">
         <div class="d-flex align-items-center mb-2">
-            <h5 class="mb-0">@Localizer["Teachers"]</h5>
             <button class="btn btn-primary btn-sm ms-2" id="openAddTeacher">@Localizer["AddTeacherBtn"]</button>
         </div>
         <div id="teachers-list"></div>
@@ -146,6 +148,57 @@
         </div>
     </div>
 </div>
+
+<!-- Gradient header style -->
+<style>
+    :root {
+        --primary-gradient-horizontal: linear-gradient(90deg, #6c5ce7 0%, #0984e3 100%);
+        --border-radius-lg: 28px;
+        --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+    }
+
+    .questions-header {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 2.2rem;
+        padding: 2rem 0 1.2rem 0;
+        background: transparent;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid rgba(108,92,231,0.11);
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .questions-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            letter-spacing: -.01em;
+            background: var(--primary-gradient-horizontal);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .questions-header i {
+            margin-right: 12px;
+            color: #4f8cff;
+        }
+    @@media (max-width: 900px) {
+        .questions-header h2
+
+    {
+        font-size: 1.6rem;
+    }
+
+    }
+</style>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -1,8 +1,9 @@
-﻿// Localized JS variables are expected to be injected from the Razor view
-console.log("SubjectManagement.js loaded");
+﻿console.log("SubjectManagement.js loaded");
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOMContentLoaded fired, JS running!");
+
+    // Modal & Form Elements
     const modal = document.getElementById('addSubjectModal');
     const openBtn = document.getElementById('add-subject-btn');
     const closeBtn = document.getElementById('closeModal');
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalTitle = document.getElementById('modalTitle');
     const subjectCodeInput = document.getElementById('subjectCode');
 
-    // Add Teacher to Subject Modal
+    // Add Teacher to Subject Modal & Form
     const addTeacherModal = document.getElementById('addTeacherToSubjectModal');
     const closeAddTeacherModalBtn = document.getElementById('closeAddTeacherToSubjectModal');
     const addTeacherForm = document.getElementById('addTeacherToSubjectForm');
@@ -30,13 +31,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const addSubjectSubmitBtn = document.querySelector('#addSubjectForm button[type="submit"]');
     const addTeacherSubmitBtn = document.querySelector('#addTeacherToSubjectForm button[type="submit"]');
 
+    // You can change this to match your button text in resources or HTML
+    const saveChangesText = "Save Changes";
+    const addSubjectText = "Add Subject";
+
     let editMode = false;
     let selectedSubjectData = {};
 
     // Helper to reset submit buttons
     function resetSubmitButton(btn, defaultText) {
         if (btn) {
-            btn.textContent = defaultText || processingText;
+            btn.textContent = defaultText || saveChangesText;
             btn.disabled = false;
         }
     }
@@ -48,7 +53,8 @@ document.addEventListener('DOMContentLoaded', function () {
         editMode = isEdit;
         modalTitle.textContent = isEdit ? editTitle : addTitle;
         subjectCodeInput.value = '';
-        resetSubmitButton(addSubjectSubmitBtn, processingText);
+        // Show correct text on button depending on mode
+        resetSubmitButton(addSubjectSubmitBtn, isEdit ? saveChangesText : addSubjectText);
         if (!isEdit) {
             loadYears();
         } else if (subject) {
@@ -61,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function closeModalFunc() {
         modal.style.display = "none";
         editMode = false;
-        resetSubmitButton(addSubjectSubmitBtn, processingText);
+        resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
     }
     if (openBtn) openBtn.onclick = () => openModal(false);
     if (closeBtn) closeBtn.onclick = closeModalFunc;
@@ -108,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const subjectCode = subjectCodeInput.value;
 
         if (!subjectName || !yearCode) {
-            resetSubmitButton(addSubjectSubmitBtn, processingText);
+            resetSubmitButton(addSubjectSubmitBtn, editMode ? saveChangesText : addSubjectText);
             errorDiv.textContent = pleaseFillFieldsText;
             return;
         }
@@ -125,10 +131,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(editedSubject => {
                     updateSubjectRow(editedSubject);
+                    // Reset button to Save Changes after edit finishes
+                    resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
                     closeModalFunc();
                 })
                 .catch(err => {
-                    resetSubmitButton(addSubjectSubmitBtn, processingText);
+                    // Reset button if error
+                    resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
                     errorDiv.textContent = couldNotEditText + ": " + (err.message || "Unknown error");
                 });
         } else {
@@ -143,10 +152,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(newSubject => {
                     addSubjectRow(newSubject);
+                    // Reset button to Add Subject after add finishes
+                    resetSubmitButton(addSubjectSubmitBtn, addSubjectText);
                     closeModalFunc();
                 })
                 .catch(err => {
-                    resetSubmitButton(addSubjectSubmitBtn, processingText);
+                    // Reset button if error
+                    resetSubmitButton(addSubjectSubmitBtn, addSubjectText);
                     errorDiv.textContent = couldNotAddText + ": " + (err.message || "Unknown error");
                 });
         }
@@ -188,16 +200,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function subjectRowHTML(subject) {
         return `
-            <td class="subject-name-cell">${subject.subjectName ?? ''}</td>
-            <td>${subject.isPrimary ? yesText : noText}</td>
-            <td>${subject.yearName ?? ''}</td>
-            <td>
-                <button class="action-btn edit-btn" data-code="${subject.subjectCode}">${editTitle}</button>
-                <button class="action-btn delete-btn" data-code="${subject.subjectCode}">${closeText}</button>
-                <button class="action-btn add-teacher-btn" data-code="${subject.subjectCode}">${addTeacherText}</button>
-                <button class="action-btn show-teachers-btn" data-code="${subject.subjectCode}">${showTeachersText}</button>
-            </td>
-        `;
+        <td class="subject-name-cell">${subject.subjectName ?? ''}</td>
+        <td>${subject.isPrimary ? yesText : noText}</td>
+        <td>${subject.yearName ?? ''}</td>
+        <td style="text-align:center;">
+            <div class="subject-btn-row">
+                <button class="modern-btn edit-btn" data-code="${subject.subjectCode}">${editTitle}</button>
+                <button class="modern-btn delete-btn" data-code="${subject.subjectCode}">${closeText}</button>
+                <button class="modern-btn success-btn add-teacher-btn" data-code="${subject.subjectCode}">${addTeacherText}</button>
+                <button class="modern-btn secondary-btn show-teachers-btn" data-code="${subject.subjectCode}">${showTeachersText}</button>
+            </div>
+        </td>
+    `;
     }
 
     function addActionListeners(tr, subject) {
@@ -228,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (addTeacherBtn) {
             addTeacherBtn.onclick = function () {
-                // Store subject data for modal submission
                 selectedSubjectData = {
                     SubjectCode: tr.getAttribute('data-subject-code'),
                     SubjectName: tr.querySelector('.subject-name-cell').textContent,
@@ -236,13 +249,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     EduYearCode: tr.getAttribute('data-eduyear-code')
                 };
 
-                // Fill subject info in modal (read-only or hidden)
                 addTeacherSubjectName.value = selectedSubjectData.SubjectName;
                 addTeacherYearCode.value = selectedSubjectData.YearCode;
                 addTeacherEduYearCode.value = selectedSubjectData.EduYearCode;
                 resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
 
-                // Load teachers
                 fetch('/Subject/GetTeachersByRoot')
                     .then(resp => resp.json())
                     .then(teachers => {
@@ -252,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                     });
 
-                // Load branches
                 fetch('/Subject/GetBranchesByRoot')
                     .then(resp => resp.json())
                     .then(branches => {
@@ -275,9 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!trTeachers) return;
                 const td = trTeachers.querySelector('.teachers-list-td');
 
-                // Toggle display
                 if (trTeachers.style.display === "none" || trTeachers.style.display === "") {
-                    // Fetch and display teachers
                     td.innerHTML = `<div class="text-muted">${processingText}</div>`;
                     fetch('/Subject/GetTeachersForSubject?subjectCode=' + subjectCode)
                         .then(resp => resp.json())
@@ -341,7 +349,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     tr.innerHTML = subjectRowHTML(subject);
                     tbody.appendChild(tr);
 
-                    // Insert the hidden row for teachers after this row
                     const trTeachers = document.createElement('tr');
                     trTeachers.classList.add('teachers-row');
                     trTeachers.setAttribute('data-subject-code', subject.subjectCode);

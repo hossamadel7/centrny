@@ -9,8 +9,8 @@ function setItemLabels() {
     $('#filterRootLabel').text(getJsString('filter-by-root-label'));
     $('#filterRootCode').html(`<option value="">${getJsString('all-roots-option')}</option>`);
     $('#freeItemsLabel').text(getJsString('free-items-label'));
-    $('#downloadLastGeneratedBtn').text(getJsString('download-last-generated-btn'));
-    $('#addItemBtn').text(getJsString('add-item-btn'));
+    $('#downloadLastGeneratedBtn span').text(getJsString('download-last-generated-btn'));
+    $('#addItemBtn span').text(getJsString('add-item-btn'));
     $('#itemCodeHeader').text(getJsString('table-item-code-header'));
     $('#studentNameHeader').text(getJsString('table-student-name-header'));
     $('#itemTypeHeader').text(getJsString('table-item-type-header'));
@@ -21,14 +21,14 @@ function setItemLabels() {
     $('#itemTypeLabelAdd').text(getJsString('item-type-label'));
     $('#numberOfItemsLabel').text(getJsString('record-count-label'));
     $('#RecordCount').attr('placeholder', getJsString('record-count-placeholder'));
-    $('#addItemsBtn').text(getJsString('add-btn'));
-    $('#cancelBtn').text(getJsString('cancel-btn'));
+    $('#addItemsBtn span').text(getJsString('add-btn'));
+    $('#cancelBtn span').text(getJsString('cancel-btn'));
     $('#editItemModalLabel').text(getJsString('edit-item-title'));
     $('#studentCodeLabel').text(getJsString('student-code-label'));
-    $('#saveChangesBtn').text(getJsString('save-changes-btn'));
-    $('#cancelBtn2').text(getJsString('cancel-btn'));
+    $('#saveChangesBtn span').text(getJsString('save-changes-btn'));
+    $('#cancelBtn2 span').text(getJsString('cancel-btn'));
     $('#qrModalLabel').text(getJsString('qr-modal-title'));
-    $('#downloadQRBtn').text(getJsString('download-qr-btn'));
+    $('#downloadQRBtn span').text(getJsString('download-qr-btn'));
 }
 
 $(document).ready(function () {
@@ -159,9 +159,9 @@ $(document).ready(function () {
                             <div id="${qrId}" class="qr-code-cell"></div>
                         </td>
                         <td>
-                          <button class="btn btn-sm btn-primary edit-btn" data-itemcode="${item.itemCode}">${getJsString('edit-btn')}</button>
-                          <button class="btn btn-sm btn-danger delete-btn" data-itemcode="${item.itemCode}">${getJsString('delete-btn')}</button>
-                          <button class="btn btn-sm btn-success download-qr-btn" data-qrid="${qrId}" data-itemkey="${item.itemKey}">${getJsString('download-qr-action-btn')}</button>
+                          <button class="btn-table edit edit-btn" data-itemcode="${item.itemCode}"><i class="fas fa-pencil"></i> ${getJsString('edit-btn')}</button>
+                          <button class="btn-table delete delete-btn" data-itemcode="${item.itemCode}"><i class="fas fa-trash"></i> ${getJsString('delete-btn')}</button>
+                          <button class="btn-table add download-qr-btn" data-qrid="${qrId}" data-itemkey="${item.itemKey}"><i class="fas fa-download"></i> ${getJsString('download-qr-action-btn')}</button>
                         </td>
                     </tr>`;
                 });
@@ -267,15 +267,17 @@ $(document).ready(function () {
         loadItemTypes();
         $('#rootCode').closest('.mb-3').show();
         var $btn = $('#addItemsBtn');
-        $btn.prop('disabled', false).text(getJsString('add-btn'));
+        $btn.prop('disabled', false);
+        $btn.find('span').text(getJsString('add-btn'));
     });
 
     $('#insertItemsForm').submit(function (e) {
         e.preventDefault();
 
         var $btn = $('#addItemsBtn');
-        var originalText = getJsString('add-btn');
-        $btn.prop('disabled', true).text(getJsString('processing'));
+        var originalText = $btn.find('span').text();
+        $btn.prop('disabled', true);
+        $btn.find('span').text(getJsString('processing'));
 
         const dataToSend = {
             rootCode: parseInt($('#rootCode').val()),
@@ -286,7 +288,8 @@ $(document).ready(function () {
 
         if (!dataToSend.rootCode || !dataToSend.insertUserCode || !dataToSend.itemTypeCode || !dataToSend.recordCount) {
             showAlert(getJsString('please-fill-all-fields'));
-            $btn.prop('disabled', false).text(originalText);
+            $btn.prop('disabled', false);
+            $btn.find('span').text(originalText);
             return;
         }
 
@@ -309,7 +312,8 @@ $(document).ready(function () {
                 });
                 loadGlobalFreeItemCount();
                 $('#insertItemsForm')[0].reset();
-                $btn.prop('disabled', false).text(originalText);
+                $btn.prop('disabled', false);
+                $btn.find('span').text(originalText);
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
                 if (modal) modal.hide();
                 fixBodyScrolling();
@@ -318,7 +322,8 @@ $(document).ready(function () {
                 showAlert(getJsString('error') + ': ' + (xhr.responseJSON?.error || xhr.statusText));
                 lastGeneratedItems = [];
                 $('#downloadLastGeneratedBtn').prop('disabled', true);
-                $btn.prop('disabled', false).text(originalText);
+                $btn.prop('disabled', false);
+                $btn.find('span').text(originalText);
                 fixBodyScrolling();
             }
         });

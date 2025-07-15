@@ -827,8 +827,8 @@ namespace centrny.Controllers
                                 RootCode = reservationRootCode,
                                 TeacherCode = reservation.TeacherCode,
                                 SubjectCode = 0, // Set as needed
-                                BranchCode = reservation.BranchCode,
-                                HallCode = reservation.HallCode,
+                                BranchCode = (int)reservation.BranchCode,
+                                HallCode = (int)reservation.HallCode,
                                 EduYearCode = 0, // Set as needed
                                 YearCode = null,
                                 NoOfStudents = 0,

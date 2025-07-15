@@ -20,13 +20,13 @@ function setBranchLabels() {
     $('#label-hall-name').text(getJsString('labelHallName'));
     $('#label-hall-capacity').text(getJsString('labelHallCapacity'));
     $('#button-cancel').text(getJsString('buttonCancel'));
-    $('#button-add-hall').text(getJsString('buttonAddHall'));
+    $('#button-add-hall').html('<i class="fas fa-plus"></i> ' + getJsString('buttonAddHall'));
 
     $('#editHallModalLabel').text(getJsString('modalTitleEditHall'));
     $('#label-hall-name-edit').text(getJsString('labelHallName'));
     $('#label-hall-capacity-edit').text(getJsString('labelHallCapacity'));
     $('#button-cancel-edit').text(getJsString('buttonCancel'));
-    $('#button-save-changes').text(getJsString('buttonSaveChanges'));
+    $('#button-save-changes').html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
 }
 
 $(document).ready(function () {
@@ -112,15 +112,15 @@ async function loadCentersAndBranches(rootCode) {
                                 ${hall.hallName} <span class="badge bg-secondary">${hall.hallCapacity}</span>
                             </span>
                             <span class="hall-actions">
-                                <button class="btn btn-sm edit-hall-btn" 
+                                <button class="btn-table edit edit-hall-btn"
                                     data-hall-code="${hall.hallCode}" 
                                     data-hall-name="${hall.hallName}" 
                                     data-hall-capacity="${hall.hallCapacity}">
-                                    ${getJsString('buttonEditHall')}
+                                    <i class="fas fa-pencil"></i> ${getJsString('buttonEditHall')}
                                 </button>
-                                <button class="btn btn-sm delete-hall-btn ms-2" 
+                                <button class="btn-table delete delete-hall-btn ms-2"
                                     data-hall-code="${hall.hallCode}">
-                                    ${getJsString('buttonDeleteHall')}
+                                    <i class="fas fa-trash"></i> ${getJsString('buttonDeleteHall')}
                                 </button>
                             </span>
                         </li>`
@@ -134,10 +134,10 @@ async function loadCentersAndBranches(rootCode) {
                 <li class="list-group-item d-flex flex-column align-items-start">
                     <div class="d-flex w-100 justify-content-between align-items-center">
                         <span>${branch.branchName}</span>
-                        <button class="btn btn-sm btn-outline-primary ms-2 add-hall-btn"
+                        <button class="btn-table add add-hall-btn ms-2"
                             data-branch-code="${branch.branchCode}"
                             data-root-code="${rootCode}">
-                            ${getJsString('buttonAddHall')}
+                            <i class="fas fa-plus"></i> ${getJsString('buttonAddHall')}
                         </button>
                     </div>
                     ${hallHtml}
@@ -173,7 +173,7 @@ function openAddHallModal(rootCode, branchCode) {
     $('#HallName').val('');
     $('#HallCapacity').val('');
     const submitBtn = $('#addHallForm button[type="submit"]');
-    submitBtn.text(getJsString('buttonAddHall'));
+    submitBtn.html('<i class="fas fa-plus"></i> ' + getJsString('buttonAddHall'));
     submitBtn.prop('disabled', false);
     var myModal = new bootstrap.Modal(document.getElementById('addHallModal'));
     myModal.show();
@@ -184,7 +184,7 @@ function openEditHallModal(btn) {
     $('#editHallName').val($(btn).attr('data-hall-name'));
     $('#editHallCapacity').val($(btn).attr('data-hall-capacity'));
     const submitBtn = $('#editHallForm button[type="submit"]');
-    submitBtn.text(getJsString('buttonSaveChanges'));
+    submitBtn.html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
     submitBtn.prop('disabled', false);
     var myModal = new bootstrap.Modal(document.getElementById('editHallModal'));
     myModal.show();
@@ -202,8 +202,8 @@ async function submitAddHall() {
     }
 
     const submitBtn = $('#addHallForm button[type="submit"]');
-    const originalText = getJsString('buttonAddHall');
-    submitBtn.prop('disabled', true).text('...');
+    const originalText = '<i class="fas fa-plus"></i> ' + getJsString('buttonAddHall');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
     try {
         const res = await fetch('/Branch/AddHall', {
@@ -226,7 +226,7 @@ async function submitAddHall() {
     } catch (err) {
         alert(getJsString('alertHallAddError'));
     } finally {
-        submitBtn.prop('disabled', false).text(originalText);
+        submitBtn.prop('disabled', false).html(originalText);
     }
 }
 
@@ -236,8 +236,8 @@ async function submitEditHall() {
     const hallCapacity = parseInt($('#editHallCapacity').val(), 10);
 
     const submitBtn = $('#editHallForm button[type="submit"]');
-    const originalText = getJsString('buttonSaveChanges');
-    submitBtn.prop('disabled', true).text('...');
+    const originalText = '<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
     try {
         const res = await fetch('/Branch/EditHall', {
@@ -260,7 +260,7 @@ async function submitEditHall() {
     } catch (err) {
         alert(getJsString('alertHallUpdateError'));
     } finally {
-        submitBtn.prop('disabled', false).text(originalText);
+        submitBtn.prop('disabled', false).html(originalText);
     }
 }
 

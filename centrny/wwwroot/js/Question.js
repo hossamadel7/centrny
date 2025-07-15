@@ -117,7 +117,7 @@ $(document).ready(function () {
             subjectYearPairs.forEach(p => {
                 html += `<option value="${p.subjectCode}|${p.yearCode}">${p.subjectName} (${p.yearName})</option>`;
             });
-            $('#subjectYearFilter').html(html);
+            $('#subjectYearFilter').html(html).addClass('styled-select');
 
             let sticky = getStickyFilter();
             if (sticky && sticky.subjectCode && sticky.yearCode) {
@@ -160,6 +160,24 @@ $(document).ready(function () {
         if (raw) return JSON.parse(raw);
         return null;
     }
+
+    // ------ MODAL SYSTEM: Universal Show/Hide ------
+    function showModal(modalId) {
+        $(modalId).css('display', 'flex');
+    }
+    function hideModal(modalId) {
+        $(modalId).css('display', 'none');
+    }
+    $(document).on('keydown', function (e) {
+        if (e.key === "Escape") {
+            $('.modal-background').css('display', 'none');
+        }
+    });
+    $('.modal-background').on('click', function (e) {
+        if (e.target === this) {
+            $(this).css('display', 'none');
+        }
+    });
 
     // ------ ADD CHAPTER LOGIC ------
     $('#add-chapter-btn').on('click', function () {
@@ -218,7 +236,7 @@ $(document).ready(function () {
                     $('#chapter-yearcode').val('');
                 }
             }
-            $('#chapter-modal').fadeIn(180);
+            showModal('#chapter-modal');
         });
     });
 
@@ -268,12 +286,12 @@ $(document).ready(function () {
         loadChapterSubjects(teacherCode, eduYearCode);
     });
     $('#cancel-chapter-btn').on('click', function () {
-        $('#chapter-modal').fadeOut(120);
+        hideModal('#chapter-modal');
         $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
     });
     $('#chapter-modal').on('click', function (e) {
         if (e.target === this) {
-            $('#chapter-modal').fadeOut(120);
+            hideModal('#chapter-modal');
             $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
         }
     });
@@ -313,7 +331,7 @@ $(document).ready(function () {
                 if (result.success) {
                     $('#chapter-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
-                        $('#chapter-modal').fadeOut(120);
+                        hideModal('#chapter-modal');
                         $('#save-chapter-btn').text(getJsString('addChapterBtn')).prop('disabled', false);
                         loadChapters();
                     }, 700);
@@ -347,15 +365,15 @@ $(document).ready(function () {
         $('#lesson-eduyearcode').val($(this).data('eduyearcode'));
         $('#lesson-chaptercode').val($(this).data('chaptercode'));
         $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
-        $('#lesson-modal').fadeIn(180);
+        showModal('#lesson-modal');
     });
     $('#cancel-lesson-btn').on('click', function () {
-        $('#lesson-modal').fadeOut(120);
+        hideModal('#lesson-modal');
         $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
     });
     $('#lesson-modal').on('click', function (e) {
         if (e.target === this) {
-            $('#lesson-modal').fadeOut(120);
+            hideModal('#lesson-modal');
             $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
         }
     });
@@ -386,7 +404,7 @@ $(document).ready(function () {
                 if (result.success) {
                     $('#lesson-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
-                        $('#lesson-modal').fadeOut(100);
+                        hideModal('#lesson-modal');
                         $('#save-lesson-btn').text(getJsString('addLessonBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 700);
@@ -478,14 +496,14 @@ $(document).ready(function () {
                     html = `<div style="padding:32px;text-align:center;color:#888;">${getJsString('noChapters')}</div>`;
                 }
                 data.forEach(function (item, idx) {
-                    let chapterBlockAddLessonBtn = `<button class="modern-btn add-lesson-btn"
+                    let chapterBlockAddLessonBtn = `<button class="btn-table add add-lesson-btn"
                         data-rootcode="${item.rootCode || ''}"
                         data-chaptercode="${item.chapterCode || ''}"
                         data-yearcode="${item.yearCode || ''}"
                         data-eduyearcode="${item.eduYearCode || ''}"
                         data-teachercode="${item.teacherCode || ''}"
                         data-subjectcode="${item.subjectCode || ''}">
-                        ${getJsString('addLessonBtn')}
+                        <i class="fas fa-plus"></i> ${getJsString('addLessonBtn')}
                     </button>`;
 
                     html += `<div class="chapter-block">
@@ -501,8 +519,8 @@ $(document).ready(function () {
                             html += `<div class="lesson-block" data-lesson="${lesson.lessonCode}">
                                 <div class="lesson-header">
                                     <span class="lesson-title"><i class="fa-solid fa-book"></i> ${lesson.lessonName}</span>
-                                    <button class="styled-btn add-question-btn" data-lesson="${lesson.lessonCode}" data-lessonname="${lesson.lessonName}">
-                                        <i class="fa-solid fa-plus"></i> ${getJsString('addQuestionBtn')}
+                                    <button class="btn-table add add-question-btn" data-lesson="${lesson.lessonCode}" data-lessonname="${lesson.lessonName}">
+                                        <i class="fas fa-plus"></i> ${getJsString('addQuestionBtn')}
                                     </button>
                                 </div>
                                 <div class="questions-list" id="questions-list-${lesson.lessonCode}">`;
@@ -512,14 +530,18 @@ $(document).ready(function () {
                                     html += `<div class="question-row" data-question="${q.questionCode}">
                                         <span class="question-content">${q.questionContent}</span>
                                         <div class="question-actions">
-                                            <button class="styled-btn show-answers-btn" data-question="${q.questionCode}">
-                                                <i class="fa-solid fa-chevron-down"></i> ${getJsString('showAnswersBtn')}
+                                            <button class="btn-table stats show-answers-btn" data-question="${q.questionCode}">
+                                                <i class="fas fa-chevron-down"></i> ${getJsString('showAnswersBtn')}
                                             </button>
-                                            <button class="styled-btn add-answers-btn" data-question="${q.questionCode}" data-questioncontent="${q.questionContent}">
-                                                <i class="fa-solid fa-plus"></i> ${getJsString('addAnswersBtn')}
+                                            <button class="btn-table add add-answers-btn" data-question="${q.questionCode}" data-questioncontent="${q.questionContent}">
+                                                <i class="fas fa-plus"></i> ${getJsString('addAnswersBtn')}
                                             </button>
-                                            <button class="icon-btn edit-question-btn" data-question='${JSON.stringify(q)}'><i class="fa-solid fa-edit"></i></button>
-                                            <button class="icon-btn delete-question-btn" data-question="${q.questionCode}"><i class="fa-solid fa-trash"></i></button>
+                                            <button class="btn-table edit edit-question-btn" data-question='${JSON.stringify(q)}'>
+                                                <i class="fas fa-pencil"></i><span style="display:none;">${getJsString('editBtn')}</span>
+                                            </button>
+                                            <button class="btn-table delete delete-question-btn" data-question="${q.questionCode}">
+                                                <i class="fas fa-trash"></i><span style="display:none;">${getJsString('deleteBtn')}</span>
+                                            </button>
                                         </div>
                                         <div class="answers-list" id="answers-list-${q.questionCode}" style="display:none;"></div>
                                     </div>`;
@@ -588,7 +610,7 @@ $(document).ready(function () {
         $('#question-modal-title').text(getJsString('addQuestionBtn') + ' "' + lessonName + '"');
         $('#question-message').text('');
         $('#save-question-btn').text(getJsString('addQuestionBtn')).prop('disabled', false);
-        $('#question-modal').fadeIn(180);
+        showModal('#question-modal');
     });
 
     // Show modal for edit question
@@ -603,17 +625,17 @@ $(document).ready(function () {
         $('#question-modal-title').text(getJsString('editBtn'));
         $('#question-message').text('');
         $('#save-question-btn').text(getJsString('editBtn')).prop('disabled', false);
-        $('#question-modal').fadeIn(180);
+        showModal('#question-modal');
     });
 
     // Hide question modal
     $('#cancel-question-btn').on('click', function () {
-        $('#question-modal').fadeOut(150);
+        hideModal('#question-modal');
         $('#save-question-btn').text(getJsString('addQuestionBtn')).prop('disabled', false);
     });
     $('#question-modal').on('click', function (e) {
         if (e.target === this) {
-            $('#question-modal').fadeOut(150);
+            hideModal('#question-modal');
             $('#save-question-btn').text(getJsString('addQuestionBtn')).prop('disabled', false);
         }
     });
@@ -649,7 +671,7 @@ $(document).ready(function () {
                 if (result.success) {
                     $('#question-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
-                        $('#question-modal').fadeOut(100);
+                        hideModal('#question-modal');
                         $('#save-question-btn').text(isEdit ? getJsString('editBtn') : getJsString('addQuestionBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
@@ -717,8 +739,8 @@ $(document).ready(function () {
                                         ${ans.isTrue ? '✔️' : '❌'}
                                     </span>
                                     <div class="answer-actions">
-                                        <button class="icon-btn edit-answer-btn" data-answer='${JSON.stringify(ans)}'><i class="fa-solid fa-edit"></i></button>
-                                        <button class="icon-btn delete-answer-btn" data-answer="${ans.answerCode}"><i class="fa-solid fa-trash"></i></button>
+                                        <button class="btn-table edit edit-answer-btn" data-answer='${JSON.stringify(ans)}'><i class="fas fa-pencil"></i><span style="display:none;">${getJsString('editBtn')}</span></button>
+                                        <button class="btn-table delete delete-answer-btn" data-answer="${ans.answerCode}"><i class="fas fa-trash"></i><span style="display:none;">${getJsString('deleteBtn')}</span></button>
                                     </div>
                                 </div>
                             `;
@@ -747,17 +769,17 @@ $(document).ready(function () {
         $('#answers-modal-title').text(getJsString('addAnswersBtn') + ': "' + questionContent + '"');
         $('#answers-message').text('');
         $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
-        $('#answers-modal').fadeIn(180);
+        showModal('#answers-modal');
     });
 
     // Hide answers modal
     $('#cancel-answers-btn').on('click', function () {
-        $('#answers-modal').fadeOut(150);
+        hideModal('#answers-modal');
         $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
     });
     $('#answers-modal').on('click', function (e) {
         if (e.target === this) {
-            $('#answers-modal').fadeOut(150);
+            hideModal('#answers-modal');
             $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
         }
     });
@@ -834,7 +856,7 @@ $(document).ready(function () {
                 if (result.success) {
                     $('#answers-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
-                        $('#answers-modal').fadeOut(100);
+                        hideModal('#answers-modal');
                         $('#save-answers-btn').text(getJsString('addAnswersBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);
@@ -863,17 +885,17 @@ $(document).ready(function () {
         $('#edit-answer-istrue').prop('checked', ans.isTrue);
         $('#edit-answer-message').text('');
         $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
-        $('#edit-answer-modal').fadeIn(180);
+        showModal('#edit-answer-modal');
     });
 
     // Hide edit answer modal
     $('#cancel-edit-answer-btn').on('click', function () {
-        $('#edit-answer-modal').fadeOut(150);
+        hideModal('#edit-answer-modal');
         $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
     });
     $('#edit-answer-modal').on('click', function (e) {
         if (e.target === this) {
-            $('#edit-answer-modal').fadeOut(150);
+            hideModal('#edit-answer-modal');
             $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
         }
     });
@@ -906,7 +928,7 @@ $(document).ready(function () {
                 if (result.success) {
                     $('#edit-answer-message').css('color', '#27ae60').text(getJsString('saved'));
                     setTimeout(() => {
-                        $('#edit-answer-modal').fadeOut(100);
+                        hideModal('#edit-answer-modal');
                         $('#save-edit-answer-btn').text(getJsString('editBtn')).prop('disabled', false);
                         loadChapters(currentPage);
                     }, 800);

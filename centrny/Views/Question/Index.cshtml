@@ -33,12 +33,121 @@
             direction: rtl;
             text-align: right;
         }
-        /* Optionally override form, button, input alignment for RTL if needed */
+
         html[dir="rtl"] .form-label,
         html[dir="rtl"] .form-group,
         html[dir="rtl"] .modal-actions {
             text-align: right;
         }
+
+        .styled-select {
+            background: var(--bg-light);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            font-size: 1.14em;
+            font-weight: 600;
+            color: var(--text-dark);
+            padding: 0.7em 1.3em;
+            box-shadow: 0 2px 10px #a29bfe14;
+            transition: border-color 0.2s;
+            appearance: none;
+            outline: none;
+        }
+
+            .styled-select:focus {
+                border-color: #5982ff;
+                box-shadow: 0 0 0 2px #a29bfe44;
+            }
+
+            .styled-select option {
+                font-weight: 600;
+                color: var(--text-dark);
+                background: #f8f9fa;
+                border-radius: 12px;
+            }
+        /* Modal background overlay */
+        .modal-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 30, 30, 0.45);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.25s;
+        }
+        /* Modal content box with animation */
+        .modal-content {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            padding: 32px 24px;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            z-index: 10000;
+            animation: modalUpFade 0.35s cubic-bezier(.4,0,.2,1);
+        }
+        @@keyframes modalUpFade {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        }
+        @@media (max-width: 600px) {
+            .modal-content
+
+        {
+            max-width: 95vw;
+            padding: 16px 8px;
+        }
+
+        }
+        /* Modern textarea styling for question content */
+        textarea.modern-input,
+        #question-content {
+            width: 100%;
+            min-height: 85px;
+            font-size: 1.13em;
+            border-radius: 12px;
+            border: 1.5px solid #e0e0e0;
+            background: #fafbff;
+            padding: 10px 14px;
+            resize: vertical;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.06);
+            margin-top: 6px;
+            transition: border-color 0.18s;
+        }
+
+            textarea.modern-input:focus,
+            #question-content:focus {
+                border-color: var(--primary-color, #6c5ce7);
+                outline: none;
+            }
+        /* Icon-only action buttons for questions */
+        .question-actions .btn-table.edit,
+        .question-actions .btn-table.delete {
+            min-width: 38px;
+            padding: 8px 0 !important;
+            justify-content: center !important;
+            gap: 0 !important;
+        }
+
+            .question-actions .btn-table.edit span,
+            .question-actions .btn-table.delete span {
+                display: none !important;
+            }
     </style>
 </head>
 <body>
@@ -111,14 +220,15 @@
         <button class="modern-btn" id="add-chapter-btn" style="margin:16px 0;"></button>
         <div id="subject-year-filter-bar" style="margin: 12px 0 16px 0; text-align: left; display:none;">
             <label for="subjectYearFilter" style="margin-right: 6px;"><b></b></label>
-            <select id="subjectYearFilter" class="modern-input" style="width:280px;max-width:100%;"></select>
+            <select id="subjectYearFilter" class="modern-input styled-select" style="width:280px;max-width:100%;"></select>
         </div>
         <div id="chapters-container"></div>
         <div id="pagination-container" style="margin-top: 20px; text-align: center;"></div>
     </div>
 
+    <!-- MODALS (should be direct children of body for correct overlay) -->
     <!-- ADD CHAPTER MODAL -->
-    <div id="chapter-modal" class="modal-background" style="display:none;">
+    <div id="chapter-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="chapter-modal-title"></h3>
             <form id="chapter-form" autocomplete="off">
@@ -128,16 +238,16 @@
                 </div>
                 <div class="form-group">
                     <label for="chapter-eduyearcode"><span id="education-year-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input"></select>
+                    <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input styled-select"></select>
                 </div>
                 <div class="form-group" id="teacher-group" style="display:none;">
                     <label for="chapter-teachercode"><span id="teacher-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-teachercode" name="TeacherCode" class="modern-input"></select>
+                    <select id="chapter-teachercode" name="TeacherCode" class="modern-input styled-select"></select>
                 </div>
                 <input type="hidden" id="chapter-teachercode-hidden" name="TeacherCode" />
                 <div class="form-group">
                     <label for="chapter-subjectcode"><span id="subject-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input"></select>
+                    <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input styled-select"></select>
                 </div>
                 <input type="hidden" id="chapter-yearcode" name="YearCode" />
                 <div class="modal-actions">
@@ -150,7 +260,7 @@
     </div>
 
     <!-- ADD LESSON MODAL -->
-    <div id="lesson-modal" class="modal-background" style="display:none;">
+    <div id="lesson-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="lesson-modal-title"></h3>
             <form id="lesson-form" autocomplete="off">
@@ -173,8 +283,8 @@
         </div>
     </div>
 
-    <!-- Modals for adding and editing questions/answers -->
-    <div id="question-modal" class="modal-background" style="display:none;">
+    <!-- ADD/EDIT QUESTION MODAL -->
+    <div id="question-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="question-modal-title"></h3>
             <form id="question-form" autocomplete="off">
@@ -197,7 +307,8 @@
         </div>
     </div>
 
-    <div id="answers-modal" class="modal-background" style="display:none;">
+    <!-- ADD ANSWERS MODAL -->
+    <div id="answers-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="answers-modal-title"></h3>
             <form id="answers-form" autocomplete="off">
@@ -215,7 +326,8 @@
         </div>
     </div>
 
-    <div id="edit-answer-modal" class="modal-background" style="display:none;">
+    <!-- EDIT ANSWER MODAL -->
+    <div id="edit-answer-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="edit-answer-modal-title"></h3>
             <form id="edit-answer-form" autocomplete="off">

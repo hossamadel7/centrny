@@ -1223,12 +1223,10 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.BranchCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Reservation_Branch");
 
             entity.HasOne(d => d.HallCodeNavigation).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.HallCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Reservation_Hall");
 
             entity.HasOne(d => d.TeacherCodeNavigation).WithMany(p => p.Reservations)
