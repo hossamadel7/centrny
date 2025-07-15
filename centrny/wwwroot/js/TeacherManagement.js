@@ -69,8 +69,8 @@ $(function () {
                         <div style="color: var(--text-muted);">${addressText}: <span class="fw-bold">${teacher.teacherAddress || ''}</span></div>
                         <div style="color: var(--text-muted);">Status: <span class="fw-bold">${teacher.isActive ? 'Active' : 'Inactive'}</span></div>
                         <div class="mt-3 teacher-btn-row">
-                            <button class="modern-btn secondary-btn show-subjects-btn" data-teacher="${teacher.teacherCode}">${showSubjectsBtn}</button>
-                            <button class="modern-btn success-btn add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>
+                            <button class="modern-btn show-subjects-btn" data-teacher="${teacher.teacherCode}">${showSubjectsBtn}</button>
+                            <button class="modern-btn add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>
                             <button class="modern-btn edit-btn edit-teacher-btn" data-teacher="${teacher.teacherCode}">${editBtnText}</button>
                             <button class="modern-btn delete-btn delete-teacher-btn" data-teacher="${teacher.teacherCode}">${deleteBtnText}</button>
                         </div>
@@ -96,10 +96,23 @@ $(function () {
         .teacher-card .modern-btn {
             min-width: 120px;
         }
-        .teacher-card .show-subjects-btn { background: var(--primary-gradient-light) !important; color: var(--primary-color) !important; }
-        .teacher-card .add-teachsubject-btn { background: var(--success-gradient) !important; color: #fff !important; }
-        .teacher-card .edit-teacher-btn { background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important; color: #fff !important; }
-        .teacher-card .delete-teacher-btn { background: var(--danger-gradient) !important; color: #fff !important; }
+        .teacher-card .show-subjects-btn {
+            background: var(--primary-gradient-light) !important;
+            color: var(--primary-color) !important;
+            font-weight: 600 !important;
+        }
+        .teacher-card .add-teachsubject-btn {
+            background: var(--secondary-gradient) !important;
+            color: #fff !important;
+        }
+        .teacher-card .edit-teacher-btn {
+            background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+            color: #fff !important;
+        }
+        .teacher-card .delete-teacher-btn {
+            background: var(--danger-gradient) !important;
+            color: #fff !important;
+        }
         .teacher-card .modern-btn:hover, .teacher-card .modern-btn:focus {
             box-shadow: var(--shadow-lg) !important;
             transform: scale(1.05) !important;

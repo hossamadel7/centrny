@@ -37,8 +37,8 @@
 
 <div class="container mt-4">
     <div id="teachers-section">
-        <div class="d-flex align-items-center mb-2">
-            <button class="btn btn-primary btn-sm ms-2" id="openAddTeacher">@Localizer["AddTeacherBtn"]</button>
+        <div style="text-align:center;margin-bottom:1.4em;">
+            <button class="modern-btn secondary-btn" id="openAddTeacher">@Localizer["AddTeacherBtn"]</button>
         </div>
         <div id="teachers-list"></div>
     </div>
@@ -68,7 +68,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btn-action">@Localizer["AddTeacherBtn"]</button>
+                    <button type="submit" class="modern-btn secondary-btn">@Localizer["AddTeacherBtn"]</button>
                 </div>
             </form>
         </div>
@@ -100,7 +100,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-warning btn-action">@Localizer["SaveChanges"]</button>
+                    <button type="submit" class="modern-btn edit-btn">@Localizer["SaveChanges"]</button>
                 </div>
             </form>
         </div>
@@ -142,21 +142,29 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-success btn-action">@Localizer["AddTeachingSubjectSubmit"]</button>
+                    <button type="submit" class="modern-btn secondary-btn">@Localizer["AddTeachingSubjectSubmit"]</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Gradient header style -->
+<!-- Inline CSS for button colors and header -->
 <style>
     :root {
-        --primary-gradient-horizontal: linear-gradient(90deg, #6c5ce7 0%, #0984e3 100%);
+        --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+        --secondary-gradient: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+        --primary-color: #6c5ce7;
+        --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
+        --border-radius: 18px;
         --border-radius-lg: 28px;
         --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+        --bg-white: #fff;
     }
 
+    /* Gradient block header centered */
     .questions-header {
         width: 100%;
         text-align: center;
@@ -198,6 +206,53 @@
     }
 
     }
+
+    /* Modern button style */
+    .modern-btn {
+        font-weight: 600 !important;
+        padding: 0.65rem 1.3rem !important;
+        border-radius: var(--border-radius) !important;
+        border: none !important;
+        color: #fff !important;
+        box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+        font-size: 1rem !important;
+        cursor: pointer !important;
+        margin-right: 0.4rem !important;
+        transition: transform 0.16s, box-shadow 0.16s !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5em !important;
+        background: var(--primary-gradient) !important;
+    }
+
+        /* Only Add Teaching Subject button - purple gradient */
+        .modern-btn.add-teachsubject-btn,
+        .modern-btn.secondary-btn.add-teachsubject-btn {
+            background: var(--secondary-gradient) !important;
+            color: #fff !important;
+        }
+
+        /* Only Show Subjects button - light theme */
+        .modern-btn.show-subjects-btn {
+            background: var(--primary-gradient-light) !important;
+            color: var(--primary-color) !important;
+            font-weight: 600;
+        }
+
+        /* Edit and Delete */
+        .modern-btn.edit-btn {
+            background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+        }
+
+        .modern-btn.delete-btn {
+            background: var(--danger-gradient) !important;
+            color: #fff !important;
+        }
+
+        .modern-btn:hover, .modern-btn:focus {
+            box-shadow: var(--shadow-lg) !important;
+            transform: scale(1.05) !important;
+        }
 </style>
 
 @section Scripts {

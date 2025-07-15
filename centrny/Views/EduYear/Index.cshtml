@@ -31,10 +31,12 @@
     var isRtl = System.Threading.Thread.CurrentThread.CurrentUICulture.Name.StartsWith("ar");
     var dir = isRtl ? "rtl" : "ltr";
 }
-<!-- Gradient Header Block -->
-<div class="page-header">
-    <h2>@EduYearView.EduYearsList</h2>
-    <p>@EduYearView.YearsForActiveEduYear</p>
+<!-- Gradient Header Block (Centered) - REMOVE Years for Active Edu Year from beside header -->
+<div class="questions-header" style="margin-bottom: 0;">
+    <h2>
+        <i class="fa-solid fa-calendar-days"></i>
+        @EduYearView.EduYearsList
+    </h2>
 </div>
 
 <div class="table-card">
@@ -88,8 +90,14 @@
 </div>
 
 <!-- LEVELS AND YEARS SECTION -->
+<!-- Make "Years for Active Edu Year" a gradient centered header similar to the main header -->
+<div class="years-active-header questions-header" style="margin-bottom: 0; margin-top: 38px;">
+    <h2>
+        <i class="fa-solid fa-calendar-week"></i>
+        @EduYearView.YearsForActiveEduYear
+    </h2>
+</div>
 <div class="table-card">
-    <h2 style="margin-top:10px;margin-bottom:24px;">@EduYearView.YearsForActiveEduYear</h2>
     <div id="levels-years-container" class="levels-years-container">
         <!-- JS will populate cards/boxes here -->
     </div>

@@ -13,20 +13,20 @@
     </h2>
 </div>
 
-<div class="security-panel-card" style="max-width: 1000px;">
+<div class="security-panel-card" style="max-width: 1100px;">
     <!-- Add Subject Button -->
     <div style="margin-bottom: 22px; text-align: center;">
-        <button id="add-subject-btn" class="modern-btn success-btn">@SubjectResource.Subject_AddBtn</button>
+        <button id="add-subject-btn" class="modern-btn primary-btn">@SubjectResource.Subject_AddBtn</button>
     </div>
 
     <!-- Modal for Add/Edit Subject -->
     <div id="addSubjectModal" class="modal-overlay" style="display:none;">
-        <div class="modal-box">
+        <div class="modal-box wide-centered-modal">
             <div class="modal-header">
                 <span id="modalTitle" style="font-weight:600;font-size:1.15rem;">@SubjectResource.Subject_AddModalTitle</span>
                 <span id="closeModal" style="cursor:pointer;font-size:1.4rem;">&times;</span>
             </div>
-            <form id="addSubjectForm">
+            <form id="addSubjectForm" class="centered-form">
                 <input type="hidden" id="subjectCode" name="subjectCode" />
                 <div class="form-group">
                     <label for="subjectName">@SubjectResource.Subject_NameLabel</label>
@@ -46,19 +46,19 @@
                     </select>
                 </div>
                 <div id="addSubjectError" style="color:#c00; margin-bottom:10px;"></div>
-                <button type="submit" class="modern-btn success-btn" style="width:100%;">@SubjectResource.Subject_Submit</button>
+                <button type="submit" class="modern-btn primary-btn" style="width:100%;">@SubjectResource.Subject_Submit</button>
             </form>
         </div>
     </div>
 
     <!-- Modal for Add Teacher to Subject -->
     <div id="addTeacherToSubjectModal" class="modal-overlay" style="display:none;">
-        <div class="modal-box">
+        <div class="modal-box wide-centered-modal">
             <div class="modal-header">
                 <span style="font-weight:600;font-size:1.15rem;">@SubjectResource.Subject_AssignTeacherToSubjectTitle</span>
                 <span id="closeAddTeacherToSubjectModal" style="cursor:pointer;font-size:1.4rem;">&times;</span>
             </div>
-            <form id="addTeacherToSubjectForm">
+            <form id="addTeacherToSubjectForm" class="centered-form">
                 <div class="form-group">
                     <label>@SubjectResource.Subject_NameLabel</label>
                     <input type="text" id="addTeacherSubjectName" readonly />
@@ -81,11 +81,11 @@
                 </div>
                 <input type="hidden" id="addTeacherYearCode" />
                 <input type="hidden" id="addTeacherEduYearCode" />
-                <button type="submit" class="modern-btn success-btn" style="width:100%;">@SubjectResource.Subject_AssignTeacher</button>
+                <button type="submit" class="modern-btn primary-btn" style="width:100%;">@SubjectResource.Subject_AssignTeacher</button>
             </form>
         </div>
     </div>
-    <!-- Remove inline style and use proper CSS for centering and sizing -->
+
     <div class="subject-table-container">
         <table class="gradient-table">
             <thead>
@@ -104,14 +104,66 @@
     </div>
 </div>
 
-<!-- Add/override CSS for button row and secondary button design -->
 <style>
     :root {
+        --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
         --secondary-gradient: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        --success-gradient: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
+        --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
+        --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+        --primary-color: #6c5ce7;
+        --border-radius: 18px;
+        --border-radius-lg: 28px;
+        --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+        --bg-white: #fff;
+    }
+
+    /* Gradient block header centered */
+    .questions-header {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 2.2rem;
+        padding: 2rem 0 1.2rem 0;
+        background: transparent;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid rgba(108,92,231,0.11);
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .questions-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            letter-spacing: -.01em;
+            background: var(--primary-gradient-horizontal);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .questions-header i {
+            margin-right: 12px;
+            color: #4f8cff;
+        }
+    @@media (max-width: 900px) {
+        .questions-header h2
+
+    {
+        font-size: 1.6rem;
+    }
+
     }
 
     .subject-table-container {
-        width: 100%;
+        width: 150%;
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -132,11 +184,10 @@
         align-items: center;
     }
 
-    /* Modern button base style */
     .modern-btn {
         font-weight: 600 !important;
         padding: 0.65rem 1.3rem !important;
-        border-radius: var(--border-radius, 18px) !important;
+        border-radius: var(--border-radius) !important;
         border: none !important;
         color: #fff !important;
         box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
@@ -147,31 +198,90 @@
         display: inline-flex !important;
         align-items: center !important;
         gap: 0.5em !important;
-        background: var(--primary-gradient) !important;
     }
 
-        .modern-btn.success-btn {
-            background: var(--success-gradient) !important;
+        /* Primary button (add subject, add teacher, assign teacher) */
+        .modern-btn.primary-btn,
+        .modern-btn.primary-btn[type="submit"] {
+            background: var(--primary-gradient) !important;
+            color: #fff !important;
         }
 
-        .modern-btn.delete-btn {
-            background: var(--danger-gradient) !important;
+        /* Secondary button (show teachers) */
+        .modern-btn.secondary-btn {
+            background: var(--primary-gradient-light) !important;
+            color: var(--primary-color) !important;
+            font-weight: 600 !important;
         }
 
+        /* Edit and Delete buttons */
         .modern-btn.edit-btn {
             background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
         }
 
-        /* Secondary button (Show Teachers) */
-        .modern-btn.secondary-btn {
-            background: var(--secondary-gradient) !important;
+        .modern-btn.delete-btn {
+            background: var(--danger-gradient) !important;
             color: #fff !important;
         }
 
         .modern-btn:hover, .modern-btn:focus {
-            box-shadow: var(--shadow-lg, 0 8px 36px rgba(108, 92, 231, 0.18)) !important;
+            box-shadow: var(--shadow-lg) !important;
             transform: scale(1.05) !important;
         }
+
+    /* Center and widen modal forms */
+    .wide-centered-modal {
+        max-width: 520px;
+        min-width: 390px;
+        margin: 0 auto;
+    }
+
+    .centered-form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .centered-form .form-group {
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto 16px auto;
+        }
+
+        .centered-form input,
+        .centered-form select {
+            width: 100%;
+            font-size: 1.13em;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1.5px solid #e0e0e0;
+            background: #fafbff;
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+
+            .centered-form input:focus,
+            .centered-form select:focus {
+                border-color: var(--primary-color);
+                outline: none;
+                box-shadow: 0 0 0 2px #a29bfe44;
+            }
+
+    @@media (max-width: 600px) {
+        .wide-centered-modal
+
+    {
+        min-width: 98vw;
+        max-width: 98vw;
+        padding: 1em 0.2em;
+    }
+
+    .centered-form .form-group {
+        max-width: 98vw;
+    }
+
+    }
 </style>
 
 @section Scripts {

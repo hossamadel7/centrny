@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const addSubjectSubmitBtn = document.querySelector('#addSubjectForm button[type="submit"]');
     const addTeacherSubmitBtn = document.querySelector('#addTeacherToSubjectForm button[type="submit"]');
 
-    // You can change this to match your button text in resources or HTML
+    // You can change these to match your button text in resources or HTML
     const saveChangesText = "Save Changes";
     const addSubjectText = "Add Subject";
 
@@ -131,12 +131,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(editedSubject => {
                     updateSubjectRow(editedSubject);
-                    // Reset button to Save Changes after edit finishes
                     resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
                     closeModalFunc();
                 })
                 .catch(err => {
-                    // Reset button if error
                     resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
                     errorDiv.textContent = couldNotEditText + ": " + (err.message || "Unknown error");
                 });
@@ -152,12 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(newSubject => {
                     addSubjectRow(newSubject);
-                    // Reset button to Add Subject after add finishes
                     resetSubmitButton(addSubjectSubmitBtn, addSubjectText);
                     closeModalFunc();
                 })
                 .catch(err => {
-                    // Reset button if error
                     resetSubmitButton(addSubjectSubmitBtn, addSubjectText);
                     errorDiv.textContent = couldNotAddText + ": " + (err.message || "Unknown error");
                 });
@@ -207,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="subject-btn-row">
                 <button class="modern-btn edit-btn" data-code="${subject.subjectCode}">${editTitle}</button>
                 <button class="modern-btn delete-btn" data-code="${subject.subjectCode}">${closeText}</button>
-                <button class="modern-btn success-btn add-teacher-btn" data-code="${subject.subjectCode}">${addTeacherText}</button>
+                <button class="modern-btn primary-btn add-teacher-btn" data-code="${subject.subjectCode}">${addTeacherText}</button>
                 <button class="modern-btn secondary-btn show-teachers-btn" data-code="${subject.subjectCode}">${showTeachersText}</button>
             </div>
         </td>
