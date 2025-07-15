@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Resources\DailyClassView.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DailyClassView.resx</DependentUpon>
+    </Compile>
     <Compile Update="Resources\EduYearView.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -38,6 +43,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Resources\DailyClassView.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <CustomToolNamespace>Resources</CustomToolNamespace>
+      <LastGenOutput>DailyClassView.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Resources\EduYearView.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <CustomToolNamespace>Resources</CustomToolNamespace>

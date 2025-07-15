@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Title" xml:space="preserve"><value>Daily Classes</value></data>
+	<data name="PageSubTitle" xml:space="preserve"><value>Manage your classes for each day - Calendar View</value></data>
+	<data name="ErrorBanner" xml:space="preserve"><value>Error</value></data>
+	<data name="UserContextBanner" xml:space="preserve"><value>Daily classes for:</value></data>
+	<data name="RootCodeLabel" xml:space="preserve"><value>Root Code</value></data>
+	<data name="IsCenterLabel" xml:space="preserve"><value>Center User</value></data>
+	<data name="IsTeacherLabel" xml:space="preserve"><value>Teacher User</value></data>
+	<data name="UserContextBannerSub" xml:space="preserve"><value>You can view and manage classes for your assigned organization only</value></data>
+	<data name="WeeklyGenerationBannerTitle" xml:space="preserve"><value>Weekly Class Generation</value></data>
+	<data name="WeeklyGenerationBannerChecking" xml:space="preserve"><value>Checking status...</value></data>
+	<data name="WeeklyGenerationBannerGenerateBtn" xml:space="preserve"><value>Generate This Week</value></data>
+	<data name="WeeklyGenerationBannerViewBtn" xml:space="preserve"><value>View Details</value></data>
+	<data name="DateNavPrev" xml:space="preserve"><value>Previous Day</value></data>
+	<data name="DateNavNext" xml:space="preserve"><value>Next Day</value></data>
+	<data name="LegendClasses" xml:space="preserve"><value>Classes</value></data>
+	<data name="LegendSchedule" xml:space="preserve"><value>Schedule-based (Recurring)</value></data>
+	<data name="LegendReservation" xml:space="preserve"><value>Reservation-based (Specific date)</value></data>
+	<data name="LegendDirect" xml:space="preserve"><value>Direct classes (Added from daily view)</value></data>
+	<data name="WeeklySchedulesBtn" xml:space="preserve"><value>Weekly Schedules</value></data>
+	<data name="RefreshBtn" xml:space="preserve"><value>Refresh</value></data>
+	<data name="TodayBtn" xml:space="preserve"><value>Today</value></data>
+	<data name="GenerateWeeklyBtn" xml:space="preserve"><value>Generate Weekly Classes</value></data>
+	<data name="CalendarDayHeader" xml:space="preserve"><value>Daily Classes</value></data>
+	<data name="AddClassBtn" xml:space="preserve"><value>Add New Class</value></data>
+	<data name="NoClassesScheduled" xml:space="preserve"><value>No classes scheduled</value></data>
+	<data name="NoClassesSubText" xml:space="preserve"><value>Click &quot;Add New Class&quot; to schedule your first class for this day.</value></data>
+	<data name="WeeklyGenerationModalTitle" xml:space="preserve"><value>Weekly Class Generation Status</value></data>
+	<data name="WeeklyGenerationModalLoading" xml:space="preserve"><value>Loading generation status...</value></data>
+	<data name="WeeklyGenerationModalClose" xml:space="preserve"><value>Close</value></data>
+	<data name="WeeklyGenerationModalGenerateBtn" xml:space="preserve"><value>Generate Classes</value></data>
+	<data name="FloatingAddBtnTitle" xml:space="preserve"><value>Add New Class</value></data>
+	<data name="ClassDetailsModalTitle" xml:space="preserve"><value>Class Details</value></data>
+	<data name="ClassDetailsModalClose" xml:space="preserve"><value>Close</value></data>
+	<data name="ClassDetailsModalEditBtn" xml:space="preserve"><value>Edit</value></data>
+	<data name="ClassDetailsModalDeleteBtn" xml:space="preserve"><value>Delete</value></data>
+	<data name="FormClassName" xml:space="preserve"><value>Class Name</value></data>
+	<data name="FormTeacher" xml:space="preserve"><value>Teacher</value></data>
+	<data name="FormCenter" xml:space="preserve"><value>Center</value></data>
+	<data name="FormStartTime" xml:space="preserve"><value>Start Time</value></data>
+	<data name="FormEndTime" xml:space="preserve"><value>End Time</value></data>
+	<data name="FormSubject" xml:space="preserve"><value>Subject</value></data>
+	<data name="FormBranch" xml:space="preserve"><value>Branch</value></data>
+	<data name="FormHall" xml:space="preserve"><value>Hall</value></data>
+	<data name="FormEduYear" xml:space="preserve"><value>Education Year</value></data>
+	<data name="FormYear" xml:space="preserve"><value>Year</value></data>
+	<data name="FormNoOfStudents" xml:space="preserve"><value>Number of Students</value></data>
+	<data name="FormTotalAmount" xml:space="preserve"><value>Total Amount</value></data>
+	<data name="FormTeacherAmount" xml:space="preserve"><value>Teacher Amount</value></data>
+	<data name="FormCenterAmount" xml:space="preserve"><value>Center Amount</value></data>
+	<data name="FormCancel" xml:space="preserve"><value>Cancel</value></data>
+	<data name="FormSaveClass" xml:space="preserve"><value>Save Class</value></data>
+	<data name="SelectOption" xml:space="preserve"><value>Select...</value></data>
+</root>

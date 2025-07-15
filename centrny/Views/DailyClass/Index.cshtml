@@ -1,404 +1,434 @@
-﻿@{
-    ViewData["Title"] = "Daily Classes";
+﻿@using Resources
+@{
+    ViewData["Title"] = DailyClassView.Title;
     Layout = "_Layout";
+
+    // Detect Arabic for RTL
+    var isArabic = System.Threading.Thread.CurrentThread.CurrentUICulture.Name.StartsWith("ar");
+    var dir = isArabic ? "rtl" : "ltr";
+    var lang = isArabic ? "ar" : "en";
 }
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<link href="~/css/dailyclass.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/dailyclass.css" rel="stylesheet" />
 
-<div class="container-fluid daily-classes-page">
-    <div class="daily-container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1><i class="fas fa-calendar-day me-3"></i>Daily Classes</h1>
-            <p>Manage your classes for each day - Calendar View</p>
-        </div>
-
-        <!-- User Context Banner or Error Message -->
-        @if (ViewBag.Error != null)
-        {
-            <div class="error-banner">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>@ViewBag.Error</strong>
-            </div>
+    <style>
+        html[dir="rtl"] .form-select {
+            direction: rtl;
+            text-align: right;
+            padding-right: 1rem;
+            padding-left: 2.5rem;
+            background-position: left 0.75rem center;
         }
-        else if (ViewBag.CurrentUserRootCode != null)
-        {
-            <div class="user-context-banner" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);">
-                <h6>
-                    <i class="fas fa-user-circle me-2"></i>
-                    Daily classes for: <strong>@ViewBag.UserRootName</strong>
-                    <span class="badge ms-2">
-                        Root Code: @ViewBag.CurrentUserRootCode
-                    </span>
-                    @if (ViewBag.IsCenter == true)
-                    {
-                        <span class="badge bg-success ms-2">Center User</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning ms-2">Teacher User</span>
-                    }
-                </h6>
-                <small>You can view and manage classes for your assigned organization only</small>
-            </div>
+        html[dir="rtl"] label, html[dir="rtl"] .form-label, html[dir="rtl"] .legend-item, html[dir="rtl"] .controls-section {
+            text-align: right !important;
         }
+        html[dir="rtl"] .modal-title, html[dir="rtl"] h1, html[dir="rtl"] h4, html[dir="rtl"] h6 {
+            text-align: right !important;
+        }
+        html[dir="rtl"] .add-class-btn-main {
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    <!-- Resource strings for JS -->
+    <input type="hidden" id="resxSelectOption" value="@DailyClassView.SelectOption" />
+    @* All other resource strings as before, omitted for brevity *@
 
-        @if (ViewBag.Error == null)
-        {
-            <!-- Weekly Class Generation Status Banner -->
-            <div class="weekly-generation-banner" id="weeklyGenerationBanner" style="display: none;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <div class="generation-info">
-                        <h6 class="mb-1">
-                            <i class="fas fa-calendar-week me-2"></i>
-                            <span id="generationStatusText">Weekly Class Generation</span>
-                        </h6>
-                        <small id="generationStatusDetails">Checking status...</small>
-                    </div>
-                    <div class="generation-actions d-flex gap-2">
-                        <button type="button" class="btn btn-success btn-sm" id="generateWeeklyBtn" style="display: none;" onclick="generateWeeklyClasses()">
-                            <i class="fas fa-magic me-1"></i>Generate This Week
-                        </button>
-                        <button type="button" class="btn btn-outline-info btn-sm" id="viewStatusBtn" onclick="showWeeklyGenerationStatus()">
-                            <i class="fas fa-info-circle me-1"></i>View Details
-                        </button>
-                    </div>
-                </div>
+    <div class="container-fluid daily-classes-page">
+        <div class="daily-container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1><i class="fas fa-calendar-day me-3"></i>@DailyClassView.Title</h1>
+                <p>@DailyClassView.PageSubTitle</p>
             </div>
 
-            <!-- Date Navigation -->
-            <div class="date-navigation">
-                <button type="button" class="date-nav-btn" id="prevDayBtn">
-                    <i class="fas fa-chevron-left"></i> Previous Day
-                </button>
-
-                <div class="current-date" id="currentDateDisplay">
-                    <h4 id="displayDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</h4>
-                    <p id="displayDayOfWeek">@ViewBag.DayOfWeek</p>
+            <!-- User Context Banner or Error Message -->
+            @if (ViewBag.Error != null)
+            {
+                <div class="error-banner">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>@ViewBag.Error</strong>
                 </div>
-
-                <input type="date" class="date-picker-input" id="datePicker" value="@ViewBag.SelectedDateFormatted">
-
-                <button type="button" class="date-nav-btn" id="nextDayBtn">
-                    Next Day <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-
-            <!-- Legend -->
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: #6c5ce7;"></div>
-                    <span>Classes</span>
+            }
+            else if (ViewBag.CurrentUserRootCode != null)
+            {
+                <div class="user-context-banner" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);">
+                    <h6>
+                        <i class="fas fa-user-circle me-2"></i>
+                        @DailyClassView.UserContextBanner <strong>@ViewBag.UserRootName</strong>
+                        <span class="badge ms-2">
+                            @DailyClassView.RootCodeLabel: @ViewBag.CurrentUserRootCode
+                        </span>
+                        @if (ViewBag.IsCenter == true)
+                        {
+                            <span class="badge bg-success ms-2">@DailyClassView.IsCenterLabel</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning ms-2">@DailyClassView.IsTeacherLabel</span>
+                        }
+                    </h6>
+                    <small>@DailyClassView.UserContextBannerSub</small>
                 </div>
-                <div class="legend-item">
-                    <i class="fas fa-calendar text-info me-2"></i>
-                    <span>Schedule-based (Recurring)</span>
-                </div>
-                <div class="legend-item">
-                    <i class="fas fa-calendar-day text-warning me-2"></i>
-                    <span>Reservation-based (Specific date)</span>
-                </div>
-                <div class="legend-item">
-                    <i class="fas fa-calendar-plus text-success me-2"></i>
-                    <span>Direct classes (Added from daily view)</span>
-                </div>
-            </div>
+            }
 
-            <!-- Controls -->
-            <div class="controls-section">
-                <a href="@Url.Action("Index", "Schedule")" class="btn-modern btn-info">
-                    <i class="fas fa-calendar-week"></i> Weekly Schedules
-                </a>
-                <button type="button" class="btn-modern" onclick="refreshClasses()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button type="button" class="btn-modern" onclick="goToToday()">
-                    <i class="fas fa-calendar-day"></i> Today
-                </button>
-                <button type="button" class="btn-modern btn-warning" id="manualGenerateBtn" onclick="generateWeeklyClasses()" title="Generate classes from schedules for this week">
-                    <i class="fas fa-calendar-plus"></i> Generate Weekly Classes
-                </button>
-            </div>
-
-            <!-- Calendar Day Container -->
-            <div class="calendar-day-container" style="position: relative;">
-                <div class="loading-overlay" id="initialLoader">
-                    <div class="spinner"></div>
-                </div>
-
-                <div class="calendar-day-header">
-                    <i class="fas fa-calendar-day me-2"></i>
-                    Daily Classes
-                    @if (ViewBag.UserRootName != null)
-                    {
-                        <small class="ms-3 opacity-75">(@ViewBag.UserRootName)</small>
-                    }
-                    <div class="mt-1">
-                        <small id="calendarDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</small>
-                    </div>
-                </div>
-
-                <div class="calendar-day-content">
-                    <!-- Add Class Section -->
-                    <div class="add-class-section">
-                        <button type="button" class="add-class-btn-main" data-bs-toggle="modal" data-bs-target="#addClassModal">
-                            <i class="fas fa-plus"></i>
-                            <span>Add New Class</span>
-                        </button>
-                    </div>
-
-                    <!-- Classes Content -->
-                    <div id="classesContent">
-                        <!-- Classes will be populated here by JavaScript -->
-                        <div class="empty-day-state">
-                            <i class="fas fa-calendar-times"></i>
-                            <h4>No classes scheduled</h4>
-                            <p>Click "Add New Class" to schedule your first class for this day.</p>
+            @if (ViewBag.Error == null)
+            {
+                <!-- Weekly Class Generation Status Banner -->
+                <div class="weekly-generation-banner" id="weeklyGenerationBanner" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="generation-info">
+                            <h6 class="mb-1">
+                                <i class="fas fa-calendar-week me-2"></i>
+                                <span id="generationStatusText">@DailyClassView.WeeklyGenerationBannerTitle</span>
+                            </h6>
+                            <small id="generationStatusDetails">@DailyClassView.WeeklyGenerationBannerChecking</small>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Weekly Generation Status Modal -->
-            <div class="modal fade" id="weeklyGenerationModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="fas fa-calendar-week me-2"></i>Weekly Class Generation Status
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="weeklyGenerationContent">
-                                <div class="text-center py-3">
-                                    <div class="spinner"></div>
-                                    <p class="mt-2">Loading generation status...</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-success" id="modalGenerateBtn" onclick="generateWeeklyClassesFromModal()">
-                                <i class="fas fa-magic me-2"></i>Generate Classes
+                        <div class="generation-actions d-flex gap-2">
+                            <button type="button" class="btn btn-success btn-sm" id="generateWeeklyBtn" style="display: none;" onclick="generateWeeklyClasses()">
+                                <i class="fas fa-magic me-1"></i>@DailyClassView.WeeklyGenerationBannerGenerateBtn
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm" id="viewStatusBtn" onclick="showWeeklyGenerationStatus()">
+                                <i class="fas fa-info-circle me-1"></i>@DailyClassView.WeeklyGenerationBannerViewBtn
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-</div>
 
-@if (ViewBag.Error == null)
-{
-    <!-- Floating Add Button -->
-    <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addClassModal" title="Add New Class">
-        <i class="fas fa-plus"></i>
-    </button>
+                <!-- Date Navigation -->
+                <div class="date-navigation">
+                    <button type="button" class="date-nav-btn" id="prevDayBtn">
+                        <i class="fas fa-chevron-left"></i> @DailyClassView.DateNavPrev
+                    </button>
+                    <div class="current-date" id="currentDateDisplay">
+                        <h4 id="displayDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</h4>
+                        <p id="displayDayOfWeek">@ViewBag.DayOfWeek</p>
+                    </div>
+                    <input type="date" class="date-picker-input" id="datePicker" value="@ViewBag.SelectedDateFormatted">
+                    <button type="button" class="date-nav-btn" id="nextDayBtn">
+                        @DailyClassView.DateNavNext <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
 
-    <!-- Add Class Modal -->
-    <div class="modal fade" id="addClassModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-plus-circle me-2"></i>Add New Class
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #6c5ce7;"></div>
+                        <span>@DailyClassView.LegendClasses</span>
+                    </div>
+                    <div class="legend-item">
+                        <i class="fas fa-calendar text-info me-2"></i>
+                        <span>@DailyClassView.LegendSchedule</span>
+                    </div>
+                    <div class="legend-item">
+                        <i class="fas fa-calendar-day text-warning me-2"></i>
+                        <span>@DailyClassView.LegendReservation</span>
+                    </div>
+                    <div class="legend-item">
+                        <i class="fas fa-calendar-plus text-success me-2"></i>
+                        <span>@DailyClassView.LegendDirect</span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls-section">
+                    <a href="@Url.Action("Index", "Schedule")" class="btn-modern btn-info">
+                        <i class="fas fa-calendar-week"></i> @DailyClassView.WeeklySchedulesBtn
+                    </a>
+                    <button type="button" class="btn-modern" onclick="refreshClasses()">
+                        <i class="fas fa-sync-alt"></i> @DailyClassView.RefreshBtn
+                    </button>
+                    <button type="button" class="btn-modern" onclick="goToToday()">
+                        <i class="fas fa-calendar-day"></i> @DailyClassView.TodayBtn
+                    </button>
+                    <button type="button" class="btn-modern btn-warning" id="manualGenerateBtn" onclick="generateWeeklyClasses()" title="@DailyClassView.GenerateWeeklyBtn">
+                        <i class="fas fa-calendar-plus"></i> @DailyClassView.GenerateWeeklyBtn
+                    </button>
+                </div>
+
+                <!-- Calendar Day Container -->
+                <div class="calendar-day-container" style="position: relative;">
+                    <div class="loading-overlay" id="initialLoader">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <div class="calendar-day-header">
+                        <i class="fas fa-calendar-day me-2"></i>
+                        @DailyClassView.CalendarDayHeader
                         @if (ViewBag.UserRootName != null)
                         {
-                            <small class="text-muted">for @ViewBag.UserRootName</small>
+                            <small class="ms-3 opacity-75">(@ViewBag.UserRootName)</small>
                         }
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="classForm">
-                        @if (ViewBag.CurrentUserRootCode != null)
-                        {
-                            <div class="alert alert-info mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Note:</strong> This class will be created for <strong>@ViewBag.UserRootName</strong>
-                                (Root Code: @ViewBag.CurrentUserRootCode)
-                                @if (ViewBag.IsCenter == true)
-                                {
-                                    <span class="badge bg-success ms-2">Center User</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning ms-2">Teacher User</span>
-                                }
-                                on <strong id="formSelectedDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</strong>
-                            </div>
-                        }
+                        <div class="mt-1">
+                            <small id="calendarDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</small>
+                        </div>
+                    </div>
 
-                        <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
-                        <input type="hidden" id="classDate" value="@ViewBag.SelectedDateFormatted">
-                        <input type="hidden" id="isCenter" value="@ViewBag.IsCenter">
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Class Name *</label>
-                                <input type="text" class="form-control" id="className" required placeholder="Enter class name">
-                            </div>
-                            
-                            @if (ViewBag.IsCenter == true)
-                            {
-                                <div class="col-md-6 mb-3" id="teacherField">
-                                    <label class="form-label">Teacher *</label>
-                                    <select class="form-select" id="teacherCode" required>
-                                        <option value="">Select Teacher</option>
-                                    </select>
-                                </div>
-                            }
-                            
-                            @if (ViewBag.IsCenter != true)
-                            {
-                                <div class="col-md-6 mb-3" id="centerField">
-                                    <label class="form-label">Center *</label>
-                                    <select class="form-select" id="centerCode" required onchange="loadBranchesByCenter()">
-                                        <option value="">Select Center</option>
-                                    </select>
-                                </div>
-                            }
+                    <div class="calendar-day-content">
+                        <!-- Add Class Section -->
+                        <div class="add-class-section">
+                            <button type="button" class="add-class-btn-main" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                                <i class="fas fa-plus"></i>
+                                <span>@DailyClassView.AddClassBtn</span>
+                            </button>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Start Time *</label>
-                                <input type="time" class="form-control" id="startTime" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">End Time *</label>
-                                <input type="time" class="form-control" id="endTime" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Subject *</label>
-                                <select class="form-select" id="subjectCode" required>
-                                    <option value="">Select Subject</option>
-                                </select>
-                            </div>
-                           @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
-{
-    <!-- CENTER USER with NO group: show dropdown -->
-    <div class="col-md-6 mb-3">
-        <label class="form-label">Branch *</label>
-        <select class="form-select" id="branchCode" required>
-            <option value="">Select Branch</option>
-        </select>
-    </div>
-}
-else if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode != null)
-{
-    <!-- Center user with group-assigned branch: hide dropdown, show info, add hidden input -->
-    <input type="hidden" id="branchCode" name="branchCode" value="@ViewBag.GroupBranchCode" />
-    <div class="mb-3">
-        <label class="form-label">Branch *</label>
-        <input type="text" class="form-control" value="@ViewBag.BranchName" disabled />
-        <small class="text-muted">Branch is auto-assigned and cannot be changed.</small>
-    </div>
-}
-else
-{
-    <!-- TEACHER USER: show dropdown as usual -->
-    <div class="col-md-6 mb-3">
-        <label class="form-label">Branch *</label>
-        <select class="form-select" id="branchCode" required>
-            <option value="">Select Branch</option>
-        </select>
-    </div>
-}
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Hall *</label>
-                                <select class="form-select" id="hallCode" required>
-                                    <option value="">Select Hall</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Education Year *</label>
-                                <select class="form-select" id="eduYearCode" required>
-                                    <option value="">Select Education Year</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Year</label>
-                                <select class="form-select" id="yearCode">
-                                    <option value="">Select Year (Optional)</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Number of Students <small class="text-muted">(Auto-updated from attendance)</small></label>
-                                <input type="text" class="form-control" id="noOfStudents" readonly style="background-color: #f8f9fa; cursor: not-allowed;" value="0">
-                                <small class="form-text text-muted">This count increases automatically when students attend the class</small>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Total Amount</label>
-                                <input type="number" class="form-control" id="totalAmount" step="0.01" min="0" placeholder="0.00">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Teacher Amount</label>
-                                <input type="number" class="form-control" id="teacherAmount" step="0.01" min="0" placeholder="0.00">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Center Amount</label>
-                                <input type="number" class="form-control" id="centerAmount" step="0.01" min="0" placeholder="0.00">
+                        <!-- Classes Content -->
+                        <div id="classesContent">
+                            <!-- Classes will be populated here by JavaScript -->
+                            <div class="empty-day-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <h4>@DailyClassView.NoClassesScheduled</h4>
+                                <p>@DailyClassView.NoClassesSubText</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn-modern btn-success" id="saveClassBtn">
-                        <i class="fas fa-save me-2"></i>Save Class
-                    </button>
+
+                <!-- Weekly Generation Status Modal -->
+                <div class="modal fade" id="weeklyGenerationModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-calendar-week me-2"></i>@DailyClassView.WeeklyGenerationModalTitle
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="weeklyGenerationContent">
+                                    <div class="text-center py-3">
+                                        <div class="spinner"></div>
+                                        <p class="mt-2">@DailyClassView.WeeklyGenerationModalLoading</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@DailyClassView.WeeklyGenerationModalClose</button>
+                                <button type="button" class="btn btn-success" id="modalGenerateBtn" onclick="generateWeeklyClassesFromModal()">
+                                    <i class="fas fa-magic me-2"></i>@DailyClassView.WeeklyGenerationModalGenerateBtn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 
-    <!-- Class Details Modal -->
-    <div class="modal fade" id="classDetailsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-info-circle me-2"></i>Class Details
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="classDetailsContent"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn-modern btn-info" id="editClassBtn">
-                        <i class="fas fa-edit me-2"></i>Edit
-                    </button>
-                    <button type="button" class="btn-modern" style="background: var(--danger-gradient);" id="deleteClassBtn">
-                        <i class="fas fa-trash me-2"></i>Delete
-                    </button>
+    @if (ViewBag.Error == null)
+    {
+        <!-- Floating Add Button -->
+        <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addClassModal" title="@DailyClassView.FloatingAddBtnTitle">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- Add Class Modal -->
+        <div class="modal fade" id="addClassModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-plus-circle me-2"></i>@DailyClassView.AddClassBtn
+                            @if (ViewBag.UserRootName != null)
+                            {
+                                <small class="text-muted">for @ViewBag.UserRootName</small>
+                            }
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="classForm">
+                            @if (ViewBag.CurrentUserRootCode != null)
+                            {
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Note:</strong> This class will be created for <strong>@ViewBag.UserRootName</strong>
+                                    (@DailyClassView.RootCodeLabel: @ViewBag.CurrentUserRootCode)
+                                    @if (ViewBag.IsCenter == true)
+                                    {
+                                        <span class="badge bg-success ms-2">@DailyClassView.IsCenterLabel</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning ms-2">@DailyClassView.IsTeacherLabel</span>
+                                    }
+                                    on <strong id="formSelectedDate">@ViewBag.SelectedDate?.ToString("dddd, MMMM dd, yyyy")</strong>
+                                </div>
+                            }
+
+                            <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
+                            <input type="hidden" id="classDate" value="@ViewBag.SelectedDateFormatted">
+                            <input type="hidden" id="isCenter" value="@ViewBag.IsCenter">
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormClassName *</label>
+                                    <input type="text" class="form-control" id="className" required placeholder="@DailyClassView.FormClassName">
+                                </div>
+                                @if (ViewBag.IsCenter == true)
+                                {
+                                    <div class="col-md-6 mb-3" id="teacherField">
+                                        <label class="form-label">@DailyClassView.FormTeacher *</label>
+                                        <select class="form-select" id="teacherCode" required>
+                                            <option value="">@DailyClassView.SelectOption</option>
+                                        </select>
+                                    </div>
+                                }
+                                @if (ViewBag.IsCenter != true)
+                                {
+                                    <div class="col-md-6 mb-3" id="centerField">
+                                        <label class="form-label">@DailyClassView.FormCenter *</label>
+                                        <select class="form-select" id="centerCode" required onchange="loadBranchesByCenter()">
+                                            <option value="">@DailyClassView.SelectOption</option>
+                                        </select>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormStartTime *</label>
+                                    <input type="time" class="form-control" id="startTime" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormEndTime *</label>
+                                    <input type="time" class="form-control" id="endTime" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormSubject *</label>
+                                    <select class="form-select" id="subjectCode" required>
+                                        <option value="">@DailyClassView.SelectOption</option>
+                                    </select>
+                                </div>
+                                @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@DailyClassView.FormBranch *</label>
+                                        <select class="form-select" id="branchCode" required>
+                                            <option value="">@DailyClassView.SelectOption</option>
+                                        </select>
+                                    </div>
+                                }
+                                else if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode != null)
+                                {
+                                    <input type="hidden" id="branchCode" name="branchCode" value="@ViewBag.GroupBranchCode" />
+                                    <div class="mb-3">
+                                        <label class="form-label">@DailyClassView.FormBranch *</label>
+                                        <input type="text" class="form-control" value="@ViewBag.BranchName" disabled />
+                                        <small class="text-muted">@((isArabic ? "لا يمكن تغيير الفرع. يتم تعيينه تلقائيًا." : "Branch is auto-assigned and cannot be changed"))</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@DailyClassView.FormBranch *</label>
+                                        <select class="form-select" id="branchCode" required>
+                                            <option value="">@DailyClassView.SelectOption</option>
+                                        </select>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormHall *</label>
+                                    <select class="form-select" id="hallCode" required>
+                                        <option value="">@DailyClassView.SelectOption</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormEduYear *</label>
+                                    <select class="form-select" id="eduYearCode" required>
+                                        <option value="">@DailyClassView.SelectOption</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormYear</label>
+                                    <select class="form-select" id="yearCode">
+                                        <option value="">@DailyClassView.SelectOption</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">@DailyClassView.FormNoOfStudents <small class="text-muted">@((isArabic ? "يتم التحديث آلياً من الحضور" : "Auto-updated from attendance"))</small></label>
+                                    <input type="text" class="form-control" id="noOfStudents" readonly style="background-color: #f8f9fa; cursor: not-allowed;" value="0">
+                                    <small class="form-text text-muted">@((isArabic ? "يتم زيادة هذا العدد تلقائياً عند حضور الطلاب" : "This count increases automatically when students attend the class"))</small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">@DailyClassView.FormTotalAmount</label>
+                                    <input type="number" class="form-control" id="totalAmount" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">@DailyClassView.FormTeacherAmount</label>
+                                    <input type="number" class="form-control" id="teacherAmount" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">@DailyClassView.FormCenterAmount</label>
+                                    <input type="number" class="form-control" id="centerAmount" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@DailyClassView.FormCancel</button>
+                        <button type="button" class="btn-modern btn-success" id="saveClassBtn">
+                            <i class="fas fa-save me-2"></i>@DailyClassView.FormSaveClass
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-}
 
-<!-- Toast Container -->
-<div class="toast-container"></div>
+        <!-- Class Details Modal -->
+        <div class="modal fade" id="classDetailsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle me-2"></i>@DailyClassView.ClassDetailsModalTitle
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="classDetailsContent"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@DailyClassView.ClassDetailsModalClose</button>
+                        <button type="button" class="btn-modern btn-info" id="editClassBtn">
+                            <i class="fas fa-edit me-2"></i>@DailyClassView.ClassDetailsModalEditBtn
+                        </button>
+                        <button type="button" class="btn-modern" style="background: var(--danger-gradient);" id="deleteClassBtn">
+                            <i class="fas fa-trash me-2"></i>@DailyClassView.ClassDetailsModalDeleteBtn
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-<script src="~/js/dailyclass.js"></script>
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/dailyclass.js"></script>
+</body>
+</html>

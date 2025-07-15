@@ -256,10 +256,10 @@ function populateSelectAsync(selectId, options) {
     const select = document.getElementById(selectId);
     if (!select || !options) return;
 
-    // Clear existing options except first
-    select.innerHTML = '<option value="">Select...</option>';
+    // Use localized placeholder from resx hidden input
+    const localizedPlaceholder = document.getElementById('resxSelectOption').value;
+    select.innerHTML = `<option value="">${localizedPlaceholder}</option>`;
 
-    // Add options efficiently using document fragment
     const fragment = document.createDocumentFragment();
     options.forEach(option => {
         const optionElement = document.createElement('option');
