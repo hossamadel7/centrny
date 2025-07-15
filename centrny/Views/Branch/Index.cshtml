@@ -28,13 +28,62 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="/css/Hamody.css" />
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+            --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+            --primary-color: #6c5ce7;
+            --border-radius-lg: 28px;
+            --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+        }
+
         html[dir="rtl"] body,
         html[dir="rtl"] .container-fluid,
         html[dir="rtl"] .profile-content {
             direction: rtl;
             text-align: right;
         }
-        /* Any additional RTL adjustments for your branch view can go here */
+        /* Gradient centered header for branch view */
+        .branch-gradient-header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2.2rem;
+            padding: 2rem 0 1.2rem 0;
+            background: transparent;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .branch-gradient-header h2 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.3rem;
+                letter-spacing: -.01em;
+                background: var(--primary-gradient-horizontal);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                color: transparent;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .branch-gradient-header i {
+                margin-right: 12px;
+                color: #4f8cff;
+            }
+        @@media (max-width: 900px) {
+            .branch-gradient-header h2
+
+        {
+            font-size: 1.6rem;
+        }
+
+        }
     </style>
 </head>
 <body>
@@ -71,7 +120,13 @@
          data-alert-hall-delete-failed="@Localizer["Alert_HallDeleteFailed"]"
          data-alert-hall-delete-error="@Localizer["Alert_HallDeleteError"]" />
 
-    <h2 class="mb-4" id="branch-title"></h2>
+    <!-- Gradient centered header for Branch View -->
+    <div class="branch-gradient-header mb-4">
+        <h2>
+            <i class="fa-solid fa-code-branch"></i>
+            @Localizer["Title_ManageBranches"]
+        </h2>
+    </div>
 
     @if (userRootCode == 1)
     {
@@ -86,14 +141,7 @@
     }
     else
     {
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="alert alert-info">
-                    <strong id="alert-center"></strong> <span id="centerName">@centerName</span><br />
-                    <strong id="alert-user"></strong> <span id="userName">@userName</span>
-                </div>
-            </div>
-        </div>
+       
         <input type="hidden" id="fixedRootCode" value="@userRootCode" />
     }
 

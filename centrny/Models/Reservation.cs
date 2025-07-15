@@ -15,7 +15,7 @@ public partial class Reservation
 
     public decimal Cost { get; set; }
 
-    public int BranchCode { get; set; }
+    public int? BranchCode { get; set; }
 
     public decimal? Period { get; set; }
 
@@ -25,17 +25,17 @@ public partial class Reservation
 
     public int? FinalCost { get; set; }
 
-    public int HallCode { get; set; }
+    public int? HallCode { get; set; }
 
     public TimeOnly? ReservationStartTime { get; set; }
 
     public TimeOnly? ReservationEndTime { get; set; }
 
-    public virtual Branch BranchCodeNavigation { get; set; } = null!;
+    public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
-    public virtual Hall HallCodeNavigation { get; set; } = null!;
+    public virtual Hall? HallCodeNavigation { get; set; }
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
 }

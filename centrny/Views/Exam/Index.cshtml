@@ -15,6 +15,7 @@
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
 <head>
+    <link rel="stylesheet" href="~/css/Hamody.css" />
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
     @if (isArabic)
@@ -27,41 +28,135 @@
     }
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <style>
-        html[dir="rtl"] body,
-        html[dir="rtl"] .container-fluid,
-        html[dir="rtl"] .profile-content,
+        /* Exam view only RTL/LTR fix and unified root look */
         html[dir="rtl"] .exam-index-card,
-        html[dir="rtl"] .modal-content,
-        html[dir="rtl"] .card,
-        html[dir="rtl"] .table,
-        html[dir="rtl"] .form-label,
-        html[dir="rtl"] .form-group,
-        html[dir="rtl"] .modal-actions {
+        html[dir="rtl"] .gradient-table,
+        html[dir="rtl"] .exam-index-table,
+        html[dir="rtl"] .table-card {
             direction: rtl;
             text-align: right;
         }
 
-        html[dir="rtl"] .btn-group, html[dir="rtl"] .btn-group-actions {
-            float: left !important;
+        html[dir="ltr"] .exam-index-card,
+        html[dir="ltr"] .gradient-table,
+        html[dir="ltr"] .exam-index-table,
+        html[dir="ltr"] .table-card {
+            direction: ltr;
+            text-align: left;
+        }
+            /* Table column alignment fix for exam table only */
+            html[dir="ltr"] .gradient-table th:first-child,
+            html[dir="ltr"] .gradient-table td:first-child {
+                text-align: left;
+            }
+
+            html[dir="ltr"] .gradient-table th:last-child,
+            html[dir="ltr"] .gradient-table td:last-child {
+                text-align: right;
+            }
+
+        html[dir="rtl"] .gradient-table th:first-child,
+        html[dir="rtl"] .gradient-table td:first-child {
+            text-align: right;
         }
 
-        html[dir="rtl"] .me-2, html[dir="rtl"] .me-1 {
-            margin-left: 0.5rem !important;
-            margin-right: 0 !important;
+        html[dir="rtl"] .gradient-table th:last-child,
+        html[dir="rtl"] .gradient-table td:last-child {
+            text-align: left;
         }
-
-        html[dir="rtl"] .text-start {
-            text-align: right !important;
-        }
-
-        .badge.bg-assignment {
-            background-color: #5bc0de !important; /* Change to any color you want */
+        /* Stats button for exam view */
+        .btn-table.stats {
+            background: var(--info-gradient) !important;
             color: #fff !important;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            padding: 0.35em 0.7em;
+        }
+        /* Unified badge colors for exam view (looks like root) */
+        .badge.exam-type-exam {
+            background: var(--primary-gradient) !important;
         }
 
+        .badge.exam-type-assignment {
+            background: var(--info-gradient) !important;
+        }
+
+        .badge.exam-status-done {
+            background: var(--success-gradient) !important;
+        }
+
+        .badge.exam-status-pending {
+            background: var(--warning-gradient) !important;
+        }
+
+        .badge.exam-mode-online {
+            background: var(--info-gradient) !important;
+        }
+
+        .badge.exam-mode-offline {
+            background: var(--danger-gradient) !important;
+            color: #fff !important;
+        }
+
+        .badge.exam-duration {
+            background: var(--info-gradient) !important;
+        }
+
+        .badge.exam-degree {
+            background: var(--primary-gradient) !important;
+        }
+        /* Card and header just like root */
+        .table-card {
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            margin-top: 1.7rem;
+            margin-bottom: 2rem;
+            width: 98vw;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .exam-header-block {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2.2rem;
+            padding: 2rem 0 1.2rem 0;
+            background: var(--primary-gradient-light);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
+            position: relative;
+        }
+
+            .exam-header-block h2 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.3rem;
+                letter-spacing: -.01em;
+                background: var(--primary-gradient-horizontal);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                color: transparent;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .exam-header-block p {
+                color: var(--text-muted);
+                font-size: 1.13rem;
+                margin: 0;
+                font-weight: 500;
+            }
+        /* spacing for add button */
+        .exam-header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-bottom: 1.3rem;
+        }
     </style>
 </head>
 <body>
@@ -135,39 +230,28 @@
          data-offline="@Localizer["Offline"]" />
 
     <div class="container-fluid">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            @if (isCenter)
+        <div class="exam-header-block">
+            @if (!isCenter)
             {
-                <h2 class="mb-0">@Localizer["Title_ExamManagement"]</h2>
+                <h2 class="mb-0">Exams</h2>
             }
             else
             {
-                <div id="exam-for-teacher" class="mb-0"></div>
+                <h2 class="mb-0">@Localizer["Title_ExamManagement"]</h2>
             }
-            <button id="addExamBtn" class="exam-index-btn-add btn btn-primary">
-                <i class="bi bi-plus-circle"></i>
-                <span>@Localizer["AddExamBtn"]</span>
-            </button>
-        </div>
-
-        @if (isCenter)
-        {
-            <div id="exam-for-teacher" class="mb-2" style="display:none"></div>
-        }
-
-        <div class="card mb-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px solid #dee2e6;">
-            <div class="card-body py-2">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <small class="text-muted">@Localizer["PageContext"]</small>
-                        <strong>@rootName</strong>
-                        <span class="badge bg-@(isCenter ? "primary" : "success") ms-2">
-                            @(isCenter ? @Localizer["Center"] : @Localizer["Teacher"])
-                        </span>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <small class="text-muted">@Localizer["RootCodeLabel"] @rootCode</small>
-                    </div>
+            <div class="exam-header-actions">
+                <button id="addExamBtn" class="btn-table modules exam-index-btn-add">
+                    <i class="fas fa-plus me-2"></i>
+                    <span>@Localizer["AddExamBtn"]</span>
+                </button>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2" style="font-size:1rem;">
+                <div>
+                    <span class="text-muted">@Localizer["PageContext"]</span>
+                    <span class="badge teacher ms-2">@Localizer["Teacher"]</span>
+                </div>
+                <div>
+                    <span class="text-muted">@Localizer["RootCodeLabel"] @rootCode</span>
                 </div>
             </div>
         </div>
@@ -179,9 +263,10 @@
             </div>
         }
 
-        <div class="card exam-index-card">
+        <div class="table-card">
             <div class="card-body">
                 <div class="table-responsive">
+                    <!-- The table will be rendered by JS, so no need to change here -->
                     <div id="exam-details">
                         <div class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
@@ -201,15 +286,15 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="examStatsModalLabel">
-                        <i class="bi bi-bar-chart-line me-2"></i>@Localizer["ExamStatisticsTitle"]
+                        <i class="fas fa-chart-bar me-2"></i>@Localizer["ExamStatisticsTitle"]
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["CloseBtn"]"></button>
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal" aria-label="@Localizer["CloseBtn"]"></button>
                 </div>
                 <div class="modal-body" id="examStatsContent">
                     <!-- Stats will be loaded here -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CloseBtn"]</button>
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal">@Localizer["CloseBtn"]</button>
                 </div>
             </div>
         </div>
@@ -221,13 +306,12 @@
             <form id="examForm" class="modal-content" autocomplete="off">
                 <div class="modal-header">
                     <h5 class="modal-title" id="examModalLabel">
-                        <i class="bi bi-plus-circle me-2"></i>@Localizer["AddExamBtn"]
+                        <i class="fas fa-plus me-2"></i>@Localizer["AddExamBtn"]
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["CancelBtn"]"></button>
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal" aria-label="@Localizer["CancelBtn"]"></button>
                 </div>
                 <div class="modal-body">
                     <div id="examError" class="alert alert-danger" style="display:none"></div>
-
                     <div class="row">
                         <div class="col-md-6">
                             <!-- Teacher Selection -->
@@ -239,13 +323,11 @@
                                     </select>
                                 </div>
                             </div>
-
                             <!-- Teacher Display for Teacher Users -->
                             <div id="teacherDisplayGroup" style="display:none">
                                 <div id="teacherDisplayContainer"></div>
                                 <input type="hidden" id="AddExamTeacherCode" name="AddExamTeacherCode" />
                             </div>
-
                             <!-- Center Selection for Teacher Users -->
                             <div id="centerDropdownGroup" style="display:none">
                                 <div class="mb-3">
@@ -255,7 +337,6 @@
                                     </select>
                                 </div>
                             </div>
-
                             <!-- Branch Selection -->
                             <div id="branchDropdownGroup" style="display:none">
                                 <div class="mb-3">
@@ -265,7 +346,6 @@
                                     </select>
                                 </div>
                             </div>
-
                             <div id="rootBranchDropdownGroup" style="display:none">
                                 <div class="mb-3">
                                     <label for="AddExamBranchCode" class="form-label">@Localizer["BranchLabel"]</label>
@@ -274,14 +354,12 @@
                                     </select>
                                 </div>
                             </div>
-
                             <!-- Exam Name -->
                             <div class="mb-3">
                                 <label for="ExamName" class="form-label">@Localizer["ExamNameLabel"] <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="ExamName" id="ExamName" required
                                        placeholder="@Localizer["ExamNamePlaceholder"]">
                             </div>
-
                             <!-- Exam Timer -->
                             <div class="mb-3">
                                 <label for="ExamTimer" class="form-label">@Localizer["ExamTimerLabel"] <span class="text-danger">*</span></label>
@@ -291,7 +369,6 @@
                                 <div class="form-text">@Localizer["ExamTimerHelper"]</div>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <!-- Educational Year -->
                             <div class="mb-3">
@@ -300,7 +377,6 @@
                                     <option value="">@Localizer["SelectEduYearOption"]</option>
                                 </select>
                             </div>
-
                             <!-- Subject -->
                             <div class="mb-3">
                                 <label for="SubjectCode" class="form-label">@Localizer["SubjectLabel"] <span class="text-danger">*</span></label>
@@ -308,7 +384,6 @@
                                     <option value="">@Localizer["SelectSubjectOption"]</option>
                                 </select>
                             </div>
-
                             <!-- Year -->
                             <div class="mb-3">
                                 <label for="YearCode" class="form-label">@Localizer["YearLabel"] <span class="text-danger">*</span></label>
@@ -316,7 +391,6 @@
                                     <option value="">@Localizer["SelectYearOption"]</option>
                                 </select>
                             </div>
-
                             <!-- Checkboxes -->
                             <div class="mb-3">
                                 <div class="form-check">
@@ -326,7 +400,6 @@
                                     </label>
                                 </div>
                             </div>
-
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input type="checkbox" class="form-check-input" name="IsOnline" id="IsOnline">
@@ -339,11 +412,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-2"></i>@Localizer["CancelBtn"]
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>@Localizer["CancelBtn"]
                     </button>
-                    <button type="submit" class="btn btn-primary" id="saveExamBtn">
-                        <i class="bi bi-check-circle me-2"></i>@Localizer["SaveExamBtn"]
+                    <button type="submit" class="btn-table edit" id="saveExamBtn">
+                        <i class="fas fa-save me-2"></i>@Localizer["SaveExamBtn"]
                     </button>
                 </div>
             </form>
@@ -356,13 +429,12 @@
             <form id="editExamForm" class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editExamModalLabel">
-                        <i class="bi bi-pencil me-2"></i>@Localizer["EditExamBtn"]
+                        <i class="fas fa-pencil me-2"></i>@Localizer["EditExamBtn"]
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["CancelBtn"]"></button>
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal" aria-label="@Localizer["CancelBtn"]"></button>
                 </div>
                 <div class="modal-body">
                     <div id="editExamError" class="alert alert-danger" style="display:none"></div>
-
                     <!-- Hidden fields for required properties -->
                     <input type="hidden" name="ExamCode" id="EditExamCode" />
                     <input type="hidden" name="TeacherCode" id="EditTeacherCode" />
@@ -370,7 +442,6 @@
                     <input type="hidden" name="YearCode" id="EditYearCode" />
                     <input type="hidden" name="BranchCode" id="EditBranchCode" />
                     <input type="hidden" name="EduYearCode" id="EditEduYearCode" />
-
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -388,7 +459,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-check">
@@ -413,11 +483,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-2"></i>@Localizer["CancelBtn"]
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>@Localizer["CancelBtn"]
                     </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-2"></i>@Localizer["UpdateExamBtn"]
+                    <button type="submit" class="btn-table edit">
+                        <i class="fas fa-save me-2"></i>@Localizer["UpdateExamBtn"]
                     </button>
                 </div>
             </form>
@@ -428,15 +498,14 @@
     <div class="modal fade" id="questionsModal" tabindex="-1" aria-labelledby="questionsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <form id="questionsForm" class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header gradient-table" style="border-radius: 18px 18px 0 0;">
                     <h5 class="modal-title" id="questionsModalLabel">
-                        <i class="bi bi-list-check me-2"></i>@Localizer["ManageQuestions"]
+                        <i class="fas fa-list-check me-2"></i>@Localizer["ManageQuestions"]
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="@Localizer["CloseBtn"]"></button>
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal" aria-label="@Localizer["CloseBtn"]"></button>
                 </div>
                 <div class="modal-body p-3" style="min-height: 80vh; max-height: 80vh; overflow: hidden;">
                     <input type="hidden" id="questionsExamCode" name="ExamCode">
-
                     <div class="row g-3 h-100">
                         <div class="col-lg-6 d-flex flex-column">
                             <!-- Question Search Bar -->
@@ -444,23 +513,22 @@
                                 <div class="input-group">
                                     <input type="text" id="examQuestionSearchInput" class="form-control"
                                            placeholder="@Localizer["SearchQuestionsPlaceholder"]">
-                                    <button id="examQuestionSearchBtn" class="btn btn-primary" type="button">
-                                        <i class="bi bi-search"></i> @Localizer["SearchBtn"]
+                                    <button id="examQuestionSearchBtn" class="btn-table modules" type="button">
+                                        <i class="fas fa-search"></i> @Localizer["SearchBtn"]
                                     </button>
-                                    <button id="examQuestionSearchClearBtn" class="btn btn-secondary" type="button" style="display:none;">
-                                        <i class="bi bi-x-circle"></i> @Localizer["ClearBtn"]
+                                    <button id="examQuestionSearchClearBtn" class="btn-table delete" type="button" style="display:none;">
+                                        <i class="fas fa-times"></i> @Localizer["ClearBtn"]
                                     </button>
                                 </div>
                             </div>
                             <div id="exam-question-search-results" class="mb-2" style="display:none;"></div>
-
                             <div class="questions-section h-100 d-flex flex-column">
                                 <div id="availablePaginationTop" class="mb-2"></div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="fw-bold text-primary mb-0">
-                                        <i class="bi bi-collection me-2"></i>@Localizer["AvailableQuestions"]
+                                        <i class="fas fa-collection me-2"></i>@Localizer["AvailableQuestions"]
                                     </h6>
-                                    <span id="availableInfo" class="badge bg-info fs-6"></span>
+                                    <span id="availableInfo" class="badge user fs-6"></span>
                                 </div>
                                 <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
                                     <ul id="availableQuestions" class="list-group question-list flex-grow-1"></ul>
@@ -473,9 +541,9 @@
                                 <div id="chosenPaginationTop" class="mb-2"></div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="fw-bold text-success mb-0">
-                                        <i class="bi bi-check-square me-2"></i>@Localizer["ChosenQuestions"]
+                                        <i class="fas fa-check-square me-2"></i>@Localizer["ChosenQuestions"]
                                     </h6>
-                                    <span id="chosenInfo" class="badge bg-success fs-6"></span>
+                                    <span id="chosenInfo" class="badge center fs-6"></span>
                                 </div>
                                 <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
                                     <ul id="chosenQuestions" class="list-group question-list flex-grow-1"></ul>
@@ -486,11 +554,11 @@
                     </div>
                 </div>
                 <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-2"></i>@Localizer["CancelBtn"]
+                    <button type="button" class="btn-table delete" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>@Localizer["CancelBtn"]
                     </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle me-2"></i>@Localizer["SaveQuestionsBtn"]
+                    <button type="submit" class="btn-table edit">
+                        <i class="fas fa-save me-2"></i>@Localizer["SaveQuestionsBtn"]
                     </button>
                 </div>
             </form>

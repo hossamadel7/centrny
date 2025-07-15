@@ -1,10 +1,15 @@
-﻿@{
+﻿@using centrny.Controllers
+@inject centrny.Models.CenterContext DbContext
+@{
     var culture = System.Threading.Thread.CurrentThread.CurrentUICulture;
     var isRtl = culture.Name.StartsWith("ar");
     var dir = isRtl ? "rtl" : "ltr";
+    var sidebarPages = User.Identity.IsAuthenticated
+        ? LayoutController.GetSidebarPagesForUser(DbContext, User, Context.Session)
+        : new List<SidebarPageViewModel>();
 }
 <!DOCTYPE html>
-<html lang="@culture.Name" dir="@(isRtl ? "rtl" : "ltr")">
+<html lang="@culture.Name" dir="@dir">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,7 +32,7 @@
 
         :root {
             --sidebar-width: 280px;
-            --sidebar-bg: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
+            --sidebar-bg: linear-gradient(135deg, #032a9b 0%, #3c78d5 50%, #2450a1 100%);
             --sidebar-text: #e2e8f0;
             --sidebar-hover: rgba(255,255,255,0.10);
             --sidebar-active: rgba(255,255,255,0.15);
@@ -61,9 +66,9 @@
             font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
-            .modern-sidebar.open {
-                transform: translateX(0);
-            }
+        .modern-sidebar.open {
+            transform: translateX(0);
+        }
 
         .sidebar-overlay {
             position: fixed;
@@ -78,10 +83,10 @@
             transition: opacity 0.2s;
         }
 
-            .sidebar-overlay.active {
-                opacity: 1;
-                visibility: visible;
-            }
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
 
         .sidebar-header {
             display: flex;
@@ -99,10 +104,10 @@
             font-weight: 700;
         }
 
-            .sidebar-brand .fa-graduation-cap {
-                color: #fbbf24;
-                font-size: 1.7rem;
-            }
+        .sidebar-brand .fa-graduation-cap {
+            color: #fbbf24;
+            font-size: 1.7rem;
+        }
 
         .brand-text {
             font-size: 1.3rem;
@@ -123,9 +128,9 @@
             transition: background 0.2s;
         }
 
-            .sidebar-toggle-btn:hover {
-                background: var(--sidebar-hover);
-            }
+        .sidebar-toggle-btn:hover {
+            background: var(--sidebar-hover);
+        }
 
         .sidebar-user-profile {
             display: flex;
@@ -230,11 +235,11 @@
             letter-spacing: 0.015em;
         }
 
-            .nav-link:hover, .nav-link.active {
-                background: var(--sidebar-hover);
-                color: #fff;
-                transform: translateX(5px);
-            }
+        .nav-link:hover, .nav-link.active {
+            background: var(--sidebar-hover);
+            color: #fff;
+            transform: translateX(5px);
+        }
 
         .nav-icon {
             font-size: 1.13rem;
@@ -255,10 +260,10 @@
             color: #fca5a5 !important;
         }
 
-            .logout-link:hover {
-                background: rgba(251,113,133,0.08) !important;
-                color: #fee2e2 !important;
-            }
+        .logout-link:hover {
+            background: rgba(251,113,133,0.08) !important;
+            color: #fee2e2 !important;
+        }
 
         .main-wrapper {
             min-height: 100vh;
@@ -296,10 +301,10 @@
             transition: background 0.18s;
         }
 
-            .menu-toggle-btn:hover {
-                background: #f3f4f6;
-                color: #3730a3;
-            }
+        .menu-toggle-btn:hover {
+            background: #f3f4f6;
+            color: #3730a3;
+        }
 
         .page-title {
             font-size: 1.15rem;
@@ -325,9 +330,9 @@
                 transform: translateX(-100%);
             }
 
-                .modern-sidebar.open {
-                    transform: translateX(0);
-                }
+            .modern-sidebar.open {
+                transform: translateX(0);
+            }
 
             .main-wrapper {
                 margin-left: 0 !important;
@@ -343,9 +348,9 @@
                 transform: translateX(-100%);
             }
 
-                .modern-sidebar.open {
-                    transform: translateX(0);
-                }
+            .modern-sidebar.open {
+                transform: translateX(0);
+            }
 
             .main-wrapper {
                 margin-left: 0;
@@ -372,14 +377,14 @@
     </style>
 </head>
 <body>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <nav class="modern-sidebar" id="modernSidebar">
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <i class="fas fa-graduation-cap"></i>
                 <span class="brand-text">Centrny</span>
             </div>
-            <button class="sidebar-toggle-btn" type="button" onclick="toggleSidebar(false)">
+            <button class="sidebar-toggle-btn" type="button" id="sidebarCloseBtn">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -404,27 +409,28 @@
         }
         <div class="sidebar-nav">
             <ul class="nav-list">
-                <li><a class="nav-link" asp-controller="Root" asp-action="Index"><i class="fas fa-sitemap nav-icon"></i> <span class="nav-text">Roots</span></a></li>
-                <li><a class="nav-link" asp-controller="Security" asp-action="Index"><i class="fas fa-users nav-icon"></i> <span class="nav-text">Groups Management</span></a></li>
-                <li><a class="nav-link" asp-controller="EduYear" asp-action="Index"><i class="fas fa-calendar-alt nav-icon"></i> <span class="nav-text">Edu Years & Years</span></a></li>
-                <li><a class="nav-link" asp-controller="Expenses" asp-action="Index"><i class="fas fa-home nav-icon"></i> <span class="nav-text">Dashboard</span></a></li>
-                <li><a class="nav-link" asp-controller="Subject" asp-action="Index"><i class="fas fa-book nav-icon"></i> <span class="nav-text">Subjects</span></a></li>
-                <li><a class="nav-link" asp-controller="Student" asp-action="Index"><i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Students</span></a></li>
-                <li><a class="nav-link" asp-controller="Exam" asp-action="Index"><i class="fas fa-file-alt nav-icon"></i> <span class="nav-text">Exams</span></a></li>
-                <li><a class="nav-link" asp-controller="Schedule" asp-action="Index"><i class="fas fa-clock nav-icon"></i> <span class="nav-text">Schedules</span></a></li>
-                <li><a class="nav-link" asp-controller="Reservation" asp-action="Index"><i class="fas fa-calendar-check nav-icon"></i> <span class="nav-text">Reservations</span></a></li>
-                <li><a class="nav-link" asp-controller="TeacherManagement" asp-action="Index"><i class="fas fa-cogs nav-icon"></i> <span class="nav-text">Teacher Management</span></a></li>
-                <li><a class="nav-link" asp-controller="Item" asp-action="Index"><i class="fas fa-boxes nav-icon"></i> <span class="nav-text">Items</span></a></li>
-                <li><a class="nav-link" asp-controller="DailyClass" asp-action="Index"><i class="fas fa-chalkboard nav-icon"></i> <span class="nav-text">Classes</span></a></li>
-                <li><a class="nav-link" asp-controller="Question" asp-action="Index"><i class="fas fa-question-circle nav-icon"></i> <span class="nav-text">Questions</span></a></li>
-                <li><a class="nav-link" asp-controller="StudentExam" asp-action="Index"><i class="fas fa-user-graduate nav-icon"></i> <span class="nav-text">Student Exam</span></a></li>
-                <li><a class="nav-link" asp-controller="ViewAuthority" asp-action="Index"><i class="fas fa-users-cog nav-icon"></i> <span class="nav-text">Page Permissions</span></a></li>
+                @if (sidebarPages.Any())
+                {
+                    @foreach (var sidebarPage in sidebarPages)
+                    {
+                        <li>
+                            <a class="nav-link" asp-controller="@sidebarPage.Controller" asp-action="@sidebarPage.Action">
+                                <i class="@sidebarPage.Icon nav-icon"></i>
+                                <span class="nav-text">@sidebarPage.Text</span>
+                            </a>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <!-- Empty sidebar if no modules assigned -->
+                }
             </ul>
         </div>
         <div class="sidebar-footer">
             @if (User.Identity.IsAuthenticated)
             {
-                <a class="nav-link logout-link" href="#" onclick="document.getElementById('logoutForm').submit();">
+                <a class="nav-link logout-link" href="#" id="logoutBtn">
                     <i class="fas fa-sign-out-alt nav-icon"></i>
                     <span class="nav-text">Logout</span>
                 </a>
@@ -441,7 +447,7 @@
     <div class="main-wrapper" id="mainWrapper">
         <header class="top-header">
             <div class="header-left">
-                <button class="menu-toggle-btn" onclick="toggleSidebar(true)">
+                <button class="menu-toggle-btn" id="menuToggleBtn">
                     <i class="fas fa-bars"></i>
                 </button>
                 <span class="page-title">@ViewData["Title"]</span>
@@ -482,29 +488,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        function toggleSidebar(open) {
-            const sidebar = document.getElementById('modernSidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            if (open) {
-                sidebar.classList.add('open');
-                overlay.classList.add('active');
-            } else {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
-            }
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.modern-sidebar .nav-link').forEach(link => {
-                link.addEventListener('click', () => toggleSidebar(false));
-            });
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === "Escape") {
-                toggleSidebar(false);
-            }
-        });
-    </script>
+    <script src="~/js/Layout.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

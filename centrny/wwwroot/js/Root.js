@@ -61,17 +61,17 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-column gap-1">
-                                    <button class="btn root-index-btn-edit editBtn" type="button">
-                                        <i class="fas fa-edit me-1"></i>Edit
-                                    </button>
-                                    <button class="btn btn-danger deleteBtn" type="button">
-                                        <i class="fas fa-trash me-1"></i>Delete
-                                    </button>
-                                    <button class="btn btn-info assign-modules-btn" type="button"
-                                        data-rootcode="${root.rootCode}" 
-                                        data-rootname="${root.rootName}">
-                                        <i class="fas fa-puzzle-piece me-1"></i>Modules
-                                    </button>
+                                   <button class="btn-table edit editBtn" type="button">
+    <i class="fas fa-edit me-1"></i>Edit
+</button>
+<button class="btn-table delete deleteBtn" type="button">
+    <i class="fas fa-trash me-1"></i>Delete
+</button>
+<button class="btn-table modules assign-modules-btn" type="button"
+    data-rootcode="${root.rootCode}" 
+    data-rootname="${root.rootName}">
+    <i class="fas fa-puzzle-piece me-1"></i>Modules
+</button>
                                 </div>
                             </td>
                         </tr>`;

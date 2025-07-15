@@ -21,38 +21,186 @@ namespace centrny1.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasReservationPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            // Use your page path as stored in Pages (adjust as needed)
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Reservation/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         // Helper to get logged-in user's info from claims & DB (like EduYear)
-        private async Task<(int userCode, int groupCode, int rootCode)> GetUserInfoAsync()
+        private async Task<(int userCode, int groupCode, int rootCode, bool isCenter)> GetUserInfoAsync()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             int userCode = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userCode);
             if (user == null)
-                return (0, 0, 0);
+                return (0, 0, 0, true);
 
             int groupCode = user.GroupCode;
             var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
             if (group == null)
-                return (userCode, groupCode, 0);
+                return (userCode, groupCode, 0, true);
 
             int rootCode = group.RootCode;
+            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == rootCode);
+            bool isCenter = root?.IsCenter ?? true;
             // Debug output
-            Console.WriteLine($"DEBUG ReservationController User: UserCode={userCode}, GroupCode={groupCode}, RootCode={rootCode}");
-            return (userCode, groupCode, rootCode);
+            Console.WriteLine($"DEBUG ReservationController User: UserCode={userCode}, GroupCode={groupCode}, RootCode={rootCode}, IsCenter={isCenter}");
+            return (userCode, groupCode, rootCode, isCenter);
         }
 
         [HttpGet("")]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            if (!UserHasReservationPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
+            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            ViewBag.IsCenter = isCenter;
+            ViewBag.RootCode = rootCode;
             return View();
+        }
+
+        // For IsCenter == false, get the only teacher for this root (NO IsStaff filter)
+        [HttpGet("GetSingleTeacherForRoot")]
+        public async Task<IActionResult> GetSingleTeacherForRoot()
+        {
+            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            if (isCenter) return Json(new { success = false, message = "Not applicable" });
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.RootCode == rootCode);
+            if (teacher == null) return Json(new { success = false, message = "No teacher found" });
+            return Json(new { success = true, teacherCode = teacher.TeacherCode, teacherName = teacher.TeacherName });
+        }
+
+        // For IsCenter == false, show all reservations for root and date (no branch, no hall, NO IsStaff filter)
+        [HttpGet("GetRootReservations")]
+        public async Task<IActionResult> GetRootReservations(DateTime? reservationDate)
+        {
+            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            if (!UserHasReservationPermission() || isCenter)
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+            var date = reservationDate?.Date ?? DateTime.Today;
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.RootCode == rootCode);
+
+            if (teacher == null)
+            {
+                return Json(new { success = true, reservations = new List<object>() });
+            }
+
+            var reservations = await _context.Reservations
+                .Where(r =>
+                    r.RTime == DateOnly.FromDateTime(date)
+                    && r.TeacherCode == teacher.TeacherCode
+                )
+                .ToListAsync();
+
+            return Json(new
+            {
+                success = true,
+                reservations = reservations.Select(r => new
+                {
+                    reservationCode = r.ReservationCode,
+                    teacherName = teacher.TeacherName,
+                    description = r.Description,
+                    capacity = r.Capacity,
+                    cost = r.Cost,
+                    period = r.Period,
+                    deposit = r.Deposit,
+                    finalCost = r.FinalCost,
+                    rTime = r.RTime.ToString("yyyy-MM-dd"),
+                    reservationStartTime = r.ReservationStartTime?.ToString("HH:mm"),
+                    reservationEndTime = r.ReservationEndTime?.ToString("HH:mm")
+                }).ToList()
+            });
+        }
+
+        // Add reservation for non-center root (branch/hall are null)
+        [HttpPost("AddRootReservation")]
+        public async Task<IActionResult> AddRootReservation([FromForm] Reservation reservation)
+        {
+            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            if (!UserHasReservationPermission() || isCenter)
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+            // assign branch and hall to null explicitly
+            reservation.BranchCode = null;
+            reservation.HallCode = null;
+            await _context.Reservations.AddAsync(reservation);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Edit reservation for non-center root
+        [HttpPost("EditRootReservation")]
+        public async Task<IActionResult> EditRootReservation([FromForm] int ReservationCode, [FromForm] string Description, [FromForm] int Capacity, [FromForm] decimal Cost, [FromForm] int Deposit, [FromForm] int? FinalCost,
+            [FromForm] decimal? Period, [FromForm] TimeOnly? ReservationStartTime, [FromForm] TimeOnly? ReservationEndTime)
+        {
+            var (_, _, _, isCenter) = await GetUserInfoAsync();
+            if (!UserHasReservationPermission() || isCenter)
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
+            var reservation = await _context.Reservations.FindAsync(ReservationCode);
+            if (reservation == null) return NotFound();
+            reservation.Description = Description;
+            reservation.Capacity = Capacity;
+            reservation.Cost = Cost;
+            reservation.Deposit = Deposit;
+            reservation.FinalCost = FinalCost;
+            reservation.Period = Period;
+            reservation.ReservationStartTime = ReservationStartTime;
+            reservation.ReservationEndTime = ReservationEndTime;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Delete reservation (same for both flows)
+        [HttpPost("DeleteRootReservation")]
+        public async Task<IActionResult> DeleteRootReservation([FromForm] int reservationCode)
+        {
+            var (_, _, _, isCenter) = await GetUserInfoAsync();
+            if (!UserHasReservationPermission() || isCenter)
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
+            var reservation = await _context.Reservations.FindAsync(reservationCode);
+            if (reservation == null) return NotFound();
+            _context.Reservations.Remove(reservation);
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // Branch dropdown filtered by root code
         [HttpGet("GetBranchCodes")]
         public async Task<IActionResult> GetBranchCodes()
         {
-            var (_, _, rootCode) = await GetUserInfoAsync();
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+            var (_, _, rootCode, _) = await GetUserInfoAsync();
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode)
                 .Select(b => new { branchCode = b.BranchCode, branchName = b.BranchName })
@@ -64,6 +212,10 @@ namespace centrny1.Controllers
         [HttpGet("GetReservationGrid")]
         public async Task<IActionResult> GetReservationGrid(DateTime? reservationDate, int? branchCode)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             if (!branchCode.HasValue)
                 return Json(new { periods = new List<string>(), grid = new List<List<object>>() });
 
@@ -140,6 +292,11 @@ namespace centrny1.Controllers
         [HttpGet("GetTeachers")]
         public async Task<IActionResult> GetTeachers()
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var teachers = await _context.Teachers
                 .Where(t => !t.IsStaff)
                 .Select(t => new { teacherCode = t.TeacherCode, teacherName = t.TeacherName })
@@ -150,6 +307,11 @@ namespace centrny1.Controllers
         [HttpGet("GetHalls")]
         public async Task<IActionResult> GetHalls(int branchCode)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var halls = await _context.Halls
                 .Where(h => h.BranchCode == branchCode)
                 .OrderBy(h => h.HallCode)
@@ -161,6 +323,11 @@ namespace centrny1.Controllers
         [HttpPost("AddReservation")]
         public async Task<IActionResult> AddReservation([FromForm] Reservation reservation)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             if (string.IsNullOrWhiteSpace(reservation.Description)) reservation.Description = null;
             await _context.Reservations.AddAsync(reservation);
             await _context.SaveChangesAsync();
@@ -170,6 +337,11 @@ namespace centrny1.Controllers
         [HttpPost("EditReservation")]
         public async Task<IActionResult> EditReservation([FromForm] int ReservationCode, [FromForm] string Description, [FromForm] int TeacherCode, [FromForm] TimeOnly ReservationStartTime, [FromForm] TimeOnly ReservationEndTime)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var reservation = await _context.Reservations.FindAsync(ReservationCode);
             if (reservation == null) return NotFound();
             reservation.Description = Description;
@@ -183,6 +355,11 @@ namespace centrny1.Controllers
         [HttpPost("DeleteReservation")]
         public async Task<IActionResult> DeleteReservation([FromForm] int reservationCode)
         {
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
             var reservation = await _context.Reservations.FindAsync(reservationCode);
             if (reservation == null) return NotFound();
             _context.Reservations.Remove(reservation);
@@ -194,7 +371,12 @@ namespace centrny1.Controllers
         [HttpPost("AddTeacher")]
         public async Task<IActionResult> AddTeacher([FromForm] string TeacherName, [FromForm] string TeacherPhone, [FromForm] string? TeacherAddress)
         {
-            var (userCode, _, rootCode) = await GetUserInfoAsync();
+            if (!UserHasReservationPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
+            var (userCode, _, rootCode, _) = await GetUserInfoAsync();
             var newTeacher = new Teacher
             {
                 TeacherName = TeacherName,

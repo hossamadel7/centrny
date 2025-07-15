@@ -25,6 +25,22 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/Hamody.css" rel="stylesheet" />
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+            --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+            --success-gradient: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
+            --danger-gradient: linear-gradient(135deg, #e73f3f 0%, #fd797e 100%);
+            --secondary-gradient: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+            --primary-color: #6c5ce7;
+            --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+            --border-radius: 18px;
+            --border-radius-lg: 28px;
+            --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+        }
+
         html[dir="rtl"] body,
         html[dir="rtl"] .container-fluid,
         html[dir="rtl"] .profile-content,
@@ -33,15 +49,189 @@
             direction: rtl;
             text-align: right;
         }
-        /* Optionally override form, button, input alignment for RTL if needed */
+
         html[dir="rtl"] .form-label,
         html[dir="rtl"] .form-group,
         html[dir="rtl"] .modal-actions {
             text-align: right;
         }
+
+        /* Unified gradient, centered header */
+        .questions-header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2.2rem;
+            padding: 2rem 0 1.2rem 0;
+            background: transparent;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .questions-header h2 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.3rem;
+                letter-spacing: -.01em;
+                background: var(--primary-gradient-horizontal);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                color: transparent;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .questions-header i {
+                margin-right: 12px;
+                color: #4f8cff;
+            }
+        @@media (max-width: 900px) {
+            .questions-header h2
+
+        {
+            font-size: 1.6rem;
+        }
+
+        }
+
+        /* Unified buttons */
+        .modern-btn {
+            font-weight: 600 !important;
+            padding: 0.65rem 1.3rem !important;
+            border-radius: var(--border-radius) !important;
+            border: none !important;
+            color: #fff !important;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+            font-size: 1rem !important;
+            cursor: pointer !important;
+            margin-right: 0.4rem !important;
+            transition: transform 0.16s, box-shadow 0.16s !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5em !important;
+        }
+
+            .modern-btn.primary-btn {
+                background: var(--primary-gradient) !important;
+                color: #fff !important;
+            }
+
+            .modern-btn.success-btn {
+                background: var(--success-gradient) !important;
+                color: #fff !important;
+            }
+
+            .modern-btn.warning-btn {
+                background: var(--danger-gradient) !important;
+                color: #fff !important;
+            }
+
+            .modern-btn.secondary-btn {
+                background: var(--primary-gradient-light) !important;
+                color: var(--primary-color) !important;
+                font-weight: 600 !important;
+            }
+
+            .modern-btn:hover, .modern-btn:focus {
+                box-shadow: var(--shadow-lg) !important;
+                transform: scale(1.05) !important;
+            }
+
+        /* Modal background overlay */
+        .modal-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 30, 30, 0.45);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.25s;
+        }
+        /* Modal content box with animation */
+        .modal-content {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: var(--shadow-lg);
+            padding: 32px 24px;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            z-index: 10000;
+            animation: modalUpFade 0.35s cubic-bezier(.4,0,.2,1);
+        }
+
+        @@keyframes modalUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @@media (max-width: 600px) {
+            .modal-content {
+                max-width: 95vw;
+                padding: 16px 8px;
+            }
+        }
+        /* Modern textarea styling for question content */
+        textarea.modern-input,
+        #question-content {
+            width: 100%;
+            min-height: 85px;
+            font-size: 1.13em;
+            border-radius: 12px;
+            border: 1.5px solid #e0e0e0;
+            background: #fafbff;
+            padding: 10px 14px;
+            resize: vertical;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.06);
+            margin-top: 6px;
+            transition: border-color 0.18s;
+        }
+
+            textarea.modern-input:focus,
+            #question-content:focus {
+                border-color: var(--primary-color, #6c5ce7);
+                outline: none;
+            }
+        /* Icon-only action buttons for questions */
+        .question-actions .modern-btn.success-btn,
+        .question-actions .modern-btn.warning-btn {
+            min-width: 38px;
+            padding: 8px 0 !important;
+            justify-content: center !important;
+            gap: 0 !important;
+        }
+
+            .question-actions .modern-btn.success-btn span,
+            .question-actions .modern-btn.warning-btn span {
+                display: none !important;
+            }
     </style>
 </head>
 <body>
+    <!-- Gradient, centered header -->
+    <div class="questions-header">
+        <h2>
+            <i class="fa-solid fa-book-open-reader"></i>
+            @Localizer["Questions"]
+        </h2>
+    </div>
+
     <!-- Localized strings for JS -->
     <div id="js-localization"
          data-search-placeholder="@Localizer["SearchPlaceholder"]"
@@ -97,66 +287,60 @@
     <div id="user-root-info-box" style="display:none;"></div>
 
     <div id="chapter-lesson-container">
-        <h2 id="chapter-lesson-title">
-            <i class="fa-solid fa-book-open-reader" style="color:#4f8cff;margin-right:12px;"></i>
-            @Localizer["Questions"]
-        </h2>
-
         <div id="question-search-bar" style="margin: 24px 0 16px 0; text-align: left;">
-            <input type="text" id="questionSearchInput" class="modern-input" style="width:260px;max-width:100%;" />
-            <button id="questionSearchBtn" class="modern-btn" style="margin-left:8px;"></button>
-            <button id="questionSearchClearBtn" class="modern-btn btn-cancel" style="margin-left:6px;display:none;"></button>
+            <input type="text" id="questionSearchInput" class="modern-input secondary-btn" style="width:260px;max-width:100%;" />
+            <button id="questionSearchBtn" class="modern-btn secondary-btn" style="margin-left:8px;"></button>
+            <button id="questionSearchClearBtn" class="modern-btn secondary-btn" style="margin-left:6px;display:none;"></button>
         </div>
         <div id="question-search-results" style="display:none; margin-bottom: 30px;"></div>
-        <button class="modern-btn" id="add-chapter-btn" style="margin:16px 0;"></button>
+        <button class="modern-btn primary-btn" id="add-chapter-btn" style="margin:16px 0;"></button>
         <div id="subject-year-filter-bar" style="margin: 12px 0 16px 0; text-align: left; display:none;">
             <label for="subjectYearFilter" style="margin-right: 6px;"><b></b></label>
-            <select id="subjectYearFilter" class="modern-input" style="width:280px;max-width:100%;"></select>
+            <select id="subjectYearFilter" class="modern-input secondary-btn" style="width:280px;max-width:100%;"></select>
         </div>
         <div id="chapters-container"></div>
         <div id="pagination-container" style="margin-top: 20px; text-align: center;"></div>
     </div>
 
-    <!-- ADD CHAPTER MODAL -->
-    <div id="chapter-modal" class="modal-background" style="display:none;">
+    <!-- MODALS -->
+    <div id="chapter-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="chapter-modal-title"></h3>
             <form id="chapter-form" autocomplete="off">
                 <div class="form-group">
                     <label for="chapter-lessonname"><span id="chapter-name-label"></span><span style="color:red;">*</span></label>
-                    <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input" />
+                    <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input secondary-btn" />
                 </div>
                 <div class="form-group">
                     <label for="chapter-eduyearcode"><span id="education-year-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input"></select>
+                    <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input secondary-btn"></select>
                 </div>
                 <div class="form-group" id="teacher-group" style="display:none;">
                     <label for="chapter-teachercode"><span id="teacher-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-teachercode" name="TeacherCode" class="modern-input"></select>
+                    <select id="chapter-teachercode" name="TeacherCode" class="modern-input secondary-btn"></select>
                 </div>
                 <input type="hidden" id="chapter-teachercode-hidden" name="TeacherCode" />
                 <div class="form-group">
                     <label for="chapter-subjectcode"><span id="subject-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input"></select>
+                    <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input secondary-btn"></select>
                 </div>
                 <input type="hidden" id="chapter-yearcode" name="YearCode" />
                 <div class="modal-actions">
-                    <button type="submit" class="modern-btn" id="save-chapter-btn"></button>
-                    <button type="button" id="cancel-chapter-btn" class="modern-btn btn-cancel"></button>
+                    <button type="submit" class="modern-btn primary-btn" id="save-chapter-btn"></button>
+                    <button type="button" id="cancel-chapter-btn" class="modern-btn secondary-btn"></button>
                 </div>
                 <div id="chapter-message"></div>
             </form>
         </div>
     </div>
 
-    <!-- ADD LESSON MODAL -->
-    <div id="lesson-modal" class="modal-background" style="display:none;">
+    <div id="lesson-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="lesson-modal-title"></h3>
             <form id="lesson-form" autocomplete="off">
                 <div class="form-group">
                     <label for="lesson-name"><span id="lesson-name-label"></span><span style="color:red;">*</span></label>
-                    <input type="text" id="lesson-name" name="LessonName" required class="modern-input" />
+                    <input type="text" id="lesson-name" name="LessonName" required class="modern-input secondary-btn" />
                 </div>
                 <input type="hidden" id="lesson-rootcode" name="RootCode" />
                 <input type="hidden" id="lesson-teachercode" name="TeacherCode" />
@@ -165,16 +349,15 @@
                 <input type="hidden" id="lesson-chaptercode" name="ChapterCode" />
                 <input type="hidden" id="lesson-yearcode" name="YearCode" />
                 <div class="modal-actions">
-                    <button type="submit" class="modern-btn" id="save-lesson-btn"></button>
-                    <button type="button" id="cancel-lesson-btn" class="modern-btn btn-cancel"></button>
+                    <button type="submit" class="modern-btn primary-btn" id="save-lesson-btn"></button>
+                    <button type="button" id="cancel-lesson-btn" class="modern-btn secondary-btn"></button>
                 </div>
                 <div id="lesson-message"></div>
             </form>
         </div>
     </div>
 
-    <!-- Modals for adding and editing questions/answers -->
-    <div id="question-modal" class="modal-background" style="display:none;">
+    <div id="question-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="question-modal-title"></h3>
             <form id="question-form" autocomplete="off">
@@ -186,18 +369,18 @@
                 </div>
                 <div class="form-group">
                     <label for="question-examcode"><span id="exam-code-label"></span></label>
-                    <input type="number" id="question-examcode" name="ExamCode" class="modern-input" />
+                    <input type="number" id="question-examcode" name="ExamCode" class="modern-input secondary-btn" />
                 </div>
                 <div class="modal-actions">
-                    <button type="submit" class="modern-btn" id="save-question-btn"></button>
-                    <button type="button" id="cancel-question-btn" class="modern-btn btn-cancel"></button>
+                    <button type="submit" class="modern-btn primary-btn" id="save-question-btn"></button>
+                    <button type="button" id="cancel-question-btn" class="modern-btn secondary-btn"></button>
                 </div>
                 <div id="question-message"></div>
             </form>
         </div>
     </div>
 
-    <div id="answers-modal" class="modal-background" style="display:none;">
+    <div id="answers-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="answers-modal-title"></h3>
             <form id="answers-form" autocomplete="off">
@@ -205,17 +388,17 @@
                 <div id="answers-fields">
                     <!-- Dynamic answer fields here -->
                 </div>
-                <button type="button" id="add-more-answer-btn" class="modern-btn" style="margin-bottom:8px;"></button>
+                <button type="button" id="add-more-answer-btn" class="modern-btn secondary-btn" style="margin-bottom:8px;"></button>
                 <div class="modal-actions">
-                    <button type="submit" class="modern-btn" id="save-answers-btn"></button>
-                    <button type="button" id="cancel-answers-btn" class="modern-btn btn-cancel"></button>
+                    <button type="submit" class="modern-btn primary-btn" id="save-answers-btn"></button>
+                    <button type="button" id="cancel-answers-btn" class="modern-btn secondary-btn"></button>
                 </div>
                 <div id="answers-message"></div>
             </form>
         </div>
     </div>
 
-    <div id="edit-answer-modal" class="modal-background" style="display:none;">
+    <div id="edit-answer-modal" class="modal-background">
         <div class="modal-content">
             <h3 id="edit-answer-modal-title"></h3>
             <form id="edit-answer-form" autocomplete="off">
@@ -223,7 +406,7 @@
                 <input type="hidden" id="edit-answer-questioncode" name="QuestionCode" />
                 <div class="form-group">
                     <label for="edit-answer-content"><span id="edit-answer-content-label"></span><span style="color:red;">*</span></label>
-                    <input type="text" id="edit-answer-content" name="AnswerContent" required class="modern-input" />
+                    <input type="text" id="edit-answer-content" name="AnswerContent" required class="modern-input secondary-btn" />
                 </div>
                 <div class="form-group">
                     <label>
@@ -232,8 +415,8 @@
                     </label>
                 </div>
                 <div class="modal-actions">
-                    <button type="submit" class="modern-btn" id="save-edit-answer-btn"></button>
-                    <button type="button" id="cancel-edit-answer-btn" class="modern-btn btn-cancel"></button>
+                    <button type="submit" class="modern-btn success-btn" id="save-edit-answer-btn"></button>
+                    <button type="button" id="cancel-edit-answer-btn" class="modern-btn secondary-btn"></button>
                 </div>
                 <div id="edit-answer-message"></div>
             </form>

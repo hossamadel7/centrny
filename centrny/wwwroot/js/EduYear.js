@@ -72,7 +72,7 @@ function openEduModal(isEdit = false, eduYear = null) {
     eduCodeInput.value = '';
     const submitBtn = eduForm.querySelector('button[type="submit"]');
     submitBtn.disabled = false;
-    submitBtn.textContent = resxSubmit;
+    submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
     if (isEdit && eduYear) {
         eduCodeInput.value = eduYear.eduCode;
         eduForm.eduName.value = eduYear.eduName;
@@ -96,9 +96,9 @@ eduForm.onsubmit = function (e) {
     eduErrorDiv.textContent = "";
 
     const submitBtn = eduForm.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
+    const originalHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.textContent = resxLoading;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
 
     const eduName = eduForm.eduName.value.trim();
     const isActive = eduForm.isActive.value === "true";
@@ -107,7 +107,7 @@ eduForm.onsubmit = function (e) {
     if (!eduName) {
         eduErrorDiv.textContent = resxLoading;
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        submitBtn.innerHTML = originalHtml;
         return;
     }
 
@@ -138,7 +138,7 @@ eduForm.onsubmit = function (e) {
         })
         .finally(() => {
             submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            submitBtn.innerHTML = originalHtml;
         });
 };
 
@@ -148,8 +148,8 @@ function eduYearRowHTML(eduYear) {
         <td>${eduYear.eduName ?? ''}</td>
         <td>${eduYear.isActive ? resxYes : resxNo}</td>
         <td>
-            <button class="action-btn edit-btn" data-code="${eduYear.eduCode}">${resxEdit}</button>
-            <button class="action-btn delete-btn" data-code="${eduYear.eduCode}">${resxDelete}</button>
+            <button class="btn-table edit edit-btn" data-code="${eduYear.eduCode}"><i class="fas fa-pencil"></i> ${resxEdit}</button>
+            <button class="btn-table delete delete-btn" data-code="${eduYear.eduCode}"><i class="fas fa-trash"></i> ${resxDelete}</button>
         </td>
     `;
 }
@@ -236,6 +236,9 @@ function openYearModal(levelCode, isEdit = false, year = null) {
     editingYearObj = year;
     yearModalTitle.textContent = isEdit ? resxEdit + " " + resxAddYear : resxAddYear;
     yearCodeInput.value = '';
+    const submitBtn = yearForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
     if (isEdit && year) {
         yearCodeInput.value = year.yearCode;
         yearNameInput.value = year.yearName;
@@ -255,6 +258,9 @@ function openLevelModal() {
     levelErrorDiv.textContent = "";
     levelForm.reset();
     levelModalTitle.textContent = resxAddLevel;
+    const submitBtn = levelForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
 }
 function closeLevelModalFunc() {
     levelModal.style.display = "none";
@@ -267,9 +273,9 @@ yearForm.onsubmit = function (e) {
     yearErrorDiv.textContent = "";
 
     const submitBtn = yearForm.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
+    const originalHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.textContent = resxLoading;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
 
     const yearName = yearNameInput.value.trim();
     const yearSort = parseInt(yearSortInput.value);
@@ -279,7 +285,7 @@ yearForm.onsubmit = function (e) {
     if (!yearName || isNaN(yearSort) || isNaN(levelCode)) {
         yearErrorDiv.textContent = resxLoading;
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        submitBtn.innerHTML = originalHtml;
         return;
     }
 
@@ -310,7 +316,7 @@ yearForm.onsubmit = function (e) {
         })
         .finally(() => {
             submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            submitBtn.innerHTML = originalHtml;
         });
 };
 
@@ -320,16 +326,16 @@ levelForm.onsubmit = function (e) {
     levelErrorDiv.textContent = "";
 
     const submitBtn = levelForm.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
+    const originalHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.textContent = resxLoading;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
 
     const levelName = levelNameInput.value.trim();
 
     if (!levelName) {
         levelErrorDiv.textContent = resxLoading;
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        submitBtn.innerHTML = originalHtml;
         return;
     }
 
@@ -351,7 +357,7 @@ levelForm.onsubmit = function (e) {
         })
         .finally(() => {
             submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            submitBtn.innerHTML = originalHtml;
         });
 };
 
@@ -374,11 +380,11 @@ function levelBoxHTML(level, years) {
         <div class="level-box" data-level-code="${level.levelCode}">
             <div class="level-header">
                 <h3 style="display:inline-block;margin-right:16px;">${level.levelName}</h3>
-                <button class="modern-btn add-year-btn" data-level-code="${level.levelCode}" style="margin-right:8px;">${resxAddYear}</button>
+                <button class="btn-table add add-year-btn" data-level-code="${level.levelCode}" style="margin-right:8px;"><i class="fas fa-plus"></i> ${resxAddYear}</button>
             </div>
             <div class="years-list">${yearsHTML}</div>
             <div style="text-align:right;margin-top:8px;">
-                <button class="modern-btn add-level-btn">${resxAddLevel}</button>
+                <button class="btn-table add add-level-btn"><i class="fas fa-plus"></i> ${resxAddLevel}</button>
             </div>
         </div>
     `;
@@ -389,8 +395,8 @@ function yearRowHTML(year) {
             <td>${year.yearName ?? ''}</td>
             <td>${year.yearSort ?? ''}</td>
             <td>
-                <button class="action-btn edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">${resxEdit}</button>
-                <button class="action-btn delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">${resxDelete}</button>
+                <button class="btn-table edit edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-pencil"></i> ${resxEdit}</button>
+                <button class="btn-table delete delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-trash"></i> ${resxDelete}</button>
             </td>
         </tr>
     `;
@@ -408,7 +414,7 @@ function loadLevelsAndYears() {
             }
             if (!data.levels || data.levels.length === 0) {
                 levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">${resxNoLevels}</div>
-                <div style="margin-top:16px;"><button class="modern-btn add-level-btn">${resxAddLevel}</button></div>`;
+                <div style="margin-top:16px;"><button class="btn-table add add-level-btn"><i class="fas fa-plus"></i> ${resxAddLevel}</button></div>`;
                 return;
             }
             data.levels.forEach(level => {

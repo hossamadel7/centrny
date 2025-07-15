@@ -3,29 +3,40 @@
     Layout = "_Layout";
 }
 <link rel="stylesheet" href="~/css/Hamody.css" />
-<div class="container mt-5">
-    <h2>Security Page</h2>
-    <div class="mb-3">
-        <label class="form-label fw-bold fs-5">Select Root Type</label>
-        <div class="btn-group w-100" role="group" aria-label="Select Root Type">
-            <input type="radio" class="btn-check" name="userType" id="userTypeCenter" value="center" autocomplete="off">
-            <label class="btn btn-outline-primary" for="userTypeCenter">Center</label>
-            <input type="radio" class="btn-check" name="userType" id="userTypeTeacher" value="teacher" autocomplete="off">
-            <label class="btn btn-outline-primary" for="userTypeTeacher">Teacher</label>
+
+<div class="security-header mb-0">
+    <h2>
+        <i class="bi bi-shield-check"></i>
+        Security Management
+    </h2>
+</div>
+
+<div class="security-panel-card">
+    <div class="filter-panel mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6 col-lg-5">
+                <label class="form-label fw-bold fs-5">Select Root Type</label>
+                <div class="btn-group w-100" role="group" aria-label="Select Root Type">
+                    <input type="radio" class="btn-check" name="userType" id="userTypeCenter" value="center" autocomplete="off">
+                    <label class="btn modern-btn secondary-btn" for="userTypeCenter">Center</label>
+                    <input type="radio" class="btn-check" name="userType" id="userTypeTeacher" value="teacher" autocomplete="off">
+                    <label class="btn modern-btn secondary-btn" for="userTypeTeacher">Teacher</label>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-7">
+                <label class="form-label">Select Root</label>
+                <div class="dropdown">
+                    <button class="btn modern-btn secondary-btn dropdown-toggle text-start" type="button" id="rootDropdownButton"
+                            data-bs-toggle="dropdown" aria-expanded="false" style="width:100%;" disabled>
+                        Select root type first
+                    </button>
+                    <ul class="dropdown-menu w-100" id="rootDropdownMenu" aria-labelledby="rootDropdownButton">
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="mb-3" id="rootDropdownContainer">
-        <label class="form-label">Select Root</label>
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle text-start" type="button" id="rootDropdownButton"
-                    data-bs-toggle="dropdown" aria-expanded="false" style="width:100%;" disabled>
-                Select root type first
-            </button>
-            <ul class="dropdown-menu w-100" id="rootDropdownMenu" aria-labelledby="rootDropdownButton">
-            </ul>
-        </div>
-    </div>
     <div id="groupsActionsContainer" class="mb-3"></div>
     <div id="groupsContainer" class="mt-3"></div>
 </div>
@@ -43,16 +54,22 @@
                     <input type="hidden" id="createGroupRootCode" name="RootCode">
                     <div class="mb-3">
                         <label for="createGroupName" class="form-label">Group Name</label>
-                        <input type="text" class="form-control" id="createGroupName" name="GroupName" required>
+                        <input type="text" class="form-control modern-input" id="createGroupName" name="GroupName" required>
                     </div>
                     <div class="mb-3">
                         <label for="createGroupDesc" class="form-label">Group Description</label>
-                        <textarea class="form-control" id="createGroupDesc" name="GroupDesc"></textarea>
+                        <textarea class="form-control modern-input" id="createGroupDesc" name="GroupDesc"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createGroupBranch" class="form-label">Select Branch</label>
+                        <select class="form-select modern-input" id="createGroupBranch" name="BranchCode" required>
+                            <option value="">Select branch</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Create Group</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modern-btn success-btn">Create Group</button>
+                    <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
@@ -72,16 +89,22 @@
                     <input type="hidden" id="editGroupCode" name="GroupCode">
                     <div class="mb-3">
                         <label for="editGroupName" class="form-label">Group Name</label>
-                        <input type="text" class="form-control" id="editGroupName" name="GroupName" required>
+                        <input type="text" class="form-control modern-input" id="editGroupName" name="GroupName" required>
                     </div>
                     <div class="mb-3">
                         <label for="editGroupDesc" class="form-label">Group Description</label>
-                        <textarea class="form-control" id="editGroupDesc" name="GroupDesc"></textarea>
+                        <textarea class="form-control modern-input" id="editGroupDesc" name="GroupDesc"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGroupBranch" class="form-label">Select Branch</label>
+                        <select class="form-select modern-input" id="editGroupBranch" name="BranchCode" required>
+                            <option value="">Select branch</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modern-btn edit-btn">Save Changes</button>
+                    <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
@@ -101,19 +124,23 @@
                     <input type="hidden" id="editUserCode" name="userCode">
                     <div class="mb-3">
                         <label for="editUserName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="editUserName" name="name">
+                        <input type="text" class="form-control modern-input" id="editUserName" name="name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control modern-input" id="editUserPassword" name="password" autocomplete="new-password" placeholder="Leave blank to keep current password">
                     </div>
                     <div class="form-check mb-3">
                         <input type="checkbox" class="form-check-input" id="editUserIsActive" name="isActive">
                         <label class="form-check-label" for="editUserIsActive">Active</label>
                     </div>
                     <div class="mb-3">
-                        <button type="button" class="btn btn-warning reset-password-btn" id="resetPasswordBtn" data-user-code="">Reset Password</button>
+                        <button type="button" class="modern-btn warning-btn reset-password-btn" id="resetPasswordBtn" data-user-code="">Reset Password</button>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Save changes</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modern-btn edit-btn">Save changes</button>
+                    <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
@@ -133,16 +160,16 @@
                     <input type="hidden" id="createUserGroupCode" name="groupCode">
                     <div class="mb-3">
                         <label for="createUserName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="createUserName" name="name" required>
+                        <input type="text" class="form-control modern-input" id="createUserName" name="name" required>
                     </div>
                     <div class="mb-3">
                         <label for="createUserUsername" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="createUserUsername" name="username" required>
+                        <input type="text" class="form-control modern-input" id="createUserUsername" name="username" required>
                         <div id="usernameCheckMsg" class="mt-1"></div>
                     </div>
                     <div class="mb-3">
                         <label for="createInsertUserCode" class="form-label">Insert User Code</label>
-                        <input type="number" class="form-control" id="createInsertUserCode" name="insertUserCode" required>
+                        <input type="number" class="form-control modern-input" id="createInsertUserCode" name="insertUserCode" required>
                     </div>
                     <div class="form-check mb-3">
                         <input type="checkbox" class="form-check-input" id="createUserIsActive" name="isActive" checked>
@@ -151,8 +178,8 @@
                     <div id="createUserSuccess" class="alert alert-success d-none"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Create User</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="modern-btn success-btn">Create User</button>
+                    <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>

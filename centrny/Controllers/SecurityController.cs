@@ -19,14 +19,42 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasSecurityPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Security/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         public IActionResult Index()
         {
+            if (!UserHasSecurityPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
             return View();
         }
 
         [HttpGet]
         public JsonResult GetRoots(bool? isCenter = null)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var query = _context.Roots.AsQueryable();
             if (isCenter.HasValue)
             {
@@ -38,12 +66,33 @@ namespace centrny.Controllers
             return Json(roots);
         }
 
+        // --- NEW ENDPOINT: Fetch Branches by RootCode ---
+        [HttpGet]
+        public JsonResult GetBranchesByRoot(int rootCode)
+        {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+            // Replace Branches with your actual branch entity name
+            var branches = _context.Branches
+                .Where(b => b.RootCode == rootCode)
+                .Select(b => new { b.BranchCode, b.BranchName })
+                .ToList();
+
+            return Json(branches);
+        }
+
         [HttpGet]
         public JsonResult GetGroupsByRoot(int rootCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var groups = _context.Groups
                 .Where(g => g.RootCode == rootCode)
-                .Select(g => new { g.GroupCode, g.GroupName, g.GroupDesc, g.RootCode })
+                .Select(g => new { g.GroupCode, g.GroupName, g.GroupDesc, g.RootCode, g.BranchCode })
                 .ToList();
 
             if (groups.Count == 0)
@@ -53,8 +102,12 @@ namespace centrny.Controllers
         }
 
         [HttpPost]
-        public JsonResult CreateGroup(string groupName, string groupDesc, int rootCode, int insertUser)
+        public JsonResult CreateGroup(string groupName, string groupDesc, int rootCode, int insertUser, int branchCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             try
             {
                 if (string.IsNullOrWhiteSpace(groupName))
@@ -67,11 +120,12 @@ namespace centrny.Controllers
                     GroupDesc = groupDesc,
                     RootCode = rootCode,
                     InsertUser = insertUser,
-                    InsertTime = DateTime.Now
+                    InsertTime = DateTime.Now,
+                    BranchCode = branchCode
                 };
                 _context.Groups.Add(group);
                 _context.SaveChanges();
-                return Json(new { success = true, group = new { group.GroupCode, group.GroupName, group.GroupDesc, group.RootCode } });
+                return Json(new { success = true, group = new { group.GroupCode, group.GroupName, group.GroupDesc, group.RootCode, group.BranchCode } });
             }
             catch (Exception ex)
             {
@@ -87,8 +141,12 @@ namespace centrny.Controllers
         }
 
         [HttpPost]
-        public JsonResult EditGroup(int groupCode, string groupName, string groupDesc)
+        public JsonResult EditGroup(int groupCode, string groupName, string groupDesc, int branchCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var group = _context.Groups.FirstOrDefault(g => g.GroupCode == groupCode);
             if (group == null)
                 return Json(new { success = false, message = "Group not found" });
@@ -96,24 +154,31 @@ namespace centrny.Controllers
             if (!string.IsNullOrWhiteSpace(groupName))
                 group.GroupName = groupName;
             group.GroupDesc = groupDesc;
+            group.BranchCode = branchCode;
 
             _context.SaveChanges();
 
             return Json(new { success = true });
         }
 
+        // --- MODIFIED: Delete group deletes all users first ---
         [HttpPost]
         public JsonResult DeleteGroup(int groupCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var group = _context.Groups.FirstOrDefault(g => g.GroupCode == groupCode);
             if (group == null)
                 return Json(new { success = false, message = "Group not found" });
 
-            // Check for referencing users
-            var hasUsers = _context.Users.Any(u => u.GroupCode == groupCode && u.IsActive);
-            if (hasUsers)
-                return Json(new { success = false, message = "Cannot delete group with active users. Remove users first." });
-
+            // Delete all users (not just deactivate)
+            var users = _context.Users.Where(u => u.GroupCode == groupCode).ToList();
+            if (users.Any())
+            {
+                _context.Users.RemoveRange(users);
+            }
             _context.Groups.Remove(group);
             _context.SaveChanges();
             return Json(new { success = true });
@@ -122,6 +187,10 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetUsersByGroup(int groupCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var users = _context.Users
                 .Where(u => u.GroupCode == groupCode && u.IsActive)
                 .Select(u => new { u.UserCode, u.Name, u.Username, u.IsActive })
@@ -131,8 +200,12 @@ namespace centrny.Controllers
         }
 
         [HttpPost]
-        public JsonResult EditUser(int userCode, string name, bool isActive)
+        public JsonResult EditUser(int userCode, string name, bool isActive, string password = null)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var user = _context.Users.FirstOrDefault(u => u.UserCode == userCode);
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
@@ -141,13 +214,31 @@ namespace centrny.Controllers
                 user.Name = name;
             user.IsActive = isActive;
 
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                using (var md5 = MD5.Create())
+                {
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(password);
+                    byte[] hashBytes = md5.ComputeHash(inputBytes);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < hashBytes.Length; i++)
+                        sb.Append(hashBytes[i].ToString("x2"));
+                    user.Password = sb.ToString();
+                }
+            }
+
             _context.SaveChanges();
 
             return Json(new { success = true });
         }
+
         [HttpPost]
         public JsonResult ResetUserPassword(int userCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var user = _context.Users.FirstOrDefault(u => u.UserCode == userCode);
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
@@ -170,6 +261,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult DeleteUser(int userCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             var user = _context.Users.FirstOrDefault(u => u.UserCode == userCode);
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
@@ -183,6 +278,10 @@ namespace centrny.Controllers
         [HttpPost]
         public JsonResult CreateUser(string name, string username, string password, int groupCode, bool isActive, int insertUserCode)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             try
             {
                 string usernameToCheck = (username ?? "").Trim().ToLower();
@@ -246,6 +345,10 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult IsUsernameTaken(string username)
         {
+            if (!UserHasSecurityPermission())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
             username = (username ?? "").Trim().ToLower();
             bool taken = _context.Users.Any(u => u.Username.ToLower() == username);
             return Json(new { taken });

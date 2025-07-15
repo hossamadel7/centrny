@@ -161,6 +161,7 @@ namespace centrny.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            HttpContext.Session.Remove("SidebarPages");
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             _logger.LogInformation("User logged out: {Username}", User.Identity.Name);
             return RedirectToAction("Index");

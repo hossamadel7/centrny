@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
 
 namespace centrny.Controllers
 {
@@ -16,6 +20,27 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // --- Authority Check ---
+        private bool UserHasEduYearPermission()
+        {
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false;
+
+            var userGroupCodes = _context.Users
+                .Where(ug => ug.UserCode == user.UserCode)
+                .Select(ug => ug.GroupCode)
+                .ToList();
+
+            // Use your page path as stored in Pages (adjust as needed)
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "EduYear/Index");
+            if (page == null)
+                return false;
+
+            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+        }
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -24,12 +49,19 @@ namespace centrny.Controllers
 
         public IActionResult Index()
         {
+            if (!UserHasEduYearPermission())
+            {
+                return View("~/Views/Login/AccessDenied.cshtml");
+            }
             return View();
         }
 
         [HttpGet]
         public async Task<IActionResult> GetEduYears()
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
 
@@ -59,6 +91,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLevelsAndYearsForActiveEduYear()
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             int userId = GetCurrentUserId();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
 
@@ -124,6 +159,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddEduYear([FromBody] AddEduYearDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.EduName))
                 return BadRequest("Invalid data.");
 
@@ -166,6 +204,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> EditEduYear([FromBody] EditEduYearDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.EduName))
                 return BadRequest("Invalid data.");
             var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.EduCode == dto.EduCode);
@@ -197,6 +238,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteEduYear([FromBody] DeleteEduYearDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || dto.EduCode == 0)
                 return BadRequest("Invalid data.");
 
@@ -213,6 +257,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddYear([FromBody] AddYearDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
                 return BadRequest("Invalid data.");
 
@@ -258,6 +305,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> EditYear([FromBody] EditYearDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
                 return BadRequest("Invalid data.");
             var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
@@ -282,6 +332,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteYear([FromBody] DeleteYearDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || dto.YearCode == 0)
                 return BadRequest("Invalid data.");
 
@@ -298,6 +351,9 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddLevel([FromBody] AddLevelDto dto)
         {
+            if (!UserHasEduYearPermission())
+                return Json(new { success = false, message = "Access denied." });
+
             if (dto == null || string.IsNullOrWhiteSpace(dto.LevelName))
                 return BadRequest("Invalid data.");
 

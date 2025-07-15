@@ -1,10 +1,4 @@
-﻿let loggedInUserCode = null;
-let loggedInUserRootCode = null;
-let currentTeacherCode = null;
-
-function getJsString(key) {
-    return $('#js-localization').data(key);
-}
+﻿console.log("TeacherManagement.js loaded");
 
 $(function () {
     // Localized JS strings
@@ -14,16 +8,22 @@ $(function () {
     const fillAllFields = getJsString('fill-all-fields');
     const processingText = getJsString('processing');
     const submitText = getJsString('submit');
+    const saveChangesText = getJsString('save-changes') || "Save Changes";
+    const addTeacherText = getJsString('add-teacher-btn') || "Add Teacher";
+    const addTeachingSubjectBtn = getJsString('add-teaching-subject-btn');
+    const showSubjectsBtn = getJsString('show-subjects-btn');
+    const editBtnText = getJsString('edit-btn');
+    const deleteBtnText = getJsString('delete-btn');
+    const noEduYear = getJsString('no-educational-year');
     const userCodeText = getJsString('usercode');
     const userNameText = getJsString('username');
     const rootNameText = getJsString('rootname');
     const phoneText = getJsString('phone');
     const addressText = getJsString('address');
-    const showSubjectsBtn = getJsString('show-subjects-btn');
-    const addTeachingSubjectBtn = getJsString('add-teaching-subject-btn');
-    const editBtn = getJsString('edit-btn');
-    const deleteBtn = getJsString('delete-btn');
-    const noEduYear = getJsString('no-educational-year');
+
+    let loggedInUserCode = null;
+    let loggedInUserRootCode = null;
+    let currentTeacherCode = null;
 
     const addTeacherSubmitBtn = $('#teacherForm button[type="submit"]');
     const editTeacherSubmitBtn = $('#editTeacherForm button[type="submit"]');
@@ -31,6 +31,10 @@ $(function () {
 
     function resetSubmitButton($btn, defaultText) {
         $btn.text(defaultText).prop('disabled', false);
+    }
+
+    function getJsString(key) {
+        return $('#js-localization').data(key);
     }
 
     $.ajax({
@@ -58,17 +62,17 @@ $(function () {
             method: 'GET',
             success: function (teachers) {
                 let html = teachers.map(teacher => `
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div><b>${teacher.teacherName}</b></div>
-                        <div>${phoneText}: ${teacher.teacherPhone}</div>
-                        <div>${addressText}: ${teacher.teacherAddress || ''}</div>
-                        <div>Status: ${teacher.isActive ? 'Active' : 'Inactive'}</div>
-                        <div class="mt-2">
-                            <button class="btn btn-info btn-sm show-subjects-btn" data-teacher="${teacher.teacherCode}">${showSubjectsBtn}</button>
-                            <button class="btn btn-success btn-sm add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>
-                            <button class="btn btn-warning btn-sm edit-teacher-btn" data-teacher="${teacher.teacherCode}">${editBtn}</button>
-                            <button class="btn btn-danger btn-sm delete-teacher-btn" data-teacher="${teacher.teacherCode}">${deleteBtn}</button>
+                <div class="card teacher-card mb-3" style="border-radius: 20px; box-shadow: var(--shadow-lg); border: none; background: var(--bg-white);">
+                    <div class="card-body" style="padding: 1.6em 1.3em;">
+                        <div class="fw-bold mb-1" style="font-size: 1.1em; color: var(--primary-color);">${teacher.teacherName}</div>
+                        <div style="color: var(--text-muted);">${phoneText}: <span class="fw-bold">${teacher.teacherPhone}</span></div>
+                        <div style="color: var(--text-muted);">${addressText}: <span class="fw-bold">${teacher.teacherAddress || ''}</span></div>
+                        <div style="color: var(--text-muted);">Status: <span class="fw-bold">${teacher.isActive ? 'Active' : 'Inactive'}</span></div>
+                        <div class="mt-3 teacher-btn-row">
+                            <button class="modern-btn show-subjects-btn" data-teacher="${teacher.teacherCode}">${showSubjectsBtn}</button>
+                            <button class="modern-btn add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>
+                            <button class="modern-btn edit-btn edit-teacher-btn" data-teacher="${teacher.teacherCode}">${editBtnText}</button>
+                            <button class="modern-btn delete-btn delete-teacher-btn" data-teacher="${teacher.teacherCode}">${deleteBtnText}</button>
                         </div>
                         <div class="mt-2 subjects-container" id="subjects-for-teacher-${teacher.teacherCode}" style="display:none;"></div>
                     </div>
@@ -79,9 +83,45 @@ $(function () {
         });
     }
 
+    // Style for button row (matches unified theme)
+    $('<style>').text(`
+        .teacher-btn-row {
+            display: flex;
+            gap: 0.6em;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 0.5em;
+        }
+        .teacher-card .modern-btn {
+            min-width: 120px;
+        }
+        .teacher-card .show-subjects-btn {
+            background: var(--primary-gradient-light) !important;
+            color: var(--primary-color) !important;
+            font-weight: 600 !important;
+        }
+        .teacher-card .add-teachsubject-btn {
+            background: var(--secondary-gradient) !important;
+            color: #fff !important;
+        }
+        .teacher-card .edit-teacher-btn {
+            background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+            color: #fff !important;
+        }
+        .teacher-card .delete-teacher-btn {
+            background: var(--danger-gradient) !important;
+            color: #fff !important;
+        }
+        .teacher-card .modern-btn:hover, .teacher-card .modern-btn:focus {
+            box-shadow: var(--shadow-lg) !important;
+            transform: scale(1.05) !important;
+        }
+    `).appendTo('head');
+
     $(document).on('click', '#openAddTeacher', function () {
         $('#teacherForm')[0].reset();
-        resetSubmitButton(addTeacherSubmitBtn, submitText);
+        resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
         $('#addTeacherModal').modal('show');
     });
 
@@ -104,17 +144,17 @@ $(function () {
                 $('#addTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
                 alert(res.message);
-                resetSubmitButton(addTeacherSubmitBtn, submitText);
+                resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
             },
             error: function (xhr) {
                 alert("Failed to add teacher: " + xhr.responseText);
-                resetSubmitButton(addTeacherSubmitBtn, submitText);
+                resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
             }
         });
     });
 
     $('#addTeacherModal').on('hidden.bs.modal', function () {
-        resetSubmitButton(addTeacherSubmitBtn, submitText);
+        resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
     });
 
     $(document).on('click', '.edit-teacher-btn', function () {
@@ -124,7 +164,7 @@ $(function () {
             $('#editTeacherName').val(teacher.teacherName);
             $('#editTeacherPhone').val(teacher.teacherPhone);
             $('#editTeacherAddress').val(teacher.teacherAddress);
-            resetSubmitButton(editTeacherSubmitBtn, submitText);
+            resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
             $('#editTeacherModal').modal('show');
         });
     });
@@ -147,17 +187,17 @@ $(function () {
                 $('#editTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
                 alert(res.message);
-                resetSubmitButton(editTeacherSubmitBtn, submitText);
+                resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
             },
             error: function (xhr) {
                 alert("Failed to edit teacher: " + xhr.responseText);
-                resetSubmitButton(editTeacherSubmitBtn, submitText);
+                resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
             }
         });
     });
 
     $('#editTeacherModal').on('hidden.bs.modal', function () {
-        resetSubmitButton(editTeacherSubmitBtn, submitText);
+        resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
     });
 
     $(document).on('click', '.delete-teacher-btn', function () {
@@ -197,8 +237,8 @@ $(function () {
                                 <span>
                                     ${s.subjectName} <span class="text-secondary">(${s.yearName})</span>
                                 </span>
-                                <button class="btn btn-danger btn-sm ms-2 delete-teach-btn"
-                                    data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}">${deleteBtn}</button>
+                                <button class="modern-btn delete-btn delete-teach-btn"
+                                    data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}" style="padding: 0.3em 1em; font-size: 0.9em;">${deleteBtnText}</button>
                             </li>`;
                     }
                     html += '</ul>';
