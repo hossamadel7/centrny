@@ -1,6 +1,7 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    loadRoots('center'); // Load Centers by default on page load
+    loadRoots('center');
+    setupAddWalletExamSubmit();
 });
 
 function setupEventListeners() {
@@ -11,7 +12,6 @@ function setupEventListeners() {
     document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', onEditClick));
     document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', onDeleteClick));
 
-    // New listeners for rootType radio and rootSelect dropdown
     document.querySelectorAll('input[name="rootType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             loadRoots(e.target.value);
@@ -34,27 +34,33 @@ async function loadRoots(type) {
     rootSelect.innerHTML = `<option value="">Loading...</option>`;
 
     try {
-        // Fetch centers or teachers from your API endpoints:
-        // Adjust URLs as per your backend routes
-        const url = type === 'center' ? '/api/centers' : '/api/teachers';
+        const isCenter = type === 'center' ? 'true' : 'false';
+        const url = `/api/roots?isCenter=${isCenter}&isActive=true`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to load data');
         const data = await res.json();
 
-        // Clear and add a default option
         rootSelect.innerHTML = `<option value="">-- Select ${capitalize(type)} --</option>`;
 
         data.forEach(item => {
-            // Assuming your centers/teachers have ID and Name properties
-            rootSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+            rootSelect.innerHTML += `<option value="${item.rootCode}">${item.rootName}</option>`;
         });
 
+        // Update modal dropdown as well
+        const modalRootSelect = document.getElementById('modalRootSelect');
+        if (modalRootSelect) {
+            modalRootSelect.innerHTML = rootSelect.innerHTML;
+        }
     } catch (error) {
         rootSelect.innerHTML = `<option value="">Failed to load ${type}s</option>`;
+        const modalRootSelect = document.getElementById('modalRootSelect');
+        if (modalRootSelect) {
+            modalRootSelect.innerHTML = rootSelect.innerHTML;
+        }
         console.error(error);
     }
 
-    filterData(); // Apply filter with updated dropdown values
+    filterData();
 }
 
 function capitalize(str) {
@@ -65,8 +71,8 @@ function filterData() {
     const query = document.getElementById('searchInput').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value;
     const expiryFilter = document.getElementById('expiryFilter').value;
-
     const rootCodeFilter = document.getElementById('rootSelect').value;
+    const rootTypeFilter = document.querySelector('input[name="rootType"]:checked').value;
 
     const rows = document.querySelectorAll('#tableBody tr');
     rows.forEach(row => {
@@ -74,17 +80,102 @@ function filterData() {
         const status = row.querySelector('.status').textContent.trim();
         const daysLeft = row.querySelector('.daysLeft').textContent.trim();
         const rootCode = row.querySelector('.rootCode').textContent.trim();
+        const rootType = row.querySelector('.rootType').textContent.trim().toLowerCase();
 
         const matchSearch = code.includes(query);
         const matchStatus = !statusFilter || status === statusFilter;
         const matchExpiry = !expiryFilter ||
             (expiryFilter === 'expired' && daysLeft === 'Expired') ||
             (expiryFilter === 'active' && daysLeft !== 'Expired');
-        // New: rootCode filtering
         const matchRootCode = !rootCodeFilter || rootCode === rootCodeFilter;
+        const matchRootType = !rootTypeFilter || rootType === rootTypeFilter;
 
-        row.style.display = (matchSearch && matchStatus && matchExpiry && matchRootCode) ? '' : 'none';
+        row.style.display = (matchSearch && matchStatus && matchExpiry && matchRootCode && matchRootType) ? '' : 'none';
     });
 }
 
-// The rest of your existing functions here (onEditClick, onSaveClick, onCancelClick, onDeleteClick, etc.) remain unchanged.
+function setupAddWalletExamSubmit() {
+    const form = document.getElementById('addWalletExamForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const payload = {
+            Amount: Number(formData.get('amount')),
+            DateStart: formData.get('dateStart'),
+            ExpireDate: formData.get('expireDate'),
+            IsActive: formData.get('isActive') === 'true',
+            RootCode: Number(formData.get('modalRootSelect'))
+            // Count and OriginalCount are not sent
+        };
+
+        try {
+            const res = await fetch(window.addWalletExamUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                location.reload();
+            } else {
+                const error = await res.json();
+                showAlert('danger', 'Failed to add wallet exam: ' + (error.message || 'Server error'));
+            }
+        } catch (err) {
+            showAlert('danger', 'Failed to add wallet exam.');
+        }
+    });
+}
+function getAntiForgeryToken() {
+    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+    return tokenInput ? tokenInput.value : '';
+}
+
+function showAlert(type, message) {
+    const alertPlaceholder = document.getElementById('alertPlaceholder');
+    alertPlaceholder.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+function onEditClick(e) {
+    const tr = e.target.closest('tr');
+    const walletExamCode = tr.getAttribute('data-id');
+    window.location.href = `/WalletExam/Edit/${walletExamCode}`;
+}
+
+function onDeleteClick(e) {
+    const tr = e.target.closest('tr');
+    const walletExamCode = tr.getAttribute('data-id');
+
+    if (confirm('Are you sure you want to delete this wallet exam?')) {
+        deleteWalletExam(walletExamCode);
+    }
+}
+
+async function deleteWalletExam(id) {
+    try {
+        const response = await fetch(`/WalletExam/DeleteConfirmed/${id}`, {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        });
+        if (response.ok) {
+            location.reload();
+        } else {
+            showAlert('danger', 'Failed to delete wallet exam.');
+        }
+    } catch (error) {
+        showAlert('danger', 'Failed to delete wallet exam.');
+    }
+}

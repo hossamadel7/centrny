@@ -70,11 +70,29 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to AM.
+        /// </summary>
+        public static string AM {
+            get {
+                return ResourceManager.GetString("AM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Daily Classes.
         /// </summary>
         public static string CalendarDayHeader {
             get {
                 return ResourceManager.GetString("CalendarDayHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capacity.
+        /// </summary>
+        public static string CapacityLabel {
+            get {
+                return ResourceManager.GetString("CapacityLabel", resourceCulture);
             }
         }
         
@@ -115,6 +133,24 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cost.
+        /// </summary>
+        public static string CostLabel {
+            get {
+                return ResourceManager.GetString("CostLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error creating class: .
+        /// </summary>
+        public static string CreateError {
+            get {
+                return ResourceManager.GetString("CreateError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Next Day.
         /// </summary>
         public static string DateNavNext {
@@ -133,11 +169,29 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to End time must be after start time.
+        /// </summary>
+        public static string EndTimeError {
+            get {
+                return ResourceManager.GetString("EndTimeError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error.
         /// </summary>
         public static string ErrorBanner {
             get {
                 return ResourceManager.GetString("ErrorBanner", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error loading branch.
+        /// </summary>
+        public static string ErrorLoadingBranch {
+            get {
+                return ResourceManager.GetString("ErrorLoadingBranch", resourceCulture);
             }
         }
         
@@ -295,6 +349,15 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to for.
+        /// </summary>
+        public static string ForUser {
+            get {
+                return ResourceManager.GetString("ForUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Generate Weekly Classes.
         /// </summary>
         public static string GenerateWeeklyBtn {
@@ -309,6 +372,15 @@ namespace Resources {
         public static string IsCenterLabel {
             get {
                 return ResourceManager.GetString("IsCenterLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to is required.
+        /// </summary>
+        public static string IsRequired {
+            get {
+                return ResourceManager.GetString("IsRequired", resourceCulture);
             }
         }
         
@@ -358,6 +430,42 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error loading data.
+        /// </summary>
+        public static string LoadError {
+            get {
+                return ResourceManager.GetString("LoadError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loading....
+        /// </summary>
+        public static string Loading {
+            get {
+                return ResourceManager.GetString("Loading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to en-US.
+        /// </summary>
+        public static string Locale {
+            get {
+                return ResourceManager.GetString("Locale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Network error occurred: .
+        /// </summary>
+        public static string NetworkError {
+            get {
+                return ResourceManager.GetString("NetworkError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No classes scheduled.
         /// </summary>
         public static string NoClassesScheduled {
@@ -385,6 +493,15 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to PM.
+        /// </summary>
+        public static string PM {
+            get {
+                return ResourceManager.GetString("PM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Refresh.
         /// </summary>
         public static string RefreshBtn {
@@ -399,6 +516,33 @@ namespace Resources {
         public static string RootCodeLabel {
             get {
                 return ResourceManager.GetString("RootCodeLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to save class. Please contact administrator..
+        /// </summary>
+        public static string SaveError {
+            get {
+                return ResourceManager.GetString("SaveError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Class created successfully!.
+        /// </summary>
+        public static string SaveSuccess {
+            get {
+                return ResourceManager.GetString("SaveSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Saving....
+        /// </summary>
+        public static string Saving {
+            get {
+                return ResourceManager.GetString("Saving", resourceCulture);
             }
         }
         
@@ -426,6 +570,42 @@ namespace Resources {
         public static string TodayBtn {
             get {
                 return ResourceManager.GetString("TodayBtn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown error.
+        /// </summary>
+        public static string UnknownError {
+            get {
+                return ResourceManager.GetString("UnknownError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error updating class: .
+        /// </summary>
+        public static string UpdateError {
+            get {
+                return ResourceManager.GetString("UpdateError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Class updated successfully!.
+        /// </summary>
+        public static string UpdateSuccess {
+            get {
+                return ResourceManager.GetString("UpdateSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updating....
+        /// </summary>
+        public static string Updating {
+            get {
+                return ResourceManager.GetString("Updating", resourceCulture);
             }
         }
         
