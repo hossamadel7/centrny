@@ -1,0 +1,172 @@
+﻿@using EmployeeResource = centrny.Resources.Employee
+@{
+    ViewData["Title"] = EmployeeResource.Employee_ListTitle;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="~/css/Hamody.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Gradient Centered Header -->
+<div class="questions-header mb-0">
+    <h2>
+        <i class="fa-solid fa-users"></i>
+        @EmployeeResource.Employee_ListTitle
+    </h2>
+</div>
+<div class="table-card" style="max-width:1100px;">
+    <div class="d-flex justify-content-end mb-3" style="width:100%;">
+        <button class="modern-btn primary-btn" id="btnAddEmployee">
+            <i class="fas fa-plus"></i> @EmployeeResource.Employee_AddBtn
+        </button>
+    </div>
+    <table class="gradient-table" id="employeeTable">
+        <thead>
+            <tr>
+                <th>@EmployeeResource.Employee_NameLabel</th>
+                <th>@EmployeeResource.Employee_PhoneLabel</th>
+                <th>@EmployeeResource.Employee_EmailLabel</th>
+                <th>@EmployeeResource.Employee_SalaryLabel</th>
+                <th>@EmployeeResource.Employee_StartDateLabel</th>
+                <th>@EmployeeResource.Employee_UserLabel</th>
+                <th>@EmployeeResource.Employee_BranchLabel</th>
+                <th>@EmployeeResource.Employee_IsActiveLabel</th>
+                <th>@EmployeeResource.Employee_Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Filled by JS -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="employeeModal" tabindex="-1" role="dialog" aria-labelledby="employeeModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="employeeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="employeeModalLabel">@EmployeeResource.Employee_AddEditModalTitle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="employeeCode" name="employeeCode" />
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_NameLabel</label>
+                        <input type="text" id="employeeName" name="employeeName" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_PhoneLabel</label>
+                        <input type="text" id="employeePhone" name="employeePhone" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_EmailLabel</label>
+                        <input type="email" id="employeeEmail" name="employeeEmail" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_SalaryLabel</label>
+                        <input type="number" id="employeeSalary" name="employeeSalary" class="form-control" required step="0.01" />
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_StartDateLabel</label>
+                        <input type="date" id="employeeStartDate" name="employeeStartDate" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_UserLabel</label>
+                        <select id="userCode" name="userCode" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_BranchLabel</label>
+                        <select id="branchCode" name="branchCode" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>@EmployeeResource.Employee_IsActiveLabel</label>
+                        <select id="isActive" name="isActive" class="form-control">
+                            <option value="true">@EmployeeResource.Employee_Active</option>
+                            <option value="false">@EmployeeResource.Employee_Inactive</option>
+                        </select>
+                    </div>
+                    <div id="addEmployeeError" style="color:#c00; margin-bottom:10px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="modern-btn success-btn" id="saveEmployee">
+                        <i class="fas fa-save"></i> @EmployeeResource.Employee_Save
+                    </button>
+                    <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal" id="cancelEmployee">
+                        <i class="fas fa-times"></i> @EmployeeResource.Employee_Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- jQuery (must come before Employee.js) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Localized JS variables (injected from RESX)
+    const addTitle = '@EmployeeResource.Employee_AddModalTitle';
+    const editTitle = '@EmployeeResource.Employee_EditModalTitle';
+    const addEditTitle = '@EmployeeResource.Employee_AddEditModalTitle';
+    const yesText = '@EmployeeResource.Employee_Active';
+    const noText = '@EmployeeResource.Employee_Inactive';
+    const userSelectText = '@EmployeeResource.Employee_SelectUser';
+    const branchSelectText = '@EmployeeResource.Employee_SelectBranch';
+    const errorLoadingText = '@EmployeeResource.Employee_ErrorLoading';
+    const pleaseFillFieldsText = '@EmployeeResource.Employee_PleaseFillFields';
+    const couldNotAddText = '@EmployeeResource.Employee_CouldNotAdd';
+    const couldNotEditText = '@EmployeeResource.Employee_CouldNotEdit';
+    const couldNotDeleteText = '@EmployeeResource.Employee_CouldNotDelete';
+    const deleteConfirmText = '@EmployeeResource.Employee_DeleteConfirm';
+    const unauthorizedText = '@EmployeeResource.Employee_Unauthorized';
+    const notFoundText = '@EmployeeResource.Employee_NotFound';
+    const noEmployeesText = '@EmployeeResource.Employee_NoEmployees';
+    const processingText = '@EmployeeResource.Employee_Processing';
+    const actionsText = '@EmployeeResource.Employee_Actions';
+    const deleteText = '@EmployeeResource.Employee_DeleteBtn';
+</script>
+<script src="~/js/Employee.js"></script>
+<style>
+    .modern-btn {
+        font-weight: 600 !important;
+        padding: 0.65rem 1.3rem !important;
+        border-radius: 18px !important;
+        border: none !important;
+        color: #fff !important;
+        box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+        font-size: 1rem !important;
+        cursor: pointer !important;
+        margin-right: 0.4rem !important;
+        transition: transform 0.16s, box-shadow 0.16s !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5em !important;
+    }
+
+        .modern-btn.primary-btn {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%) !important;
+            color: #fff !important;
+        }
+
+        .modern-btn.success-btn {
+            background: linear-gradient(135deg, #00b894 0%, #55a3ff 100%) !important;
+            color: #fff !important;
+        }
+
+        .modern-btn.delete-btn {
+            background: linear-gradient(135deg, #e17055 0%, #fd79a8 100%) !important;
+            color: #fff !important;
+        }
+
+        .modern-btn.secondary-btn {
+            background: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%) !important;
+            color: #6c5ce7 !important;
+            font-weight: 600 !important;
+        }
+
+        .modern-btn:hover, .modern-btn:focus {
+            box-shadow: 0 8px 36px rgba(108, 92, 231, 0.18) !important;
+            transform: scale(1.05) !important;
+        }
+</style>

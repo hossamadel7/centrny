@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
 	<resheader name="resmimetype">
 		<value>text/microsoft-resx</value>
@@ -13,96 +13,96 @@
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
 	<data name="Employee_ListTitle" xml:space="preserve">
-    <value>الموظفين</value>
+    <value>Employees</value>
   </data>
 	<data name="Employee_AddBtn" xml:space="preserve">
-    <value>إضافة موظف</value>
+    <value>Add Employee</value>
   </data>
 	<data name="Employee_AddModalTitle" xml:space="preserve">
-    <value>إضافة موظف</value>
+    <value>Add Employee</value>
   </data>
 	<data name="Employee_EditModalTitle" xml:space="preserve">
-    <value>تعديل الموظف</value>
+    <value>Edit Employee</value>
   </data>
 	<data name="Employee_AddEditModalTitle" xml:space="preserve">
-    <value>إضافة/تعديل موظف</value>
+    <value>Add/Edit Employee</value>
   </data>
 	<data name="Employee_NameLabel" xml:space="preserve">
-    <value>الاسم</value>
+    <value>Name</value>
   </data>
 	<data name="Employee_PhoneLabel" xml:space="preserve">
-    <value>رقم الهاتف</value>
+    <value>Phone</value>
   </data>
 	<data name="Employee_EmailLabel" xml:space="preserve">
-    <value>البريد الإلكتروني</value>
+    <value>Email</value>
   </data>
 	<data name="Employee_SalaryLabel" xml:space="preserve">
-    <value>الراتب</value>
+    <value>Salary</value>
   </data>
 	<data name="Employee_StartDateLabel" xml:space="preserve">
-    <value>تاريخ البدء</value>
+    <value>Start Date</value>
   </data>
 	<data name="Employee_UserLabel" xml:space="preserve">
-    <value>المستخدم</value>
+    <value>User</value>
   </data>
 	<data name="Employee_BranchLabel" xml:space="preserve">
-    <value>الفرع</value>
+    <value>Branch</value>
   </data>
 	<data name="Employee_IsActiveLabel" xml:space="preserve">
-    <value>الحالة</value>
+    <value>Status</value>
   </data>
 	<data name="Employee_Active" xml:space="preserve">
-    <value>نشط</value>
+    <value>Active</value>
   </data>
 	<data name="Employee_Inactive" xml:space="preserve">
-    <value>غير نشط</value>
+    <value>Inactive</value>
   </data>
 	<data name="Employee_Save" xml:space="preserve">
-    <value>حفظ</value>
+    <value>Save</value>
   </data>
 	<data name="Employee_Cancel" xml:space="preserve">
-    <value>إلغاء</value>
+    <value>Cancel</value>
   </data>
 	<data name="Employee_Actions" xml:space="preserve">
-    <value>الإجراءات</value>
+    <value>Actions</value>
   </data>
 	<data name="Employee_DeleteBtn" xml:space="preserve">
-    <value>مسح</value>
+    <value>Delete</value>
   </data>
 	<data name="Employee_ErrorLoading" xml:space="preserve">
-    <value>حدث خطأ أثناء تحميل البيانات.</value>
+    <value>Error loading data.</value>
   </data>
 	<data name="Employee_PleaseFillFields" xml:space="preserve">
-    <value>يرجى ملء جميع الحقول المطلوبة.</value>
+    <value>Please fill all required fields.</value>
   </data>
 	<data name="Employee_CouldNotAdd" xml:space="preserve">
-    <value>تعذر إضافة الموظف.</value>
+    <value>Could not add employee.</value>
   </data>
 	<data name="Employee_CouldNotEdit" xml:space="preserve">
-    <value>تعذر تعديل الموظف.</value>
+    <value>Could not edit employee.</value>
   </data>
 	<data name="Employee_CouldNotDelete" xml:space="preserve">
-    <value>تعذر حذف الموظف.</value>
+    <value>Could not delete employee.</value>
   </data>
 	<data name="Employee_DeleteConfirm" xml:space="preserve">
-    <value>هل أنت متأكد أنك تريد حذف هذا الموظف؟</value>
+    <value>Are you sure you want to delete this employee?</value>
   </data>
 	<data name="Employee_Unauthorized" xml:space="preserve">
-    <value>غير مصرح.</value>
+    <value>Unauthorized.</value>
   </data>
 	<data name="Employee_NotFound" xml:space="preserve">
-    <value>غير موجود.</value>
+    <value>Not found.</value>
   </data>
 	<data name="Employee_NoEmployees" xml:space="preserve">
-    <value>لا يوجد موظفين.</value>
+    <value>No employees found.</value>
   </data>
 	<data name="Employee_Processing" xml:space="preserve">
-    <value>جارٍ المعالجة...</value>
+    <value>Processing...</value>
   </data>
 	<data name="Employee_SelectUser" xml:space="preserve">
-    <value>-- اختر مستخدم --</value>
+    <value>-- Select User --</value>
   </data>
 	<data name="Employee_SelectBranch" xml:space="preserve">
-    <value>-- اختر فرع --</value>
+    <value>-- Select Branch --</value>
   </data>
 </root>

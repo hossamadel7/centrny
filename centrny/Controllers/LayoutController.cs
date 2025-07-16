@@ -52,6 +52,7 @@ namespace centrny.Controllers
                 return new List<SidebarPageViewModel>();
             }
 
+            // Fetch allowed pages based on updated Page table (with new URLs and removed deleted ones)
             var allowedPages = db.Pages
                 .Where(p => assignedModuleCodes.Contains(p.ModuleCode))
                 .OrderBy(p => p.PageSort)
@@ -94,26 +95,32 @@ namespace centrny.Controllers
             switch (lowerPageName)
             {
                 case "roots": return "fas fa-sitemap";
+                case "branch management": return "fas fa-code-branch";
                 case "groups management": return "fas fa-users";
-                case "edu years & years": return "fas fa-calendar-alt";
-                case "expenses": return "fas fa-money-bill-wave"; ;
+                case "edu years & years":
+                case "educational year": return "fas fa-calendar";
+                case "expenses": return "fas fa-money-bill-wave";
                 case "subjects": return "fas fa-book";
                 case "students": return "fas fa-user-graduate";
-                case "exams": return "fas fa-file-alt";
-                case "schedules": return "fas fa-clock";
+                case "exams":
+                case "exam": return "fas fa-file-alt";
+                case "schedules":
+                case "schedule list": return "fas fa-calendar-alt";
+                case "wallet exam list": return "fas fa-wallet";
+                case "security management": return "fas fa-user-shield";
+                case "dailyclass": return "fas fa-calendar-day";
                 case "reservations": return "fas fa-calendar-check";
                 case "teacher management": return "fas fa-chalkboard-teacher";
                 case "items": return "fas fa-boxes";
                 case "classes": return "fas fa-chalkboard";
-                case "questions": return "fas fa-question-circle";
+                case "questions":
+                case "question": return "fas fa-question-circle";
                 case "student exam": return "fas fa-user-graduate";
                 case "page permissions": return "fas fa-users-cog";
-                case "branch list": return "fas fa-code-branch";
-                case "dailyclass": return "fas fa-calendar-day";
-                case "question main": return "fas fa-question";
-                case "question index": return "fas fa-list";
-                case "educational year": return "fas fa-calendar";
-                
+                case "viewauthority": return "fas fa-user-lock";
+                case "employee": return "fas fa-user-tie";
+                case "item": return "fas fa-box";
+                case "root list": return "fas fa-sitemap";
                 default: return "fas fa-file";
             }
         }

@@ -33,8 +33,6 @@ public partial class Employee
 
     public DateTime? LastUpdatTime { get; set; }
 
-    public int EmploteePositionCode { get; set; }
-
     public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();

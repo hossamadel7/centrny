@@ -9,8 +9,14 @@ function setupEventListeners() {
     document.getElementById('statusFilter').addEventListener('change', filterData);
     document.getElementById('expiryFilter').addEventListener('change', filterData);
 
-    document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', onEditClick));
-    document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', onDeleteClick));
+    // Use delegated event listeners for unified design (so new buttons use correct classes)
+    document.getElementById('tableBody').addEventListener('click', function (e) {
+        if (e.target.closest('.btn-edit')) {
+            onEditClick(e);
+        } else if (e.target.closest('.btn-delete')) {
+            onDeleteClick(e);
+        }
+    });
 
     document.querySelectorAll('input[name="rootType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -147,6 +153,7 @@ function showAlert(type, message) {
     `;
 }
 
+// Unified Button Handlers
 function onEditClick(e) {
     const tr = e.target.closest('tr');
     const walletExamCode = tr.getAttribute('data-id');
@@ -178,4 +185,26 @@ async function deleteWalletExam(id) {
     } catch (error) {
         showAlert('danger', 'Failed to delete wallet exam.');
     }
+}
+
+// If you dynamically add wallet exam rows, use these unified button classes
+function addWalletExamRow(item) {
+    const daysLeft = (new Date(item.ExpireDate) - new Date()) / (1000 * 60 * 60 * 24);
+    const daysLeftText = daysLeft < 0 ? "Expired" : `${Math.round(daysLeft)} days`;
+    const statusText = item.IsActive ? "Active" : "Inactive";
+    const rootTypeText = item.IsCenter ? "center" : "teacher";
+    return `<tr data-id="${item.WalletExamCode}">
+        <td class="walletExamCode">${item.WalletExamCode}</td>
+        <td class="amount">${item.Amount}</td>
+        <td class="dateStart">${item.DateStart}</td>
+        <td class="expireDate">${item.ExpireDate}</td>
+        <td class="daysLeft">${daysLeftText}</td>
+        <td class="status">${statusText}</td>
+        <td class="rootCode">${item.RootCode}</td>
+        <td class="rootType">${rootTypeText}</td>
+        <td>
+            <button class="modern-btn success-btn btn-edit">Edit</button>
+            <button class="modern-btn delete-btn btn-delete">Delete</button>
+        </td>
+    </tr>`;
 }

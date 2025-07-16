@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Employee_ListTitle" xml:space="preserve">
+    <value>الموظفين</value>
+  </data>
+  <data name="Employee_AddBtn" xml:space="preserve">
+    <value>إضافة موظف</value>
+  </data>
+  <data name="Employee_AddModalTitle" xml:space="preserve">
+    <value>إضافة موظف</value>
+  </data>
+  <data name="Employee_EditModalTitle" xml:space="preserve">
+    <value>تعديل الموظف</value>
+  </data>
+  <data name="Employee_AddEditModalTitle" xml:space="preserve">
+    <value>إضافة/تعديل موظف</value>
+  </data>
+  <data name="Employee_NameLabel" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Employee_PhoneLabel" xml:space="preserve">
+    <value>رقم الهاتف</value>
+  </data>
+  <data name="Employee_EmailLabel" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="Employee_SalaryLabel" xml:space="preserve">
+    <value>الراتب</value>
+  </data>
+  <data name="Employee_StartDateLabel" xml:space="preserve">
+    <value>تاريخ البدء</value>
+  </data>
+  <data name="Employee_UserLabel" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="Employee_BranchLabel" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+  <data name="Employee_IsActiveLabel" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="Employee_Active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="Employee_Inactive" xml:space="preserve">
+    <value>غير نشط</value>
+  </data>
+  <data name="Employee_Save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="Employee_Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="Employee_Actions" xml:space="preserve">
+    <value>الإجراءات</value>
+  </data>
+  <data name="Employee_ErrorLoading" xml:space="preserve">
+    <value>حدث خطأ أثناء تحميل البيانات.</value>
+  </data>
+  <data name="Employee_PleaseFillFields" xml:space="preserve">
+    <value>يرجى ملء جميع الحقول المطلوبة.</value>
+  </data>
+  <data name="Employee_CouldNotAdd" xml:space="preserve">
+    <value>تعذر إضافة الموظف.</value>
+  </data>
+  <data name="Employee_CouldNotEdit" xml:space="preserve">
+    <value>تعذر تعديل الموظف.</value>
+  </data>
+  <data name="Employee_CouldNotDelete" xml:space="preserve">
+    <value>تعذر حذف الموظف.</value>
+  </data>
+  <data name="Employee_DeleteConfirm" xml:space="preserve">
+    <value>هل أنت متأكد أنك تريد حذف هذا الموظف؟</value>
+  </data>
+  <data name="Employee_Unauthorized" xml:space="preserve">
+    <value>غير مصرح.</value>
+  </data>
+  <data name="Employee_NotFound" xml:space="preserve">
+    <value>غير موجود.</value>
+  </data>
+  <data name="Employee_NoEmployees" xml:space="preserve">
+    <value>لا يوجد موظفين.</value>
+  </data>
+  <data name="Employee_Processing" xml:space="preserve">
+    <value>جارٍ المعالجة...</value>
+  </data>
+  <data name="Employee_SelectUser" xml:space="preserve">
+    <value>-- اختر مستخدم --</value>
+  </data>
+  <data name="Employee_SelectBranch" xml:space="preserve">
+    <value>-- اختر فرع --</value>
+  </data>
+</root>

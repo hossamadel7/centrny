@@ -436,7 +436,6 @@ public partial class CenterContext : DbContext
 
             entity.Property(e => e.EmployeeCode).HasColumnName("Employee_Code");
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
-            entity.Property(e => e.EmploteePositionCode).HasColumnName("Emplotee_Position_code");
             entity.Property(e => e.EmployeeEmail)
                 .HasMaxLength(100)
                 .HasColumnName("Employee_Email");
