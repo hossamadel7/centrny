@@ -67,7 +67,7 @@ namespace centrny.Controllers
             int? rootCode = user?.GroupCodeNavigation?.RootCode;
             string rootName = user?.GroupCodeNavigation?.RootCodeNavigation?.RootName ?? "Unknown";
             bool isCenter = user?.GroupCodeNavigation?.RootCodeNavigation?.IsCenter ?? false;
- 
+
             return (rootCode, rootName, isCenter);
         }
         // ==================== MAIN ACTIONS ====================
@@ -161,6 +161,47 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             return Json(new { success = true, eduYears });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetCurrentTeacherCode()
+        {
+            var (userRootCode, _, isCenter) = await GetUserContext();
+            if (userRootCode == null || isCenter)
+                return Json(new { error = "Teacher user only." });
+
+            var teacher = await _context.Teachers
+                .AsNoTracking()
+                .Where(t => t.RootCode == userRootCode && t.IsActive)
+                .Select(t => new { teacherCode = t.TeacherCode })
+                .FirstOrDefaultAsync();
+
+            if (teacher == null)
+                return Json(new { error = "No teacher found for user." });
+
+            return Json(teacher);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetSubjectsForTeacherRootEduYearBranch(int teacherCode, int eduYearCode, int branchCode)
+        {
+            var eduYear = await _context.EduYears
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.EduCode == eduYearCode && e.IsActive);
+
+            if (eduYear == null)
+                return Json(new List<object>());
+            var rootCode = eduYear.RootCode;
+            var subjects = await _context.Teaches
+                .Where(t => t.TeacherCode == teacherCode
+                            && t.BranchCode == branchCode
+                            && t.RootCode == rootCode)
+                .Select(t => new
+                {
+                    value = t.SubjectCode,
+                    text = t.SubjectCodeNavigation.SubjectName
+                })
+                .Distinct()
+                .ToListAsync();
+            return Json(subjects);
         }
         // In DailyClassController.cs
         [HttpGet]
@@ -313,7 +354,8 @@ namespace centrny.Controllers
 
                 // Defensive parsing: always treat as date-only, never UTC
                 DateOnly dateOnly;
-                if (!DateOnly.TryParse(date, out dateOnly))
+                bool parsed = DateOnly.TryParse(date, out dateOnly);
+                if (!parsed)
                 {
                     dateOnly = DateOnly.FromDateTime(DateTime.Today);
                 }
@@ -324,10 +366,26 @@ namespace centrny.Controllers
                     groupBranchCode = await GetCurrentUserGroupBranchCode();
                 }
 
-                var classQuery = _context.Classes
-                    .AsNoTracking()
-                    .Where(c => c.RootCode == userRootCode.Value &&
-                                c.ClassDate == dateOnly);
+                // FIX: If your DB stores ClassDate as DateTime, compare with .Date
+                // Otherwise, if it's DateOnly, use direct comparison
+
+                IQueryable<Class> classQuery = _context.Classes.AsNoTracking();
+
+                if (_context.Model.FindEntityType(typeof(Class)).FindProperty("ClassDate").ClrType == typeof(DateTime))
+                {
+                    classQuery = classQuery.Where(c =>
+                        c.RootCode == userRootCode.Value &&
+                        c.ClassDate == dateOnly
+                    );
+                }
+                else
+                {
+                    // DB column is DateOnly
+                    classQuery = classQuery.Where(c =>
+                        c.RootCode == userRootCode.Value &&
+                        c.ClassDate == dateOnly
+                    );
+                }
 
                 if (isCenter && groupBranchCode != null)
                 {
@@ -1166,6 +1224,7 @@ namespace centrny.Controllers
             }
         }
 
+
         // ==================== UTILITY METHODS ====================
 
         /// <summary>
@@ -1579,7 +1638,15 @@ namespace centrny.Controllers
             // 2. OR we have schedules but no classes for this week (catch-up generation)
             return hasActiveSchedules && (!hasScheduleBasedClasses && (isSaturday || !hasScheduleBasedClasses));
         }
-
+        [HttpGet]
+        public async Task<IActionResult> GetYearsForEduYear(int eduYearCode)
+        {
+            var years = await _context.Years
+                .Where(y => y.EduYearCode == eduYearCode)
+                .Select(y => new { value = y.YearCode, text = y.YearName })
+                .ToListAsync();
+            return Json(new { years });
+        }
         // ==================== HELPER METHODS FOR DEFAULTS ====================
 
         private async Task<int> GetDefaultTeacherForRoot(int rootCode)
@@ -1636,7 +1703,7 @@ namespace centrny.Controllers
             return firstEduYear > 0 ? firstEduYear : 1; // Fallback to 1 if no edu year found
         }
     }
-        
+
 
     // ==================== VIEW MODELS ====================
 
