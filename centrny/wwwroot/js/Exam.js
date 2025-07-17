@@ -1,4 +1,7 @@
 ﻿$(document).ready(function () {
+    var examItemsPerPage = 10;
+    var examCurrentPage = 1;
+    var examTotalPages = 1;
     // =============================
     // Global Variables and Configuration
     // =============================
@@ -223,32 +226,130 @@
     // =============================
     // Exam Management Functions
     // =============================
+    // =============================
+    // Filter Functions for Exam Table
+    // =============================
+    let allExams = []; // Add this if not present
 
+    function populateSubjectFilter(data) {
+        const $subject = $('#filterSubject');
+        $subject.empty().append($('<option>').val('').text('All'));
+        const uniqueSubjects = {};
+        data.forEach(exam => {
+            if (exam.subjectCode && exam.subjectName) {
+                uniqueSubjects[exam.subjectCode] = exam.subjectName;
+            }
+        });
+        Object.entries(uniqueSubjects).forEach(([code, name]) => {
+            $subject.append($('<option>').val(code).text(name));
+        });
+    }
+
+    function populateEduYearFilter(data) {
+        const $eduYear = $('#filterEduYear');
+        $eduYear.empty().append($('<option>').val('').text('All'));
+        const uniqueEduYears = {};
+        data.forEach(exam => {
+            if (exam.eduYearCode && exam.eduYearName) {
+                uniqueEduYears[exam.eduYearCode] = exam.eduYearName;
+            }
+        });
+        Object.entries(uniqueEduYears).forEach(([code, name]) => {
+            $eduYear.append($('<option>').val(code).text(name));
+        });
+    }
+
+    function filterExamsAndRender() {
+        let filtered = allExams.slice();
+        const subjectVal = $('#filterSubject').val();
+        if (subjectVal) {
+            filtered = filtered.filter(exam => String(exam.subjectCode) === String(subjectVal));
+        }
+        const yearVal = $('#filterYear').val();
+        if (yearVal) {
+            filtered = filtered.filter(exam => String(exam.yearCode) === String(yearVal));
+        }
+        const typeVal = $('#filterExamType').val();
+        if (typeVal) {
+            filtered = filtered.filter(exam => typeVal === 'exam' ? exam.isExam : !exam.isExam);
+        }
+
+        examTotalPages = Math.max(1, Math.ceil(filtered.length / examItemsPerPage));
+        // Clamp current page if out of bounds
+        if (examCurrentPage > examTotalPages) examCurrentPage = examTotalPages;
+        if (examCurrentPage < 1) examCurrentPage = 1;
+
+        const paginated = filtered.slice((examCurrentPage - 1) * examItemsPerPage, examCurrentPage * examItemsPerPage);
+
+        renderExamsTable(paginated, filtered.length);
+        renderExamPagination(filtered.length, examTotalPages, examCurrentPage);
+    }
+    function renderExamPagination(totalItems, totalPages, currentPage) {
+        const container = $('#exam-pagination');
+        container.empty();
+        if (totalPages <= 1) return;
+
+        let html = '<nav><ul class="pagination justify-content-center pagination-sm">';
+
+        html += `<li class="page-item${currentPage === 1 ? " disabled" : ""}">
+        <a class="page-link" href="#" data-page="${currentPage - 1}">&laquo;</a>
+    </li>`;
+
+        // Show up to 5 page numbers
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(totalPages, currentPage + 2);
+        for (let i = start; i <= end; i++) {
+            html += `<li class="page-item${i === currentPage ? " active" : ""}">
+            <a class="page-link" href="#" data-page="${i}">${i}</a>
+        </li>`;
+        }
+
+        html += `<li class="page-item${currentPage === totalPages ? " disabled" : ""}">
+        <a class="page-link" href="#" data-page="${currentPage + 1}">&raquo;</a>
+    </li>`;
+
+        html += '</ul></nav>';
+        container.html(html);
+
+        // Click event for pagination
+        container.find('a.page-link').on('click', function (e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (!isNaN(page) && page >= 1 && page <= totalPages && page !== currentPage) {
+                examCurrentPage = page;
+                filterExamsAndRender();
+            }
+        });
+    }
     function loadExams() {
         $('#exam-details').html(`
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">${getJsString('Loading')}</span>
-                </div>
-                <p class="mt-2 text-muted">${getJsString('Loading')}</p>
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">${getJsString('Loading')}</span>
             </div>
-        `);
+            <p class="mt-2 text-muted">${getJsString('Loading')}</p>
+        </div>
+    `);
 
         $.get('/Exam/GetAllExams')
             .done(function (data) {
-                renderExamsTable(data);
+                allExams = data || [];
+                populateSubjectFilter(data);
+                populateYearFilter(data);
+                filterExamsAndRender(); // render filtered view
             })
             .fail(function (xhr) {
                 $('#exam-details').html(`
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        ${getJsString('ErrorLoadingExams')}: ${xhr.responseJSON?.error || getJsString('UnknownError')}
-                    </div>
-                `);
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${getJsString('ErrorLoadingExams')}: ${xhr.responseJSON?.error || getJsString('UnknownError')}
+                </div>
+            `);
             });
     }
 
-    function renderExamsTable(data) {
+    function renderExamsTable(data, filteredLength) {
+        // Show teacher info if not center and there are exams
         if (!isCenterUser && data.length > 0) {
             var teacherName = data[0].teacherName || '';
             $('#exam-for-teacher').show().html(
@@ -258,18 +359,28 @@
             $('#exam-for-teacher').hide();
         }
 
+        // Show empty state if no exams
         if (data.length === 0) {
             $('#exam-details').html(`
-                <div class="text-center py-5">
-                    <i class="fas fa-inbox display-1 text-muted"></i>
-                    <h5 class="mt-3 text-muted">${getJsString('NoExamsFound')}</h5>
-                    <p class="text-muted">${getJsString('GetStartedMsg')}</p>
-                </div>
-            `);
+            <div class="text-center py-5">
+                <i class="fas fa-inbox display-1 text-muted"></i>
+                <h5 class="mt-3 text-muted">${getJsString('NoExamsFound')}</h5>
+                <p class="text-muted">${getJsString('GetStartedMsg')}</p>
+            </div>
+        `);
+            $('#exam-table-info').html('');
+            $('#exam-pagination').empty();
             return;
         }
 
-        // Table header: Code, Name, rest..., Actions
+        // Table info (showing X of Y exams)
+        $('#exam-table-info').html(
+            `<div class="text-muted" style="margin-bottom:8px;">
+        Showing ${data.length} of ${filteredLength ?? data.length} exams.
+        </div>`
+        );
+
+        // Table header
         var html = '<table class="gradient-table exam-index-table align-middle mb-0">';
         html += '<thead><tr>';
         html += `<th>${getJsString('CodeHeader')}</th>`;
@@ -282,64 +393,62 @@
         html += `<th>${getJsString('YearHeader')}</th>`;
         html += `<th>${getJsString('EduYearHeader')}</th>`;
         html += `<th>${getJsString('DurationHeader')}</th>`;
-        html += `<th>${getJsString('SuccessHeader')}</th>`;
-        html += `<th>${getJsString('AvgMarksHeader')}</th>`;
+       
         html += `<th>${getJsString('DegreeHeader')}</th>`;
         html += `<th>${getJsString('ActionsHeader')}</th>`;
         html += '</tr></thead><tbody>';
 
         data.forEach(function (exam) {
             html += `<tr>
-                <td class="fw-bold text-primary text-end">${exam.examCode ?? ''}</td>
-                <td>${exam.examName ?? ''}</td>
-                <td>
-                    <span class="badge exam-mode-${exam.isOnline ? 'online' : 'offline'}">
-                        ${exam.isOnline ? getJsString('Online') : getJsString('Offline')}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge exam-type-${exam.isExam ? 'exam' : 'assignment'}">
-                        ${exam.isExam ? getJsString('Exam') : getJsString('Assignment')}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge exam-status-${exam.isDone ? 'done' : 'pending'}">
-                        ${exam.isDone ? getJsString('Done') : getJsString('Pending')}
-                    </span>
-                </td>
-                <td>${exam.branchName ?? ''}</td>
-                <td>${exam.subjectName ?? ''}</td>
-                <td>${exam.yearName ?? ''}</td>
-                <td>${exam.eduYearName ?? ''}</td>
-                <td>
-                    <span class="badge exam-duration">${exam.examTimer ?? '00:00'}</span>
-                </td>
-                <td>${exam.examPercentage ?? '0'}%</td>
-                <td>${exam.averageMarks !== undefined ? exam.averageMarks.toFixed(1) : '0.0'}</td>
-                <td>
-                    <span class="badge exam-degree">${exam.examDegree ?? '0'}</span>
-                </td>
-                <td>
-                    <div class="d-flex flex-column gap-1">
-                        <button class="btn-table modules exam-index-btn-questions btn-sm shadow-sm add-questions"
-                                data-id="${exam.examCode}" title="${getJsString('QuestionsBtn')}">
-                            <i class="fas fa-list-check"></i> ${getJsString('QuestionsBtn')}
-                        </button>
-                        <button class="btn-table edit exam-index-btn-edit btn-sm shadow-sm edit-exam"
-                                data-id="${exam.examCode}" title="${getJsString('EditBtn')}">
-                            <i class="fas fa-pencil"></i> ${getJsString('EditBtn')}
-                        </button>
-                        <button class="btn-table delete exam-index-btn-delete btn-sm shadow-sm delete-exam"
-                                data-id="${exam.examCode}" title="${getJsString('DeleteBtn')}">
-                            <i class="fas fa-trash"></i> ${getJsString('DeleteBtn')}
-                        </button>
-                        <button class="btn-table stats btn-sm view-exam-stats"
-                                data-id="${exam.examCode}" title="${getJsString('StatsBtn')}">
-                            <i class="fas fa-chart-bar"></i> ${getJsString('StatsBtn')}
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
+            <td class="fw-bold text-primary text-end">${exam.examCode ?? ''}</td>
+            <td>${exam.examName ?? ''}</td>
+            <td>
+                <span class="badge exam-mode-${exam.isOnline ? 'online' : 'offline'}">
+                    ${exam.isOnline ? getJsString('Online') : getJsString('Offline')}
+                </span>
+            </td>
+            <td>
+                <span class="badge exam-type-${exam.isExam ? 'exam' : 'assignment'}">
+                    ${exam.isExam ? getJsString('Exam') : getJsString('Assignment')}
+                </span>
+            </td>
+            <td>
+                <span class="badge exam-status-${exam.isDone ? 'done' : 'pending'}">
+                    ${exam.isDone ? getJsString('Done') : getJsString('Pending')}
+                </span>
+            </td>
+            <td>${exam.branchName ?? ''}</td>
+            <td>${exam.subjectName ?? ''}</td>
+            <td>${exam.yearName ?? ''}</td>
+            <td>${exam.eduYearName ?? ''}</td>
+            <td>
+                <span class="badge exam-duration">${exam.examTimer ?? '00:00'}</span>
+            </td>
+          
+            <td>
+                <span class="badge exam-degree">${exam.examDegree ?? '0'}</span>
+            </td>
+            <td>
+                <div class="d-flex flex-column gap-1">
+                    <button class="btn-table modules exam-index-btn-questions btn-sm shadow-sm add-questions"
+                            data-id="${exam.examCode}" title="${getJsString('QuestionsBtn')}">
+                        <i class="fas fa-list-check"></i> ${getJsString('QuestionsBtn')}
+                    </button>
+                    <button class="btn-table edit exam-index-btn-edit btn-sm shadow-sm edit-exam"
+                            data-id="${exam.examCode}" title="${getJsString('EditBtn')}">
+                        <i class="fas fa-pencil"></i> ${getJsString('EditBtn')}
+                    </button>
+                    <button class="btn-table delete exam-index-btn-delete btn-sm shadow-sm delete-exam"
+                            data-id="${exam.examCode}" title="${getJsString('DeleteBtn')}">
+                        <i class="fas fa-trash"></i> ${getJsString('DeleteBtn')}
+                    </button>
+                    <button class="btn-table stats btn-sm view-exam-stats"
+                            data-id="${exam.examCode}" title="${getJsString('StatsBtn')}">
+                        <i class="fas fa-chart-bar"></i> ${getJsString('StatsBtn')}
+                    </button>
+                </div>
+            </td>
+        </tr>`;
         });
 
         html += '</tbody></table>';
@@ -348,11 +457,11 @@
 
     function loadExamStats(examCode) {
         $('#examStatsContent').html(`
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary"></div>
-                <p class="mt-2">${getJsString('LoadingStatistics')}</p>
-            </div>
-        `);
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">${getJsString('LoadingStatistics')}</p>
+        </div>
+    `);
 
         var statsModal = new bootstrap.Modal(document.getElementById('examStatsModal'));
         statsModal.show();
@@ -361,52 +470,69 @@
             .done(function (res) {
                 if (res.success) {
                     $('#examStatsContent').html(`
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <h6 class="card-title">
-                                            <i class="fas fa-clipboard-check me-2"></i>${res.examName}
-                                        </h6>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card border-success">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-check-circle display-4 text-success"></i>
-                                        <h4 class="mt-2 text-success">${res.numberTookExam}</h4>
-                                        <p class="text-muted mb-0">${getJsString('StudentsCompleted')}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card border-warning">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-clock display-4 text-warning"></i>
-                                        <h4 class="mt-2 text-warning">${res.numberDidNotTakeExam}</h4>
-                                        <p class="text-muted mb-0">${getJsString('StudentsPending')}</p>
-                                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-clipboard-check me-2"></i>${res.examName}
+                                    </h6>
                                 </div>
                             </div>
                         </div>
-                    `);
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-check-circle display-4 text-success"></i>
+                                    <h4 class="mt-2 text-success">${res.numberTookExam}</h4>
+                                    <p class="text-muted mb-0">${getJsString('StudentsCompleted')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-clock display-4 text-warning"></i>
+                                    <h4 class="mt-2 text-warning">${res.numberDidNotTakeExam}</h4>
+                                    <p class="text-muted mb-0">${getJsString('StudentsPending')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Success percent and average marks (moved here from table) -->
+                        <div class="col-md-12 text-center mt-3">
+                            <div class="row justify-content-center">
+                                <div class="col-auto">
+                                    <span class="badge exam-degree fs-5">
+                                        ${getJsString('SuccessHeader')}: 
+                                        ${res.examPercentage ?? '0'}%
+                                    </span>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge exam-degree fs-5">
+                                        ${getJsString('AvgMarksHeader')}: 
+                                        ${res.averageMarks !== undefined ? res.averageMarks.toFixed(1) : '0.0'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
                 } else {
                     $('#examStatsContent').html(`
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            ${res.error || getJsString('ErrorLoadingStatistics')}
-                        </div>
-                    `);
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${res.error || getJsString('ErrorLoadingStatistics')}
+                    </div>
+                `);
                 }
             })
             .fail(function () {
                 $('#examStatsContent').html(`
-                    <div class="alert alert-danger">
-                        <i class="fas fa-times me-2"></i>
-                        ${getJsString('FailedToLoadExamStatistics')}
-                    </div>
-                `);
+                <div class="alert alert-danger">
+                    <i class="fas fa-times me-2"></i>
+                    ${getJsString('FailedToLoadExamStatistics')}
+                </div>
+            `);
             });
     }
 
@@ -746,10 +872,19 @@
         chapterExpanded = {};
         lessonExpanded = {};
 
+        // Find the exam object in allExams
+        var exam = allExams.find(e => String(e.examCode) === String(examCode));
+        if (!exam) {
+            alert(getJsString('ErrorLoadingExamDetails'));
+            return;
+        }
+
         const questionsModal = new bootstrap.Modal(document.getElementById('questionsModal'));
 
-        $.get(`/Exam/GetExamQuestions?examCode=${examCode}`)
+        // Pass teacherCode, subjectCode, yearCode to controller
+        $.get(`/Exam/GetExamQuestions?examCode=${examCode}&teacherCode=${exam.teacherCode}&subjectCode=${exam.subjectCode}&yearCode=${exam.yearCode}`)
             .done(function (data) {
+                // ... rest of your existing logic ...
                 if (data.chosenFlat && Array.isArray(data.chosenFlat)) {
                     data.chosenFlat.forEach(function (q) {
                         chosenQuestions.push({
@@ -1246,7 +1381,18 @@
             chosenQuestions[questionIndex].questionDegree = degree;
         }
     });
-
+    $('#filterSubject').on('change', function () {
+        examCurrentPage = 1;
+        filterExamsAndRender();
+    });
+    $('#filterYear').on('change', function () {
+        examCurrentPage = 1;
+        filterExamsAndRender();
+    });
+    $('#filterExamType').on('change', function () {
+        examCurrentPage = 1;
+        filterExamsAndRender();
+    });
     // =============================
     // Initialize Page
     // =============================

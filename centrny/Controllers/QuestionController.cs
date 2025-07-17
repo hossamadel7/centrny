@@ -342,7 +342,6 @@ namespace centrny.Controllers
 
         // =========================
         // CHAPTER (Add Chapter)
-        // =========================
         [HttpGet]
         public JsonResult GetEduYearsByRoot()
         {
@@ -352,7 +351,7 @@ namespace centrny.Controllers
 
             var years = (from teach in _context.Teaches
                          join eduyear in _context.EduYears on teach.EduYearCode equals eduyear.EduCode
-                         where teach.RootCode == rootCode.Value
+                         where teach.RootCode == rootCode.Value && eduyear.IsActive // Only active years
                          select new { teach.EduYearCode, eduyear.EduName })
                         .Distinct()
                         .OrderBy(y => y.EduYearCode)
@@ -416,11 +415,25 @@ namespace centrny.Controllers
                 if (!userRootCode.HasValue)
                     return Json(new { success = false, message = _localizer["UnableToDetermineRootAssignment"] });
 
+                // Always get TeacherCode from root's teacher for teacher users
+                bool isCenterUser = IsCurrentUserCenter();
+                if (!isCenterUser)
+                {
+                    // Get the only teacher for this root
+                    TeacherCode = _context.Teachers
+                        .Where(t => t.RootCode == userRootCode.Value)
+                        .Select(t => (int?)t.TeacherCode)
+                        .FirstOrDefault();
+
+                    if (!TeacherCode.HasValue)
+                        return Json(new { success = false, message = _localizer["MissingRequiredFields"] });
+                }
+
                 int? yearCode = YearCode;
                 int? eduYearCode = EduYearCode;
 
                 // For center users, yearCode might be inferred via Teach
-                if (!yearCode.HasValue && TeacherCode.HasValue && EduYearCode.HasValue)
+                if (isCenterUser && (!yearCode.HasValue && TeacherCode.HasValue && EduYearCode.HasValue))
                 {
                     var teach = _context.Teaches.FirstOrDefault(t =>
                         t.TeacherCode == TeacherCode &&
@@ -434,7 +447,8 @@ namespace centrny.Controllers
                         return Json(new { success = false, message = _localizer["MatchingTeachNotFound"] });
                 }
 
-                if (!eduYearCode.HasValue || !TeacherCode.HasValue || !yearCode.HasValue)
+                // Require all fields
+                if (!eduYearCode.HasValue || !TeacherCode.HasValue || !yearCode.HasValue || SubjectCode == 0)
                     return Json(new { success = false, message = _localizer["MissingRequiredFields"] });
 
                 var lesson = new Lesson

@@ -8,7 +8,7 @@ using centrny.Attributes;
 
 namespace centrny.Controllers
 {
-    [RequirePageAccess("StudentExam")]
+   
     public class StudentExamController : Controller
     {
         private readonly CenterContext _context;
@@ -69,7 +69,8 @@ namespace centrny.Controllers
                 examDurationMinutes = (exam.ExamTimer.Hour * 60 + exam.ExamTimer.Minute),
                 subjectName = exam.SubjectCodeNavigation?.SubjectName,
                 teacherName = exam.TeacherCodeNavigation?.TeacherName,
-                alreadyTaken = alreadyTaken
+                alreadyTaken = alreadyTaken,
+                   isExam = exam.IsExam
             });
         }
 
@@ -107,7 +108,7 @@ namespace centrny.Controllers
         /// API: Submit exam answers
         /// </summary>
         [HttpPost]
-        [RequirePageAccess("StudentExam", "insert")]
+   
         public JsonResult SubmitExam([FromBody] ExamSubmission submission)
         {
             using (var transaction = _context.Database.BeginTransaction())

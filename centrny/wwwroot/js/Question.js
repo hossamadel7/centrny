@@ -184,7 +184,8 @@ $(document).ready(function () {
         setModalLabels();
         $('#chapter-lessonname').val('');
         $('#chapter-message').text('');
-        $('#chapter-eduyearcode').html('');
+        $('#chapter-eduyearcode').val('');
+        $('#chapter-eduyearcode-view').val('');
         $('#chapter-subjectcode').html(`<option value="">${getJsString('select')}</option>`);
         $('#chapter-teachercode').html('');
         $('#chapter-teachercode-hidden').val('');
@@ -209,12 +210,11 @@ $(document).ready(function () {
                         );
                     });
                     $('#chapter-subjectcode').off().on('change', function () {
-                        if ($(this).val()) {
+                        if ($(this).val() && $(this).val().indexOf('|') !== -1) {
                             let [subject, year] = $(this).val().split('|');
-                            $('#chapter-subjectcode').val(subject);
                             $('#chapter-yearcode').val(year);
+                            // Do NOT overwrite the value of chapter-subjectcode, keep "subject|year"
                         } else {
-                            $('#chapter-subjectcode').val('');
                             $('#chapter-yearcode').val('');
                         }
                     });
@@ -226,10 +226,10 @@ $(document).ready(function () {
                 } else if (subjectYearPairs.length === 1) {
                     $('#chapter-subjectcode').html(
                         `<option value="${subjectYearPairs[0].subjectCode}|${subjectYearPairs[0].yearCode}" selected>
-                            ${subjectYearPairs[0].subjectName} (${subjectYearPairs[0].yearName})
-                        </option>`
+                        ${subjectYearPairs[0].subjectName} (${subjectYearPairs[0].yearName})
+                    </option>`
                     ).prop('disabled', true);
-                    $('#chapter-subjectcode').val(subjectYearPairs[0].subjectCode);
+                    $('#chapter-subjectcode').val(subjectYearPairs[0].subjectCode + "|" + subjectYearPairs[0].yearCode);
                     $('#chapter-yearcode').val(subjectYearPairs[0].yearCode);
                 } else {
                     $('#chapter-subjectcode').html(`<option value="">${getJsString('noTeachingSubjects')}</option>`).prop('disabled', true);
@@ -238,15 +238,22 @@ $(document).ready(function () {
             }
             showModal('#chapter-modal');
         });
-    });
-
+    
+    });  
     function loadChapterYears() {
         $.get('/Question/GetEduYearsByRoot', function (years) {
-            let html = `<option value="">${getJsString('select')}</option>`;
-            years.forEach(y => {
-                html += `<option value="${y.eduYearCode}">${y.eduYearCode} - ${y.eduYearName}</option>`;
-            });
-            $('#chapter-eduyearcode').html(html);
+            if (years.length === 1) {
+                // Only one active EduYear, set hidden value and readonly display field
+                $('#chapter-eduyearcode').val(years[0].eduYearCode);
+                $('#chapter-eduyearcode-view').val(years[0].eduYearCode + " - " + years[0].eduYearName);
+            } else if (years.length > 1) {
+                // If multiple, select first and show all (optional: you can remove this if you never want a dropdown)
+                $('#chapter-eduyearcode').val(years[0].eduYearCode);
+                $('#chapter-eduyearcode-view').val(years[0].eduYearCode + " - " + years[0].eduYearName);
+            } else {
+                $('#chapter-eduyearcode').val('');
+                $('#chapter-eduyearcode-view').val('');
+            }
         });
     }
     function loadChapterTeachers() {
@@ -302,12 +309,18 @@ $(document).ready(function () {
         setButtonProcessing($saveBtn, getJsString('processing'));
         let data = {
             LessonName: $('#chapter-lessonname').val(),
+            EduYearCode: $('#chapter-eduyearcode').val()
         };
+
         if (isCenter) {
-            data.EduYearCode = $('#chapter-eduyearcode').val();
             data.TeacherCode = $('#chapter-teachercode').val();
             data.SubjectCode = $('#chapter-subjectcode').val();
+            // For center users, YearCode may be set in dropdown or inferred by backend, optional:
+            let yearVal = $('#chapter-yearcode').val();
+            if (yearVal) data.YearCode = yearVal;
         } else {
+            // Non-center user (teacher): always send TeacherCode as userTeacherCode
+            data.TeacherCode = userTeacherCode;
             let val = $('#chapter-subjectcode').val();
             if (val && val.indexOf('|') !== -1) {
                 let [subjectCode, yearCode] = val.split('|');
@@ -318,11 +331,17 @@ $(document).ready(function () {
                 data.YearCode = '';
             }
         }
-        if (!data.LessonName || !data.SubjectCode || (!isCenter && !data.YearCode)) {
+
+        // Validation: require all fields
+        if (!data.LessonName || !data.SubjectCode || !data.EduYearCode || !data.TeacherCode || !data.YearCode) {
             $('#chapter-message').css('color', '#e74c3c').text(getJsString('pleaseFillAllFields'));
             resetButton($saveBtn);
             return;
         }
+
+        // Debug: log payload
+        console.log("AddChapter data:", data);
+
         $.ajax({
             url: '/Question/AddChapter',
             method: 'POST',
@@ -336,7 +355,9 @@ $(document).ready(function () {
                         loadChapters();
                     }, 700);
                 } else {
-                    $('#chapter-message').css('color', '#e74c3c').text(result.message || getJsString('failed'));
+                    $('#chapter-message').css('color', '#e74c3c').text(
+                        (result.message && result.message.value) ? result.message.value : getJsString('failed')
+                    );
                 }
             },
             error: function () {

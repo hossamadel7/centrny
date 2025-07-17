@@ -111,7 +111,7 @@
             margin-top: 1.7rem;
             margin-bottom: 2rem;
             width: 98vw;
-            max-width: 1400px;
+            max-width: 1500px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -231,14 +231,7 @@
 
     <div class="container-fluid">
         <div class="exam-header-block">
-            @if (!isCenter)
-            {
-                <h2 class="mb-0">Exams</h2>
-            }
-            else
-            {
-                <h2 class="mb-0">@Localizer["Title_ExamManagement"]</h2>
-            }
+            <h2 class="mb-0">@Localizer["Title_ExamManagement"]</h2>
             <div class="exam-header-actions">
                 <button id="addExamBtn" class="btn-table modules exam-index-btn-add">
                     <i class="fas fa-plus me-2"></i>
@@ -262,10 +255,28 @@
                 @ViewBag.Error
             </div>
         }
+        <div class="exam-filters" style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.3rem; flex-wrap: wrap;">
+            <label for="filterSubject"><b>Subject:</b></label>
+            <select id="filterSubject" class="form-select" style="max-width:210px;">
+                <option value="">All</option>
+            </select>
+            <label for="filterYear"><b>Year:</b></label>
+            <select id="filterYear" class="form-select" style="max-width:210px;">
+                <option value="">All</option>
+            </select>
 
+            <label for="filterExamType"><b>Type:</b></label>
+            <select id="filterExamType" class="form-select" style="max-width:180px;">
+                <option value="">All</option>
+                <option value="exam">Exam</option>
+                <option value="assignment">Assignment</option>
+            </select>
+        </div>
         <div class="table-card">
             <div class="card-body">
                 <div class="table-responsive">
+                    <div id="exam-table-info"></div>
+                    <div id="exam-pagination"></div>
                     <!-- The table will be rendered by JS, so no need to change here -->
                     <div id="exam-details">
                         <div class="text-center py-4">
@@ -497,7 +508,7 @@
     <!-- Questions Management Modal -->
     <div class="modal fade" id="questionsModal" tabindex="-1" aria-labelledby="questionsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
-            <form id="questionsForm" class="modal-content">
+            <form id="questionsForm" class="modal-content modern-questions-form">
                 <div class="modal-header gradient-table" style="border-radius: 18px 18px 0 0;">
                     <h5 class="modal-title" id="questionsModalLabel">
                         <i class="fas fa-list-check me-2"></i>@Localizer["ManageQuestions"]
@@ -522,7 +533,7 @@
                                 </div>
                             </div>
                             <div id="exam-question-search-results" class="mb-2" style="display:none;"></div>
-                            <div class="questions-section h-100 d-flex flex-column">
+                            <div class="questions-section h-100 d-flex flex-column rounded shadow-sm" style="background: #f7fbfe; padding: 1rem;">
                                 <div id="availablePaginationTop" class="mb-2"></div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="fw-bold text-primary mb-0">
@@ -530,14 +541,14 @@
                                     </h6>
                                     <span id="availableInfo" class="badge user fs-6"></span>
                                 </div>
-                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
+                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh; background: #eef5fa; border-radius: 8px; box-shadow: 0 1px 6px rgba(120,160,200,0.06); padding: 0.5rem;">
                                     <ul id="availableQuestions" class="list-group question-list flex-grow-1"></ul>
                                 </div>
                                 <div id="availablePagination" class="mt-2"></div>
                             </div>
                         </div>
                         <div class="col-lg-6 d-flex flex-column">
-                            <div class="questions-section h-100 d-flex flex-column">
+                            <div class="questions-section h-100 d-flex flex-column rounded shadow-sm" style="background: #f7fbfe; padding: 1rem;">
                                 <div id="chosenPaginationTop" class="mb-2"></div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="fw-bold text-success mb-0">
@@ -545,7 +556,7 @@
                                     </h6>
                                     <span id="chosenInfo" class="badge center fs-6"></span>
                                 </div>
-                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh;">
+                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh; background: #eef5fa; border-radius: 8px; box-shadow: 0 1px 6px rgba(120,160,200,0.06); padding: 0.5rem;">
                                     <ul id="chosenQuestions" class="list-group question-list flex-grow-1"></ul>
                                 </div>
                                 <div id="chosenPagination" class="mt-2"></div>
@@ -553,7 +564,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light py-2">
+                <div class="modal-footer bg-light py-2" style="border-radius: 0 0 18px 18px;">
                     <button type="button" class="btn-table delete" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>@Localizer["CancelBtn"]
                     </button>

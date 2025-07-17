@@ -123,12 +123,86 @@ class ScheduleManager {
             const res = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
             const data = await res.json();
             this.schedules = Array.isArray(data) ? data : [];
-            this.renderWeeklyGrid();
+            this.renderScheduleCardList(); // <--- UPDATED: Use carded schedule layout
         } catch (e) {
             this.showToast(getJsString('failed'), 'error');
         } finally {
             this.hideLoader();
         }
+    }
+
+    // NEW: Carded schedule layout renderer
+    renderScheduleCardList() {
+        // Find the schedule-list container
+        const scheduleList = document.querySelector('.schedule-list');
+        if (!scheduleList) return;
+
+        // Prepare HTML for all cards
+        let html = '';
+        for (const schedule of this.schedules) {
+            const s = schedule.extendedProps || {};
+            const dayName = getJsString((s.dayOfWeek || '').toLowerCase());
+            const startTime = s.startTime || '';
+            const endTime = s.endTime || '';
+            const type = s.isCenter ? 'center' : 'teacher';
+            const hallName = s.hallName || '';
+            const centerBranch = s.centerName && s.branchName ? `${s.centerName} - ${s.branchName}` : (s.centerName || s.branchName || '');
+            const teacherSubject = s.teacherName && s.subjectName ? `${s.teacherName} - ${s.subjectName}` : (s.teacherName || s.subjectName || '');
+            const amount = s.scheduleAmount ? `<span class="schedule-amount">${getJsString('amountCurrency')}${parseFloat(s.scheduleAmount).toFixed(2)}</span>` : '';
+            const status = s.isActive ? getJsString('active') : getJsString('inactive');
+            const statusClass = s.isActive ? "active" : "expired";
+
+            html += `
+                <div class="schedule-card ${statusClass}">
+                    <div class="schedule-card-header">
+                        <span class="wallet-code"><i class="fa-solid fa-calendar"></i> ${schedule.title}</span>
+                        <span class="badge status-badge">${status}</span>
+                    </div>
+                    <div class="schedule-card-body">
+                        <div class="card-row">
+                            <span class="card-icon"><i class="fa-solid fa-calendar-day"></i></span>
+                            <span class="schedule-label">${getJsString('day')}:</span> ${dayName}
+                        </div>
+                        <div class="card-row">
+                            <span class="card-icon"><i class="fa-solid fa-clock"></i></span>
+                            <span class="schedule-label">${getJsString('time')}:</span> ${startTime} - ${endTime}
+                        </div>
+                        ${hallName ? `
+                        <div class="card-row">
+                            <span class="card-icon"><i class="fa-solid fa-door-open"></i></span>
+                            <span class="schedule-label">${getJsString('hall')}:</span> ${hallName}
+                        </div>` : ''}
+                        ${centerBranch ? `
+                        <div class="card-row">
+                            <span class="card-icon"><i class="fa-solid fa-building"></i></span>
+                            <span class="schedule-label">${getJsString('centerBranch')}:</span> ${centerBranch}
+                        </div>` : ''}
+                        ${teacherSubject ? `
+                        <div class="card-row">
+                            <span class="card-icon"><i class="fa-solid fa-user"></i></span>
+                            <span class="schedule-label">${getJsString('teacherSubject')}:</span> ${teacherSubject}
+                        </div>` : ''}
+                        ${amount ? `
+                        <div class="card-row">
+                            <span class="card-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+                            <span class="schedule-label">${getJsString('amount')}:</span> ${amount}
+                        </div>` : ''}
+                    </div>
+                    <div class="schedule-card-actions">
+                        <button type="button" class="modern-btn info" onclick="showScheduleDetails(${s.scheduleCode})" title="${getJsString('viewDetailsBtn')}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="modern-btn edit-btn" onclick="editSchedule(${s.scheduleCode})" title="${getJsString('editBtn')}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="modern-btn delete-btn" onclick="deleteSchedule(${s.scheduleCode})" title="${getJsString('deleteBtn')}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        scheduleList.innerHTML = html;
     }
 
     // Save (Create/Edit) Schedule

@@ -56,7 +56,6 @@
             text-align: right;
         }
 
-        /* Unified gradient, centered header */
         .questions-header {
             width: 100%;
             text-align: center;
@@ -90,16 +89,13 @@
                 margin-right: 12px;
                 color: #4f8cff;
             }
+
         @@media (max-width: 900px) {
-            .questions-header h2
-
-        {
-            font-size: 1.6rem;
+            .questions-header h2 {
+                font-size: 1.6rem;
+            }
         }
 
-        }
-
-        /* Unified buttons */
         .modern-btn {
             font-weight: 600 !important;
             padding: 0.65rem 1.3rem !important;
@@ -142,7 +138,6 @@
                 transform: scale(1.05) !important;
             }
 
-        /* Modal background overlay */
         .modal-background {
             position: fixed;
             top: 0;
@@ -156,7 +151,7 @@
             align-items: center;
             transition: opacity 0.25s;
         }
-        /* Modal content box with animation */
+
         .modal-content {
             background: #fff;
             border-radius: 18px;
@@ -187,7 +182,7 @@
                 padding: 16px 8px;
             }
         }
-        /* Modern textarea styling for question content */
+
         textarea.modern-input,
         #question-content {
             width: 100%;
@@ -208,7 +203,7 @@
                 border-color: var(--primary-color, #6c5ce7);
                 outline: none;
             }
-        /* Icon-only action buttons for questions */
+
         .question-actions .modern-btn.success-btn,
         .question-actions .modern-btn.warning-btn {
             min-width: 38px;
@@ -224,7 +219,6 @@
     </style>
 </head>
 <body>
-    <!-- Gradient, centered header -->
     <div class="questions-header">
         <h2>
             <i class="fa-solid fa-book-open-reader"></i>
@@ -232,7 +226,6 @@
         </h2>
     </div>
 
-    <!-- Localized strings for JS -->
     <div id="js-localization"
          data-search-placeholder="@Localizer["SearchPlaceholder"]"
          data-search-btn="@Localizer["SearchBtn"]"
@@ -313,7 +306,9 @@
                 </div>
                 <div class="form-group">
                     <label for="chapter-eduyearcode"><span id="education-year-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-eduyearcode" name="EduYearCode" required class="modern-input secondary-btn"></select>
+                    <!-- Only one active edu year, hidden input for value, show as readonly text -->
+                    <input type="hidden" id="chapter-eduyearcode" name="EduYearCode" />
+                    <input type="text" id="chapter-eduyearcode-view" class="modern-input secondary-btn" readonly tabindex="-1" style="background: #f5fafd;" />
                 </div>
                 <div class="form-group" id="teacher-group" style="display:none;">
                     <label for="chapter-teachercode"><span id="teacher-label"></span><span style="color:red;">*</span></label>

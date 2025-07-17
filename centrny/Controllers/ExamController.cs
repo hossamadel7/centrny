@@ -419,6 +419,7 @@ namespace centrny.Controllers
                 if (exam == null)
                     return Json(new { success = false, error = "Exam not found" });
 
+                // Get eligible students
                 var eligibleStudentCodes = await _context.Learns
                     .Where(l => l.TeacherCode == exam.TeacherCode &&
                                l.SubjectCode == exam.SubjectCode &&
@@ -429,14 +430,28 @@ namespace centrny.Controllers
                     .Select(l => l.StudentCode)
                     .ToListAsync();
 
-                var studentsWhoTookExam = await _context.StudentExams
+                // Get students who took exam
+                var studentExams = await _context.StudentExams
                     .Where(se => se.ExamCode == exam.ExamCode && eligibleStudentCodes.Contains(se.StudentCode))
-                    .Select(se => se.StudentCode)
-                    .Distinct()
                     .ToListAsync();
 
-                int tookExam = studentsWhoTookExam.Count;
+                int tookExam = studentExams.Select(se => se.StudentCode).Distinct().Count();
                 int didntTakeExam = eligibleStudentCodes.Count - tookExam;
+
+                // Calculate success percent (students with result >= 50% of degree)
+                int successCount = studentExams.Count(se =>
+                    se.StudentResult.HasValue &&
+                    exam.ExamDegree != null &&
+                    int.TryParse(exam.ExamDegree, out int deg) &&
+                    deg > 0 &&
+                    se.StudentResult.Value >= deg * 0.5);
+
+                double successPercent = tookExam > 0 ? ((double)successCount * 100) / tookExam : 0.0;
+
+                // Calculate average marks for students who took exam
+                double avgMarks = studentExams.Count > 0
+                    ? studentExams.Average(se => se.StudentResult ?? 0)
+                    : 0.0;
 
                 return Json(new
                 {
@@ -444,7 +459,9 @@ namespace centrny.Controllers
                     examCode = exam.ExamCode,
                     examName = exam.ExamName,
                     numberTookExam = tookExam,
-                    numberDidNotTakeExam = didntTakeExam
+                    numberDidNotTakeExam = didntTakeExam,
+                    examPercentage = Math.Round(successPercent, 1), // Success percent
+                    averageMarks = Math.Round(avgMarks, 1)          // Average marks
                 });
             }
             catch (Exception ex)
@@ -640,6 +657,29 @@ namespace centrny.Controllers
                 return Json(new List<object>());
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> GetFilterYears()
+        {
+            var (rootCode, _, _) = await GetUserContext();
+            if (!rootCode.HasValue) return Json(new List<object>());
+
+            // Get all EduYear codes that are active and belong to this root
+            var activeEduYearCodes = await _context.EduYears
+                .Where(e => e.RootCode == rootCode.Value && e.IsActive)
+                .Select(e => e.EduCode)
+                .ToListAsync();
+
+            // Return all Years for this root that are associated with an active EduYear
+            var years = await (from y in _context.Years
+                               join edu in _context.EduYears on y.EduYearCode equals edu.EduCode
+                               where edu.RootCode == rootCode.Value
+                                     && edu.IsActive
+                               select new { value = y.YearCode, text = y.YearName })
+                   .OrderBy(y => y.text)
+                   .ToListAsync();
+
+            return Json(years);
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetTeachersByEduYear(int eduYearCode)
@@ -771,7 +811,7 @@ namespace centrny.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetExamQuestions(int examCode)
+        public async Task<IActionResult> GetExamQuestions(int examCode, int teacherCode, int subjectCode, int yearCode)
         {
             try
             {
@@ -794,8 +834,12 @@ namespace centrny.Controllers
                     return Json(new { chosen = new object[0], available = new object[0], chosenFlat = new object[0], availableFlat = new object[0] });
                 }
 
+                // Filter lessons by teacherCode, subjectCode, yearCode
                 var teacherLessons = await _context.Lessons
-                    .Where(l => l.TeacherCode == exam.TeacherCode && l.RootCode == rootCode.Value)
+                    .Where(l => l.TeacherCode == teacherCode
+                                && l.SubjectCode == subjectCode
+                                && l.YearCode == yearCode
+                                && l.RootCode == rootCode.Value)
                     .Select(l => new {
                         l.LessonCode,
                         l.LessonName,
@@ -809,6 +853,7 @@ namespace centrny.Controllers
                     .Where(l => l.ChapterCode == null)
                     .ToDictionary(l => l.LessonCode, l => l.LessonName ?? "Unnamed Chapter");
 
+                // Get chosen questions for the exam
                 var chosen = await (from eq in _context.ExamQuestions
                                     join q in _context.Questions on eq.QuestionCode equals q.QuestionCode
                                     join lesson in _context.Lessons on q.LessonCode equals lesson.LessonCode into lessonGroup
@@ -829,6 +874,7 @@ namespace centrny.Controllers
 
                 var chosenCodes = chosen.Select(q => q.QuestionCode).ToList();
 
+                // Only available questions for those lesson codes, and not already chosen
                 var availableData = await (from q in _context.Questions
                                            join lesson in _context.Lessons on q.LessonCode equals lesson.LessonCode into lessonGroup
                                            from lesson in lessonGroup.DefaultIfEmpty()

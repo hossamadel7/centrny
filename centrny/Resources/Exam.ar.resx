@@ -1,108 +1,138 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>2.0</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<data name="Employee_ListTitle" xml:space="preserve">
-    <value>الموظفين</value>
-  </data>
-	<data name="Employee_AddBtn" xml:space="preserve">
-    <value>إضافة موظف</value>
-  </data>
-	<data name="Employee_AddModalTitle" xml:space="preserve">
-    <value>إضافة موظف</value>
-  </data>
-	<data name="Employee_EditModalTitle" xml:space="preserve">
-    <value>تعديل الموظف</value>
-  </data>
-	<data name="Employee_AddEditModalTitle" xml:space="preserve">
-    <value>إضافة/تعديل موظف</value>
-  </data>
-	<data name="Employee_NameLabel" xml:space="preserve">
-    <value>الاسم</value>
-  </data>
-	<data name="Employee_PhoneLabel" xml:space="preserve">
-    <value>رقم الهاتف</value>
-  </data>
-	<data name="Employee_EmailLabel" xml:space="preserve">
-    <value>البريد الإلكتروني</value>
-  </data>
-	<data name="Employee_SalaryLabel" xml:space="preserve">
-    <value>الراتب</value>
-  </data>
-	<data name="Employee_StartDateLabel" xml:space="preserve">
-    <value>تاريخ البدء</value>
-  </data>
-	<data name="Employee_UserLabel" xml:space="preserve">
-    <value>المستخدم</value>
-  </data>
-	<data name="Employee_BranchLabel" xml:space="preserve">
-    <value>الفرع</value>
-  </data>
-	<data name="Employee_IsActiveLabel" xml:space="preserve">
-    <value>الحالة</value>
-  </data>
-	<data name="Employee_Active" xml:space="preserve">
-    <value>نشط</value>
-  </data>
-	<data name="Employee_Inactive" xml:space="preserve">
-    <value>غير نشط</value>
-  </data>
-	<data name="Employee_Save" xml:space="preserve">
-    <value>حفظ</value>
-  </data>
-	<data name="Employee_Cancel" xml:space="preserve">
-    <value>إلغاء</value>
-  </data>
-	<data name="Employee_Actions" xml:space="preserve">
-    <value>الإجراءات</value>
-  </data>
-	<data name="Employee_DeleteBtn" xml:space="preserve">
-    <value>مسح</value>
-  </data>
-	<data name="Employee_ErrorLoading" xml:space="preserve">
-    <value>حدث خطأ أثناء تحميل البيانات.</value>
-  </data>
-	<data name="Employee_PleaseFillFields" xml:space="preserve">
-    <value>يرجى ملء جميع الحقول المطلوبة.</value>
-  </data>
-	<data name="Employee_CouldNotAdd" xml:space="preserve">
-    <value>تعذر إضافة الموظف.</value>
-  </data>
-	<data name="Employee_CouldNotEdit" xml:space="preserve">
-    <value>تعذر تعديل الموظف.</value>
-  </data>
-	<data name="Employee_CouldNotDelete" xml:space="preserve">
-    <value>تعذر حذف الموظف.</value>
-  </data>
-	<data name="Employee_DeleteConfirm" xml:space="preserve">
-    <value>هل أنت متأكد أنك تريد حذف هذا الموظف؟</value>
-  </data>
-	<data name="Employee_Unauthorized" xml:space="preserve">
-    <value>غير مصرح.</value>
-  </data>
-	<data name="Employee_NotFound" xml:space="preserve">
-    <value>غير موجود.</value>
-  </data>
-	<data name="Employee_NoEmployees" xml:space="preserve">
-    <value>لا يوجد موظفين.</value>
-  </data>
-	<data name="Employee_Processing" xml:space="preserve">
-    <value>جارٍ المعالجة...</value>
-  </data>
-	<data name="Employee_SelectUser" xml:space="preserve">
-    <value>-- اختر مستخدم --</value>
-  </data>
-	<data name="Employee_SelectBranch" xml:space="preserve">
-    <value>-- اختر فرع --</value>
-  </data>
+	<data name="Title_ExamManagement" xml:space="preserve"><value>إدارة الامتحانات</value></data>
+	<data name="AddExamBtn" xml:space="preserve"><value>إضافة امتحان</value></data>
+	<data name="EditExamBtn" xml:space="preserve"><value>تعديل الامتحان</value></data>
+	<data name="DeleteExamBtn" xml:space="preserve"><value>حذف الامتحان</value></data>
+	<data name="SaveExamBtn" xml:space="preserve"><value>حفظ الامتحان</value></data>
+	<data name="CancelBtn" xml:space="preserve"><value>إلغاء</value></data>
+	<data name="ExamNameLabel" xml:space="preserve"><value>اسم الامتحان</value></data>
+	<data name="ExamTimerLabel" xml:space="preserve"><value>مدة الامتحان</value></data>
+	<data name="ExamTimerHelper" xml:space="preserve"><value>الصيغة HH:mm</value></data>
+	<data name="ExamNamePlaceholder" xml:space="preserve"><value>أدخل اسم الامتحان</value></data>
+	<data name="ExamTimerPlaceholder" xml:space="preserve"><value>HH:mm</value></data>
+	<data name="EduYearLabel" xml:space="preserve"><value>السنة الدراسية</value></data>
+	<data name="SubjectLabel" xml:space="preserve"><value>المادة</value></data>
+	<data name="YearLabel" xml:space="preserve"><value>الصف</value></data>
+	<data name="TeacherLabel" xml:space="preserve"><value>المعلم</value></data>
+	<data name="BranchLabel" xml:space="preserve"><value>الفرع</value></data>
+	<data name="IsExamLabel" xml:space="preserve"><value>امتحان</value></data>
+	<data name="IsOnlineLabel" xml:space="preserve"><value>امتحان إلكتروني</value></data>
+	<data name="IsDoneLabel" xml:space="preserve"><value>تم الانتهاء</value></data>
+	<data name="VsQuizLabel" xml:space="preserve"><value>مقارنة بالاختبار القصير</value></data>
+	<data name="Actions" xml:space="preserve"><value>الإجراءات</value></data>
+	<data name="Status" xml:space="preserve"><value>الحالة</value></data>
+	<data name="Type" xml:space="preserve"><value>النوع</value></data>
+	<data name="Mode" xml:space="preserve"><value>الوضع</value></data>
+	<data name="Degree" xml:space="preserve"><value>الدرجة</value></data>
+	<data name="SuccessMsg" xml:space="preserve"><value>نجاح</value></data>
+	<data name="ErrorMsg" xml:space="preserve"><value>خطأ</value></data>
+	<data name="ConfirmDeleteTitle" xml:space="preserve"><value>حذف الامتحان</value></data>
+	<data name="ConfirmDeleteWarning" xml:space="preserve"><value>هل أنت متأكد أنك تريد حذف هذا الامتحان؟</value></data>
+	<data name="CloseBtn" xml:space="preserve"><value>إغلاق</value></data>
+	<data name="ViewDetailsBtn" xml:space="preserve"><value>عرض التفاصيل</value></data>
+	<data name="ExamStatisticsTitle" xml:space="preserve"><value>إحصائيات الامتحان</value></data>
+	<data name="StudentsCompleted" xml:space="preserve"><value>الطلاب الذين أكملوا</value></data>
+	<data name="StudentsPending" xml:space="preserve"><value>الطلاب بانتظار الإكمال</value></data>
+	<data name="ManageQuestions" xml:space="preserve"><value>إدارة الأسئلة</value></data>
+	<data name="SaveQuestionsBtn" xml:space="preserve"><value>حفظ الأسئلة</value></data>
+	<data name="SearchQuestionsPlaceholder" xml:space="preserve"><value>ابحث عن الأسئلة...</value></data>
+	<data name="SearchBtn" xml:space="preserve"><value>بحث</value></data>
+	<data name="ClearBtn" xml:space="preserve"><value>مسح</value></data>
+	<data name="AvailableQuestions" xml:space="preserve"><value>الأسئلة المتاحة</value></data>
+	<data name="ChosenQuestions" xml:space="preserve"><value>الأسئلة المختارة</value></data>
+	<data name="UpdateExamBtn" xml:space="preserve"><value>تحديث الامتحان</value></data>
+	<data name="Loading" xml:space="preserve"><value>جار التحميل...</value></data>
+	<data name="NoExamsFound" xml:space="preserve"><value>لا توجد امتحانات</value></data>
+	<data name="GetStartedMsg" xml:space="preserve"><value>اضغط "إضافة امتحان" للبدء.</value></data>
+	<data name="PageContext" xml:space="preserve"><value>سياق الصفحة</value></data>
+	<data name="RootCodeLabel" xml:space="preserve"><value>كود الجذر</value></data>
+	<data name="Center" xml:space="preserve"><value>المركز</value></data>
+	<data name="Teacher" xml:space="preserve"><value>المعلم</value></data>
+	<data name="ActionsHeader" xml:space="preserve"><value>الإجراءات</value></data>
+	<data name="ModeHeader" xml:space="preserve"><value>الوضع</value></data>
+	<data name="TypeHeader" xml:space="preserve"><value>النوع</value></data>
+	<data name="StatusHeader" xml:space="preserve"><value>الحالة</value></data>
+	<data name="BranchHeader" xml:space="preserve"><value>الفرع</value></data>
+	<data name="SubjectHeader" xml:space="preserve"><value>المادة</value></data>
+	<data name="YearHeader" xml:space="preserve"><value>الصف</value></data>
+	<data name="EduYearHeader" xml:space="preserve"><value>السنة الدراسية</value></data>
+	<data name="DurationHeader" xml:space="preserve"><value>المدة</value></data>
+	<data name="SuccessHeader" xml:space="preserve"><value>% النجاح</value></data>
+	<data name="AvgMarksHeader" xml:space="preserve"><value>متوسط العلامات</value></data>
+	<data name="DegreeHeader" xml:space="preserve"><value>الدرجة</value></data>
+	<data name="NameHeader" xml:space="preserve"><value>الاسم</value></data>
+	<data name="CodeHeader" xml:space="preserve"><value>الكود</value></data>
+	<data name="QuestionsBtn" xml:space="preserve"><value>الأسئلة</value></data>
+	<data name="EditBtn" xml:space="preserve"><value>تعديل</value></data>
+	<data name="DeleteBtn" xml:space="preserve"><value>حذف</value></data>
+	<data name="StatsBtn" xml:space="preserve"><value>إحصائيات</value></data>
+	<data name="Assignment" xml:space="preserve"><value>واجب</value></data>
+	<data name="Exam" xml:space="preserve"><value>امتحان</value></data>
+	<data name="Done" xml:space="preserve"><value>تم</value></data>
+	<data name="Pending" xml:space="preserve"><value>قيد الانتظار</value></data>
+	<data name="Online" xml:space="preserve"><value>إلكتروني</value></data>
+	<data name="Offline" xml:space="preserve"><value>ورقي</value></data>
+	<data name="ExamNameRequired" xml:space="preserve"><value>اسم الامتحان مطلوب.</value></data>
+	<data name="ExamTimerRequired" xml:space="preserve"><value>يرجى إدخال وقت صالح بصيغة HH:MM.</value></data>
+	<data name="EduYearRequired" xml:space="preserve"><value>السنة الدراسية مطلوبة.</value></data>
+	<data name="SubjectRequired" xml:space="preserve"><value>المادة مطلوبة.</value></data>
+	<data name="YearRequired" xml:space="preserve"><value>الصف مطلوب.</value></data>
+	<data name="TeacherRequired" xml:space="preserve"><value>المعلم مطلوب.</value></data>
+	<data name="BranchRequired" xml:space="preserve"><value>الفرع مطلوب.</value></data>
+	<data name="NoTeacherFound" xml:space="preserve"><value>لم يتم العثور على معلم لجذرك.</value></data>
+	<data name="CenterRequired" xml:space="preserve"><value>المركز مطلوب.</value></data>
+	<data name="SelectCenterOption" xml:space="preserve"><value>-- اختر المركز --</value></data>
+	<data name="SelectBranchOption" xml:space="preserve"><value>-- اختر الفرع --</value></data>
+	<data name="FailedToLoadCenters" xml:space="preserve"><value>فشل في تحميل المراكز</value></data>
+	<data name="FailedToLoadBranches" xml:space="preserve"><value>فشل في تحميل الفروع</value></data>
+	<data name="ErrorLoadingTeacher" xml:space="preserve"><value>حدث خطأ أثناء تحميل معلومات المعلم.</value></data>
+	<data name="SelectEduYearOption" xml:space="preserve"><value>-- اختر السنة الدراسية --</value></data>
+	<data name="FailedToLoadEduYears" xml:space="preserve"><value>فشل في تحميل السنوات الدراسية</value></data>
+	<data name="ErrorLoadingExams" xml:space="preserve"><value>حدث خطأ أثناء تحميل الامتحانات</value></data>
+	<data name="UnknownError" xml:space="preserve"><value>خطأ غير معروف</value></data>
+	<data name="ExamsFor" xml:space="preserve"><value>امتحانات لـ:</value></data>
+	<data name="Saving" xml:space="preserve"><value>جار الحفظ...</value></data>
+	<data name="ExamCreatedSuccess" xml:space="preserve"><value>تم إنشاء الامتحان بنجاح!</value></data>
+	<data name="ErrorAddingExam" xml:space="preserve"><value>حدث خطأ أثناء إضافة الامتحان</value></data>
+	<data name="ServerErrorOccurred" xml:space="preserve"><value>حدث خطأ في الخادم</value></data>
+	<data name="FailedToLoadExamDetails" xml:space="preserve"><value>فشل في تحميل تفاصيل الامتحان</value></data>
+	<data name="Updating" xml:space="preserve"><value>جار التحديث...</value></data>
+	<data name="ExamUpdatedSuccess" xml:space="preserve"><value>تم تحديث الامتحان بنجاح!</value></data>
+	<data name="ErrorUpdatingExam" xml:space="preserve"><value>حدث خطأ أثناء تحديث الامتحان</value></data>
+	<data name="ConfirmDeleteExam" xml:space="preserve"><value>هل أنت متأكد أنك تريد حذف هذا الامتحان؟ هذا الإجراء لا يمكن التراجع عنه.</value></data>
+	<data name="ExamDeletedSuccess" xml:space="preserve"><value>تم حذف الامتحان بنجاح!</value></data>
+	<data name="ErrorDeletingExam" xml:space="preserve"><value>حدث خطأ أثناء حذف الامتحان</value></data>
+	<data name="Error" xml:space="preserve"><value>خطأ</value></data>
+	<data name="SelectOption" xml:space="preserve"><value>-- اختر --</value></data>
+	<data name="SelectSubjectOption" xml:space="preserve"><value>-- اختر المادة --</value></data>
+	<data name="SelectYearOption" xml:space="preserve"><value>-- اختر الصف --</value></data>
+	<data name="SelectTeacherOption" xml:space="preserve"><value>-- اختر المعلم --</value></data>
+	<data name="FailedToLoadTeachers" xml:space="preserve"><value>فشل في تحميل المعلمين</value></data>
+	<data name="FailedToLoadSubjects" xml:space="preserve"><value>فشل في تحميل المواد</value></data>
+	<data name="FailedToLoadYears" xml:space="preserve"><value>فشل في تحميل الصفوف</value></data>
+	<data name="FailedToLoadExamQuestions" xml:space="preserve"><value>فشل في تحميل أسئلة الامتحان.</value></data>
+	<data name="Searching" xml:space="preserve"><value>جار البحث...</value></data>
+	<data name="NoQuestionsFoundFor" xml:space="preserve"><value>لم يتم العثور على أسئلة لـ</value></data>
+	<data name="LessonLabel" xml:space="preserve"><value>الدرس</value></data>
+	<data name="AddBtn" xml:space="preserve"><value>إضافة</value></data>
+	<data name="BackBtn" xml:space="preserve"><value>رجوع</value></data>
+	<data name="ErrorSearchingQuestions" xml:space="preserve"><value>حدث خطأ أثناء البحث عن الأسئلة.</value></data>
+	<data name="SelectAtLeastOneQuestion" xml:space="preserve"><value>يرجى اختيار سؤال واحد على الأقل للامتحان.</value></data>
+	<data name="QuestionsSavedSuccess" xml:space="preserve"><value>تم حفظ الأسئلة بنجاح!</value></data>
+	<data name="UpdateFailed" xml:space="preserve"><value>فشل التحديث</value></data>
+	<data name="ErrorSavingQuestions" xml:space="preserve"><value>حدث خطأ أثناء حفظ الأسئلة</value></data>
+	<data name="Chapter" xml:space="preserve"><value>الفصل</value></data>
+	<data name="Lesson" xml:space="preserve"><value>الدرس</value></data>
+	<data name="DegreeLabel" xml:space="preserve"><value>الدرجة</value></data>
+	<data name="Page" xml:space="preserve"><value>صفحة</value></data>
+	<data name="Of" xml:space="preserve"><value>من</value></data>
+	<data name="Previous" xml:space="preserve"><value>السابق</value></data>
+	<data name="Next" xml:space="preserve"><value>التالي</value></data>
+	<data name="ExamManagementInitializedFor" xml:space="preserve"><value>تم بدء إدارة الامتحانات لـ:</value></data>
+	<data name="LoadingStatistics" xml:space="preserve"><value>جار تحميل الإحصائيات...</value></data>
+	<data name="StudentsCompleted" xml:space="preserve"><value>الطلاب الذين أكملوا</value></data>
+	<data name="StudentsPending" xml:space="preserve"><value>الطلاب بانتظار الإكمال</value></data>
+	<data name="ErrorLoadingStatistics" xml:space="preserve"><value>حدث خطأ أثناء تحميل الإحصائيات</value></data>
+	<data name="FailedToLoadExamStatistics" xml:space="preserve"><value>فشل في تحميل إحصائيات الامتحان.</value></data>
 </root>

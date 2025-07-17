@@ -496,23 +496,31 @@
                 container.innerHTML = renderEmptyState('fa-file-alt', 'no-upcoming-exams', 'no-upcoming-exams-msg');
                 return;
             }
-            container.innerHTML = exams.map(exam => `
-                <div class="exam-card">
-                    <div class="exam-header">
-                        <div class="exam-icon"><i class="fas fa-file-alt"></i></div>
-                        <h3 class="exam-name">${exam.examName}</h3>
-                    </div>
-                    <div class="exam-details">
-                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <button class="attend-exam-btn" onclick="attendExam(${exam.examCode})" >
-                            <i class="fas fa-play"></i> ${getJsString('attend-exam')}
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+            container.innerHTML = exams.map(exam => {
+                // Disable attend button if exam.isDone is true and NOT attended
+                       const hideAttendBtn = exam.isDone && !exam.attended;
+        return `
+        <div class="exam-card">
+            <div class="exam-header">
+                <div class="exam-icon"><i class="fas fa-file-alt"></i></div>
+                <h3 class="exam-name">${exam.examName}</h3>
+            </div>
+            <div class="exam-details">
+                <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
+                <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
+            </div>
+            <div style="margin-top: 1rem;">
+                ${
+                    hideAttendBtn
+                    ? `<div class="alert-error" style="margin-top:10px;">This exam is closed and cannot be attended.</div>`
+                    : `<button class="attend-exam-btn" onclick="attendExam(${exam.examCode})">
+                         <i class="fas fa-play"></i> ${getJsString('attend-exam')}
+                       </button>`
+                }
+            </div>
+        </div>
+        `;
+            }).join('');
         }
         function attendExam(examCode) {
             const studentCode = '@Model.StudentCode';
@@ -566,25 +574,33 @@
                 container.innerHTML = renderEmptyState('fa-tasks', 'no-assignments', 'no-assignments-msg');
                 return;
             }
-            container.innerHTML = assignments.map(assignment => `
-                <div class="exam-card ${assignment.attended ? 'attended' : ''}">
-                    <div class="exam-header">
-                        <div class="exam-icon"><i class="fas fa-tasks"></i></div>
-                        <h3 class="exam-name">${assignment.examName}</h3>
-                    </div>
-                    <div class="exam-details">
-                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${assignment.subjectName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${assignment.teacherName}</span></div>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        ${
-                            assignment.attended
-                            ? `<button class="attend-exam-btn" disabled><i class="fas fa-check"></i> ${getJsString('attended')}</button>`
-                            : `<button class="attend-exam-btn" onclick="attendExam(${assignment.examCode})"><i class="fas fa-play"></i> ${getJsString('attend-assignment')}</button>`
-                        }
-                    </div>
-                </div>
-            `).join('');
+            container.innerHTML = assignments.map(assignment => {
+                // Disable attend button if assignment.isDone == true and NOT attended
+                       const hideAttendBtn = assignment.isDone && !assignment.attended;
+        return `
+        <div class="exam-card ${assignment.attended ? 'attended' : ''}">
+            <div class="exam-header">
+                <div class="exam-icon"><i class="fas fa-tasks"></i></div>
+                <h3 class="exam-name">${assignment.examName}</h3>
+            </div>
+            <div class="exam-details">
+                <div class="exam-detail"><i class="fas fa-book"></i> <span>${assignment.subjectName}</span></div>
+                <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${assignment.teacherName}</span></div>
+            </div>
+            <div style="margin-top: 1rem;">
+                ${
+                    assignment.attended
+                    ? `<button class="attend-exam-btn" disabled><i class="fas fa-check"></i> ${getJsString('attended')}</button>`
+                    : (
+                        hideAttendBtn
+                        ? `<div class="alert-error" style="margin-top:10px;">This assignment is closed and cannot be attended.</div>`
+                        : `<button class="attend-exam-btn" onclick="attendExam(${assignment.examCode})"><i class="fas fa-play"></i> ${getJsString('attend-assignment')}</button>`
+                    )
+                }
+            </div>
+        </div>
+        `;
+            }).join('');
         }
         // ---- Subjects ----
         async function loadStudentSubjects() {

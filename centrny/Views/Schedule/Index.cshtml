@@ -5,11 +5,12 @@
 @{
     var Localizer = LocalizerFactory.Create("Schedule", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
     ViewData["Title"] = Localizer["Title"];
+    var daysOfWeek = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 }
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="~/css/site.css" />
+<link rel="stylesheet" href="~/css/Schedule.css" />
 
 <!-- Localized strings for JS -->
 <div id="js-localization"
@@ -87,198 +88,117 @@
      data-amount-currency="@Localizer["AmountCurrency"]"
      data-empty-state-icon="@Localizer["EmptyStateIcon"]" />
 
-<div class="schedule-page">
-    <div class="container-fluid page-container">
-        <div class="row justify-content-center">
-            <div class="col-12">
-                <div class="card main-card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h2>
-                                <i class="fas fa-calendar-alt me-2"></i>
-                                @Localizer["Title"]
-                            </h2>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                                    <i class="fas fa-plus me-1"></i> @Localizer["AddScheduleBtn"]
-                                </button>
-                                <a href="@Url.Action("Calendar")" class="btn-modern btn-info">
-                                    <i class="fas fa-calendar me-1"></i> @Localizer["CalendarTitle"]
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+<div class="schedule-page" style="min-height:100vh;">
+    <!-- Unified centered gradient header -->
+    <div class="questions-header">
+        <h2>
+            <i class="fas fa-calendar-alt me-2"></i>
+            @Localizer["Title"]
+        </h2>
+    </div>
+    <div class="filter-panel d-flex justify-content-between align-items-center">
+        @if (ViewBag.CurrentUserRootCode != null)
+        {
+            <div class="user-info">
+                <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
+                @Localizer["Showing schedules for"]: <strong>@ViewBag.UserRootName</strong>
+                (@(ViewBag.IsCenter ? Localizer["Center"] : Localizer["Teacher"]) - Root: @ViewBag.CurrentUserRootCode)
+                @if (ViewBag.BranchName != null)
+                {
+                    <span> @Localizer["at"] <strong>@ViewBag.BranchName</strong></span>
+                }
+                | @Localizer["Total"]: <strong>@ViewBag.ScheduleCount</strong> @Localizer["schedules"]
+            </div>
+        }
+        <div>
+            <button type="button" class="modern-btn add" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                <i class="fas fa-plus me-1"></i> @Localizer["AddScheduleBtn"]
+            </button>
+            <a href="@Url.Action("Calendar")" class="modern-btn info">
+                <i class="fas fa-calendar me-1"></i> @Localizer["CalendarTitle"]
+            </a>
+            <button type="button" class="modern-btn info" onclick="refreshList()">
+                <i class="fas fa-sync-alt"></i> @Localizer["RefreshBtn"]
+            </button>
+        </div>
+    </div>
 
-                    @if (ViewBag.CurrentUserRootCode != null)
+    <!-- SCHEDULE GRID LAYOUT -->
+    <div class="schedule-grid">
+        @foreach (var day in daysOfWeek)
+        {
+            <div class="schedule-row">
+                <div class="schedule-day">
+                    <span class="day-label">@Localizer[day]</span>
+                </div>
+                <div class="schedule-cards">
+                    @foreach (var item in Model.Where(x => x.DayOfWeek == day))
                     {
-                        <div class="controls-section">
-                            <div class="user-info">
-                                <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
-                                @Localizer["Showing schedules for"]: <strong>@ViewBag.UserRootName</strong>
-                                (@(ViewBag.IsCenter ? Localizer["Center"] : Localizer["Teacher"]) - Root: @ViewBag.CurrentUserRootCode)
-                                @if (ViewBag.BranchName != null)
+                        var startTime = item.StartTime?.ToString("hh:mm tt");
+                        var endTime = item.EndTime?.ToString("hh:mm tt");
+                        var hallName = item.HallCodeNavigation?.HallName;
+                        var centerBranch = ViewBag.IsTeacher == true
+                        ? (item.CenterCodeNavigation?.CenterName ?? "") + (item.BranchCodeNavigation?.BranchName != null ? " - " + item.BranchCodeNavigation?.BranchName : "")
+                        : "";
+                        var teacherSubject = ViewBag.IsTeacher != true
+                        ? (item.TeacherCodeNavigation?.TeacherName ?? "") + (item.SubjectCodeNavigation?.SubjectName != null ? " - " + item.SubjectCodeNavigation?.SubjectName : "")
+                        : "";
+                        <div class="schedule-card">
+                            <div class="schedule-card-body">
+                                <div class="card-row">
+                                    <span class="card-icon"><i class="fa-solid fa-calendar-day"></i></span>
+                                    <span class="schedule-label">@Localizer["Day"]:</span> @Localizer[item.DayOfWeek]
+                                </div>
+                                <div class="card-row">
+                                    <span class="card-icon"><i class="fa-solid fa-clock"></i></span>
+                                    <span class="schedule-label">@Localizer["Time"]:</span> @(startTime) - @(endTime)
+                                </div>
+                                @if (!string.IsNullOrEmpty(hallName))
                                 {
-                                    <span> @Localizer["at"] <strong>@ViewBag.BranchName</strong></span>
+                                    <div class="card-row">
+                                        <span class="card-icon"><i class="fa-solid fa-door-open"></i></span>
+                                        <span class="schedule-label">@Localizer["Hall"]:</span> @hallName
+                                    </div>
                                 }
-                                | @Localizer["Total"]: <strong>@ViewBag.ScheduleCount</strong> @Localizer["schedules"]
+                                @if (!string.IsNullOrEmpty(centerBranch))
+                                {
+                                    <div class="card-row">
+                                        <span class="card-icon"><i class="fa-solid fa-building"></i></span>
+                                        <span class="schedule-label">@Localizer["CenterBranch"]:</span> @centerBranch
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(teacherSubject))
+                                {
+                                    <div class="card-row">
+                                        <span class="card-icon"><i class="fa-solid fa-user"></i></span>
+                                        <span class="schedule-label">@Localizer["TeacherSubject"]:</span> @teacherSubject
+                                    </div>
+                                }
+                                @if (item.ScheduleAmount.HasValue)
+                                {
+                                    <div class="card-row">
+                                        <span class="card-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+                                        <span class="schedule-label">@Localizer["Amount"]:</span>
+                                        <span class="schedule-amount">@Localizer["AmountCurrency"]@item.ScheduleAmount.Value.ToString("F2")</span>
+                                    </div>
+                                }
                             </div>
-                            <button type="button" class="btn-modern btn-info" onclick="refreshList()">
-                                <i class="fas fa-sync-alt"></i> @Localizer["RefreshBtn"]
-                            </button>
+                            <div class="schedule-card-actions">
+                                <button type="button" class="modern-btn info" onclick="showScheduleDetails(@item.ScheduleCode)" title="@Localizer["ViewDetailsBtn"]">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="modern-btn edit-btn" onclick="editSchedule(@item.ScheduleCode)" title="@Localizer["EditBtn"]">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="modern-btn delete-btn" onclick="deleteSchedule(@item.ScheduleCode)" title="@Localizer["DeleteBtn"]">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     }
-
-                    <div class="table-container">
-                        @if (Model != null && Model.Count > 0)
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-hover schedule-table">
-                                    <thead>
-                                        <tr>
-                                            <th>@Localizer["ScheduleName"]</th>
-                                            <th>@Localizer["Day"]</th>
-                                            <th>@Localizer["Time"]</th>
-                                            <th>@Localizer["Type"]</th>
-                                            <th>@Localizer["Hall"]</th>
-                                            @if (ViewBag.IsTeacher == true)
-                                            {
-                                                <th>@Localizer["CenterBranch"]</th>
-                                            }
-                                            else
-                                            {
-                                                <th>@Localizer["TeacherSubject"]</th>
-                                            }
-                                            <th>@Localizer["Amount"]</th>
-                                            <th>@Localizer["Actions"]</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item in Model)
-                                        {
-                                            <tr>
-                                                <td>
-                                                    <strong>@item.ScheduleName</strong>
-                                                </td>
-                                                <td>
-                                                    <span class="badge badge-modern badge-day">
-                                                        @Localizer[item.DayOfWeek]
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    @{
-                                                        var startTime = item.StartTime;
-                                                        var endTime = item.EndTime;
-                                                    }
-                                                    @if (startTime.HasValue && endTime.HasValue)
-                                                    {
-                                                        <small class="text-muted">
-                                                            @startTime.Value.ToString("hh:mm tt") - @endTime.Value.ToString("hh:mm tt")
-                                                        </small>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @if (item.RootCodeNavigation?.IsCenter == true)
-                                                    {
-                                                        <span class="badge badge-modern badge-center">
-                                                            <i class="fas fa-building me-1"></i>@Localizer["Center"]
-                                                        </span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge badge-modern badge-teacher">
-                                                            <i class="fas fa-user me-1"></i>@Localizer["Teacher"]
-                                                        </span>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @(item.HallCodeNavigation?.HallName ?? "")
-                                                </td>
-                                                <td>
-                                                    @if (ViewBag.IsTeacher == true)
-                                                    {
-                                                        <div>
-                                                            @if (item.CenterCodeNavigation != null)
-                                                            {
-                                                                <span class="badge badge-modern badge-center mb-1">
-                                                                    <i class="fas fa-building me-1"></i>@item.CenterCodeNavigation.CenterName
-                                                                </span>
-                                                            }
-                                                            @if (item.BranchCodeNavigation != null)
-                                                            {
-                                                                <br>
-                                                                <span class="badge badge-modern badge-branch">
-                                                                    <i class="fas fa-map-marker-alt me-1"></i>@item.BranchCodeNavigation.BranchName
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <div>
-                                                            @if (item.TeacherCodeNavigation != null)
-                                                            {
-                                                                <span class="badge badge-modern badge-teacher mb-1">
-                                                                    <i class="fas fa-user me-1"></i>@item.TeacherCodeNavigation.TeacherName
-                                                                </span>
-                                                            }
-                                                            @if (item.SubjectCodeNavigation != null)
-                                                            {
-                                                                <br>
-                                                                <span class="badge badge-modern badge-subject">
-                                                                    <i class="fas fa-book me-1"></i>@item.SubjectCodeNavigation.SubjectName
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @if (item.ScheduleAmount.HasValue)
-                                                    {
-                                                        <span class="text-success fw-bold">
-                                                            @Localizer["AmountCurrency"]@item.ScheduleAmount.Value.ToString("F2")
-                                                        </span>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group-actions">
-                                                        <button type="button" class="btn-action btn-view"
-                                                                onclick="showScheduleDetails(@item.ScheduleCode)"
-                                                                title="@Localizer["ViewDetailsBtn"]">
-                                                            <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        <button type="button" class="btn-action btn-edit"
-                                                                onclick="editSchedule(@item.ScheduleCode)"
-                                                                title="@Localizer["EditBtn"]">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn-action btn-delete"
-                                                                onclick="deleteSchedule(@item.ScheduleCode)"
-                                                                title="@Localizer["DeleteBtn"]">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="empty-state">
-                                <i class="@Localizer["EmptyStateIcon"]"></i>
-                                <h4>@Localizer["NoSchedulesFound"]</h4>
-                                <p>@Localizer["GetStartedMsg"]</p>
-                                <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                                    <i class="fas fa-plus me-2"></i> @Localizer["CreateNewScheduleBtn"]
-                                </button>
-                            </div>
-                        }
-                    </div>
                 </div>
             </div>
-        </div>
+        }
     </div>
 </div>
 
@@ -301,7 +221,6 @@
                 </div>
                 <div class="modal-body">
                     <div id="scheduleForm">
-                        <!-- User context info in form - Only for Center Users -->
                         @if (ViewBag.CurrentUserRootCode != null && ViewBag.IsCenter == true)
                         {
                             <div class="alert alert-info mb-3">
@@ -499,8 +418,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CancelBtn"]</button>
-                    <button type="button" class="btn-modern" id="saveScheduleBtn">
+                    <button type="button" class="modern-btn" style="background:var(--danger-gradient);" data-bs-dismiss="modal">@Localizer["CancelBtn"]</button>
+                    <button type="button" class="modern-btn add" id="saveScheduleBtn">
                         <i class="fas fa-save me-2"></i><span class="btn-text">@Localizer["SaveScheduleBtn"]</span>
                         <div class="spinner-border spinner-border-sm d-none" role="status">
                             <span class="visually-hidden">@Localizer["Loading"]</span>
@@ -515,7 +434,7 @@
     <div class="modal fade schedule-modal" id="eventDetailsModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header" style="background:var(--primary-gradient);color:white;">
                     <h5 class="modal-title">
                         <i class="fas fa-info-circle me-2"></i>@Localizer["ViewDetailsBtn"]
                     </h5>
@@ -525,11 +444,11 @@
                     <div id="eventDetailsContent"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CloseBtn"]</button>
-                    <button type="button" class="btn-modern btn-warning" id="editEventBtn">
+                    <button type="button" class="modern-btn" style="background:var(--danger-gradient);" data-bs-dismiss="modal">@Localizer["CloseBtn"]</button>
+                    <button type="button" class="modern-btn edit-btn" id="editEventBtn">
                         <i class="fas fa-edit me-2"></i>@Localizer["EditBtn"]
                     </button>
-                    <button type="button" class="btn-modern btn-danger" id="deleteEventBtn">
+                    <button type="button" class="modern-btn delete-btn" id="deleteEventBtn">
                         <i class="fas fa-trash me-2"></i>@Localizer["DeleteBtn"]
                     </button>
                 </div>
@@ -541,7 +460,7 @@
     <div class="modal fade schedule-modal" id="deleteConfirmModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-danger">
+                <div class="modal-header" style="background:var(--danger-gradient);color:white;">
                     <h5 class="modal-title">
                         <i class="fas fa-exclamation-triangle me-2"></i>@Localizer["ConfirmDeleteTitle"]
                     </h5>
@@ -557,8 +476,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CancelBtn"]</button>
-                    <button type="button" class="btn-modern btn-danger" id="confirmDeleteBtn">
+                    <button type="button" class="modern-btn" style="background:var(--danger-gradient);" data-bs-dismiss="modal">@Localizer["CancelBtn"]</button>
+                    <button type="button" class="modern-btn delete-btn" id="confirmDeleteBtn">
                         <i class="fas fa-trash me-2"></i>@Localizer["DeleteScheduleBtn"]
                     </button>
                 </div>

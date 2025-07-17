@@ -148,8 +148,8 @@ function eduYearRowHTML(eduYear) {
         <td>${eduYear.eduName ?? ''}</td>
         <td>${eduYear.isActive ? resxYes : resxNo}</td>
         <td>
-            <button class="btn-table edit edit-btn" data-code="${eduYear.eduCode}"><i class="fas fa-pencil"></i> ${resxEdit}</button>
-            <button class="btn-table delete delete-btn" data-code="${eduYear.eduCode}"><i class="fas fa-trash"></i> ${resxDelete}</button>
+            <button class="btn-table edit edit-btn" data-code="${eduYear.eduCode}"><i class="fas fa-pencil"></i></button>
+            <button class="btn-table delete delete-btn" data-code="${eduYear.eduCode}"><i class="fas fa-trash"></i></button>
         </td>
     `;
 }
@@ -395,8 +395,8 @@ function yearRowHTML(year) {
             <td>${year.yearName ?? ''}</td>
             <td>${year.yearSort ?? ''}</td>
             <td>
-                <button class="btn-table edit edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-pencil"></i> ${resxEdit}</button>
-                <button class="btn-table delete delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-trash"></i> ${resxDelete}</button>
+                <button class="btn-table edit edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-pencil"></i></button>
+                <button class="btn-table delete delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `;

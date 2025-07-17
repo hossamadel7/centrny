@@ -7,6 +7,7 @@ let examDurationSeconds = null;
 let timer = null;
 let timeLeft = null;
 let submitted = false;
+let isExam = true; // default true, will be set by backend
 
 const STORAGE_KEY = `exam_${studentCode}_${examCode}_progress`;
 
@@ -41,6 +42,20 @@ function loadExamInfo() {
                 return;
             }
             document.getElementById('examTitle').textContent = data.examName + ` (Code: ${data.examCode})`;
+
+            // ---- NEW LOGIC: Check if this is an assignment (IsExam == false) ----
+            isExam = (typeof data.isExam !== "undefined") ? data.isExam : true;
+
+            if (!isExam) {
+                // Assignment: Hide timer, student can take unlimited time
+                document.getElementById('examTimer').style.display = 'none';
+                // Do NOT set examDurationSeconds, timer, etc.
+                loadQuestions(); // Just load questions, don't start timer
+                return;
+            }
+
+            // Normal exam: show timer
+            document.getElementById('examTimer').style.display = '';
             examDurationSeconds = (data.examDurationMinutes || 30) * 60;
             loadQuestions();
         }).catch(() => {
@@ -70,6 +85,13 @@ function loadQuestions() {
                 startTimestamp = Date.now();
                 answers = {};
                 saveProgress({ startTimestamp, answers });
+            }
+
+            // ---- NEW LOGIC: For assignments, skip timer logic ----
+            if (!isExam) {
+                renderQuestions(data, answers);
+                // Do not start timer, no time limit!
+                return;
             }
 
             // Calculate time left

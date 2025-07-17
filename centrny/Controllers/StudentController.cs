@@ -42,10 +42,9 @@ namespace centrny.Controllers
                     return NotFound("Item key is required.");
                 }
 
-                // Find the item and validate it exists and is active
                 var item = await _context.Items
                     .Include(i => i.RootCodeNavigation)
-                    .Include(i => i.StudentCodeNavigation) // Include student if linked
+                    .Include(i => i.StudentCodeNavigation)
                     .Where(i => i.ItemKey == item_key && i.IsActive)
                     .FirstOrDefaultAsync();
 
@@ -54,25 +53,29 @@ namespace centrny.Controllers
                     return NotFound("Item not found.");
                 }
 
-                // Check if item has a student linked and load their data
                 var hasExistingStudent = item.StudentCode.HasValue && item.StudentCodeNavigation != null;
 
-                // Get available branches for this root
+                var availableEduYears = await _context.EduYears
+                    .Where(e => e.IsActive && e.RootCode == item.RootCode)
+                    .Select(e => new SelectListItem { Value = e.EduCode.ToString(), Text = e.EduName })
+                    .ToListAsync();
+
                 var availableBranches = await _context.Branches
                     .Where(b => b.RootCode == item.RootCode && b.IsActive)
                     .Select(b => new SelectListItem { Value = b.BranchCode.ToString(), Text = b.BranchName })
                     .ToListAsync();
 
-                // Get available years
-                var availableYears = await _context.Years
-                    .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
-                    .ToListAsync();
+                // Only use first available EduYear
+                int? selectedEduYearCode = availableEduYears.Count > 0
+                    ? int.Parse(availableEduYears[0].Value)
+                    : (int?)null;
 
-                // Get available education years
-                var availableEduYears = await _context.EduYears
-                    .Where(e => e.IsActive && e.RootCode == item.RootCode)
-                    .Select(e => new SelectListItem { Value = e.EduCode.ToString(), Text = e.EduName })
-                    .ToListAsync();
+                var availableYears = selectedEduYearCode.HasValue
+                    ? await _context.Years
+                        .Where(y => y.EduYearCode == selectedEduYearCode)
+                        .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
+                        .ToListAsync()
+                    : new List<SelectListItem>();
 
                 var viewModel = new StudentRegistrationViewModel
                 {
@@ -84,7 +87,6 @@ namespace centrny.Controllers
                     HasExistingStudent = hasExistingStudent
                 };
 
-                // If student exists, populate their data
                 if (hasExistingStudent && item.StudentCodeNavigation != null)
                 {
                     var student = item.StudentCodeNavigation;
@@ -103,6 +105,25 @@ namespace centrny.Controllers
             {
                 _logger.LogError(ex, "Error loading registration page for item key {ItemKey}", item_key);
                 return NotFound("An error occurred while loading the registration page.");
+            }
+        }
+        [HttpGet]
+        [Route("Student/GetYearsForEduYear/{eduYearCode}")]
+        public async Task<IActionResult> GetYearsForEduYear(int eduYearCode)
+        {
+            try
+            {
+                var years = await _context.Years
+                    .Where(y => y.EduYearCode == eduYearCode)
+                    .Select(y => new { Value = y.YearCode, Text = y.YearName })
+                    .ToListAsync();
+
+                return Json(years);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading years for EduYear code {EduYearCode}", eduYearCode);
+                return Json(new { error = "Failed to load years." });
             }
         }
 
@@ -614,8 +635,8 @@ namespace centrny.Controllers
                     SubjectCode = selection.SubjectCode,
                     TeacherCode = selection.TeacherCode,
                     ScheduleCode = selection.ScheduleCode,
-                    EduYearCode = currentEduYear.EduCode, // Use the correct EduCode
-                    BranchCode =  27,
+                    EduYearCode = currentEduYear.EduCode,
+                    BranchCode = student.BranchCode, // <-- FIX: Use the student's actual branch code!
                     RootCode = student.RootCode,
                     YearCode = student.YearCode,
                     IsOnline = selection.IsOnline,
@@ -1969,7 +1990,9 @@ namespace centrny.Controllers
                             examName = exam.ExamName,
                             subjectName = exam.SubjectCodeNavigation != null ? exam.SubjectCodeNavigation.SubjectName : "N/A",
                             teacherName = exam.TeacherCodeNavigation != null ? exam.TeacherCodeNavigation.TeacherName : "N/A",
-                            attended = attendedExamCodes.Contains(exam.ExamCode)
+                            attended = attendedExamCodes.Contains(exam.ExamCode),
+                              isExam = exam.IsExam,      // <-- ADD THIS
+                            isDone = exam.IsDone
                         });
                     }
                 }
@@ -2031,7 +2054,9 @@ namespace centrny.Controllers
                             examName = exam.ExamName,
                             subjectName = exam.SubjectCodeNavigation != null ? exam.SubjectCodeNavigation.SubjectName : "N/A",
                             teacherName = exam.TeacherCodeNavigation != null ? exam.TeacherCodeNavigation.TeacherName : "N/A",
-                            attended = attendedExamCodes.Contains(exam.ExamCode)
+                            attended = attendedExamCodes.Contains(exam.ExamCode),
+                              isExam = exam.IsExam,      // <-- ADD THIS
+                            isDone = exam.IsDone
                         });
                     }
                 }
