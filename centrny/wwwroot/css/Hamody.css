@@ -934,3 +934,42 @@ input.question-degree {
     background: #baf3e7;
     border-radius: 8px;
 }
+/* Expenses view filter styles - uniquely scoped to .expenses-filters-container */
+
+/* === Expenses View DataTable Filter Styling (only applies to .expenses-view) === */
+
+.expenses-view #expensesTable_wrapper .dataTables_length,
+.expenses-view #expensesTable_wrapper .dataTables_filter {
+    background: #f7fafc;
+    padding: 0.8rem 1rem 0.8rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.06);
+    display: inline-block;
+}
+
+    .expenses-view #expensesTable_wrapper .dataTables_filter label,
+    .expenses-view #expensesTable_wrapper .dataTables_length label {
+        font-weight: 500;
+        color: #3c4858;
+        margin-right: 0.5rem;
+    }
+
+    .expenses-view #expensesTable_wrapper .dataTables_filter input[type="search"],
+    .expenses-view #expensesTable_wrapper .dataTables_length select {
+        border-radius: 0.35rem;
+        border: 1px solid #dedede;
+        padding: 0.25rem 0.75rem;
+        margin-left: 0.5rem;
+        font-size: 1rem;
+        color: #333;
+        background: #fff;
+        transition: border 0.2s;
+        outline: none;
+    }
+
+        .expenses-view #expensesTable_wrapper .dataTables_filter input[type="search"]:focus,
+        .expenses-view #expensesTable_wrapper .dataTables_length select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 2px #cfe2ff;
+        }

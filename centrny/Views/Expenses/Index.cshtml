@@ -1,64 +1,79 @@
 ﻿@{
     ViewBag.Title = "Expenses";
-    var isRootAdmin = ViewBag.IsRootAdmin ?? false;
-    var roots = ViewBag.Roots as IEnumerable<dynamic>;
-    var expenses = ViewBag.Expenses as IEnumerable<centrny.Models.Expense>;
-    int? userRootCode = ViewBag.UserRootCode as int?;
+    var employees = ViewBag.Employees as IEnumerable<dynamic>;
     Layout = "_Layout";
 }
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
 <link rel="stylesheet" href="~/css/Hamody.css" />
-<h2>Expenses</h2>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
 
-@if (isRootAdmin)
-{
-    <label for="rootDropdown">Select Root:</label>
-    <select id="rootDropdown" class="form-control" style="width: 300px; display: inline;">
-        <option value="">-- Select Root --</option>
-        @if (roots != null)
-        {
-            foreach (var root in roots)
-            {
-                <option value="@root.RootCode">@root.RootName (@root.RootCode)</option>
-            }
-        }
-    </select>
-    <div id="expensesTableContainer"></div>
-}
-else
-{
-    <h4>Expenses for Root Code: @userRootCode</h4>
-    <div id="expensesTableContainer">
-        @if (expenses != null && expenses.Any())
-        {
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        @foreach (var prop in typeof(centrny.Models.Expense).GetProperties())
-                        {
-                            <th>@prop.Name</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var exp in expenses)
-                    {
-                        <tr>
-                            @foreach (var prop in typeof(centrny.Models.Expense).GetProperties())
-                            {
-                                <td>@(prop.GetValue(exp) ?? "")</td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-        else
-        {
-            <div class="alert alert-info">No expenses found for this root.</div>
-        }
+<div class="container mt-4 table-card expenses-view">
+    <div class="questions-header">
+        <h2><i class="bi bi-cash-coin"></i>Expenses</h2>
     </div>
-}
+    <button id="addExpenseBtn" class="btn-table add mb-3"><i class="bi bi-plus-circle"></i> Add Expense</button>
+    <div class="subject-table-container">
+        <table id="expensesTable" class="display gradient-table table table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Expense Reason</th>
+                    <th>Amount</th>
+                    <th>Employee</th>
+                    <th>Expense Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="expenseForm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="expenseModalLabel">Expense</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="ExpensesCode" name="ExpensesCode" />
+                    <div class="form-group mb-3">
+                        <label for="ExpensesReason" class="form-label">Reason</label>
+                        <input type="text" class="form-control" id="ExpensesReason" name="ExpensesReason" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="ExpensesAmount" class="form-label">Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="ExpensesAmount" name="ExpensesAmount" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="EmployeeCode" class="form-label">Employee</label>
+                        <select class="form-select" id="EmployeeCode" name="EmployeeCode" required>
+                            <option value="">Select Employee</option>
+                            @foreach (var e in employees)
+                            {
+                                <option value="@e.EmployeeCode">@e.EmployeeName (@e.EmployeeCode)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="ExpenseTime" class="form-label">Expense Date</label>
+                        <input type="date" class="form-control" id="ExpenseTime" name="ExpenseTime" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="modern-btn add" id="saveExpenseBtn">Save</button>
+                    <button type="button" class="modern-btn delete-btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/Expenses.js"></script>
 }

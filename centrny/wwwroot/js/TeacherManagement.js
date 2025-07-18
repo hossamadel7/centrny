@@ -233,13 +233,13 @@ $(function () {
                     html = '<ul class="list-group">';
                     for (let s of subjects) {
                         html += `
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>
-                                    ${s.subjectName} <span class="text-secondary">(${s.yearName})</span>
-                                </span>
-                                <button class="modern-btn delete-btn delete-teach-btn"
-                                    data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}" style="padding: 0.3em 1em; font-size: 0.9em;">${deleteBtnText}</button>
-                            </li>`;
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+            ${s.subjectName} <span class="text-secondary">(${s.yearName} - ${s.branchName})</span>
+        </span>
+        <button class="modern-btn delete-btn delete-teach-btn"
+            data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}" style="padding: 0.3em 1em; font-size: 0.9em;">${deleteBtnText}</button>
+    </li>`;
                     }
                     html += '</ul>';
                 }

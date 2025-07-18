@@ -12,6 +12,16 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="~/css/Schedule.css" />
 
+<script>
+    // Ensure userContext is set before schedule-common.js loads
+    if (typeof window.userContext === 'undefined') {
+        window.userContext = {
+            isTeacher: @((ViewBag.IsTeacher ?? false).ToString().ToLower()),
+            isCenter: @((ViewBag.IsCenter ?? false).ToString().ToLower())
+        };
+    }
+</script>
+
 <!-- Localized strings for JS -->
 <div id="js-localization"
      data-title="@Localizer["Title"]"
@@ -271,7 +281,7 @@
                                 <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">@Localizer["BranchLabel"]</label>
-                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                    <select class="form-select" id="branchCode">
                                         <option value="">@Localizer["SelectBranchOption"]</option>
                                     </select>
                                     <small class="text-muted">@Localizer["SelectBranchMsg"]</small>
@@ -294,7 +304,7 @@
                             {
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">@Localizer["CenterLabel"]</label>
-                                    <select class="form-select" id="centerCode" onchange="loadBranchesForCenter()">
+                                    <select class="form-select" id="centerCode">
                                         <option value="">@Localizer["SelectCenterOption"]</option>
                                         @if (ViewData["CenterCode"] != null)
                                         {
@@ -307,7 +317,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">@Localizer["BranchLabel"]</label>
-                                    <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
+                                    <select class="form-select" id="branchCode">
                                         <option value="">@Localizer["SelectCenterOption"]</option>
                                     </select>
                                 </div>
@@ -365,7 +375,7 @@
                             {
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">@Localizer["TeacherLabel"] *</label>
-                                    <select class="form-select" id="teacherCode" required onchange="loadSubjectsForTeacher()">
+                                    <select class="form-select" id="teacherCode">
                                         <option value="">@Localizer["SelectTeacherOption"]</option>
                                         @if (ViewData["TeacherCode"] != null)
                                         {
@@ -392,14 +402,6 @@
                                 <label class="form-label">@Localizer["SubjectLabel"]</label>
                                 <select class="form-select" id="subjectCode">
                                     <option value="">@Localizer["SelectSubjectOption"]</option>
-                                    @if (ViewBag.IsCenter == true)
-                                    {
-                                        <!-- For CENTER USERS: Will be loaded after selecting teacher -->
-                                    }
-                                    else
-                                    {
-                                        <!-- For TEACHER USERS: Will be loaded after selecting year -->
-                                    }
                                 </select>
                                 @if (ViewBag.IsTeacher == true)
                                 {

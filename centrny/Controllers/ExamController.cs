@@ -491,8 +491,7 @@ namespace centrny.Controllers
                     return BadRequest(new { success = false, error = "Subject must be selected." });
                 if (exam.YearCode == null || exam.YearCode <= 0)
                     return BadRequest(new { success = false, error = "Year must be selected." });
-                if (exam.BranchCode <= 0)
-                    return BadRequest(new { success = false, error = "Branch must be selected." });
+               
 
                 // Validate that teacher and eduYear belong to user's root
                 var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == exam.TeacherCode && t.RootCode == rootCode.Value);
@@ -503,9 +502,7 @@ namespace centrny.Controllers
                     return BadRequest(new { success = false, error = "Selected teacher does not belong to your root." });
                 if (!eduYearExists)
                     return BadRequest(new { success = false, error = "Selected education year does not belong to your root." });
-                if (!branchExists)
-                    return BadRequest(new { success = false, error = "Selected branch does not belong to your root." });
-
+            
                 string timerString = exam.ExamTimer.ToString();
                 exam.ExamTimer = ParseTimeOnly(timerString);
 
@@ -551,8 +548,7 @@ namespace centrny.Controllers
                     return BadRequest(new { success = false, error = "Subject is required." });
                 if (exam.YearCode == null || exam.YearCode == 0)
                     return BadRequest(new { success = false, error = "Year is required." });
-                if (exam.BranchCode == 0)
-                    return BadRequest(new { success = false, error = "Branch is required." });
+               
 
                 var dbExam = await (from e in _context.Exams
                                     join teacher in _context.Teachers on e.TeacherCode equals teacher.TeacherCode

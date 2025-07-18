@@ -1,8 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using centrny.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Text;
 
 namespace centrny.Controllers
 {
@@ -11,107 +11,116 @@ namespace centrny.Controllers
     {
         private readonly CenterContext db = new CenterContext();
 
-        // --- Authority Check ---
-        private bool UserHasExpensesPermission()
-        {
-            var username = User.Identity?.Name;
-            var user = db.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = db.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
-
-            var page = db.Pages.FirstOrDefault(p => p.PagePath == "Expenses/Index");
-            if (page == null)
-                return false;
-
-            return db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
-        }
-
         private User GetCurrentUser()
         {
             var username = User.Identity.Name;
             return db.Users.FirstOrDefault(u => u.Username == username);
         }
 
+        private int GetCurrentRootCode()
+        {
+            var user = GetCurrentUser();
+            if (user == null) return 0;
+            var group = db.Groups.FirstOrDefault(g => g.GroupCode == user.GroupCode);
+            return group?.RootCode ?? 0;
+        }
+
         public IActionResult Index()
         {
-            if (!UserHasExpensesPermission())
-            {
-                return View("~/Views/Login/AccessDenied.cshtml");
-            }
-
             var user = GetCurrentUser();
-            if (user == null)
-                return Unauthorized();
+            if (user == null) return Unauthorized();
+            int rootCode = GetCurrentRootCode();
 
-            var group = db.Groups.FirstOrDefault(g => g.GroupCode == user.GroupCode);
-            if (group == null)
-                return Unauthorized();
+            ViewBag.Employees = db.Employees
+                .Where(e => e.RootCode == rootCode)
+                .Select(e => new { e.EmployeeCode, e.EmployeeName })
+                .ToList();
 
-            bool isRootAdmin = group.RootCode == 1;
-            ViewBag.IsRootAdmin = isRootAdmin;
-
-            if (isRootAdmin)
-            {
-                ViewBag.Roots = db.Roots.Select(r => new { r.RootCode, r.RootName }).ToList();
-                ViewBag.Expenses = null;
-            }
-            else
-            {
-                ViewBag.Roots = null;
-                ViewBag.UserRootCode = group.RootCode;
-                ViewBag.Expenses = db.Expenses.Where(e => e.RootCode == group.RootCode).ToList();
-            }
             return View();
         }
 
-        // Returns only the table HTML (no partial view!)
         [HttpGet]
-        public IActionResult GetExpensesByRoot(int rootCode)
+        public IActionResult GetExpenses()
         {
-            if (!UserHasExpensesPermission())
-            {
-                return Content("<div class='alert alert-danger'>Access denied.</div>", "text/html");
-            }
+            var user = GetCurrentUser();
+            if (user == null) return Unauthorized();
+            int rootCode = GetCurrentRootCode();
 
-            try
-            {
-                var expenses = db.Expenses.Where(e => e.RootCode == rootCode).ToList();
-
-                var props = typeof(centrny.Models.Expense).GetProperties();
-                var sb = new StringBuilder();
-
-                if (expenses.Any())
+            var expenses = db.Expenses
+                .Where(e => e.RootCode == rootCode && e.IsActive)
+                .OrderByDescending(e => e.ExpenseTime)
+                .Select(e => new
                 {
-                    sb.Append("<table class=\"table table-bordered table-striped\"><thead><tr>");
-                    foreach (var prop in props)
-                        sb.Append($"<th>{prop.Name}</th>");
-                    sb.Append("</tr></thead><tbody>");
-                    foreach (var exp in expenses)
-                    {
-                        sb.Append("<tr>");
-                        foreach (var prop in props)
-                            sb.Append($"<td>{prop.GetValue(exp) ?? ""}</td>");
-                        sb.Append("</tr>");
-                    }
-                    sb.Append("</tbody></table>");
-                }
-                else
-                {
-                    sb.Append("<div class=\"alert alert-info\">No expenses found for this root.</div>");
-                }
+                    expensesCode = e.ExpensesCode,
+                    expensesReason = e.ExpensesReason,
+                    expensesAmount = e.ExpensesAmount,
+                    employeeName = db.Employees.Where(emp => emp.EmployeeCode == e.EmployeeCode).Select(emp => emp.EmployeeName).FirstOrDefault(),
+                    expenseTime = e.ExpenseTime.ToString("yyyy-MM-dd")
+                })
+                .ToList();
 
-                return Content(sb.ToString(), "text/html");
-            }
-            catch (System.Exception ex)
-            {
-                return Content("<div class='alert alert-danger'>Failed to load expenses: " +
-                    ex.Message + "</div>", "text/html");
-            }
+            return Json(new { data = expenses });
+        }
+
+        [HttpPost]
+        public IActionResult AddExpense([FromForm] Expense expense)
+        {
+            var user = GetCurrentUser();
+            if (user == null) return Unauthorized();
+
+            expense.RootCode = GetCurrentRootCode();
+            expense.InsertUser = user.UserCode;
+            expense.InsertTime = DateTime.Now;
+            expense.ExpenseTime = DateOnly.FromDateTime(DateTime.Now);
+            expense.IsActive = true;
+
+            db.Expenses.Add(expense);
+            db.SaveChanges();
+            return Json(new { success = true });
+        }
+
+        [HttpGet]
+        public IActionResult GetExpense(int id)
+        {
+            var exp = db.Expenses
+                .Where(e => e.ExpensesCode == id && e.IsActive)
+                .Select(e => new {
+                    expensesCode = e.ExpensesCode,
+                    expensesReason = e.ExpensesReason,
+                    expensesAmount = e.ExpensesAmount,
+                    employeeCode = e.EmployeeCode,
+                    expenseTime = e.ExpenseTime.ToString("yyyy-MM-dd")
+                })
+                .FirstOrDefault();
+
+            if (exp == null) return NotFound();
+            return Json(exp);
+        }
+
+        [HttpPost]
+        public IActionResult EditExpense([FromForm] Expense expense)
+        {
+            var exp = db.Expenses.FirstOrDefault(e => e.ExpensesCode == expense.ExpensesCode && e.IsActive);
+            if (exp == null) return NotFound();
+
+            exp.ExpensesReason = expense.ExpensesReason;
+            exp.ExpensesAmount = expense.ExpensesAmount;
+            exp.EmployeeCode = expense.EmployeeCode;
+            exp.ExpenseTime = expense.ExpenseTime;
+
+            db.SaveChanges();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public IActionResult DeleteExpense(int id)
+        {
+            var exp = db.Expenses.FirstOrDefault(e => e.ExpensesCode == id && e.IsActive);
+            if (exp == null) return NotFound();
+
+            exp.IsActive = false;
+            db.SaveChanges();
+            return Json(new { success = true });
         }
     }
 }

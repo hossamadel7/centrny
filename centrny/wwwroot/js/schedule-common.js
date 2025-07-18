@@ -1,5 +1,5 @@
 ﻿// schedule-common.js - Complete updated version with teacher/center display logic, now with full localization support
-// Updated: 2025-07-10 23:57:23 UTC by Copilot
+// Updated: 2025-07-18 15:31:40 UTC by Copilot
 
 // Helper for localization: fetch strings from #js-localization
 function getJsString(key) {
@@ -7,6 +7,11 @@ function getJsString(key) {
     if (!el) return key;
     key = key.replace(/([A-Z])/g, '-$1').toLowerCase();
     return el.dataset[key] || key;
+}
+
+// Ensure window.userContext is defined before this script runs
+if (typeof window.userContext === 'undefined') {
+    window.userContext = { isTeacher: false, isCenter: false };
 }
 
 class ScheduleManager {
@@ -77,13 +82,20 @@ class ScheduleManager {
             if (dayHeader) dayHeader.textContent = getJsString(day.toLowerCase());
         });
         // Placeholder/localization for selects
-        if (this.dom.dayOfWeek) this.dom.dayOfWeek.querySelector('option[value=""]').textContent = getJsString('selectDayOption');
-        if (this.dom.centerCode) this.dom.centerCode.querySelector('option[value=""]').textContent = getJsString('selectCenterOption');
-        if (this.dom.branchCode) this.dom.branchCode.querySelector('option[value=""]').textContent = getJsString('selectBranchOption');
-        if (this.dom.hallCode) this.dom.hallCode.querySelector('option[value=""]').textContent = getJsString('selectHallOption');
-        if (this.dom.yearCode) this.dom.yearCode.querySelector('option[value=""]').textContent = getJsString('selectYearOption');
-        if (this.dom.teacherCode) this.dom.teacherCode.querySelector('option[value=""]').textContent = getJsString('selectTeacherOption');
-        if (this.dom.subjectCode) this.dom.subjectCode.querySelector('option[value=""]').textContent = getJsString('selectSubjectOption');
+        if (this.dom.dayOfWeek && this.dom.dayOfWeek.querySelector('option[value=""]'))
+            this.dom.dayOfWeek.querySelector('option[value=""]').textContent = getJsString('selectDayOption');
+        if (this.dom.centerCode && this.dom.centerCode.querySelector('option[value=""]'))
+            this.dom.centerCode.querySelector('option[value=""]').textContent = getJsString('selectCenterOption');
+        if (this.dom.branchCode && this.dom.branchCode.querySelector('option[value=""]'))
+            this.dom.branchCode.querySelector('option[value=""]').textContent = getJsString('selectBranchOption');
+        if (this.dom.hallCode && this.dom.hallCode.querySelector('option[value=""]'))
+            this.dom.hallCode.querySelector('option[value=""]').textContent = getJsString('selectHallOption');
+        if (this.dom.yearCode && this.dom.yearCode.querySelector('option[value=""]'))
+            this.dom.yearCode.querySelector('option[value=""]').textContent = getJsString('selectYearOption');
+        if (this.dom.teacherCode && this.dom.teacherCode.querySelector('option[value=""]'))
+            this.dom.teacherCode.querySelector('option[value=""]').textContent = getJsString('selectTeacherOption');
+        if (this.dom.subjectCode && this.dom.subjectCode.querySelector('option[value=""]'))
+            this.dom.subjectCode.querySelector('option[value=""]').textContent = getJsString('selectSubjectOption');
     }
 
     cacheDom() {
@@ -354,61 +366,75 @@ class ScheduleManager {
     }
 
     setupDropdownListeners() {
-        this.dom.centerCode?.addEventListener('change', async (e) => {
-            const val = e.target.value;
-            if (val) {
-                await this.loadDropdown(`/Schedule/GetBranchesForCenter?centerCode=${val}`, 'branchCode', getJsString('selectBranchOption'));
-                if (this.dom.hallCode) this.dom.hallCode.innerHTML = `<option value="">${getJsString('selectBranchOption')}</option>`;
-            } else {
-                if (this.dom.branchCode) this.dom.branchCode.innerHTML = `<option value="">${getJsString('selectCenterOption')}</option>`;
-                if (this.dom.hallCode) this.dom.hallCode.innerHTML = `<option value="">${getJsString('selectBranchOption')}</option>`;
-            }
-        });
-        this.dom.branchCode?.addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val) {
-                this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${val}`, 'hallCode', getJsString('selectHallOption'));
-            } else {
-                if (this.dom.hallCode) this.dom.hallCode.innerHTML = `<option value="">${getJsString('selectBranchOption')}</option>`;
-            }
-        });
-        this.dom.teacherCode?.addEventListener('change', (e) => {
-            const teacherId = e.target.value;
-            const yearId = this.dom.yearCode?.value;
-            if (teacherId && yearId) {
-                let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${teacherId}&yearCode=${yearId}`;
-                this.loadDropdown(url, 'subjectCode', getJsString('selectSubjectOption'));
-            } else {
-                if (this.dom.subjectCode) this.dom.subjectCode.innerHTML = `<option value="">${getJsString('selectSubjectOption')}</option>`;
-            }
-        });
-        this.dom.yearCode?.addEventListener('change', (e) => {
-            if (window.userContext?.isTeacher) {
-                this.loadSubjectsForTeacherByYearAndBranch();
-            } else if (window.userContext?.isCenter) {
-                const teacherId = this.dom.teacherCode?.value;
-                const yearId = e.target.value;
+        // Remove all inline onchange attributes from selects in HTML!
+        if (this.dom.centerCode) {
+            this.dom.centerCode.onchange = null;
+            this.dom.centerCode.addEventListener('change', async (e) => {
+                const val = e.target.value;
+                if (val) {
+                    await this.loadDropdown(`/Schedule/GetBranchesForCenter?centerCode=${val}`, 'branchCode', getJsString('selectBranchOption'));
+                    if (this.dom.hallCode) this.dom.hallCode.innerHTML = `<option value="">${getJsString('selectBranchOption')}</option>`;
+                } else {
+                    if (this.dom.branchCode) this.dom.branchCode.innerHTML = `<option value="">${getJsString('selectCenterOption')}</option>`;
+                    if (this.dom.hallCode) this.dom.hallCode.innerHTML = `<option value="">${getJsString('selectBranchOption')}</option>`;
+                }
+            });
+        }
+        if (this.dom.branchCode) {
+            this.dom.branchCode.onchange = null;
+            this.dom.branchCode.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val) {
+                    this.loadDropdown(`/Schedule/GetHallsForBranch?branchCode=${val}`, 'hallCode', getJsString('selectHallOption'));
+                } else {
+                    if (this.dom.hallCode) this.dom.hallCode.innerHTML = `<option value="">${getJsString('selectBranchOption')}</option>`;
+                }
+                if (window.userContext?.isTeacher) {
+                    this.loadSubjectsForTeacherByYearAndBranch();
+                }
+            });
+        }
+        if (this.dom.teacherCode) {
+            this.dom.teacherCode.onchange = null;
+            this.dom.teacherCode.addEventListener('change', (e) => {
+                const teacherId = e.target.value;
+                const yearId = this.dom.yearCode?.value;
                 if (teacherId && yearId) {
                     let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${teacherId}&yearCode=${yearId}`;
                     this.loadDropdown(url, 'subjectCode', getJsString('selectSubjectOption'));
                 } else {
                     if (this.dom.subjectCode) this.dom.subjectCode.innerHTML = `<option value="">${getJsString('selectSubjectOption')}</option>`;
                 }
-            }
-        });
-        this.dom.branchCode?.addEventListener('change', (e) => {
-            if (window.userContext?.isTeacher) {
-                this.loadSubjectsForTeacherByYearAndBranch();
-            }
-        });
-        this.dom.eduYearCode?.addEventListener('change', (e) => {
-            const eduYearId = e.target.value;
-            if (eduYearId) {
-                this.loadDropdown(`/Schedule/GetYearsByEduYear?eduYearCode=${eduYearId}`, 'yearCode', getJsString('selectYearOption'));
-            } else {
-                if (this.dom.yearCode) this.dom.yearCode.innerHTML = `<option value="">${getJsString('selectYearOption')}</option>`;
-            }
-        });
+            });
+        }
+        if (this.dom.yearCode) {
+            this.dom.yearCode.onchange = null;
+            this.dom.yearCode.addEventListener('change', (e) => {
+                if (window.userContext?.isTeacher) {
+                    this.loadSubjectsForTeacherByYearAndBranch();
+                } else if (window.userContext?.isCenter) {
+                    const teacherId = this.dom.teacherCode?.value;
+                    const yearId = e.target.value;
+                    if (teacherId && yearId) {
+                        let url = `/Schedule/GetSubjectsForTeacher?teacherCode=${teacherId}&yearCode=${yearId}`;
+                        this.loadDropdown(url, 'subjectCode', getJsString('selectSubjectOption'));
+                    } else {
+                        if (this.dom.subjectCode) this.dom.subjectCode.innerHTML = `<option value="">${getJsString('selectSubjectOption')}</option>`;
+                    }
+                }
+            });
+        }
+        if (this.dom.eduYearCode) {
+            this.dom.eduYearCode.onchange = null;
+            this.dom.eduYearCode.addEventListener('change', (e) => {
+                const eduYearId = e.target.value;
+                if (eduYearId) {
+                    this.loadDropdown(`/Schedule/GetYearsByEduYear?eduYearCode=${eduYearId}`, 'yearCode', getJsString('selectYearOption'));
+                } else {
+                    if (this.dom.yearCode) this.dom.yearCode.innerHTML = `<option value="">${getJsString('selectYearOption')}</option>`;
+                }
+            });
+        }
     }
 
     async loadSubjectsForTeacherByYearAndBranch(selectedValue = null) {
@@ -843,4 +869,7 @@ class ScheduleManager {
     }
 }
 
-window.scheduleManager = new ScheduleManager();
+// Ensure only one instance is created even if file is loaded multiple times
+if (!window.scheduleManager) {
+    window.scheduleManager = new ScheduleManager();
+}

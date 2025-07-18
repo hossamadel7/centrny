@@ -99,16 +99,13 @@
 
         if (isCenter) {
             const teacherCode = $('#TeacherCode').val();
-            const branchCode = $('#BranchCode').val();
+          
 
             if (!teacherCode) {
                 showError('examError', getJsString('TeacherRequired'));
                 return false;
             }
-            if (!branchCode) {
-                showError('examError', getJsString('BranchRequired'));
-                return false;
-            }
+            
         } else {
             const teacherCode = $('#AddExamTeacherCode').val();
             const centerCode = $('#AddExamCenterCode').val();
@@ -122,10 +119,7 @@
                 showError('examError', getJsString('CenterRequired'));
                 return false;
             }
-            if (!branchCode) {
-                showError('examError', getJsString('BranchRequired'));
-                return false;
-            }
+          
         }
 
         return true;
@@ -561,14 +555,14 @@
             $('#teacherDropdownGroup').show();
             $('#branchDropdownGroup').show();
             setRequiredInGroup('#teacherDropdownGroup', true);
-            setRequiredInGroup('#branchDropdownGroup', true);
+            setRequiredInGroup('#branchDropdownGroup', false);
         } else {
             $('#teacherDisplayGroup').show();
             $('#centerDropdownGroup').show();
             $('#rootBranchDropdownGroup').show();
             setRequiredInGroup('#teacherDisplayGroup', true);
             setRequiredInGroup('#centerDropdownGroup', true);
-            setRequiredInGroup('#rootBranchDropdownGroup', true);
+            setRequiredInGroup('#rootBranchDropdownGroup', false);
             fetchAndDisplayTeacher($('#teacherDisplayContainer'));
             fetchAndPopulateCenters($('#AddExamCenterCode'));
         }
@@ -604,7 +598,7 @@
             IsOnline: $('#IsOnline').is(':checked'),
             TeacherCode: parseInt(isCenterUser ? $('#TeacherCode').val() : $('#AddExamTeacherCode').val()) || 0,
             CenterCode: isCenterUser ? null : parseInt($('#AddExamCenterCode').val()) || null,
-            BranchCode: parseInt(branchVal) || 0,
+            BranchCode: branchVal ? parseInt(branchVal) : null,
             YearCode: parseInt($('#YearCode').val()) || 0,
             SubjectCode: parseInt($('#SubjectCode').val()) || 0,
             EduYearCode: parseInt($('#EduYearCode').val()) || 0

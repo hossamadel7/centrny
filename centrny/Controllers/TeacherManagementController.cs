@@ -239,10 +239,11 @@ namespace centrny.Controllers
             if (!UserHasTeacherManagementPermission())
                 return Json(new { error = "Access denied." });
 
-            // Join Teach, Subject, Year to get subject name and year name
+            // Join Teach, Subject, Year, Branch to get subject name, year name, branch name
             var teachRecords = (from t in _db.Teaches
                                 join s in _db.Subjects on t.SubjectCode equals s.SubjectCode
                                 join y in _db.Years on t.YearCode equals y.YearCode
+                                join b in _db.Branches on t.BranchCode equals b.BranchCode
                                 where t.TeacherCode == teacherCode && t.RootCode == rootCode
                                 select new
                                 {
@@ -250,7 +251,9 @@ namespace centrny.Controllers
                                     subjectCode = t.SubjectCode,
                                     subjectName = s.SubjectName,
                                     yearCode = y.YearCode,
-                                    yearName = y.YearName
+                                    yearName = y.YearName,
+                                    branchCode = b.BranchCode,
+                                    branchName = b.BranchName
                                 }).ToList();
 
             return Json(teachRecords);

@@ -663,7 +663,7 @@ namespace centrny.Controllers
         {
             try
             {
-                // Validate root exists and is active
+                // Validate that the root exists and is active
                 var root = await _context.Roots
                     .Where(r => r.RootCode == root_code && r.IsActive)
                     .FirstOrDefaultAsync();
@@ -679,10 +679,21 @@ namespace centrny.Controllers
                     .Select(b => new SelectListItem { Value = b.BranchCode.ToString(), Text = b.BranchName })
                     .ToListAsync();
 
-                // Get available years
-                var availableYears = await _context.Years
-                    .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
-                    .ToListAsync();
+                // Get the active EduYear for this root
+                var activeEduYear = await _context.EduYears
+                    .Where(e => e.RootCode == root_code && e.IsActive)
+                    .OrderByDescending(e => e.EduCode)
+                    .FirstOrDefaultAsync();
+
+                List<SelectListItem> availableYears = new();
+                if (activeEduYear != null)
+                {
+                    // Only get years for the active EduYear
+                    availableYears = await _context.Years
+                        .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                        .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
+                        .ToListAsync();
+                }
 
                 var viewModel = new PublicRegistrationViewModel
                 {
