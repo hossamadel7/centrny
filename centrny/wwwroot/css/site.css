@@ -1002,12 +1002,12 @@ body {
     }
 
     .schedule-event.teacher-event {
-        background: var(--danger-color);
+        background: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
         border-left-color: rgba(255, 255, 255, 0.3);
     }
 
     .schedule-event.center-event {
-        background: var(--success-color);
+        background: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
         border-left-color: rgba(255, 255, 255, 0.3);
     }
 
