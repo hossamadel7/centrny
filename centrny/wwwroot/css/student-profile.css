@@ -51,7 +51,7 @@ body {
 
 /* Enhanced Header Section */
 .profile-header {
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #2a28b9 0%, #9bddfe 100%);
     color: white;
     padding: 3rem 2rem;
     position: relative;
