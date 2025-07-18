@@ -1,300 +1,205 @@
-﻿@model List<centrny.Models.Schedule>
-
-@using Microsoft.Extensions.Localization
-@inject IStringLocalizerFactory LocalizerFactory
-@{
-    var Localizer = LocalizerFactory.Create("Schedule", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
-    ViewData["Title"] = Localizer["Title"];
+﻿@{
+    ViewData["Title"] = "Schedule Calendar";
 }
 
+<link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.min.css' rel='stylesheet' />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="~/css/site.css" />
-
-<!-- Localized strings for JS -->
-<div id="js-localization"
-     data-title="@Localizer["Title"]"
-     data-calendar-title="@Localizer["CalendarTitle"]"
-     data-weekly-template-title="@Localizer["WeeklyTemplateTitle"]"
-     data-list-view="@Localizer["ListView"]"
-     data-add-schedule-btn="@Localizer["AddScheduleBtn"]"
-     data-create-new-schedule-btn="@Localizer["CreateNewScheduleBtn"]"
-     data-save-schedule-btn="@Localizer["SaveScheduleBtn"]"
-     data-cancel-btn="@Localizer["CancelBtn"]"
-     data-delete-schedule-btn="@Localizer["DeleteScheduleBtn"]"
-     data-edit-btn="@Localizer["EditBtn"]"
-     data-view-details-btn="@Localizer["ViewDetailsBtn"]"
-     data-refresh-btn="@Localizer["RefreshBtn"]"
-     data-close-btn="@Localizer["CloseBtn"]"
-     data-confirm-delete-title="@Localizer["ConfirmDeleteTitle"]"
-     data-confirm-delete-warning="@Localizer["ConfirmDeleteWarning"]"
-     data-no-schedules-found="@Localizer["NoSchedulesFound"]"
-     data-get-started-msg="@Localizer["GetStartedMsg"]"
-     data-no-schedules-for-day="@Localizer["NoSchedulesForDay"]"
-     data-add-schedule-for-day="@Localizer["AddScheduleForDay"]"
-     data-legend-multiple-classes="@Localizer["LegendMultipleClasses"]"
-     data-legend-click-to-edit="@Localizer["LegendClickToEdit"]"
-     data-schedule-name="@Localizer["ScheduleName"]"
-     data-day="@Localizer["Day"]"
-     data-time="@Localizer["Time"]"
-     data-type="@Localizer["Type"]"
-     data-hall="@Localizer["Hall"]"
-     data-center-branch="@Localizer["CenterBranch"]"
-     data-teacher-subject="@Localizer["TeacherSubject"]"
-     data-amount="@Localizer["Amount"]"
-     data-actions="@Localizer["Actions"]"
-     data-schedule-name-label="@Localizer["ScheduleNameLabel"]"
-     data-day-of-week-label="@Localizer["DayOfWeekLabel"]"
-     data-start-time-label="@Localizer["StartTimeLabel"]"
-     data-end-time-label="@Localizer["EndTimeLabel"]"
-     data-branch-label="@Localizer["BranchLabel"]"
-     data-center-label="@Localizer["CenterLabel"]"
-     data-hall-label="@Localizer["HallLabel"]"
-     data-educational-year-label="@Localizer["EducationalYearLabel"]"
-     data-year-label="@Localizer["YearLabel"]"
-     data-teacher-label="@Localizer["TeacherLabel"]"
-     data-subject-label="@Localizer["SubjectLabel"]"
-     data-amount-label="@Localizer["AmountLabel"]"
-     data-note-center-user="@Localizer["NoteCenterUser"]"
-     data-select-branch-msg="@Localizer["SelectBranchMsg"]"
-     data-select-year-msg="@Localizer["SelectYearMsg"]"
-     data-available-subjects-msg="@Localizer["AvailableSubjectsMsg"]"
-     data-select-option="@Localizer["SelectOption"]"
-     data-select-day-option="@Localizer["SelectDayOption"]"
-     data-select-center-option="@Localizer["SelectCenterOption"]"
-     data-select-branch-option="@Localizer["SelectBranchOption"]"
-     data-select-hall-option="@Localizer["SelectHallOption"]"
-     data-select-year-option="@Localizer["SelectYearOption"]"
-     data-select-teacher-option="@Localizer["SelectTeacherOption"]"
-     data-select-subject-option="@Localizer["SelectSubjectOption"]"
-     data-sunday="@Localizer["Sunday"]"
-     data-monday="@Localizer["Monday"]"
-     data-tuesday="@Localizer["Tuesday"]"
-     data-wednesday="@Localizer["Wednesday"]"
-     data-thursday="@Localizer["Thursday"]"
-     data-friday="@Localizer["Friday"]"
-     data-saturday="@Localizer["Saturday"]"
-     data-saved="@Localizer["Saved"]"
-     data-failed="@Localizer["Failed"]"
-     data-error-occurred="@Localizer["ErrorOccurred"]"
-     data-loading="@Localizer["Loading"]"
-     data-schedule-created="@Localizer["ScheduleCreated"]"
-     data-schedule-updated="@Localizer["ScheduleUpdated"]"
-     data-schedule-deleted="@Localizer["ScheduleDeleted"]"
-     data-schedule-not-found="@Localizer["ScheduleNotFound"]"
-     data-welcome-calendar-loaded="@Localizer["WelcomeCalendarLoaded"]"
-     data-warning="@Localizer["Warning"]"
-     data-amount-currency="@Localizer["AmountCurrency"]"
-     data-empty-state-icon="@Localizer["EmptyStateIcon"]" />
 
 <div class="schedule-page">
-    <div class="container-fluid page-container">
-        <div class="row justify-content-center">
-            <div class="col-12">
-                <div class="card main-card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h2>
-                                <i class="fas fa-calendar-alt me-2"></i>
-                                @Localizer["Title"]
-                            </h2>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                                    <i class="fas fa-plus me-1"></i> @Localizer["AddScheduleBtn"]
-                                </button>
-                                <a href="@Url.Action("Calendar")" class="btn-modern btn-info">
-                                    <i class="fas fa-calendar me-1"></i> @Localizer["CalendarTitle"]
-                                </a>
-                            </div>
-                        </div>
+    <div class="container-fluid calendar-page">
+        <div class="calendar-container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule Template</h1>
+                <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
+            </div>
+
+            <!-- User Context Banner or Error Message -->
+            @if (ViewBag.Error != null)
+            {
+                <div class="error-banner">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>@ViewBag.Error</strong>
+                </div>
+            }
+            else if (ViewBag.CurrentUserRootCode != null)
+            {
+                <div class="user-context-banner @(ViewBag.IsCenter ? "center-banner" : "teacher-banner")">
+                    <h6>
+                        <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
+                        Your schedules for: <strong>@ViewBag.UserRootName</strong>
+                        <span class="badge ms-2">
+                            @(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode
+                        </span>
+                    </h6>
+                    <small>You can view and manage schedules for your assigned @(ViewBag.IsCenter ? "center" : "teaching account") only</small>
+                </div>
+            }
+
+            @if (ViewBag.Error == null)
+            {
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <i class="fas fa-layer-group text-info me-2"></i>
+                        <span>Multiple classes can run simultaneously</span>
                     </div>
-
-                    @if (ViewBag.CurrentUserRootCode != null)
-                    {
-                        <div class="controls-section">
-                            <div class="user-info">
-                                <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
-                                @Localizer["Showing schedules for"]: <strong>@ViewBag.UserRootName</strong>
-                                (@(ViewBag.IsCenter ? Localizer["Center"] : Localizer["Teacher"]) - Root: @ViewBag.CurrentUserRootCode)
-                                @if (ViewBag.BranchName != null)
-                                {
-                                    <span> @Localizer["at"] <strong>@ViewBag.BranchName</strong></span>
-                                }
-                                | @Localizer["Total"]: <strong>@ViewBag.ScheduleCount</strong> @Localizer["schedules"]
-                            </div>
-                            <button type="button" class="btn-modern btn-info" onclick="refreshList()">
-                                <i class="fas fa-sync-alt"></i> @Localizer["RefreshBtn"]
-                            </button>
-                        </div>
-                    }
-
-                    <div class="table-container">
-                        @if (Model != null && Model.Count > 0)
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-hover schedule-table">
-                                    <thead>
-                                        <tr>
-                                            <th>@Localizer["ScheduleName"]</th>
-                                            <th>@Localizer["Day"]</th>
-                                            <th>@Localizer["Time"]</th>
-                                            <th>@Localizer["Type"]</th>
-                                            <th>@Localizer["Hall"]</th>
-                                            @if (ViewBag.IsTeacher == true)
-                                            {
-                                                <th>@Localizer["CenterBranch"]</th>
-                                            }
-                                            else
-                                            {
-                                                <th>@Localizer["TeacherSubject"]</th>
-                                            }
-                                            <th>@Localizer["Amount"]</th>
-                                            <th>@Localizer["Actions"]</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item in Model)
-                                        {
-                                            <tr>
-                                                <td>
-                                                    <strong>@item.ScheduleName</strong>
-                                                </td>
-                                                <td>
-                                                    <span class="badge badge-modern badge-day">
-                                                        @Localizer[item.DayOfWeek]
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    @{
-                                                        var startTime = item.StartTime;
-                                                        var endTime = item.EndTime;
-                                                    }
-                                                    @if (startTime.HasValue && endTime.HasValue)
-                                                    {
-                                                        <small class="text-muted">
-                                                            @startTime.Value.ToString("hh:mm tt") - @endTime.Value.ToString("hh:mm tt")
-                                                        </small>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @if (item.RootCodeNavigation?.IsCenter == true)
-                                                    {
-                                                        <span class="badge badge-modern badge-center">
-                                                            <i class="fas fa-building me-1"></i>@Localizer["Center"]
-                                                        </span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge badge-modern badge-teacher">
-                                                            <i class="fas fa-user me-1"></i>@Localizer["Teacher"]
-                                                        </span>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @(item.HallCodeNavigation?.HallName ?? "")
-                                                </td>
-                                                <td>
-                                                    @if (ViewBag.IsTeacher == true)
-                                                    {
-                                                        <div>
-                                                            @if (item.CenterCodeNavigation != null)
-                                                            {
-                                                                <span class="badge badge-modern badge-center mb-1">
-                                                                    <i class="fas fa-building me-1"></i>@item.CenterCodeNavigation.CenterName
-                                                                </span>
-                                                            }
-                                                            @if (item.BranchCodeNavigation != null)
-                                                            {
-                                                                <br>
-                                                                <span class="badge badge-modern badge-branch">
-                                                                    <i class="fas fa-map-marker-alt me-1"></i>@item.BranchCodeNavigation.BranchName
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <div>
-                                                            @if (item.TeacherCodeNavigation != null)
-                                                            {
-                                                                <span class="badge badge-modern badge-teacher mb-1">
-                                                                    <i class="fas fa-user me-1"></i>@item.TeacherCodeNavigation.TeacherName
-                                                                </span>
-                                                            }
-                                                            @if (item.SubjectCodeNavigation != null)
-                                                            {
-                                                                <br>
-                                                                <span class="badge badge-modern badge-subject">
-                                                                    <i class="fas fa-book me-1"></i>@item.SubjectCodeNavigation.SubjectName
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @if (item.ScheduleAmount.HasValue)
-                                                    {
-                                                        <span class="text-success fw-bold">
-                                                            @Localizer["AmountCurrency"]@item.ScheduleAmount.Value.ToString("F2")
-                                                        </span>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group-actions">
-                                                        <button type="button" class="btn-action btn-view"
-                                                                onclick="showScheduleDetails(@item.ScheduleCode)"
-                                                                title="@Localizer["ViewDetailsBtn"]">
-                                                            <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        <button type="button" class="btn-action btn-edit"
-                                                                onclick="editSchedule(@item.ScheduleCode)"
-                                                                title="@Localizer["EditBtn"]">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn-action btn-delete"
-                                                                onclick="deleteSchedule(@item.ScheduleCode)"
-                                                                title="@Localizer["DeleteBtn"]">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="empty-state">
-                                <i class="@Localizer["EmptyStateIcon"]"></i>
-                                <h4>@Localizer["NoSchedulesFound"]</h4>
-                                <p>@Localizer["GetStartedMsg"]</p>
-                                <button type="button" class="btn-modern" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                                    <i class="fas fa-plus me-2"></i> @Localizer["CreateNewScheduleBtn"]
-                                </button>
-                            </div>
-                        }
+                    <div class="legend-item">
+                        <i class="fas fa-mouse-pointer text-primary me-2"></i>
+                        <span>Click any schedule to view/edit/delete</span>
                     </div>
                 </div>
-            </div>
+
+                <!-- Controls -->
+                <div class="controls-section">
+                    <button type="button" class="btn-modern btn-success" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                        <i class="fas fa-plus"></i> Add Schedule
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn-modern btn-info">
+                        <i class="fas fa-list"></i> List View
+                    </a>
+                    <button type="button" class="btn-modern" onclick="refreshSchedules()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="branchFilter" class="form-label">Select Branch</label>
+                            <select id="branchFilter" class="form-select" onchange="onBranchFilterChanged()">
+                                <option value="">All Branches</option>
+                                @if (ViewBag.Branches != null)
+                                {
+                                    foreach (dynamic branch in ViewBag.Branches)
+                                    {
+                                        <option value="@branch.value">@branch.text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+                <!-- Week Template Info -->
+                <div class="week-template-info">
+                    <h5><i class="fas fa-repeat me-2"></i>Weekly Schedule Template</h5>
+                    <p>
+                        This template shows your recurring weekly schedule pattern for <strong>@ViewBag.UserRootName</strong>.
+                        These schedules automatically repeat every week.
+                    </p>
+                </div>
+
+                <!-- Custom Weekly Template Grid -->
+                <div class="weekly-template-grid" style="position: relative;">
+                    <div class="loading-overlay" id="initialLoader">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <div class="week-header">
+                        Weekly Schedule Template
+                        @if (ViewBag.UserRootName != null)
+                        {
+                            <small class="ms-3 opacity-75">(@ViewBag.UserRootName)</small>
+                        }
+                    </div>
+
+                    <div class="days-grid">
+                        <div class="day-column" data-day="Sunday">
+                            <div class="day-header">Sunday</div>
+                            <div class="day-content" id="day-Sunday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Sunday')" title="Add schedule for Sunday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Monday">
+                            <div class="day-header">Monday</div>
+                            <div class="day-content" id="day-Monday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Monday')" title="Add schedule for Monday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Tuesday">
+                            <div class="day-header">Tuesday</div>
+                            <div class="day-content" id="day-Tuesday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Tuesday')" title="Add schedule for Tuesday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Wednesday">
+                            <div class="day-header">Wednesday</div>
+                            <div class="day-content" id="day-Wednesday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Wednesday')" title="Add schedule for Wednesday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Thursday">
+                            <div class="day-header">Thursday</div>
+                            <div class="day-content" id="day-Thursday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Thursday')" title="Add schedule for Thursday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Friday">
+                            <div class="day-header">Friday</div>
+                            <div class="day-content" id="day-Friday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Friday')" title="Add schedule for Friday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-column" data-day="Saturday">
+                            <div class="day-header">Saturday</div>
+                            <div class="day-content" id="day-Saturday">
+                                <div class="empty-day">No schedules</div>
+                                <button class="add-schedule-btn" onclick="addScheduleForDay('Saturday')" title="Add schedule for Saturday">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-<!-- Modals Section -->
-@if (ViewBag.CurrentUserRootCode != null)
+@if (ViewBag.Error == null)
 {
+
+    <!-- Floating Add Button -->
+    <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#scheduleModal" title="Add New Schedule">
+        <i class="fas fa-plus"></i>
+    </button>
+
     <!-- Main Schedule Modal (Create/Edit) -->
     <div class="modal fade schedule-modal" id="scheduleModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header" id="scheduleModalHeader">
                     <h5 class="modal-title" id="scheduleModalTitle">
-                        <i class="fas fa-calendar-plus me-2"></i>@Localizer["CreateNewScheduleBtn"]
-                        @if (ViewBag.UserRootName != null && ViewBag.BranchName != null)
+                        <i class="fas fa-calendar-plus me-2"></i>Add New Schedule
+                        @if (ViewBag.UserRootName != null)
                         {
-                            <small class="text-muted">@Localizer["for"] @ViewBag.UserRootName - @ViewBag.BranchName</small>
+                            <small class="text-muted">for @ViewBag.UserRootName</small>
                         }
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -306,61 +211,94 @@
                         {
                             <div class="alert alert-info mb-3">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <strong>@Localizer["NoteCenterUser", ViewBag.UserRootName, ViewBag.CurrentUserRootCode]</strong>
+                                <strong>Note:</strong> This schedule will be created for <strong>@ViewBag.UserRootName</strong>
+                                (Center - Root Code: @ViewBag.CurrentUserRootCode)
                                 @if (ViewBag.BranchName != null)
                                 {
-                                    <span> @Localizer["at"] <strong>@ViewBag.BranchName</strong></span>
+                                    <span> at <strong>@ViewBag.BranchName</strong></span>
                                 }
                                 <br>
-                                <small class="text-muted">@Localizer["Center will be automatically assigned. Select branch and teacher for this schedule."]</small>
+                                <small class="text-muted">Center will be automatically assigned. Select branch and teacher for this schedule.</small>
                             </div>
                         }
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["ScheduleNameLabel"] *</label>
-                                <input type="text" class="form-control" id="scheduleName" required placeholder="@Localizer["ScheduleNameLabel"]">
+                                <label class="form-label">Schedule Name *</label>
+                                <input type="text" class="form-control" id="scheduleName" required placeholder="Enter schedule name">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["DayOfWeekLabel"] *</label>
+                                <label class="form-label">Day of Week *</label>
                                 <select class="form-select" id="dayOfWeek" required>
-                                    <option value="">@Localizer["SelectDayOption"]</option>
-                                    <option value="Sunday">@Localizer["Sunday"]</option>
-                                    <option value="Monday">@Localizer["Monday"]</option>
-                                    <option value="Tuesday">@Localizer["Tuesday"]</option>
-                                    <option value="Wednesday">@Localizer["Wednesday"]</option>
-                                    <option value="Thursday">@Localizer["Thursday"]</option>
-                                    <option value="Friday">@Localizer["Friday"]</option>
-                                    <option value="Saturday">@Localizer["Saturday"]</option>
+                                    <option value="">Select Day</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
                                 </select>
                             </div>
                         </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["StartTimeLabel"] *</label>
+                                <label class="form-label">Start Time *</label>
                                 <input type="time" class="form-control" id="startTime" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["EndTimeLabel"] *</label>
+                                <label class="form-label">End Time *</label>
                                 <input type="time" class="form-control" id="endTime" required>
                             </div>
                         </div>
+
+                        <!-- Root is hidden and auto-set -->
                         <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
+
+                        <!-- Center and Branch dropdowns - Updated for both user types -->
                         <div class="row">
-                            @if (ViewBag.IsCenter == true)
+                            @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
                             {
+                                <!-- For CENTER USERS with NO group/branch: show dropdown -->
                                 <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
+
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["BranchLabel"]</label>
+                                    <label class="form-label">Branch</label>
                                     <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
-                                        <option value="">@Localizer["SelectBranchOption"]</option>
+                                        <option value="">Select Branch (Optional)</option>
+                                        <!-- Branches will be loaded via JavaScript -->
                                     </select>
-                                    <small class="text-muted">@Localizer["SelectBranchMsg"]</small>
+                                    <small class="text-muted">Select branch for this schedule</small>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["EducationalYearLabel"]</label>
+                                    <label class="form-label">Educational Year</label>
                                     <select class="form-select" id="eduYearCode">
-                                        <option value="">@Localizer["SelectYearOption"]</option>
+                                        <option value="">Select Year (Optional)</option>
+                                        @if (ViewData["EduYearCode"] != null)
+                                        {
+                                            @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            }
+                            else if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode != null)
+                            {
+                                <!-- For CENTER USERS with a group/branch: auto-assign branch, no dropdown -->
+                                <input type="hidden" id="centerCode" value="@ViewBag.SingleCenterCode">
+                                <input type="hidden" id="branchCode" name="branchCode" value="@ViewBag.GroupBranchCode" />
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Branch</label>
+                                    <input type="text" class="form-control" value="@ViewBag.BranchName" disabled />
+                                    <small class="text-muted">Branch is auto-assigned and cannot be changed</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Educational Year</label>
+                                    <select class="form-select" id="eduYearCode">
+                                        <option value="">Select Year (Optional)</option>
                                         @if (ViewData["EduYearCode"] != null)
                                         {
                                             @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
@@ -373,10 +311,11 @@
                             }
                             else
                             {
+                                <!-- For TEACHER USERS: Show center and branch fields -->
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["CenterLabel"]</label>
+                                    <label class="form-label">Center</label>
                                     <select class="form-select" id="centerCode" onchange="loadBranchesForCenter()">
-                                        <option value="">@Localizer["SelectCenterOption"]</option>
+                                        <option value="">Select Center (Optional)</option>
                                         @if (ViewData["CenterCode"] != null)
                                         {
                                             @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CenterCode"])
@@ -387,32 +326,38 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["BranchLabel"]</label>
+                                    <label class="form-label">Branch</label>
                                     <select class="form-select" id="branchCode" onchange="loadHallsForBranch()">
-                                        <option value="">@Localizer["SelectCenterOption"]</option>
+                                        <option value="">Select Center First</option>
                                     </select>
                                 </div>
                             }
                         </div>
+
+                        <!-- Halls row - separate for both user types -->
                         <div class="row">
                             @if (ViewBag.IsCenter == true)
                             {
+                                <!-- For CENTER USERS: Hall -->
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["HallLabel"]</label>
+                                    <label class="form-label">Hall</label>
                                     <select class="form-select" id="hallCode">
-                                        <option value="">@Localizer["SelectBranchOption"]</option>
+                                        <option value="">Select Branch First</option>
                                     </select>
-                                    <small class="text-muted">@Localizer["SelectBranchMsg"]</small>
+                                    <small class="text-muted">Select branch first to see available halls</small>
                                 </div>
-                                <div class="col-md-6 mb-3"></div>
+                                <div class="col-md-6 mb-3">
+                                    <!-- Empty space for center users -->
+                                </div>
                             }
                             else
                             {
+                                <!-- For TEACHER USERS: Hide hall field completely, Educational Year only -->
                                 <input type="hidden" id="hallCode" value="">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["EducationalYearLabel"]</label>
+                                    <label class="form-label">Educational Year</label>
                                     <select class="form-select" id="eduYearCode">
-                                        <option value="">@Localizer["SelectYearOption"]</option>
+                                        <option value="">Select Year (Optional)</option>
                                         @if (ViewData["EduYearCode"] != null)
                                         {
                                             @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["EduYearCode"])
@@ -422,16 +367,21 @@
                                         }
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3"></div>
+                                <div class="col-md-6 mb-3">
+                                    <!-- Empty space for teacher users -->
+                                </div>
                             }
                         </div>
+
+                        <!-- Teacher and Year section - UPDATED LOGIC FOR TEACHER USERS -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["YearLabel"] *</label>
+                                <label class="form-label">Year *</label>
                                 <select class="form-select" id="yearCode" required>
-                                    <option value="">@Localizer["SelectYearOption"]</option>
+                                    <option value="">Select Year</option>
                                     @if (ViewBag.IsTeacher != true)
                                     {
+                                        <!-- For CENTER USERS: Show all years normally -->
                                         @if (ViewData["YearCode"] != null)
                                         {
                                             @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["YearCode"])
@@ -440,14 +390,17 @@
                                             }
                                         }
                                     }
+                                    <!-- For TEACHER USERS: Years will be loaded via AJAX -->
                                 </select>
                             </div>
+
                             @if (ViewBag.IsCenter == true)
                             {
+                                <!-- For CENTER USERS: Show teacher dropdown (required) -->
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">@Localizer["TeacherLabel"] *</label>
+                                    <label class="form-label">Teacher *</label>
                                     <select class="form-select" id="teacherCode" required onchange="loadSubjectsForTeacher()">
-                                        <option value="">@Localizer["SelectTeacherOption"]</option>
+                                        <option value="">Select Teacher</option>
                                         @if (ViewData["TeacherCode"] != null)
                                         {
                                             @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["TeacherCode"])
@@ -457,22 +410,26 @@
                                         }
                                         else
                                         {
-                                            <option value="">@Localizer["No teachers data available"]</option>
+                                            <option value="">No teachers data available</option>
                                         }
                                     </select>
                                 </div>
                             }
                             else
                             {
+                                <!-- For TEACHER USERS: Hide teacher dropdown completely, auto-assign via backend -->
                                 <input type="hidden" id="teacherCode" value="">
-                                <div class="col-md-6 mb-3"></div>
+                                <div class="col-md-6 mb-3">
+                                    <!-- Empty space for teacher users - no assignment field shown -->
+                                </div>
                             }
                         </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["SubjectLabel"]</label>
+                                <label class="form-label">Subject</label>
                                 <select class="form-select" id="subjectCode">
-                                    <option value="">@Localizer["SelectSubjectOption"]</option>
+                                    <option value="">Select Subject (Optional)</option>
                                     @if (ViewBag.IsCenter == true)
                                     {
                                         <!-- For CENTER USERS: Will be loaded after selecting teacher -->
@@ -484,26 +441,26 @@
                                 </select>
                                 @if (ViewBag.IsTeacher == true)
                                 {
-                                    <small class="text-muted">@Localizer["SelectYearMsg"]</small>
+                                    <small class="text-muted">Select year first to see your subjects</small>
                                 }
                                 else
                                 {
-                                    <small class="text-muted">@Localizer["AvailableSubjectsMsg"]</small>
+                                    <small class="text-muted">Available subjects will appear after selecting a teacher</small>
                                 }
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">@Localizer["AmountLabel"]</label>
+                                <label class="form-label">Amount</label>
                                 <input type="number" class="form-control" id="scheduleAmount" step="0.01" min="0" placeholder="0.00">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CancelBtn"]</button>
-                    <button type="button" class="btn-modern" id="saveScheduleBtn">
-                        <i class="fas fa-save me-2"></i><span class="btn-text">@Localizer["SaveScheduleBtn"]</span>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-modern btn-success" id="saveScheduleBtn">
+                        <i class="fas fa-save me-2"></i><span class="btn-text">Save Schedule</span>
                         <div class="spinner-border spinner-border-sm d-none" role="status">
-                            <span class="visually-hidden">@Localizer["Loading"]</span>
+                            <span class="visually-hidden">Loading...</span>
                         </div>
                     </button>
                 </div>
@@ -517,7 +474,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="fas fa-info-circle me-2"></i>@Localizer["ViewDetailsBtn"]
+                        <i class="fas fa-info-circle me-2"></i>Schedule Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -525,12 +482,12 @@
                     <div id="eventDetailsContent"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CloseBtn"]</button>
-                    <button type="button" class="btn-modern btn-warning" id="editEventBtn">
-                        <i class="fas fa-edit me-2"></i>@Localizer["EditBtn"]
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn-modern btn-info" id="editEventBtn">
+                        <i class="fas fa-edit me-2"></i>Edit
                     </button>
                     <button type="button" class="btn-modern btn-danger" id="deleteEventBtn">
-                        <i class="fas fa-trash me-2"></i>@Localizer["DeleteBtn"]
+                        <i class="fas fa-trash me-2"></i>Delete
                     </button>
                 </div>
             </div>
@@ -543,23 +500,23 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger">
                     <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle me-2"></i>@Localizer["ConfirmDeleteTitle"]
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="delete-warning">
-                        <h5><i class="fas fa-exclamation-triangle me-2"></i>@Localizer["Warning"]</h5>
-                        <p class="mb-0">@Localizer["ConfirmDeleteWarning"]</p>
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Warning</h5>
+                        <p class="mb-0">This action cannot be undone. Are you sure you want to delete this schedule?</p>
                     </div>
                     <div class="schedule-summary" id="deleteScheduleSummary">
                         <!-- Schedule details will be inserted here -->
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CancelBtn"]</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn-modern btn-danger" id="confirmDeleteBtn">
-                        <i class="fas fa-trash me-2"></i>@Localizer["DeleteScheduleBtn"]
+                        <i class="fas fa-trash me-2"></i>Delete Schedule
                     </button>
                 </div>
             </div>
@@ -567,9 +524,318 @@
     </div>
 }
 
+<!-- Toast Container -->
 <div class="toast-container"></div>
 
+<!-- Anti-forgery token for AJAX requests -->
 @Html.AntiForgeryToken()
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<!-- Include the common schedule management JavaScript -->
 <script src="~/js/schedule-common.js"></script>
+<script>
+    // Branch filter for center admins
+    window.selectedBranchCode = null;
+    function onBranchFilterChanged() {
+        var dropdown = document.getElementById('branchFilter');
+        window.selectedBranchCode = dropdown ? dropdown.value : null;
+        if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
+            window.scheduleManager.loadSchedules();
+        }
+    }
+
+    // Patch scheduleManager to use selectedBranchCode in AJAX URL
+    setTimeout(function() {
+        if (window.scheduleManager) {
+            const origLoad = window.scheduleManager.loadSchedules.bind(window.scheduleManager);
+            window.scheduleManager.loadSchedules = async function() {
+                this.showLoader && this.showLoader();
+                try {
+                    let url = '/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31';
+                    if (window.selectedBranchCode) {
+                        url += '&branchCode=' + encodeURIComponent(window.selectedBranchCode);
+                    }
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    this.schedules = Array.isArray(data) ? data : [];
+                    this.renderWeeklyGrid();
+                } catch (e) {
+                    this.showToast && this.showToast('Failed to load schedules', 'error');
+                } finally {
+                    this.hideLoader && this.hideLoader();
+                }
+            };
+        }
+    }, 100);
+</script>
+<script>
+       window.userContext = {
+        currentUserRootCode: @Json.Serialize(ViewBag.CurrentUserRootCode),
+        userRootName: @Json.Serialize(ViewBag.UserRootName ?? ""),
+        isCenter: @Json.Serialize(ViewBag.IsCenter ?? false),
+        isTeacher: @Json.Serialize(ViewBag.IsTeacher ?? false),
+        branchName: @Json.Serialize(ViewBag.BranchName ?? ""),
+        singleCenterCode: @Json.Serialize(ViewBag.SingleCenterCode ?? null),
+        groupBranchCode: @Json.Serialize(ViewBag.GroupBranchCode ?? null),
+        hasError: @Json.Serialize(ViewBag.Error != null)
+    };
+
+    // Calendar-specific functionality
+    class CalendarScheduleManager {
+        constructor() {
+            this.schedules = [];
+            this.setupCalendarSpecific();
+            this.setupDoubleClickPrevention();
+        }
+
+        setupCalendarSpecific() {
+            // Override the common manager's callbacks
+            if (typeof scheduleManager !== 'undefined') {
+                scheduleManager.onScheduleSaved = () => this.refreshSchedules();
+                scheduleManager.onScheduleDeleted = () => this.refreshSchedules();
+            }
+
+            // Initialize calendar
+            if (!window.userContext.hasError) {
+                this.loadSchedules();
+                setTimeout(() => {
+                    this.hideInitialLoader();
+                    this.showWelcomeMessage();
+                }, 1000);
+            }
+        }
+
+        setupDoubleClickPrevention() {
+            const saveButton = document.getElementById('saveScheduleBtn');
+            if (saveButton) {
+                let isSubmitting = false;
+
+                saveButton.addEventListener('click', (e) => {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+
+                    isSubmitting = true;
+
+                    // Disable button and show loading state
+                    saveButton.disabled = true;
+                    const btnText = saveButton.querySelector('.btn-text');
+                    const spinner = saveButton.querySelector('.spinner-border');
+
+                    if (btnText) btnText.textContent = 'Saving...';
+                    if (spinner) spinner.classList.remove('d-none');
+
+                    // Re-enable after operation completes (or fails)
+                    if (typeof scheduleManager !== 'undefined') {
+                        const originalCallback = scheduleManager.onScheduleSaved;
+                        scheduleManager.onScheduleSaved = () => {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                            if (originalCallback) originalCallback();
+                        };
+
+                        // Also handle errors
+                        const originalError = scheduleManager.onScheduleError || (() => {});
+                        scheduleManager.onScheduleError = (error) => {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                            originalError(error);
+                        };
+                    }
+
+                    // Reset after 10 seconds as failsafe
+                    setTimeout(() => {
+                        if (isSubmitting) {
+                            this.resetSaveButton();
+                            isSubmitting = false;
+                        }
+                    }, 10000);
+                });
+            }
+        }
+
+        resetSaveButton() {
+            const saveButton = document.getElementById('saveScheduleBtn');
+            if (saveButton) {
+                saveButton.disabled = false;
+                const btnText = saveButton.querySelector('.btn-text');
+                const spinner = saveButton.querySelector('.spinner-border');
+
+                if (btnText) btnText.textContent = 'Save Schedule';
+                if (spinner) spinner.classList.add('d-none');
+            }
+        }
+
+        async loadSchedules() {
+            try {
+                const response = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
+                const events = await response.json();
+
+                this.schedules = events;
+
+                // Transform events to schedule format for the common manager
+                if (typeof scheduleManager !== 'undefined') {
+                    scheduleManager.allSchedules = events.map(event => ({
+                        scheduleCode: event.extendedProps?.scheduleCode || 0,
+                        scheduleName: event.title || 'Untitled',
+                        dayOfWeek: event.extendedProps?.dayOfWeek || '',
+                        startTime: event.extendedProps?.startTime || '',
+                        endTime: event.extendedProps?.endTime || '',
+                        hallName: event.extendedProps?.hallName || '',
+                        hallCode: event.extendedProps?.hallCode || null,
+                        teacherName: event.extendedProps?.teacherName || '',
+                        teacherCode: event.extendedProps?.teacherCode || null,
+                        subjectName: event.extendedProps?.subjectName || '',
+                        subjectCode: event.extendedProps?.subjectCode || null,
+                        centerName: event.extendedProps?.centerName || '',
+                        centerCode: event.extendedProps?.centerCode || null,
+                        branchName: event.extendedProps?.branchName || '',
+                        branchCode: event.extendedProps?.branchCode || null,
+                        eduYearCode: event.extendedProps?.eduYearCode || null,
+                        yearCode: event.extendedProps?.yearCode || null,
+                        scheduleAmount: event.extendedProps?.scheduleAmount || null,
+                        isCenter: event.extendedProps?.isCenter || false
+                    }));
+                }
+
+                this.renderWeeklyGrid();
+                console.log('✅ Schedules loaded for Calendar view:', this.schedules.length);
+            } catch (error) {
+                console.error('❌ Error loading schedules:', error);
+                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
+                    scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
+                }
+            }
+        }
+
+        // UPDATED: Weekly grid rendering with teacher/center display logic for Calendar.cshtml
+        renderWeeklyGrid() {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+            days.forEach(day => {
+                const dayContainer = document.getElementById(`day-${day}`);
+                if (!dayContainer) return;
+
+                const daySchedules = this.schedules.filter(s => s.extendedProps?.dayOfWeek === day);
+
+                if (daySchedules.length === 0) {
+                    dayContainer.innerHTML = `
+                        <div class="empty-day">No schedules</div>
+                        <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    `;
+                } else {
+                    let html = '';
+
+                    // Determine what to show based on user context
+                    const isCurrentUserCenter = window.userContext?.isCenter === true;
+                    const isCurrentUserTeacher = window.userContext?.isTeacher === true;
+
+                    daySchedules.forEach(schedule => {
+                        const eventClass = schedule.extendedProps?.isCenter ? 'center-event' : 'teacher-event';
+                        const s = schedule.extendedProps;
+
+                        html += `
+                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${s?.scheduleCode || 0})">
+                                <div class="event-title">
+                                    <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
+                                    ${schedule.title || 'Untitled'}
+                                </div>
+                                <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
+                                ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
+                        `;
+
+                        // Show different information based on current user type
+                        if (isCurrentUserTeacher) {
+                            // For TEACHER users: Show Center + Branch instead of teacher name
+                            if (s?.centerName && s?.branchName) {
+                                html += `<div class="event-details">🏢 ${s.centerName} - ${s.branchName}</div>`;
+                            } else if (s?.centerName) {
+                                html += `<div class="event-details">🏢 ${s.centerName}</div>`;
+                            } else if (s?.branchName) {
+                                html += `<div class="event-details">🏢 ${s.branchName}</div>`;
+                            }
+                        } else if (isCurrentUserCenter) {
+                            // For CENTER users: Show Teacher name as before
+                            if (s?.teacherName) {
+                                html += `<div class="event-details">👨‍🏫 ${s.teacherName}</div>`;
+                            }
+                        }
+
+                        // Always show subject if available
+                        if (s?.subjectName) {
+                            html += `<div class="event-details">📚 ${s.subjectName}</div>`;
+                        }
+
+                        html += `
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                        <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    `;
+
+                    dayContainer.innerHTML = html;
+                }
+            });
+        }
+
+        refreshSchedules() {
+            console.log('🔄 Refreshing calendar schedules...');
+            this.loadSchedules();
+        }
+
+        hideInitialLoader() {
+            const loader = document.getElementById('initialLoader');
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }
+
+        showWelcomeMessage() {
+            if (window.userContext.currentUserRootCode) {
+                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
+                    scheduleManager.showToast(
+                        'Welcome!',
+                        `Calendar loaded for ${window.userContext.userRootName}`,
+                        'success'
+                    );
+                }
+            }
+        }
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Calendar-specific manager
+        const calendarManager = new CalendarScheduleManager();
+
+        // Calendar-specific global functions (for backward compatibility)
+        window.refreshSchedules = () => calendarManager.refreshSchedules();
+        window.addScheduleForDay = (day) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.addScheduleForDay) {
+                scheduleManager.addScheduleForDay(day);
+            } else {
+                // Fallback implementation
+                const daySelect = document.getElementById('dayOfWeek');
+                if (daySelect) {
+                    daySelect.value = day;
+                }
+                const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+                modal.show();
+            }
+        };
+        window.showScheduleDetails = (scheduleCode) => {
+            if (typeof scheduleManager !== 'undefined' && scheduleManager.showScheduleDetails) {
+                scheduleManager.showScheduleDetails(scheduleCode);
+            }
+        };
+    });
+</script>
