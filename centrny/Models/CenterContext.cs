@@ -143,7 +143,7 @@ public partial class CenterContext : DbContext
 
         modelBuilder.Entity<Attend>(entity =>
         {
-            entity.HasKey(e => new { e.TeacherCode, e.ScheduleCode, e.ClassId, e.HallId, e.StudentId }).HasName("PK_Attend_1");
+            entity.HasKey(e => new { e.TeacherCode, e.ClassId, e.StudentId }).HasName("PK_Attend_1");
 
             entity.ToTable("Attend", tb =>
                 {
@@ -157,15 +157,15 @@ public partial class CenterContext : DbContext
                 });
 
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
-            entity.Property(e => e.ScheduleCode).HasColumnName("Schedule_Code");
             entity.Property(e => e.ClassId).HasColumnName("Class_Id");
-            entity.Property(e => e.HallId).HasColumnName("Hall_Id");
             entity.Property(e => e.StudentId).HasColumnName("Student_Id");
             entity.Property(e => e.AttendDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("Attend_Date");
+            entity.Property(e => e.HallId).HasColumnName("Hall_Id");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+            entity.Property(e => e.ScheduleCode).HasColumnName("Schedule_Code");
             entity.Property(e => e.SessionPrice)
                 .HasColumnType("money")
                 .HasColumnName("Session_Price");
@@ -188,7 +188,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.ScheduleCodeNavigation).WithMany(p => p.Attends)
                 .HasForeignKey(d => d.ScheduleCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Attend_Schedule");
 
             entity.HasOne(d => d.Student).WithMany(p => p.Attends)

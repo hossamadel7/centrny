@@ -29,6 +29,13 @@ namespace centrny.Controllers
                 .FirstOrDefaultAsync(u => u.Username == username);
             return user?.GroupCodeNavigation?.BranchCode;
         }
+        private async Task<EduYear> GetActiveEduYearForRoot(int rootCode)
+        {
+            return await _context.EduYears
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.RootCode == rootCode && e.IsActive);
+        }
+
         private int? GetCurrentUserRootCode()
         {
             if (HttpContext.Items.ContainsKey("CurrentUserRootCode"))
@@ -423,13 +430,49 @@ namespace centrny.Controllers
                 return View();
             }
 
+            // --- Only use active EduYear for this root ---
+            var activeEduYear = await _context.EduYears
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.RootCode == rootCode.Value && e.IsActive);
+            ViewBag.ActiveEduYearCode = activeEduYear?.EduCode;
+
+            if (activeEduYear != null)
+            {
+                ViewData["EduYearCode"] = new SelectList(new[] { activeEduYear }, "EduCode", "EduName", activeEduYear.EduCode);
+
+                var years = await _context.Years
+                    .AsNoTracking()
+                    .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                    .OrderBy(y => y.YearSort)
+                    .ToListAsync();
+                ViewData["YearCode"] = new SelectList(years, "YearCode", "YearName");
+            }
+            else
+            {
+                ViewData["EduYearCode"] = new SelectList(new List<dynamic>(), "EduCode", "EduName");
+                ViewData["YearCode"] = new SelectList(new List<dynamic>(), "YearCode", "YearName");
+            }
+
+            // ...other dropdowns and logic as before...
             await PopulateDropDowns();
 
             ViewBag.CurrentUserRootCode = rootCode;
             ViewBag.UserRootName = rootName;
             ViewBag.IsCenter = isCenter;
             ViewBag.IsTeacher = IsCurrentUserTeacher();
-            ViewBag.BranchName = branchName;
+
+            // Set the correct branch name
+            if (groupBranchCode.HasValue)
+            {
+                var branch = await _context.Branches
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(b => b.BranchCode == groupBranchCode.Value);
+                ViewBag.BranchName = branch?.BranchName ?? "Unknown Branch";
+            }
+            else
+            {
+                ViewBag.BranchName = branchName;
+            }
 
             if (IsCurrentUserCenter())
             {
@@ -555,12 +598,8 @@ namespace centrny.Controllers
         {
             try
             {
-                if (model == null)
-                {
-                    return Json(new { success = false, error = "Invalid data received." });
-                }
-
                 var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
+                int? groupBranchCode = await GetCurrentUserGroupBranchCode();
 
                 if (!userRootCode.HasValue)
                 {
@@ -579,6 +618,11 @@ namespace centrny.Controllers
                     else
                     {
                         return Json(new { success = false, error = "No active center found for your account." });
+                    }
+                    // Force the branch code for restricted center users (with groupBranchCode)
+                    if (groupBranchCode.HasValue)
+                    {
+                        model.BranchCode = groupBranchCode.Value;
                     }
                 }
 

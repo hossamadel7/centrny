@@ -1319,6 +1319,9 @@ namespace centrny.Controllers
 
                 var student = item.StudentCodeNavigation;
 
+                // FIX: Pass both rootCode and branchCode from student
+                var canMarkAttendance = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
+
                 // Create view model with basic student information
                 var viewModel = new StudentProfileViewModel
                 {
@@ -1338,7 +1341,7 @@ namespace centrny.Controllers
                     RootCode = student.RootCode,
                     YearCode = student.YearCode,
                     Age = CalculateAge(student.StudentBirthdate),
-                    CanMarkAttendance = await IsCurrentUserAdmin()
+                    CanMarkAttendance = canMarkAttendance
                 };
 
                 _logger.LogInformation("Loading profile for student {StudentName} with item key {ItemKey}",
@@ -1404,8 +1407,10 @@ namespace centrny.Controllers
                     .OrderBy(c => c.ClassStartTime)
                     .ToList();
 
+                // FIX: Use root/branch from student for admin check
+                var isAdmin = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
+
                 var classResults = new List<object>();
-                var isAdmin = await IsCurrentUserAdmin();
 
                 foreach (var c in availableClasses)
                 {
@@ -1501,6 +1506,9 @@ namespace centrny.Controllers
                     .ThenBy(c => c.ClassStartTime)
                     .ToListAsync();
 
+                // FIX: Use root/branch from student for admin check (could also use branchCode from method args)
+                var isAdmin = await IsCurrentUserAdmin(student.RootCode, branchCode);
+
                 var classResults = new List<object>();
 
                 foreach (var c in weeklyClasses)
@@ -1542,7 +1550,8 @@ namespace centrny.Controllers
                         totalAmount = c.TotalAmount,
                         isAttended = hasAttended,
                         isCurrentlyAvailable = isCurrentlyAvailable,
-                        canAttend = !hasAttended && isCurrentlyAvailable
+                        canAttend = !hasAttended && isCurrentlyAvailable,
+                        canMarkAttendance = isAdmin
                     });
                 }
 
@@ -1579,12 +1588,6 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Student not found." });
                 }
 
-                // Check authorization (admins only)
-                if (!await IsCurrentUserAdmin())
-                {
-                    return Json(new { success = false, error = "Only administrators can mark attendance." });
-                }
-
                 // Get class details
                 var classEntity = await _context.Classes
                     .Include(c => c.ScheduleCodeNavigation)
@@ -1595,6 +1598,12 @@ namespace centrny.Controllers
                 if (classEntity == null)
                 {
                     return Json(new { success = false, error = "Class not found." });
+                }
+
+                // FIX: Use rootCode from student, branchCode from classEntity
+                if (!await IsCurrentUserAdmin(student.RootCode, classEntity.BranchCode))
+                {
+                    return Json(new { success = false, error = "Only administrators can mark attendance." });
                 }
 
                 // Check for duplicate attendance
@@ -1611,7 +1620,7 @@ namespace centrny.Controllers
                 var attendance = new Attend
                 {
                     TeacherCode = classEntity.TeacherCode,
-                    ScheduleCode = classEntity.ScheduleCode ?? 0, // Use 0 if null
+                    ScheduleCode = classEntity.ScheduleCode, // Use 0 if null
                     ClassId = request.ClassCode,
                     HallId = classEntity.HallCode,
                     StudentId = student.StudentCode,
@@ -1637,7 +1646,10 @@ namespace centrny.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error marking attendance for request {@Request}", request);
-                return Json(new { success = false, error = "An error occurred while marking attendance." });
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                    errorMessage += " | Inner: " + ex.InnerException.Message;
+                return Json(new { success = false, error = errorMessage, stackTrace = ex.StackTrace });
             }
         }
 
@@ -2154,27 +2166,33 @@ namespace centrny.Controllers
         }
 
         // Check if current user is an admin
-        private async Task<bool> IsCurrentUserAdmin()
+        private async Task<bool> IsCurrentUserAdmin(int rootCode, int branchCode)
         {
             try
             {
-                // Skip authentication check - allow access to anyone, but only admins can edit
                 if (!User.Identity.IsAuthenticated)
-                {
                     return false;
-                }
 
-                var groupCodeClaim = User.FindFirst("GroupCode");
-                if (groupCodeClaim == null || !int.TryParse(groupCodeClaim.Value, out int groupCode))
-                {
+                // Get UserId from claims (adapt claim type as necessary)
+                var userIdClaim = User.FindFirst("UserId") ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
                     return false;
-                }
 
-                // Check if user is in Admins group
+                // Get the user entity (with GroupCode FK)
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+                if (user == null)
+                    return false;
+
+                // Find the group the user belongs to
                 var group = await _context.Groups
-                    .FirstOrDefaultAsync(g => g.GroupCode == groupCode);
+                    .FirstOrDefaultAsync(g =>
+                        g.GroupCode == user.GroupCode &&
+                        g.GroupName == "Admins" &&
+                        g.RootCode == rootCode &&
+                        (g.BranchCode == branchCode || g.BranchCode == null)
+                    );
 
-                return group != null && group.GroupName == "Admins";
+                return group != null;
             }
             catch (Exception ex)
             {

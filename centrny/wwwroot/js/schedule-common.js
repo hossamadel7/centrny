@@ -736,16 +736,28 @@ class ScheduleManager {
 
     resetForm() {
         if (this.dom.scheduleForm) {
-            ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'rootCode', 'centerCode', 'branchCode', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'yearCode', 'scheduleAmount'].forEach(id => {
+            ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'rootCode', 'centerCode', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'yearCode', 'scheduleAmount'].forEach(id => {
                 if (this.dom[id]) {
                     if (this.dom[id].tagName === 'SELECT') this.dom[id].selectedIndex = 0;
                     else this.dom[id].value = '';
                 }
             });
+            // Only reset branchCode if not fixed by groupBranchCode
+            if (!window.userContext?.groupBranchCode && this.dom.branchCode) {
+                if (this.dom.branchCode.tagName === 'SELECT') this.dom.branchCode.selectedIndex = 0;
+                else this.dom.branchCode.value = '';
+            }
+            // If groupBranchCode, set hidden input value to the correct branch code
+            if (window.userContext?.groupBranchCode && this.dom.branchCode) {
+                this.dom.branchCode.value = window.userContext.groupBranchCode;
+            }
+            if (window.userContext?.activeEduYearCode && this.dom.eduYearCode) {
+                this.dom.eduYearCode.value = window.userContext.activeEduYearCode;
+                this.dom.eduYearCode.dispatchEvent(new Event('change'));
+            }
         }
         this.removeStuckBackdrop();
     }
-
     convertTo24Hour(time12h) {
         if (!time12h || typeof time12h !== 'string') return '';
         try {

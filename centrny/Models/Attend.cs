@@ -7,13 +7,13 @@ public partial class Attend
 {
     public int TeacherCode { get; set; }
 
-    public int ScheduleCode { get; set; }
-
     public int ClassId { get; set; }
+
+    public int StudentId { get; set; }
 
     public int HallId { get; set; }
 
-    public int StudentId { get; set; }
+    public int? ScheduleCode { get; set; }
 
     public DateTime AttendDate { get; set; }
 
@@ -29,7 +29,7 @@ public partial class Attend
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
 
-    public virtual Schedule ScheduleCodeNavigation { get; set; } = null!;
+    public virtual Schedule? ScheduleCodeNavigation { get; set; }
 
     public virtual Student Student { get; set; } = null!;
 

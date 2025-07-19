@@ -11,7 +11,7 @@
         <div class="calendar-container">
             <!-- Page Header -->
             <div class="page-header">
-                <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule Template</h1>
+                <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule </h1>
                 <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
             </div>
 
@@ -109,7 +109,7 @@
                         <div class="day-column" data-day="Sunday">
                             <div class="day-header">Sunday</div>
                             <div class="day-content" id="day-Sunday">
-                                <div class="empty-day">No schedules</div>
+                                <div class="empty-day">No Classes</div>
                                 <button class="add-schedule-btn" onclick="addScheduleForDay('Sunday')" title="Add schedule for Sunday">
                                     <i class="fas fa-plus"></i>
                                 </button>
@@ -578,7 +578,8 @@
         branchName: @Json.Serialize(ViewBag.BranchName ?? ""),
         singleCenterCode: @Json.Serialize(ViewBag.SingleCenterCode ?? null),
         groupBranchCode: @Json.Serialize(ViewBag.GroupBranchCode ?? null),
-        hasError: @Json.Serialize(ViewBag.Error != null)
+        hasError: @Json.Serialize(ViewBag.Error != null),
+        activeEduYearCode: @Json.Serialize(ViewBag.ActiveEduYearCode ?? null)
     };
 
     // Calendar-specific functionality
