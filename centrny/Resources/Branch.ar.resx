@@ -96,4 +96,50 @@
 	<data name="Alert_HallDeleteError" xml:space="preserve">
     <value>فشل في حذف القاعة بسبب خطأ.</value>
   </data>
+	<!-- NEW KEYS FOR CENTER/BRANCH MANAGEMENT -->
+	<data name="Button_AddCenter" xml:space="preserve">
+    <value>إضافة مركز</value>
+  </data>
+	<data name="Button_AddBranch" xml:space="preserve">
+    <value>إضافة فرع</value>
+  </data>
+	<data name="ModalTitle_AddCenter" xml:space="preserve">
+    <value>إضافة مركز</value>
+  </data>
+	<data name="ModalTitle_AddBranch" xml:space="preserve">
+    <value>إضافة فرع</value>
+  </data>
+	<data name="Label_CenterName" xml:space="preserve">
+    <value>اسم المركز</value>
+  </data>
+	<data name="Label_BranchName" xml:space="preserve">
+    <value>اسم الفرع</value>
+  </data>
+	<data name="Button_Save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+	<data name="Alert_CenterAddSuccess" xml:space="preserve">
+    <value>تمت إضافة المركز بنجاح!</value>
+  </data>
+	<data name="Alert_BranchAddSuccess" xml:space="preserve">
+    <value>تمت إضافة الفرع بنجاح!</value>
+  </data>
+	<data name="Alert_CenterBranchLimit" xml:space="preserve">
+    <value>تم الوصول للحد الأقصى للمراكز والفروع.</value>
+  </data>
+	<data name="Alert_CenterDeleteSuccess" xml:space="preserve">
+    <value>تم حذف المركز بنجاح!</value>
+  </data>
+	<data name="Alert_BranchDeleteSuccess" xml:space="preserve">
+    <value>تم حذف الفرع بنجاح!</value>
+  </data>
+	<data name="Confirm_DeleteCenter" xml:space="preserve">
+    <value>هل أنت متأكد أنك تريد حذف هذا المركز؟</value>
+  </data>
+	<data name="Confirm_DeleteBranch" xml:space="preserve">
+    <value>هل أنت متأكد أنك تريد حذف هذا الفرع؟</value>
+  </data>
+	<data name="Button_DeleteCenter" xml:space="preserve">
+    <value>حذف المركز</value>
+  </data>
 </root>

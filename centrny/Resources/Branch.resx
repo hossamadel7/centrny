@@ -96,4 +96,50 @@
 	<data name="Alert_HallDeleteError" xml:space="preserve">
     <value>Failed to delete hall due to an error.</value>
   </data>
+	<!-- NEW KEYS FOR CENTER/BRANCH MANAGEMENT -->
+	<data name="Button_AddCenter" xml:space="preserve">
+    <value>Add Center</value>
+  </data>
+	<data name="Button_AddBranch" xml:space="preserve">
+    <value>Add Branch</value>
+  </data>
+	<data name="ModalTitle_AddCenter" xml:space="preserve">
+    <value>Add Center</value>
+  </data>
+	<data name="ModalTitle_AddBranch" xml:space="preserve">
+    <value>Add Branch</value>
+  </data>
+	<data name="Label_CenterName" xml:space="preserve">
+    <value>Center Name</value>
+  </data>
+	<data name="Label_BranchName" xml:space="preserve">
+    <value>Branch Name</value>
+  </data>
+	<data name="Button_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+	<data name="Alert_CenterAddSuccess" xml:space="preserve">
+    <value>Center added successfully!</value>
+  </data>
+	<data name="Alert_BranchAddSuccess" xml:space="preserve">
+    <value>Branch added successfully!</value>
+  </data>
+	<data name="Alert_CenterBranchLimit" xml:space="preserve">
+    <value>Limit reached for centers and branches.</value>
+  </data>
+	<data name="Alert_CenterDeleteSuccess" xml:space="preserve">
+    <value>Center deleted successfully!</value>
+  </data>
+	<data name="Alert_BranchDeleteSuccess" xml:space="preserve">
+    <value>Branch deleted successfully!</value>
+  </data>
+	<data name="Confirm_DeleteCenter" xml:space="preserve">
+    <value>Are you sure you want to delete this center?</value>
+  </data>
+	<data name="Confirm_DeleteBranch" xml:space="preserve">
+    <value>Are you sure you want to delete this branch?</value>
+  </data>
+	<data name="Button_DeleteCenter" xml:space="preserve">
+    <value>Delete Center</value>
+  </data>
 </root>

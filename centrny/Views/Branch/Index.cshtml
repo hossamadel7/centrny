@@ -11,6 +11,7 @@
     var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
     var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var htmlDir = isArabic ? "rtl" : "ltr";
+    var userCode = (int)ViewBag.UserCode;
 }
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
@@ -34,7 +35,7 @@
             --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
             --primary-color: #6c5ce7;
             --border-radius-lg: 28px;
-            --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+            --shadow-lg: 0 8px 36px rgba(108,92,231,0.18);
         }
 
         html[dir="rtl"] body,
@@ -43,7 +44,7 @@
             direction: rtl;
             text-align: right;
         }
-        /* Gradient centered header for branch view */
+
         .branch-gradient-header {
             width: 100%;
             text-align: center;
@@ -84,10 +85,79 @@
         }
 
         }
+
+        .branch-actions,
+        .hall-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        html[dir="rtl"] .branch-actions,
+        html[dir="rtl"] .hall-actions {
+            justify-content: flex-start;
+        }
+
+        html[dir="ltr"] .branch-actions,
+        html[dir="ltr"] .hall-actions {
+            justify-content: flex-end;
+        }
+
+        #centerList .list-group-item,
+        #centerList .list-group,
+        #centerList .list-group-item .list-group {
+            text-align: left;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+        }
+
+        html[dir="rtl"] #centerList .list-group-item,
+        html[dir="rtl"] #centerList .list-group,
+        html[dir="rtl"] #centerList .list-group-item .list-group {
+            text-align: right;
+            align-items: flex-end !important;
+            justify-content: flex-end !important;
+        }
+
+        #centerList .list-group-item,
+        #centerList .list-group {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        /* Custom branch card longer and prettier */
+        .branch-card {
+            min-width: 350px;
+            width: 95%;
+            margin-bottom: 1.5rem;
+            border-radius: 18px;
+            box-shadow: 0 2px 12px #d7d7ff30;
+            background: #fff;
+            padding: 0.5rem 1rem 1rem 1rem;
+            border: 1.5px solid #e3e7fa;
+        }
+
+        .add-center-btn-top {
+            background: linear-gradient(90deg,#6c5ce7,#a29bfe);
+            color: #fff;
+            border: none;
+            border-radius: 22px;
+            padding: 0.5rem 1.3rem;
+            font-size: 1.1rem;
+            margin-bottom: 1.2rem;
+            float: right;
+            font-weight: 600;
+            box-shadow: 0 2px 10px #d7d7ff40;
+        }
+
+            .add-center-btn-top i {
+                margin-right: 8px;
+            }
     </style>
 </head>
 <body>
-    <!-- Localized strings for JS -->
+    <script>
+        window.userId = @userCode;
+    </script>
     <div id="js-localization"
          data-title-manage-branches="@Localizer["Title_ManageBranches"]"
          data-label-select-root="@Localizer["Label_SelectRoot"]"
@@ -118,9 +188,24 @@
          data-confirm-delete-hall="@Localizer["Confirm_DeleteHall"]"
          data-alert-hall-delete-success="@Localizer["Alert_HallDeleteSuccess"]"
          data-alert-hall-delete-failed="@Localizer["Alert_HallDeleteFailed"]"
-         data-alert-hall-delete-error="@Localizer["Alert_HallDeleteError"]" />
+         data-alert-hall-delete-error="@Localizer["Alert_HallDeleteError"]"
+         data-button-add-center="@Localizer["Button_AddCenter"]"
+         data-button-add-branch="@Localizer["Button_AddBranch"]"
+         data-modal-title-add-center="@Localizer["ModalTitle_AddCenter"]"
+         data-modal-title-add-branch="@Localizer["ModalTitle_AddBranch"]"
+         data-label-center-name="@Localizer["Label_CenterName"]"
+         data-label-branch-name="@Localizer["Label_BranchName"]"
+         data-button-save="@Localizer["Button_Save"]"
+         data-alert-center-add-success="@Localizer["Alert_CenterAddSuccess"]"
+         data-alert-branch-add-success="@Localizer["Alert_BranchAddSuccess"]"
+         data-alert-center-branch-limit="@Localizer["Alert_CenterBranchLimit"]"
+         data-alert-center-delete-success="@Localizer["Alert_CenterDeleteSuccess"]"
+         data-alert-branch-delete-success="@Localizer["Alert_BranchDeleteSuccess"]"
+         data-confirm-delete-center="@Localizer["Confirm_DeleteCenter"]"
+         data-confirm-delete-branch="@Localizer["Confirm_DeleteBranch"]"
+         data-button-delete-center="@Localizer["Button_DeleteCenter"]"
+         data-button-delete-branch="@Localizer["Button_DeleteBranch"]" />
 
-    <!-- Gradient centered header for Branch View -->
     <div class="branch-gradient-header mb-4">
         <h2>
             <i class="fa-solid fa-code-branch"></i>
@@ -141,19 +226,93 @@
     }
     else
     {
-       
         <input type="hidden" id="fixedRootCode" value="@userRootCode" />
     }
 
     <div id="centerBranchSection" style="display:none;">
-        <h4 id="section-centers"></h4>
+        <button id="add-center-btn" class="add-center-btn-top"><i class="fas fa-plus"></i> @Localizer["Button_AddCenter"]</button>
+        <div style="clear:both"></div>
+        <div id="limit-alert" class="alert alert-warning" style="display:none;"></div>
         <ul class="list-group mb-4" id="centerList"></ul>
-
-        <h4 id="section-branches"></h4>
-        <ul class="list-group" id="branchList"></ul>
     </div>
 
-    <!-- Add Hall Modal -->
+    <!-- Add Center Modal -->
+    <div class="modal fade" id="addCenterModal" tabindex="-1" aria-labelledby="addCenterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addCenterForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCenterModalLabel"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="centerRootCode" name="RootCode" />
+                        <input type="hidden" id="centerOwnerName" name="OwnerName" />
+                        <input type="hidden" id="centerInsertUser" name="InsertUser" />
+                        <input type="hidden" id="centerInsertTime" name="InsertTime" />
+                        <input type="hidden" id="centerIsActive" name="IsActive" value="true" />
+                        <div class="mb-3">
+                            <label for="CenterName" class="form-label" id="label-center-name"></label>
+                            <input type="text" class="form-control" id="CenterName" name="CenterName" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="CenterAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="CenterAddress" name="CenterAddress" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="CenterPhone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="CenterPhone" name="CenterPhone" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="button-cancel"></button>
+                        <button type="submit" class="btn btn-primary" id="button-save-center"></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Add Branch Modal -->
+    <div class="modal fade" id="addBranchModal" tabindex="-1" aria-labelledby="addBranchModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addBranchForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addBranchModalLabel"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="branchRootCode" name="RootCode" />
+                        <input type="hidden" id="branchCenterCode" name="CenterCode" />
+                        <input type="hidden" id="branchInsertUser" name="InsertUser" />
+                        <input type="hidden" id="branchInsertTime" name="InsertTime" />
+                        <input type="hidden" id="branchIsActive" name="IsActive" value="true" />
+                        <div class="mb-3">
+                            <label for="BranchName" class="form-label" id="label-branch-name"></label>
+                            <input type="text" class="form-control" id="BranchName" name="BranchName" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="BranchAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="BranchAddress" name="Address" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="BranchPhone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="BranchPhone" name="Phone" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="BranchStartTime" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="BranchStartTime" name="StartTime" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="button-cancel"></button>
+                        <button type="submit" class="btn btn-primary" id="button-save-branch"></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Add/Edit Hall Modal -->
     <div class="modal fade" id="addHallModal" tabindex="-1" aria-labelledby="addHallModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -182,8 +341,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Edit Hall Modal -->
     <div class="modal fade" id="editHallModal" tabindex="-1" aria-labelledby="editHallModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -211,10 +368,8 @@
             </div>
         </div>
     </div>
-
     @section Scripts {
         <script>
-            // Inject userRootCode and userName for JS logic
             const userRootCode = @userRootCode;
             const userName = '@userName';
         </script>

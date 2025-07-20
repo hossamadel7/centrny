@@ -1,10 +1,11 @@
-﻿// === Localized Branch Management JS ===
+﻿// === Localized Branch Management JS with Center/Branch Limit and NESTED Layout, RTL/LTR action alignment, edit/delete for branches/halls ===
 
-// Helper to access localized strings from #js-localization
 function getJsString(key) {
-    // Convert dash-case to camelCase
     key = key.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
-    return $('#js-localization').data(key);
+    let v = $('#js-localization').data(key);
+    if (typeof v === "undefined") v = $('#js-localization').data(key.charAt(0).toUpperCase() + key.slice(1));
+    if (typeof v === "undefined") v = $('#js-localization').data(key.replace(/[A-Z]/g, m => '-' + m.toLowerCase()));
+    return v;
 }
 
 function setBranchLabels() {
@@ -27,12 +28,25 @@ function setBranchLabels() {
     $('#label-hall-capacity-edit').text(getJsString('labelHallCapacity'));
     $('#button-cancel-edit').text(getJsString('buttonCancel'));
     $('#button-save-changes').html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
+
+    $('#addCenterModalLabel')?.text(getJsString('modalTitleAddCenter'));
+    $('#label-center-name')?.text(getJsString('labelCenterName'));
+    $('#button-save-center')?.html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+
+    $('#addBranchModalLabel')?.text(getJsString('modalTitleAddBranch'));
+    $('#label-branch-name')?.text(getJsString('labelBranchName'));
+    $('#button-save-branch')?.html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
 }
+
+// ---- Global State -----
+let currentRootCode = null;
+let rootLimit = 0;
+let isCenterUser = false;
+let ownerNameByRoot = {}; // rootCode => ownerName
 
 $(document).ready(function () {
     setBranchLabels();
 
-    // Branch JS logic (all UI strings are localized)
     if (typeof userRootCode === 'undefined') {
         $('#centerBranchSection').hide();
         return;
@@ -46,10 +60,12 @@ $(document).ready(function () {
                 $('#centerBranchSection').hide();
                 return;
             }
+            await loadRootConfig(rootCode);
             await loadCentersAndBranches(rootCode);
         });
     } else {
         const fixedRootCode = $('#fixedRootCode').val();
+        loadRootConfig(parseInt(fixedRootCode));
         loadCentersAndBranches(parseInt(fixedRootCode));
     }
 
@@ -61,9 +77,16 @@ $(document).ready(function () {
         e.preventDefault();
         await submitEditHall();
     });
-});
 
-let currentRootCode = null;
+    $('#addCenterForm').on('submit', async function (e) {
+        e.preventDefault();
+        await submitAddCenter();
+    });
+    $('#addBranchForm').on('submit', async function (e) {
+        e.preventDefault();
+        await submitAddBranch();
+    });
+});
 
 async function loadRoots() {
     const res = await fetch('/Branch/GetRootsIsCenterTrue');
@@ -72,95 +95,202 @@ async function loadRoots() {
     dropdown.html(`<option value="">${getJsString('dropdownSelectRootDefault')}</option>`);
     roots.forEach(root => {
         dropdown.append(`<option value="${root.rootCode}">${root.rootName}</option>`);
+        ownerNameByRoot[root.rootCode] = root.ownerName;
     });
+}
+
+async function loadRootConfig(rootCode) {
+    const res = await fetch(`/Branch/GetRootConfig?rootCode=${rootCode}`);
+    if (!res.ok) { rootLimit = 0; isCenterUser = false; return; }
+    const data = await res.json();
+    rootLimit = data.no_Of_Center || 0;
+    isCenterUser = data.isCenter;
+    ownerNameByRoot[rootCode] = data.ownerName;
 }
 
 async function loadCentersAndBranches(rootCode) {
     currentRootCode = rootCode;
-
     const centerRes = await fetch(`/Branch/GetCentersByRoot?rootCode=${rootCode}`);
     const centers = await centerRes.json();
-
     const branchRes = await fetch(`/Branch/GetBranchesByRootCode?rootCode=${rootCode}`);
     const branches = await branchRes.json();
 
-    for (const branch of branches) {
-        branch.halls = await fetchHalls(branch.branchCode);
-        branch.rootCode = rootCode;
+    // Alignment for LTR/RTL
+    const isRtl = $("html").attr("dir") === "rtl";
+    const branchActionClass = "branch-actions";
+    const hallActionClass = "hall-actions";
+    const userId = window.userId || 0;
+
+    // Limit logic
+    const total = centers.length + branches.length;
+    const atLimit = total >= rootLimit;
+
+    if (atLimit) {
+        if ($('#limit-alert').length === 0)
+            $('#centerBranchSection').prepend('<div id="limit-alert" class="alert alert-warning"></div>');
+        $('#limit-alert').text(getJsString('alertCenterBranchLimit')).show();
+        $('#add-center-btn').hide();
+    } else {
+        $('#limit-alert').hide();
+        $('#add-center-btn').show();
     }
+
+    // Add Center Modal setup (now fills hidden fields)
+    $('#add-center-btn').off().on('click', function () {
+        $('#centerRootCode').val(currentRootCode);
+        $('#centerOwnerName').val(ownerNameByRoot[currentRootCode] || '');
+        $('#centerInsertUser').val(window.userId);
+        $('#centerInsertTime').val(new Date().toISOString());
+        $('#centerIsActive').val(true);
+        $('#CenterName').val('');
+        $('#CenterAddress').val('');
+        $('#CenterPhone').val('');
+        $('#addCenterModal').modal('show');
+    });
 
     const centerList = $('#centerList');
     centerList.html('');
     if (centers.length > 0) {
-        centers.forEach(center => {
-            centerList.append(`<li class="list-group-item">${center.centerName}</li>`);
-        });
+        for (const center of centers) {
+            let centerHtml = `
+                <li class="list-group-item" style="background:#f8f9fa">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span style="font-weight:bold">${center.centerName}</span>
+                        <span class="${branchActionClass}">
+                            <button class="btn-table add add-branch-btn" data-center-code="${center.centerCode}">
+                                <i class="fas fa-plus"></i> ${getJsString('buttonAddBranch')}
+                            </button>
+                            <button class="btn-table delete delete-center-btn"
+                                data-center-code="${center.centerCode}">
+                                <i class="fas fa-trash"></i> ${getJsString('buttonDeleteCenter')}
+                            </button>
+                        </span>
+                    </div>
+                    <ul class="list-group mt-2 ms-3" id="center-${center.centerCode}-branches"></ul>
+                </li>`;
+            centerList.append(centerHtml);
+
+            let branchList = $(`#center-${center.centerCode}-branches`);
+            let centerBranches = branches.filter(b => Number(b.centerCode) === Number(center.centerCode));
+            if (centerBranches.length > 0) {
+                for (const branch of centerBranches) {
+                    let hallsHtml = '';
+                    let addHallBtnHtml = '';
+                    if (isCenterUser) {
+                        let halls = await fetchHalls(branch.branchCode);
+                        if (halls.length > 0) {
+                            hallsHtml = `<ul class="list-group mt-2 ms-3">` +
+                                halls.map(hall =>
+                                    `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>
+                                            ${hall.hallName} <span class="badge bg-secondary">${hall.hallCapacity}</span>
+                                        </span>
+                                        <span class="${hallActionClass}">
+                                            <button class="btn-table edit edit-hall-btn" data-hall-code="${hall.hallCode}" data-hall-name="${hall.hallName}" data-hall-capacity="${hall.hallCapacity}">
+                                                <i class="fas fa-pencil"></i>
+                                            </button>
+                                            <button class="btn-table delete delete-hall-btn" data-hall-code="${hall.hallCode}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </span>
+                                    </li>`
+                                ).join('') +
+                                `</ul>`;
+                        } else {
+                            hallsHtml = `<div class="text-muted ms-3">${getJsString('listNoHalls')}</div>`;
+                        }
+                        addHallBtnHtml = `
+                        <button class="btn btn-outline-primary add-hall-btn mt-2" data-branch-code="${branch.branchCode}">
+                            <i class="fas fa-plus"></i> ${getJsString('buttonAddHall')}
+                        </button>`;
+                    }
+
+                    branchList.append(`
+                        <li class="list-group-item branch-card d-flex flex-column align-items-start">
+                            <div class="d-flex align-items-center" style="width:100%;">
+                                <span style="flex:1;text-align:left;">${branch.branchName}</span>
+                                <span class="${branchActionClass}">
+                                    <button class="btn-table edit edit-branch-btn" data-branch-code="${branch.branchCode}" data-branch-name="${branch.branchName}">
+                                        <i class="fas fa-pencil"></i>
+                                    </button>
+                                    <button class="btn-table delete delete-branch-btn"
+                                        data-branch-code="${branch.branchCode}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            ${hallsHtml}
+                            ${addHallBtnHtml}
+                        </li>
+                    `);
+                }
+            } else {
+                branchList.append(`<li class="list-group-item text-muted">${getJsString('listNoBranchesFound')}</li>`);
+            }
+        }
     } else {
         centerList.html(`<li class="list-group-item text-muted">${getJsString('listNoCentersFound')}</li>`);
     }
 
-    const branchList = $('#branchList');
-    branchList.html('');
-    if (branches.length > 0) {
-        branches.forEach(branch => {
-            let hallHtml = '';
-            if (branch.halls.length > 0) {
-                hallHtml = `<ul class="list-group mt-2 ms-3">` +
-                    branch.halls.map(hall =>
-                        `<li class="list-group-item py-1 px-2 d-flex justify-content-between align-items-center">
-                            <span>
-                                ${hall.hallName} <span class="badge bg-secondary">${hall.hallCapacity}</span>
-                            </span>
-                            <span class="hall-actions">
-                                <button class="btn-table edit edit-hall-btn"
-                                    data-hall-code="${hall.hallCode}" 
-                                    data-hall-name="${hall.hallName}" 
-                                    data-hall-capacity="${hall.hallCapacity}">
-                                    <i class="fas fa-pencil"></i> ${getJsString('buttonEditHall')}
-                                </button>
-                                <button class="btn-table delete delete-hall-btn ms-2"
-                                    data-hall-code="${hall.hallCode}">
-                                    <i class="fas fa-trash"></i> ${getJsString('buttonDeleteHall')}
-                                </button>
-                            </span>
-                        </li>`
-                    ).join('') +
-                    `</ul>`;
-            } else {
-                hallHtml = `<div class="text-muted ms-3">${getJsString('listNoHalls')}</div>`;
-            }
+    $('.delete-center-btn').off().on('click', function () {
+        const centerCode = $(this).attr('data-center-code');
+        if (confirm(getJsString('confirmDeleteCenter'))) {
+            fetch(`/Branch/DeleteCenter?centerCode=${centerCode}`, { method: 'DELETE' })
+                .then(r => {
+                    if (r.ok) {
+                        loadCentersAndBranches(currentRootCode);
+                        alert(getJsString('alertCenterDeleteSuccess'));
+                    }
+                });
+        }
+    });
 
-            branchList.append(`
-                <li class="list-group-item d-flex flex-column align-items-start">
-                    <div class="d-flex w-100 justify-content-between align-items-center">
-                        <span>${branch.branchName}</span>
-                        <button class="btn-table add add-hall-btn ms-2"
-                            data-branch-code="${branch.branchCode}"
-                            data-root-code="${rootCode}">
-                            <i class="fas fa-plus"></i> ${getJsString('buttonAddHall')}
-                        </button>
-                    </div>
-                    ${hallHtml}
-                </li>`);
-        });
-    } else {
-        branchList.html(`<li class="list-group-item text-muted">${getJsString('listNoBranchesFound')}</li>`);
-    }
+    $('.delete-branch-btn').off().on('click', function () {
+        const branchCode = $(this).attr('data-branch-code');
+        if (confirm(getJsString('confirmDeleteBranch'))) {
+            fetch(`/Branch/DeleteBranch?branchCode=${branchCode}`, { method: 'DELETE' })
+                .then(r => {
+                    if (r.ok) {
+                        loadCentersAndBranches(currentRootCode);
+                        alert(getJsString('alertBranchDeleteSuccess'));
+                    }
+                });
+        }
+    });
+
+    $('.edit-branch-btn').off().on('click', function () {
+        // You can implement a modal for editing branch, fill values here
+        // Example: $('#editBranchModal').modal('show');
+        alert('Edit branch functionality is not implemented yet.');
+    });
+
+    $('.add-branch-btn').off().on('click', function () {
+        const centerCode = $(this).attr('data-center-code');
+        $('#branchRootCode').val(currentRootCode);
+        $('#branchCenterCode').val(centerCode);
+        $('#branchInsertUser').val(window.userId);
+        $('#branchInsertTime').val(new Date().toISOString());
+        $('#branchIsActive').val(true);
+        $('#BranchName').val('');
+        $('#BranchAddress').val('');
+        $('#BranchPhone').val('');
+        $('#BranchStartTime').val('');
+        $('#addBranchModal').modal('show');
+    });
 
     $('.add-hall-btn').off().on('click', function () {
         const branchCode = $(this).attr('data-branch-code');
-        const rootCode = $(this).attr('data-root-code');
-        openAddHallModal(rootCode, branchCode);
+        openAddHallModal(currentRootCode, branchCode);
     });
 
     $('.edit-hall-btn').off().on('click', function () {
         openEditHallModal(this);
     });
 
-    $('.delete-hall-btn').off().on('click', async function () {
+    $('.delete-hall-btn').off().on('click', function () {
         const hallCode = $(this).attr('data-hall-code');
         if (confirm(getJsString('confirmDeleteHall'))) {
-            await deleteHall(hallCode);
+            deleteHall(hallCode);
         }
     });
 
@@ -282,4 +412,96 @@ async function fetchHalls(branchCode) {
     const res = await fetch(`/Branch/GetHallsByBranch?branchCode=${branchCode}`);
     if (!res.ok) return [];
     return await res.json();
+}
+
+// --------- Add Center with all required fields -------------
+async function submitAddCenter() {
+    const centerName = $('#CenterName').val();
+    const centerAddress = $('#CenterAddress').val();
+    const centerPhone = $('#CenterPhone').val();
+    const ownerName = $('#centerOwnerName').val();
+    const rootCode = parseInt($('#centerRootCode').val(), 10);
+    const insertUser = parseInt($('#centerInsertUser').val(), 10) || 0;
+    const insertTime = $('#centerInsertTime').val();
+    const isActive = true;
+
+    if (!centerName || !centerAddress || !centerPhone || isNaN(rootCode)) {
+        alert(getJsString('alertFillAllFields'));
+        return;
+    }
+    const submitBtn = $('#addCenterForm button[type="submit"]');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+    try {
+        const res = await fetch('/Branch/AddCenter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                CenterName: centerName,
+                CenterAddress: centerAddress,
+                CenterPhone: centerPhone,
+                OwnerName: ownerName,
+                RootCode: rootCode,
+                InsertUser: insertUser,
+                InsertTime: insertTime,
+                IsActive: isActive
+            })
+        });
+        if (res.ok) {
+            $('#addCenterModal').modal('hide');
+            await loadCentersAndBranches(currentRootCode);
+            alert(getJsString('alertCenterAddSuccess'));
+        } else {
+            const text = await res.text();
+            alert(text || getJsString('alertCenterBranchLimit'));
+        }
+    } finally {
+        submitBtn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+    }
+}
+
+// --------- Add Branch with all required fields -------------
+async function submitAddBranch() {
+    const branchName = $('#BranchName').val();
+    const address = $('#BranchAddress').val();
+    const phone = $('#BranchPhone').val();
+    const startTime = $('#BranchStartTime').val();
+    const rootCode = parseInt($('#branchRootCode').val(), 10);
+    const centerCode = parseInt($('#branchCenterCode').val(), 10);
+    const insertUser = parseInt($('#branchInsertUser').val(), 10) || 0;
+    const insertTime = $('#branchInsertTime').val();
+    const isActive = true;
+
+    if (!branchName || !address || !phone || !startTime || isNaN(rootCode) || isNaN(centerCode)) {
+        alert(getJsString('alertFillAllFields'));
+        return;
+    }
+    const submitBtn = $('#addBranchForm button[type="submit"]');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+    try {
+        const res = await fetch('/Branch/AddBranch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                BranchName: branchName,
+                Address: address,
+                Phone: phone,
+                StartTime: startTime,
+                CenterCode: centerCode,
+                RootCode: rootCode,
+                InsertUser: insertUser,
+                InsertTime: insertTime,
+                IsActive: isActive
+            })
+        });
+        if (res.ok) {
+            $('#addBranchModal').modal('hide');
+            await loadCentersAndBranches(currentRootCode);
+            alert(getJsString('alertBranchAddSuccess'));
+        } else {
+            const text = await res.text();
+            alert(text || getJsString('alertCenterBranchLimit'));
+        }
+    } finally {
+        submitBtn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+    }
 }
