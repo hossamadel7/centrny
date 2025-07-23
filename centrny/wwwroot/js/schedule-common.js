@@ -137,10 +137,24 @@ class ScheduleManager {
     // Save (Create/Edit) Schedule
     async saveSchedule(formData) {
         this.showModalLoader(true);
+
         try {
+            // Validate conflicts
+            const validation = this.validateScheduleConflicts(formData);
+
+            // Show validation messages
+            this.showValidationMessages(validation.errors, validation.warnings);
+
+            // Block save if there are errors
+            if (validation.errors.length > 0) {
+                this.showModalLoader(false);
+                return;
+            }
+
             const url = this.editMode && this.currentScheduleId
                 ? `/Schedule/EditScheduleEvent/${this.currentScheduleId}`
                 : '/Schedule/CreateScheduleEvent';
+
             const res = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -149,7 +163,9 @@ class ScheduleManager {
                 },
                 body: JSON.stringify(formData)
             });
+
             const result = await res.json();
+
             if (result.success) {
                 this.closeModal('scheduleModal');
                 this.resetForm();
@@ -164,7 +180,6 @@ class ScheduleManager {
             this.showModalLoader(false);
         }
     }
-
     // Delete Schedule (from modal confirm only)
     async deleteSchedule(id) {
         this.showModalDeleteSpinner(true);
@@ -537,20 +552,161 @@ class ScheduleManager {
         };
     }
 
+    timeToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+
+    // Check if two time ranges intersect (touching boundaries are acceptable)
+    timesIntersect(start1, end1, start2, end2) {
+        const start1Min = this.timeToMinutes(start1);
+        const end1Min = this.timeToMinutes(end1);
+        const start2Min = this.timeToMinutes(start2);
+        const end2Min = this.timeToMinutes(end2);
+
+        // True overlap (not just touching)
+        return start1Min < end2Min && start2Min < end1Min;
+    }
+
+    // Validate schedule conflicts
+    validateScheduleConflicts(formData) {
+        const errors = [];
+        const warnings = [];
+
+        const currentDay = formData.dayOfWeek;
+        const currentStart = formData.startTime;
+        const currentEnd = formData.endTime;
+        const currentTeacher = formData.teacherCode;
+        const currentHall = formData.hallCode;
+        const currentYear = formData.yearCode;
+
+        if (!currentDay || !currentStart || !currentEnd) {
+            return { errors, warnings };
+        }
+
+        // Filter schedules for same day, excluding current schedule if editing
+        const sameDaySchedules = this.schedules.filter(s => {
+            const scheduleDay = s.extendedProps?.dayOfWeek;
+            const scheduleCode = s.extendedProps?.scheduleCode;
+
+            // Exclude current schedule when editing
+            if (this.editMode && this.currentScheduleId && scheduleCode === this.currentScheduleId) {
+                return false;
+            }
+
+            return scheduleDay === currentDay;
+        });
+
+        for (const schedule of sameDaySchedules) {
+            const s = schedule.extendedProps;
+            const scheduleStart = this.convertTo24Hour(s.startTime);
+            const scheduleEnd = this.convertTo24Hour(s.endTime);
+
+            if (!scheduleStart || !scheduleEnd) continue;
+
+            const hasTimeConflict = this.timesIntersect(currentStart, currentEnd, scheduleStart, scheduleEnd);
+
+            if (hasTimeConflict) {
+                // Check teacher conflict (blocking error)
+                if (currentTeacher && s.teacherCode === currentTeacher) {
+                    errors.push(`Teacher conflict: This teacher already has a schedule from ${s.startTime} to ${s.endTime} on ${currentDay}`);
+                }
+
+                // Check hall conflict (blocking error)
+                if (currentHall && s.hallCode === currentHall) {
+                    errors.push(`Hall conflict: This hall is already booked from ${s.startTime} to ${s.endTime} on ${currentDay} for "${schedule.title}"`);
+                }
+
+                // Check year conflict with different teachers (warning)
+                if (currentYear && s.yearCode === currentYear && currentTeacher && s.teacherCode && s.teacherCode !== currentTeacher) {
+                    warnings.push(`Year overlap warning: Another teacher already has this year from ${s.startTime} to ${s.endTime} on ${currentDay} for "${schedule.title}"`);
+                }
+            }
+        }
+
+        return { errors, warnings };
+    }
+
+    // Show validation messages in modal
+    // REPLACE your existing showValidationMessages function with this:
+
+    showValidationMessages(errors, warnings) {
+        // Remove any existing validation messages from modal (cleanup)
+        const modalBody = this.dom.scheduleModal?.querySelector('.modal-body');
+        if (modalBody) {
+            const existingAlert = modalBody.querySelector('.validation-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+        }
+
+        // Show errors as popup notifications
+        if (errors.length > 0) {
+            errors.forEach(error => {
+                this.showToast(error, 'error');
+            });
+        }
+
+        // Show warnings as popup notifications
+        if (warnings.length > 0) {
+            warnings.forEach(warning => {
+                this.showToast(warning, 'warning');
+            });
+        }
+    }
+    // 2. REPLACE your existing convertTo24Hour function with this improved version:
+
+    convertTo24Hour(time12h) {
+        if (!time12h || typeof time12h !== 'string') return '';
+        try {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes] = time.split(':');
+            if (hours === '12') hours = '00';
+            if (modifier && modifier.toUpperCase() === 'PM') {
+                hours = parseInt(hours, 10) + 12;
+            }
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        } catch (error) {
+            return '';
+        }
+    }
+
     // UPDATED: Weekly grid rendering with teacher/center display logic
     renderWeeklyGrid() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
         for (const day of days) {
             const dayContainer = document.getElementById(`day-${day}`);
             if (!dayContainer) continue;
-            const daySchedules = this.schedules.filter(s => s.extendedProps?.dayOfWeek === day);
+
+            // Get schedules for this day and sort by start time
+            const daySchedules = this.schedules
+                .filter(s => s.extendedProps?.dayOfWeek === day)
+                .sort((a, b) => {
+                    const startTimeA = a.extendedProps?.startTime || '';
+                    const startTimeB = b.extendedProps?.startTime || '';
+
+                    // Convert 12-hour format to 24-hour for comparison
+                    const time24A = this.convertTo24Hour(startTimeA);
+                    const time24B = this.convertTo24Hour(startTimeB);
+
+                    // Convert to minutes for numerical comparison
+                    const minutesA = this.timeToMinutes(time24A);
+                    const minutesB = this.timeToMinutes(time24B);
+
+                    console.log(`Comparing: ${startTimeA} (${time24A}, ${minutesA}min) vs ${startTimeB} (${time24B}, ${minutesB}min)`);
+
+                    return minutesA - minutesB;
+                });
+
             if (daySchedules.length === 0) {
                 dayContainer.innerHTML = `
-                    <div class="empty-day">No schedules</div>
-                    <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                `;
+                <div class="empty-day">No schedules</div>
+                <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            `;
             } else {
                 let html = '';
                 for (const schedule of daySchedules) {
@@ -562,14 +718,14 @@ class ScheduleManager {
                     const isCurrentUserTeacher = window.userContext?.isTeacher === true;
 
                     html += `
-                        <div class="schedule-event ${eventClass}" onclick="scheduleManager.showScheduleDetails(${s?.scheduleCode || 0})">
-                            <div class="event-title">
-                                <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
-                                ${schedule.title || 'Untitled'}
-                            </div>
-                            <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
-                            ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
-                    `;
+                    <div class="schedule-event ${eventClass}" onclick="scheduleManager.showScheduleDetails(${s?.scheduleCode || 0})">
+                        <div class="event-title">
+                            <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
+                            ${schedule.title || 'Untitled'}
+                        </div>
+                        <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
+                        ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
+                `;
 
                     // Show different information based on current user type
                     if (isCurrentUserTeacher) {
@@ -594,19 +750,19 @@ class ScheduleManager {
                     }
 
                     html += `
-                                <div style="margin-top:6px">
-                                    <button class="btn btn-sm btn-light" onclick="event.stopPropagation();scheduleManager.editSchedule(${s?.scheduleCode})" title="Edit"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();scheduleManager.handleDeleteRequest(${s?.scheduleCode})" title="Delete"><i class="fas fa-trash"></i></button>
-                                </div>
+                            <div style="margin-top:6px">
+                                <button class="btn btn-sm btn-light" onclick="event.stopPropagation();scheduleManager.editSchedule(${s?.scheduleCode})" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();scheduleManager.handleDeleteRequest(${s?.scheduleCode})" title="Delete"><i class="fas fa-trash"></i></button>
                             </div>
-                        `;
+                        </div>
+                    `;
                 }
 
                 html += `
-                    <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                `;
+                <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            `;
 
                 dayContainer.innerHTML = html;
             }
@@ -733,7 +889,6 @@ class ScheduleManager {
         if (this.dom.endTime) this.dom.endTime.value = this.convertTo24Hour(s.endTime);
         if (this.dom.scheduleAmount) this.dom.scheduleAmount.value = s.scheduleAmount || '';
     }
-
     resetForm() {
         if (this.dom.scheduleForm) {
             ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'rootCode', 'centerCode', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'yearCode', 'scheduleAmount'].forEach(id => {
@@ -756,23 +911,18 @@ class ScheduleManager {
                 this.dom.eduYearCode.dispatchEvent(new Event('change'));
             }
         }
+
+        // Clear validation messages
+        const modalBody = this.dom.scheduleModal?.querySelector('.modal-body');
+        if (modalBody) {
+            const existingAlert = modalBody.querySelector('.validation-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+        }
+
         this.removeStuckBackdrop();
     }
-    convertTo24Hour(time12h) {
-        if (!time12h || typeof time12h !== 'string') return '';
-        try {
-            const [time, modifier] = time12h.split(' ');
-            let [hours, minutes] = time.split(':');
-            if (hours === '12') hours = '00';
-            if (modifier && modifier.toUpperCase() === 'PM') {
-                hours = parseInt(hours, 10) + 12;
-            }
-            return `${hours.toString().padStart(2, '0')}:${minutes}`;
-        } catch (error) {
-            return '';
-        }
-    }
-
     // Loader, Modal, Toast
 
     showLoader() {
@@ -838,29 +988,57 @@ class ScheduleManager {
         }
         this.removeStuckBackdrop();
     }
+
     showToast(msg, type = 'info') {
         // Good UX: Use a toast/snackbar if available, else fallback to alert
         if (window.bootstrap && window.bootstrap.Toast && document.querySelector('.toast-container')) {
             const toastDiv = document.createElement('div');
-            toastDiv.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'info')} border-0`;
+
+            // Determine background color based on type
+            let bgClass;
+            switch (type) {
+                case 'error':
+                    bgClass = 'bg-danger';
+                    break;
+                case 'success':
+                    bgClass = 'bg-success';
+                    break;
+                case 'warning':
+                    bgClass = 'bg-warning text-dark'; // Dark text for better contrast on yellow
+                    break;
+                default:
+                    bgClass = 'bg-info';
+            }
+
+            toastDiv.className = `toast align-items-center text-white ${bgClass} border-0`;
             toastDiv.setAttribute('role', 'alert');
             toastDiv.setAttribute('aria-live', 'assertive');
             toastDiv.setAttribute('aria-atomic', 'true');
+
+            // Use appropriate close button color
+            const closeButtonClass = type === 'warning' ? 'btn-close' : 'btn-close btn-close-white';
+
             toastDiv.innerHTML = `
-                <div class="d-flex">
-                  <div class="toast-body">${msg}</div>
-                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            `;
+            <div class="d-flex">
+              <div class="toast-body">${msg}</div>
+              <button type="button" class="${closeButtonClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
             document.querySelector('.toast-container').appendChild(toastDiv);
-            const toast = new bootstrap.Toast(toastDiv, { delay: 3500 });
+
+            // Set different delays based on message type
+            const delay = type === 'error' ? 6000 : (type === 'warning' ? 5000 : 3500);
+            const toast = new bootstrap.Toast(toastDiv, { delay: delay });
             toast.show();
+
             toastDiv.addEventListener('hidden.bs.toast', () => toastDiv.remove());
         } else {
-            alert(msg);
+            // Fallback to alert with type prefix
+            const prefix = type === 'error' ? '❌ Error: ' : (type === 'warning' ? '⚠️ Warning: ' : (type === 'success' ? '✅ ' : 'ℹ️ '));
+            alert(prefix + msg);
         }
     }
-
     removeStuckBackdrop() {
         document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
         document.body.classList.remove('modal-open');

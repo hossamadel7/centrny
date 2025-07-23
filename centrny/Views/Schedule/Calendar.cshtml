@@ -15,54 +15,12 @@
                 <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
             </div>
 
-            <!-- User Context Banner or Error Message -->
-            @if (ViewBag.Error != null)
-            {
-                <div class="error-banner">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>@ViewBag.Error</strong>
-                </div>
-            }
-            else if (ViewBag.CurrentUserRootCode != null)
-            {
-                <div class="user-context-banner @(ViewBag.IsCenter ? "center-banner" : "teacher-banner")">
-                    <h6>
-                        <i class="fas @(ViewBag.IsCenter ? "fa-building" : "fa-user-circle") me-2"></i>
-                        Your schedules for: <strong>@ViewBag.UserRootName</strong>
-                        <span class="badge ms-2">
-                            @(ViewBag.IsCenter ? "Center" : "Teacher") - Root Code: @ViewBag.CurrentUserRootCode
-                        </span>
-                    </h6>
-                    <small>You can view and manage schedules for your assigned @(ViewBag.IsCenter ? "center" : "teaching account") only</small>
-                </div>
-            }
-
             @if (ViewBag.Error == null)
             {
-                <!-- Legend -->
-                <div class="legend">
-                    <div class="legend-item">
-                        <i class="fas fa-layer-group text-info me-2"></i>
-                        <span>Multiple classes can run simultaneously</span>
-                    </div>
-                    <div class="legend-item">
-                        <i class="fas fa-mouse-pointer text-primary me-2"></i>
-                        <span>Click any schedule to view/edit/delete</span>
-                    </div>
-                </div>
 
-                <!-- Controls -->
-                <div class="controls-section">
-                    <button type="button" class="btn-modern btn-success" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                        <i class="fas fa-plus"></i> Add Schedule
-                    </button>
                     <a href="@Url.Action("Index")" class="btn-modern btn-info">
                         <i class="fas fa-list"></i> List View
                     </a>
-                    <button type="button" class="btn-modern" onclick="refreshSchedules()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                </div>
 
                 @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
                 {
@@ -82,27 +40,12 @@
                         </div>
                     </div>
                 }
-                <!-- Week Template Info -->
-                <div class="week-template-info">
-                    <h5><i class="fas fa-repeat me-2"></i>Weekly Schedule Template</h5>
-                    <p>
-                        This template shows your recurring weekly schedule pattern for <strong>@ViewBag.UserRootName</strong>.
-                        These schedules automatically repeat every week.
-                    </p>
-                </div>
+      
 
                 <!-- Custom Weekly Template Grid -->
                 <div class="weekly-template-grid" style="position: relative;">
                     <div class="loading-overlay" id="initialLoader">
                         <div class="spinner"></div>
-                    </div>
-
-                    <div class="week-header">
-                        Weekly Schedule Template
-                        @if (ViewBag.UserRootName != null)
-                        {
-                            <small class="ms-3 opacity-75">(@ViewBag.UserRootName)</small>
-                        }
                     </div>
 
                     <div class="days-grid">
@@ -532,7 +475,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
-<!-- Include the common schedule management JavaScript -->
 <script src="~/js/schedule-common.js"></script>
 <script>
     // Branch filter for center admins
@@ -545,32 +487,8 @@
         }
     }
 
-    // Patch scheduleManager to use selectedBranchCode in AJAX URL
-    setTimeout(function() {
-        if (window.scheduleManager) {
-            const origLoad = window.scheduleManager.loadSchedules.bind(window.scheduleManager);
-            window.scheduleManager.loadSchedules = async function() {
-                this.showLoader && this.showLoader();
-                try {
-                    let url = '/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31';
-                    if (window.selectedBranchCode) {
-                        url += '&branchCode=' + encodeURIComponent(window.selectedBranchCode);
-                    }
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    this.schedules = Array.isArray(data) ? data : [];
-                    this.renderWeeklyGrid();
-                } catch (e) {
-                    this.showToast && this.showToast('Failed to load schedules', 'error');
-                } finally {
-                    this.hideLoader && this.hideLoader();
-                }
-            };
-        }
-    }, 100);
-</script>
-<script>
-       window.userContext = {
+    // Set user context for schedule-common.js
+    window.userContext = {
         currentUserRootCode: @Json.Serialize(ViewBag.CurrentUserRootCode),
         userRootName: @Json.Serialize(ViewBag.UserRootName ?? ""),
         isCenter: @Json.Serialize(ViewBag.IsCenter ?? false),
@@ -582,261 +500,48 @@
         activeEduYearCode: @Json.Serialize(ViewBag.ActiveEduYearCode ?? null)
     };
 
-    // Calendar-specific functionality
-    class CalendarScheduleManager {
-        constructor() {
-            this.schedules = [];
-            this.setupCalendarSpecific();
-            this.setupDoubleClickPrevention();
-        }
-
-        setupCalendarSpecific() {
-            // Override the common manager's callbacks
-            if (typeof scheduleManager !== 'undefined') {
-                scheduleManager.onScheduleSaved = () => this.refreshSchedules();
-                scheduleManager.onScheduleDeleted = () => this.refreshSchedules();
-            }
-
-            // Initialize calendar
-            if (!window.userContext.hasError) {
-                this.loadSchedules();
-                setTimeout(() => {
-                    this.hideInitialLoader();
-                    this.showWelcomeMessage();
-                }, 1000);
-            }
-        }
-
-        setupDoubleClickPrevention() {
-            const saveButton = document.getElementById('saveScheduleBtn');
-            if (saveButton) {
-                let isSubmitting = false;
-
-                saveButton.addEventListener('click', (e) => {
-                    if (isSubmitting) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return false;
-                    }
-
-                    isSubmitting = true;
-
-                    // Disable button and show loading state
-                    saveButton.disabled = true;
-                    const btnText = saveButton.querySelector('.btn-text');
-                    const spinner = saveButton.querySelector('.spinner-border');
-
-                    if (btnText) btnText.textContent = 'Saving...';
-                    if (spinner) spinner.classList.remove('d-none');
-
-                    // Re-enable after operation completes (or fails)
-                    if (typeof scheduleManager !== 'undefined') {
-                        const originalCallback = scheduleManager.onScheduleSaved;
-                        scheduleManager.onScheduleSaved = () => {
-                            this.resetSaveButton();
-                            isSubmitting = false;
-                            if (originalCallback) originalCallback();
-                        };
-
-                        // Also handle errors
-                        const originalError = scheduleManager.onScheduleError || (() => {});
-                        scheduleManager.onScheduleError = (error) => {
-                            this.resetSaveButton();
-                            isSubmitting = false;
-                            originalError(error);
-                        };
-                    }
-
-                    // Reset after 10 seconds as failsafe
-                    setTimeout(() => {
-                        if (isSubmitting) {
-                            this.resetSaveButton();
-                            isSubmitting = false;
-                        }
-                    }, 10000);
-                });
-            }
-        }
-
-        resetSaveButton() {
-            const saveButton = document.getElementById('saveScheduleBtn');
-            if (saveButton) {
-                saveButton.disabled = false;
-                const btnText = saveButton.querySelector('.btn-text');
-                const spinner = saveButton.querySelector('.spinner-border');
-
-                if (btnText) btnText.textContent = 'Save Schedule';
-                if (spinner) spinner.classList.add('d-none');
-            }
-        }
-
-        async loadSchedules() {
-            try {
-                const response = await fetch('/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31');
-                const events = await response.json();
-
-                this.schedules = events;
-
-                // Transform events to schedule format for the common manager
-                if (typeof scheduleManager !== 'undefined') {
-                    scheduleManager.allSchedules = events.map(event => ({
-                        scheduleCode: event.extendedProps?.scheduleCode || 0,
-                        scheduleName: event.title || 'Untitled',
-                        dayOfWeek: event.extendedProps?.dayOfWeek || '',
-                        startTime: event.extendedProps?.startTime || '',
-                        endTime: event.extendedProps?.endTime || '',
-                        hallName: event.extendedProps?.hallName || '',
-                        hallCode: event.extendedProps?.hallCode || null,
-                        teacherName: event.extendedProps?.teacherName || '',
-                        teacherCode: event.extendedProps?.teacherCode || null,
-                        subjectName: event.extendedProps?.subjectName || '',
-                        subjectCode: event.extendedProps?.subjectCode || null,
-                        centerName: event.extendedProps?.centerName || '',
-                        centerCode: event.extendedProps?.centerCode || null,
-                        branchName: event.extendedProps?.branchName || '',
-                        branchCode: event.extendedProps?.branchCode || null,
-                        eduYearCode: event.extendedProps?.eduYearCode || null,
-                        yearCode: event.extendedProps?.yearCode || null,
-                        scheduleAmount: event.extendedProps?.scheduleAmount || null,
-                        isCenter: event.extendedProps?.isCenter || false
-                    }));
-                }
-
-                this.renderWeeklyGrid();
-                console.log('✅ Schedules loaded for Calendar view:', this.schedules.length);
-            } catch (error) {
-                console.error('❌ Error loading schedules:', error);
-                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
-                    scheduleManager.showToast('Error', 'Failed to load schedules', 'error');
-                }
-            }
-        }
-
-        // UPDATED: Weekly grid rendering with teacher/center display logic for Calendar.cshtml
-        renderWeeklyGrid() {
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-            days.forEach(day => {
-                const dayContainer = document.getElementById(`day-${day}`);
-                if (!dayContainer) return;
-
-                const daySchedules = this.schedules.filter(s => s.extendedProps?.dayOfWeek === day);
-
-                if (daySchedules.length === 0) {
-                    dayContainer.innerHTML = `
-                        <div class="empty-day">No schedules</div>
-                        <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    `;
-                } else {
-                    let html = '';
-
-                    // Determine what to show based on user context
-                    const isCurrentUserCenter = window.userContext?.isCenter === true;
-                    const isCurrentUserTeacher = window.userContext?.isTeacher === true;
-
-                    daySchedules.forEach(schedule => {
-                        const eventClass = schedule.extendedProps?.isCenter ? 'center-event' : 'teacher-event';
-                        const s = schedule.extendedProps;
-
-                        html += `
-                            <div class="schedule-event ${eventClass}" onclick="showScheduleDetails(${s?.scheduleCode || 0})">
-                                <div class="event-title">
-                                    <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
-                                    ${schedule.title || 'Untitled'}
-                                </div>
-                                <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
-                                ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
-                        `;
-
-                        // Show different information based on current user type
-                        if (isCurrentUserTeacher) {
-                            // For TEACHER users: Show Center + Branch instead of teacher name
-                            if (s?.centerName && s?.branchName) {
-                                html += `<div class="event-details">🏢 ${s.centerName} - ${s.branchName}</div>`;
-                            } else if (s?.centerName) {
-                                html += `<div class="event-details">🏢 ${s.centerName}</div>`;
-                            } else if (s?.branchName) {
-                                html += `<div class="event-details">🏢 ${s.branchName}</div>`;
-                            }
-                        } else if (isCurrentUserCenter) {
-                            // For CENTER users: Show Teacher name as before
-                            if (s?.teacherName) {
-                                html += `<div class="event-details">👨‍🏫 ${s.teacherName}</div>`;
-                            }
-                        }
-
-                        // Always show subject if available
-                        if (s?.subjectName) {
-                            html += `<div class="event-details">📚 ${s.subjectName}</div>`;
-                        }
-
-                        html += `
-                            </div>
-                        `;
-                    });
-
-                    html += `
-                        <button class="add-schedule-btn" onclick="addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    `;
-
-                    dayContainer.innerHTML = html;
-                }
-            });
-        }
-
-        refreshSchedules() {
-            console.log('🔄 Refreshing calendar schedules...');
-            this.loadSchedules();
-        }
-
-        hideInitialLoader() {
-            const loader = document.getElementById('initialLoader');
-            if (loader) {
-                loader.style.display = 'none';
-            }
-        }
-
-        showWelcomeMessage() {
-            if (window.userContext.currentUserRootCode) {
-                if (typeof scheduleManager !== 'undefined' && scheduleManager.showToast) {
-                    scheduleManager.showToast(
-                        'Welcome!',
-                        `Calendar loaded for ${window.userContext.userRootName}`,
-                        'success'
-                    );
-                }
-            }
-        }
-    }
-
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Calendar-specific manager
-        const calendarManager = new CalendarScheduleManager();
-
-        // Calendar-specific global functions (for backward compatibility)
-        window.refreshSchedules = () => calendarManager.refreshSchedules();
-        window.addScheduleForDay = (day) => {
-            if (typeof scheduleManager !== 'undefined' && scheduleManager.addScheduleForDay) {
-                scheduleManager.addScheduleForDay(day);
-            } else {
-                // Fallback implementation
-                const daySelect = document.getElementById('dayOfWeek');
-                if (daySelect) {
-                    daySelect.value = day;
+        // Wait for scheduleManager to be ready
+        setTimeout(() => {
+            if (window.scheduleManager) {
+                // Hide initial loader after schedules load
+                const loader = document.getElementById('initialLoader');
+                if (loader) {
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 1000);
                 }
-                const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
-                modal.show();
+
+                // Show welcome message
+                if (window.userContext.currentUserRootCode && window.scheduleManager.showToast) {
+                    setTimeout(() => {
+                        window.scheduleManager.showToast(
+                            `Calendar loaded for ${window.userContext.userRootName}`,
+                            'success'
+                        );
+                    }, 1500);
+                }
             }
-        };
-        window.showScheduleDetails = (scheduleCode) => {
-            if (typeof scheduleManager !== 'undefined' && scheduleManager.showScheduleDetails) {
-                scheduleManager.showScheduleDetails(scheduleCode);
-            }
-        };
+        }, 100);
     });
+
+    // Global functions for Calendar view (using common scheduleManager)
+    window.refreshSchedules = () => {
+        if (window.scheduleManager && window.scheduleManager.loadSchedules) {
+            window.scheduleManager.loadSchedules();
+        }
+    };
+
+    window.addScheduleForDay = (day) => {
+        if (window.scheduleManager && window.scheduleManager.addScheduleForDay) {
+            window.scheduleManager.addScheduleForDay(day);
+        }
+    };
+
+    window.showScheduleDetails = (scheduleCode) => {
+        if (window.scheduleManager && window.scheduleManager.showScheduleDetails) {
+            window.scheduleManager.showScheduleDetails(scheduleCode);
+        }
+    };
 </script>
