@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using System.Security.Claims;
 
 namespace centrny.Controllers
 {
@@ -34,6 +35,57 @@ namespace centrny.Controllers
             return _db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
         }
 
+        // --- Permission Helper ---
+        public class PagePermission
+        {
+            public bool CanInsert { get; set; }
+            public bool CanUpdate { get; set; }
+            public bool CanDelete { get; set; }
+        }
+
+        // STATIC version for use in views (Razor)
+        public static PagePermission GetPagePermissions(CenterContext db, ClaimsPrincipal user, string pagePath)
+        {
+            var username = user.Identity?.Name;
+            if (string.IsNullOrEmpty(username)) return new PagePermission();
+            var currentUser = db.Users.FirstOrDefault(u => u.Username == username);
+            if (currentUser == null) return new PagePermission();
+            var group = db.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
+            if (group == null) return new PagePermission();
+            var page = db.Pages.FirstOrDefault(p => p.PagePath == pagePath);
+            if (page == null) return new PagePermission();
+            var gp = db.GroupPages.FirstOrDefault(g => g.GroupCode == group.GroupCode && g.PageCode == page.PageCode);
+            if (gp == null) return new PagePermission();
+            // Use the real column names from your GroupPages model
+            return new PagePermission
+            {
+                CanInsert = gp.InsertFlag,
+                CanUpdate = gp.UpdateFlag,
+                CanDelete = gp.DeleteFlag
+            };
+        }
+
+        // INSTANCE version for use in C# controller code
+        public PagePermission GetPagePermissions(string pagePath)
+        {
+            var username = User.Identity?.Name;
+            if (string.IsNullOrEmpty(username)) return new PagePermission();
+            var currentUser = _db.Users.FirstOrDefault(u => u.Username == username);
+            if (currentUser == null) return new PagePermission();
+            var group = _db.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
+            if (group == null) return new PagePermission();
+            var page = _db.Pages.FirstOrDefault(p => p.PagePath == pagePath);
+            if (page == null) return new PagePermission();
+            var gp = _db.GroupPages.FirstOrDefault(g => g.GroupCode == group.GroupCode && g.PageCode == page.PageCode);
+            if (gp == null) return new PagePermission();
+            return new PagePermission
+            {
+                CanInsert = gp.InsertFlag,
+                CanUpdate = gp.UpdateFlag,
+                CanDelete = gp.DeleteFlag
+            };
+        }
+
         public int GetUserRootCode()
         {
             string username = User.Identity.Name;
@@ -50,6 +102,13 @@ namespace centrny.Controllers
             {
                 return View("~/Views/Login/AccessDenied.cshtml");
             }
+
+            // Pass page permissions to the view as ViewBag
+            var perms = GetPagePermissions("TeacherManagement/Index");
+            ViewBag.CanInsert = perms.CanInsert;
+            ViewBag.CanUpdate = perms.CanUpdate;
+            ViewBag.CanDelete = perms.CanDelete;
+
             return View();
         }
 

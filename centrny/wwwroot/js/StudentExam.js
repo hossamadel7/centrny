@@ -1,4 +1,5 @@
-﻿// --- Exam resume logic with ticking timer, answers, and no auto submit on close! ---
+﻿// --- Exam timer: server-based, never resets, secure ---
+// --- StudentExam record is created on first load, timer is from DB! ---
 
 let examCode = (new URLSearchParams(window.location.search)).get('examCode');
 let studentCode = (new URLSearchParams(window.location.search)).get('studentCode');
@@ -7,24 +8,23 @@ let examDurationSeconds = null;
 let timer = null;
 let timeLeft = null;
 let submitted = false;
-let isExam = true; // default true, will be set by backend
+let isExam = true;
 
 const STORAGE_KEY = `exam_${studentCode}_${examCode}_progress`;
 
-window.onbeforeunload = null; // Do NOT auto-submit on close
-
+window.onbeforeunload = null;
 window.history.pushState(null, null, window.location.href);
-window.onpopstate = function () {
-    // Just leave, don't submit, don't redirect
-};
+window.onpopstate = function () { };
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Try to load progress and time
     loadExamInfo();
-    document.getElementById('examForm').onsubmit = function (e) {
-        e.preventDefault();
-        submitExam(false);
-    };
+    const examForm = document.getElementById('examForm');
+    if (examForm) {
+        examForm.onsubmit = function (e) {
+            e.preventDefault();
+            submitExam(false);
+        };
+    }
 });
 
 function loadExamInfo() {
@@ -33,81 +33,135 @@ function loadExamInfo() {
         .then(data => {
             if (data.error) {
                 showError(data.error);
-                setTimeout(() => redirectToProfile(), 2100);
                 return;
             }
             if (data.alreadyTaken) {
+                clearProgress();
                 showError('You have already taken this exam.');
-                setTimeout(() => redirectToProfile(), 2100);
                 return;
             }
-            document.getElementById('examTitle').textContent = data.examName + ` (Code: ${data.examCode})`;
+            const examTitle = document.getElementById('examTitle');
+            if (examTitle)
+                examTitle.textContent = data.examName ;
 
-            // ---- NEW LOGIC: Check if this is an assignment (IsExam == false) ----
             isExam = (typeof data.isExam !== "undefined") ? data.isExam : true;
 
             if (!isExam) {
-                // Assignment: Hide timer, student can take unlimited time
-                document.getElementById('examTimer').style.display = 'none';
-                // Do NOT set examDurationSeconds, timer, etc.
-                loadQuestions(); // Just load questions, don't start timer
+                const timerDiv = document.getElementById('examTimer');
+                if (timerDiv) timerDiv.style.display = 'none';
+                loadQuestions();
                 return;
             }
 
-            // Normal exam: show timer
-            document.getElementById('examTimer').style.display = '';
-            examDurationSeconds = (data.examDurationMinutes || 30) * 60;
-            loadQuestions();
-        }).catch(() => {
-            showError('Error loading exam info.');
+            const timerDiv = document.getElementById('examTimer');
+            if (timerDiv) timerDiv.style.display = '';
+            fetch(`/StudentExam/GetStudentExamStartTime?studentCode=${studentCode}&examCode=${examCode}`)
+                .then(res => res.json())
+                .then(timerData => {
+                    console.log("TimerData response from backend:", timerData);
+                    if (timerData.error) {
+                        showError(timerData.error || 'Timer information missing.');
+                        return;
+                    }
+                    if (!timerData.durationSeconds || !timerData.examStartTime) {
+                        showError('Timer information missing.');
+                        return;
+                    }
+                    // If backend provides timeLeft, use it; otherwise, calculate
+                    if (typeof timerData.timeLeft === "number") {
+                        timeLeft = timerData.timeLeft;
+                    } else {
+                        examDurationSeconds = timerData.durationSeconds;
+                        let now = new Date();
+                        let serverStart = new Date(timerData.examStartTime);
+                        let elapsed = Math.floor((now.getTime() - serverStart.getTime()) / 1000);
+                        timeLeft = examDurationSeconds - elapsed;
+                    }
+
+                    // Debug info for diagnosis
+                    console.log('now:', new Date().toISOString(), 'examStart:', timerData.examStartTime, 'timeLeft:', timeLeft);
+
+                    if (timeLeft <= 0) {
+                        timeLeft = 0;
+                        loadQuestions(true);
+                        return;
+                    }
+                    loadQuestions();
+                })
+                .catch((err) => {
+                    console.error('Fetch error:', err);
+                    showError('Error loading timer info.');
+                });
+
         });
 }
 
 function showError(msg) {
     const errDiv = document.getElementById('examErrorMsg');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
-    document.getElementById('questionsContainer').innerHTML = '';
-    document.getElementById('submitExamBtn').disabled = true;
+    if (errDiv) {
+        errDiv.textContent = msg || 'Unknown error';
+        errDiv.style.display = 'block';
+    }
+    const qContainer = document.getElementById('questionsContainer');
+    if (qContainer) qContainer.innerHTML = '';
+    const submitBtn = document.getElementById('submitExamBtn');
+    if (submitBtn) submitBtn.disabled = true;
+
+    // Also log in console for debugging
+    console.error("Exam Error:", msg);
 }
 
-function loadQuestions() {
+function loadQuestions(autoSubmitIfTimeUp = false) {
     fetch(`/StudentExam/GetExamQuestions?examCode=${examCode}`)
         .then(res => res.json())
         .then(data => {
             let progress = getSavedProgress();
-            let startTimestamp;
             let answers = {};
             if (progress) {
-                startTimestamp = progress.startTimestamp;
                 answers = progress.answers || {};
             } else {
-                startTimestamp = Date.now();
                 answers = {};
-                saveProgress({ startTimestamp, answers });
+                saveProgress({ answers });
             }
 
-            // ---- NEW LOGIC: For assignments, skip timer logic ----
             if (!isExam) {
                 renderQuestions(data, answers);
-                // Do not start timer, no time limit!
                 return;
             }
 
-            // Calculate time left
-            let now = Date.now();
-            let elapsed = Math.floor((now - startTimestamp) / 1000);
-            timeLeft = examDurationSeconds - elapsed;
-            if (timeLeft <= 0) {
-                // Time is up: auto-submit answers from storage
+            if (typeof timeLeft !== 'number' || timeLeft <= 0) {
                 timeLeft = 0;
                 renderQuestions(data, answers);
-                submitExam(true, answers);
+
+                // Double-check with server if exam is already submitted before attempting auto-submit
+                fetch(`/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`)
+                    .then(res => res.json())
+                    .then(singleExam => {
+                        if (singleExam.alreadyTaken) {
+                            clearProgress();
+                            showError('You have already taken this exam.');
+                            setTimeout(() => {
+                                window.onbeforeunload = null;
+                                redirectToProfile();
+                            }, 2200);
+                            return;
+                        }
+                        // Only auto-submit if there are answers and exam is not submitted
+                        if (autoSubmitIfTimeUp && Object.keys(answers).length > 0) {
+                            submitExam(true, answers);
+                        } else if (autoSubmitIfTimeUp) {
+                            showError('Time is up! No answers to submit.');
+                            setTimeout(() => {
+                                window.onbeforeunload = null;
+                                redirectToProfile();
+                            }, 2200);
+                        }
+                    });
                 return;
             }
 
             renderQuestions(data, answers);
-            startTimer(startTimestamp, answers);
+            startTimer(answers);
         }).catch(() => {
             showError('Error loading questions.');
         });
@@ -115,11 +169,13 @@ function loadQuestions() {
 
 function renderQuestions(data, savedAnswers = {}) {
     const container = document.getElementById('questionsContainer');
+    if (!container) return;
     if (!data || data.length === 0) {
         container.innerHTML = `<div class="exam-error-message text-center">
             <i class="fas fa-exclamation-triangle me-2"></i>No questions found for this exam.
         </div>`;
-        document.getElementById('submitExamBtn').disabled = true;
+        const submitBtn = document.getElementById('submitExamBtn');
+        if (submitBtn) submitBtn.disabled = true;
         return;
     }
     container.innerHTML = data.map((q, idx) => `
@@ -143,50 +199,73 @@ function renderQuestions(data, savedAnswers = {}) {
         </div>
     `).join('');
 
-    // Attach listeners for saving answers
     container.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', () => {
-            let progress = getSavedProgress();
-            if (!progress) return;
+            let progress = getSavedProgress() || { answers: {} };
             progress.answers[radio.name.replace('q_', '')] = radio.value;
             saveProgress(progress);
         });
     });
 }
 
-function startTimer(startTimestamp, answers) {
+function startTimer(answers) {
     updateTimerDisplay();
     timer = setInterval(() => {
         timeLeft--;
         updateTimerDisplay();
         if (timeLeft <= 0) {
             clearInterval(timer);
-            submitExam(true, answers); // auto-submit saved answers
+            // Double-check with server before auto-submitting
+            fetch(`/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`)
+                .then(res => res.json())
+                .then(singleExam => {
+                    if (singleExam.alreadyTaken) {
+                        clearProgress();
+                        showError('You have already taken this exam.');
+                        setTimeout(() => {
+                            window.onbeforeunload = null;
+                            redirectToProfile();
+                        }, 2200);
+                        return;
+                    }
+                    if (Object.keys(answers).length > 0) {
+                        submitExam(true, answers);
+                    } else {
+                        showError('Time is up! No answers to submit.');
+                        setTimeout(() => {
+                            window.onbeforeunload = null;
+                            redirectToProfile();
+                        }, 2200);
+                    }
+                });
         }
     }, 1000);
 }
+
 function updateTimerDisplay() {
+    const timerDiv = document.getElementById('examTimer');
+    if (!timerDiv) return;
     let min = Math.floor(timeLeft / 60);
     let sec = timeLeft % 60;
-    document.getElementById('examTimer').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+    timerDiv.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
     if (timeLeft <= 60) {
-        document.getElementById('examTimer').style.background = '#e46a0a';
+        timerDiv.style.background = '#e46a0a';
     }
     if (timeLeft <= 10) {
-        document.getElementById('examTimer').style.background = '#dc3545';
+        timerDiv.style.background = '#dc3545';
     }
     if (timeLeft <= 0) {
-        document.getElementById('examTimer').style.background = '#dc3545';
-        document.getElementById('examTimer').textContent = "Time's up!";
+        timerDiv.style.background = '#dc3545';
+        timerDiv.textContent = "Time's up!";
     }
 }
 
-// submitExam: if answersObj is passed, use it. Otherwise, gather from DOM.
 function submitExam(auto = false, answersObj = null) {
     if (submitted) return;
     submitted = true;
     if (timer) clearInterval(timer);
-    document.getElementById('submitExamBtn').disabled = true;
+    const submitBtn = document.getElementById('submitExamBtn');
+    if (submitBtn) submitBtn.disabled = true;
 
     let answers = [];
     if (answersObj) {
@@ -205,6 +284,16 @@ function submitExam(auto = false, answersObj = null) {
         });
     }
 
+    // Prevent submission if no answers and auto
+    if (auto && answers.length === 0) {
+        showError('Time is up! No answers to submit.');
+        setTimeout(() => {
+            window.onbeforeunload = null;
+            redirectToProfile();
+        }, 2200);
+        return;
+    }
+
     fetch('/StudentExam/SubmitExam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -216,7 +305,6 @@ function submitExam(auto = false, answersObj = null) {
     })
         .then(res => res.json())
         .then(result => {
-            // Clear progress after submit
             clearProgress();
             if (result.message) {
                 showError(result.message);
@@ -244,8 +332,6 @@ function redirectToProfile() {
         window.location.href = '/Student/' + studentCode;
     }
 }
-
-// --- Local Storage for Progress ---
 
 function getSavedProgress() {
     try {

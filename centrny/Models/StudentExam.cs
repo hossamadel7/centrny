@@ -17,6 +17,8 @@ public partial class StudentExam
 
     public bool? IsActive { get; set; }
 
+    public DateTime? ExamTimer { get; set; }
+
     public int? InsertUser { get; set; }
 
     public DateTime? InsertTime { get; set; }

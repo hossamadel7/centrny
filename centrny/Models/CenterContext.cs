@@ -1477,6 +1477,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.StudentCode).HasColumnName("Student_Code");
             entity.Property(e => e.ExamCode).HasColumnName("Exam_Code");
             entity.Property(e => e.ExamDegree).HasColumnName("Exam_Degree");
+            entity.Property(e => e.ExamTimer)
+                .HasColumnType("datetime")
+                .HasColumnName("Exam_Timer");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")

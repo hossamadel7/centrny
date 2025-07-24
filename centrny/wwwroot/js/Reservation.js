@@ -1,17 +1,21 @@
-﻿// --- Localization Helper ---
+﻿// --- Reservation.js ---
+
+// Helper: get localized string by key (from data- attributes)
 function getJsString(key) {
     return $('#js-localization').attr('data-' + key.replace(/_/g, '-'));
 }
 
+function resetSubmitButton($btn, defaultText) {
+    $btn.text(defaultText).prop('disabled', false);
+}
+
 $(document).ready(function () {
-    // Detect which mode we're in
     var isCenter = typeof window.isCenter !== 'undefined'
         ? window.isCenter
         : ($("#rootAddReservationBtn").length === 0);
 
-    // ================= NON-CENTER FLOW =================
+    // =============== NON-CENTER FLOW ===================
     if (!isCenter) {
-        // Set labels
         $('#rootDateLabel').text(getJsString('date-label'));
         $('#rootTeacherLabel').text(getJsString('teacher-label'));
         $('#rootDescriptionLabel').text(getJsString('description-label'));
@@ -55,7 +59,6 @@ $(document).ready(function () {
                 }
                 let cards = '';
                 data.reservations.forEach(function (r) {
-                    // --- Horizontal Card Design ---
                     cards += `
                         <div class="reservation-horizontal-card mb-3">
                             <div class="card-horizontal-content d-flex align-items-center py-3 px-4">
@@ -110,7 +113,7 @@ $(document).ready(function () {
         $('#rootAddReservationBtn').on('click', function () {
             fetchSingleTeacher(function (t) {
                 $('#rootReservationModalLabel').text(getJsString('add-reservation-title'));
-                $('#rootReservationSaveBtn').text(getJsString('add-reservation-btn'));
+                resetSubmitButton($('#rootReservationSaveBtn'), getJsString('add-reservation-btn'));
                 $('#rootReservationForm')[0].reset();
                 $('#rootReservationCode').val('');
                 $('#rootTeacherCode').val(t.teacherCode);
@@ -126,7 +129,7 @@ $(document).ready(function () {
             let r = $(this).data('res');
             fetchSingleTeacher(function (t) {
                 $('#rootReservationModalLabel').text(getJsString('edit-reservation-title'));
-                $('#rootReservationSaveBtn').text(getJsString('save-changes-btn'));
+                resetSubmitButton($('#rootReservationSaveBtn'), getJsString('save-changes-btn'));
                 $('#rootReservationForm')[0].reset();
                 $('#rootReservationCode').val(r.reservationCode);
                 $('#rootTeacherCode').val(t.teacherCode);
@@ -147,19 +150,43 @@ $(document).ready(function () {
         $('#rootReservationForm').on('submit', function (e) {
             e.preventDefault();
             var isEdit = !!$('#rootReservationCode').val();
+            var $btn = $('#rootReservationSaveBtn');
+            var defaultText = isEdit ? getJsString('save-changes-btn') : getJsString('add-reservation-btn');
+            $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
+
+            // Defensive: check required fields before ajax
+            if (!$('#rootStartTime').val() || !$('#rootEndTime').val()) {
+                alert(getJsString('start-time-label') + " and " + getJsString('end-time-label') + " are required.");
+                resetSubmitButton($btn, defaultText);
+                return;
+            }
+
             var url = isEdit ? '/Reservation/EditRootReservation' : '/Reservation/AddRootReservation';
             $.ajax({
                 url: url,
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function () {
+                success: function (data) {
+                    if (data && data.success === false && data.message) {
+                        alert(data.message);
+                        resetSubmitButton($btn, defaultText);
+                        return;
+                    }
                     $('#rootReservationModal').modal('hide');
+                    resetSubmitButton($btn, defaultText);
                     loadRootReservations();
                 },
                 error: function (xhr) {
                     alert((isEdit ? getJsString('failed-edit-reservation') : getJsString('failed-add-reservation')) + (xhr.responseText || ''));
+                    resetSubmitButton($btn, defaultText);
                 }
             });
+        });
+
+        $('#rootReservationModal').on('hidden.bs.modal', function () {
+            var isEdit = !!$('#rootReservationCode').val();
+            var defaultText = isEdit ? getJsString('save-changes-btn') : getJsString('add-reservation-btn');
+            resetSubmitButton($('#rootReservationSaveBtn'), defaultText);
         });
 
         $(document).on('click', '.delete-root-btn', function () {
@@ -191,7 +218,7 @@ $(document).ready(function () {
         });
     }
 
-    // ================ CENTER FLOW: Existing logic ================
+    // =============== CENTER FLOW ===================
     if (isCenter) {
         let selectedBranch = null;
         let selectedDate = new Date().toISOString().slice(0, 10);
@@ -277,7 +304,20 @@ $(document).ready(function () {
         });
 
         $('#addReservationModal').on('show.bs.modal', function () {
+            resetSubmitButton($('#addReservationBtn'), getJsString('add-reservation-btn'));
             loadTeachers('#addTeacherSelect');
+        });
+
+        $('#addReservationModal').on('hidden.bs.modal', function () {
+            resetSubmitButton($('#addReservationBtn'), getJsString('add-reservation-btn'));
+        });
+
+        $('#editReservationModal').on('show.bs.modal', function () {
+            resetSubmitButton($('#saveChangesBtn'), getJsString('save-changes-btn'));
+        });
+
+        $('#editReservationModal').on('hidden.bs.modal', function () {
+            resetSubmitButton($('#saveChangesBtn'), getJsString('save-changes-btn'));
         });
 
         function loadReservationGrid() {
@@ -385,6 +425,7 @@ $(document).ready(function () {
             $('#addDeposit').val('');
             $('#addFinalCost').val('');
             $('#addPeriod').val('');
+            resetSubmitButton($('#addReservationBtn'), getJsString('add-reservation-btn'));
             loadTeachers('#addTeacherSelect');
             $('#addReservationModal').modal('show');
         });
@@ -404,26 +445,44 @@ $(document).ready(function () {
 
         $(document).on('submit', '#addReservationForm', function (e) {
             e.preventDefault();
+            var $btn = $('#addReservationBtn');
+            $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
+
+            // Defensive: check required fields before ajax
+            if (!$('#addStartTime').val() || !$('#addEndTime').val()) {
+                alert(getJsString('start-time-label') + " and " + getJsString('end-time-label') + " are required.");
+                resetSubmitButton($btn, getJsString('add-reservation-btn'));
+                return;
+            }
             if (!$('#addHallCode').val()) {
                 alert('Hall code not set. Please try again.');
+                resetSubmitButton($btn, getJsString('add-reservation-btn'));
                 return;
             }
             $.ajax({
                 url: '/Reservation/AddReservation',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function () {
+                success: function (data) {
+                    if (data && data.success === false && data.message) {
+                        alert(data.message);
+                        resetSubmitButton($btn, getJsString('add-reservation-btn'));
+                        return;
+                    }
                     $('#addReservationModal').modal('hide');
+                    resetSubmitButton($btn, getJsString('add-reservation-btn'));
                     loadReservationGrid();
                 },
                 error: function (xhr) {
                     alert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'));
+                    resetSubmitButton($btn, getJsString('add-reservation-btn'));
                 }
             });
         });
 
         $(document).on('click', '.edit-res-btn', function () {
             let res = $(this).data('res');
+            resetSubmitButton($('#saveChangesBtn'), getJsString('save-changes-btn'));
             $('#editReservationCode').val(res.reservationCode);
             $('#editDescription').val(res.description);
             $('#editStartTime').val(res.start);
@@ -434,16 +493,32 @@ $(document).ready(function () {
 
         $(document).on('submit', '#editReservationForm', function (e) {
             e.preventDefault();
+            var $btn = $('#saveChangesBtn');
+            $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
+
+            // Defensive: check required fields before ajax
+            if (!$('#editStartTime').val() || !$('#editEndTime').val()) {
+                alert(getJsString('start-time-label') + " and " + getJsString('end-time-label') + " are required.");
+                resetSubmitButton($btn, getJsString('save-changes-btn'));
+                return;
+            }
             $.ajax({
                 url: '/Reservation/EditReservation',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function () {
+                success: function (data) {
+                    if (data && data.success === false && data.message) {
+                        alert(data.message);
+                        resetSubmitButton($btn, getJsString('save-changes-btn'));
+                        return;
+                    }
                     $('#editReservationModal').modal('hide');
+                    resetSubmitButton($btn, getJsString('save-changes-btn'));
                     loadReservationGrid();
                 },
                 error: function (xhr) {
                     alert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'));
+                    resetSubmitButton($btn, getJsString('save-changes-btn'));
                 }
             });
         });

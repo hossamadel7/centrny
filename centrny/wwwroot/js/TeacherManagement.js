@@ -21,6 +21,12 @@ $(function () {
     const phoneText = getJsString('phone');
     const addressText = getJsString('address');
 
+    // Permission flags from view
+    const jsPerms = $('#js-permissions');
+    const canInsert = jsPerms.data('can-insert') === true || jsPerms.data('can-insert') === "True";
+    const canUpdate = jsPerms.data('can-update') === true || jsPerms.data('can-update') === "True";
+    const canDelete = jsPerms.data('can-delete') === true || jsPerms.data('can-delete') === "True";
+
     let loggedInUserCode = null;
     let loggedInUserRootCode = null;
     let currentTeacherCode = null;
@@ -70,9 +76,9 @@ $(function () {
                         <div style="color: var(--text-muted);">Status: <span class="fw-bold">${teacher.isActive ? 'Active' : 'Inactive'}</span></div>
                         <div class="mt-3 teacher-btn-row">
                             <button class="modern-btn show-subjects-btn" data-teacher="${teacher.teacherCode}">${showSubjectsBtn}</button>
-                            <button class="modern-btn add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>
-                            <button class="modern-btn edit-btn edit-teacher-btn" data-teacher="${teacher.teacherCode}">${editBtnText}</button>
-                            <button class="modern-btn delete-btn delete-teacher-btn" data-teacher="${teacher.teacherCode}">${deleteBtnText}</button>
+                            ${canInsert ? `<button class="modern-btn add-teachsubject-btn" data-teacher="${teacher.teacherCode}">${addTeachingSubjectBtn}</button>` : ''}
+                            ${canUpdate ? `<button class="modern-btn edit-btn edit-teacher-btn" data-teacher="${teacher.teacherCode}">${editBtnText}</button>` : ''}
+                            ${canDelete ? `<button class="modern-btn delete-btn delete-teacher-btn" data-teacher="${teacher.teacherCode}">${deleteBtnText}</button>` : ''}
                         </div>
                         <div class="mt-2 subjects-container" id="subjects-for-teacher-${teacher.teacherCode}" style="display:none;"></div>
                     </div>
@@ -237,8 +243,8 @@ $(function () {
         <span>
             ${s.subjectName} <span class="text-secondary">(${s.yearName} - ${s.branchName})</span>
         </span>
-        <button class="modern-btn delete-btn delete-teach-btn"
-            data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}" style="padding: 0.3em 1em; font-size: 0.9em;">${deleteBtnText}</button>
+        ${canDelete ? `<button class="modern-btn delete-btn delete-teach-btn"
+            data-teacher="${s.teacherCode}" data-subject="${s.subjectCode}" style="padding: 0.3em 1em; font-size: 0.9em;">${deleteBtnText}</button>` : ''}
     </li>`;
                     }
                     html += '</ul>';

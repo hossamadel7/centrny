@@ -1,9 +1,18 @@
 ﻿@using Microsoft.Extensions.Localization
 @inject IStringLocalizerFactory LocalizerFactory
+@inject centrny.Models.CenterContext DbContext
+@using centrny.Controllers
+
 @{
     var Localizer = LocalizerFactory.Create("Teacher", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
     ViewBag.Title = Localizer["Title"];
     Layout = "_Layout";
+
+    // Permission for Add/Edit/Delete for this group on TeacherManagement/Index
+    var perms = TeacherManagementController.GetPagePermissions(DbContext, User, "TeacherManagement/Index");
+    ViewBag.CanInsert = perms.CanInsert;
+    ViewBag.CanUpdate = perms.CanUpdate;
+    ViewBag.CanDelete = perms.CanDelete;
 }
 
 <link rel="stylesheet" href="~/css/Hamody.css" />
@@ -27,6 +36,12 @@
      data-delete-btn="@Localizer["DeleteBtn"]"
      data-no-educational-year="@Localizer["NoEducationalYear"]"></div>
 
+<!-- Permissions for JS -->
+<div id="js-permissions"
+     data-can-insert="@ViewBag.CanInsert"
+     data-can-update="@ViewBag.CanUpdate"
+     data-can-delete="@ViewBag.CanDelete"></div>
+
 <!-- Gradient and Centered Header -->
 <div class="questions-header" style="margin-bottom: 0;">
     <h2>
@@ -38,7 +53,10 @@
 <div class="container mt-4">
     <div id="teachers-section">
         <div style="text-align:center;margin-bottom:1.4em;">
-            <button class="modern-btn secondary-btn" id="openAddTeacher">@Localizer["AddTeacherBtn"]</button>
+            @if (ViewBag.CanInsert)
+            {
+                <button class="modern-btn secondary-btn" id="openAddTeacher">@Localizer["AddTeacherBtn"]</button>
+            }
         </div>
         <div id="teachers-list"></div>
     </div>
@@ -164,7 +182,6 @@
         --bg-white: #fff;
     }
 
-    /* Gradient block header centered */
     .questions-header {
         width: 100%;
         text-align: center;
@@ -198,16 +215,13 @@
             margin-right: 12px;
             color: #4f8cff;
         }
+
     @@media (max-width: 900px) {
-        .questions-header h2
-
-    {
-        font-size: 1.6rem;
+        .questions-header h2 {
+            font-size: 1.6rem;
+        }
     }
 
-    }
-
-    /* Modern button style */
     .modern-btn {
         font-weight: 600 !important;
         padding: 0.65rem 1.3rem !important;
@@ -225,21 +239,18 @@
         background: var(--primary-gradient) !important;
     }
 
-        /* Only Add Teaching Subject button - purple gradient */
         .modern-btn.add-teachsubject-btn,
         .modern-btn.secondary-btn.add-teachsubject-btn {
             background: var(--secondary-gradient) !important;
             color: #fff !important;
         }
 
-        /* Only Show Subjects button - light theme */
         .modern-btn.show-subjects-btn {
             background: var(--primary-gradient-light) !important;
             color: var(--primary-color) !important;
             font-weight: 600;
         }
 
-        /* Edit and Delete */
         .modern-btn.edit-btn {
             background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
         }

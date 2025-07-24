@@ -9,6 +9,8 @@ using centrny.Attributes;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 namespace centrny.Controllers
 {
@@ -22,7 +24,7 @@ namespace centrny.Controllers
             _context = context;
             _logger = logger;
         }
-
+       
         // ==================== REGISTRATION METHODS ====================
 
         /// <summary>
@@ -500,8 +502,66 @@ namespace centrny.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("Student/CheckAttendancePassword")]
+        public async Task<IActionResult> CheckAttendancePassword([FromBody] AttendancePasswordRequest req)
+        {
+            var allowedGroups = new[] { "Admins", "Attendance Officers" };
+
+            // Get allowed users in the branch
+            var users = await (from u in _context.Users
+                               join g in _context.Groups on u.GroupCode equals g.GroupCode
+                               where g.BranchCode == req.BranchCode && allowedGroups.Contains(g.GroupName)
+                               select new { u.UserCode, u.Password, u.Username }).ToListAsync();
+
+            foreach (var user in users)
+            {
+                if (user.Password == req.Password) // Plain text
+                {
+                    // Simulate login: set user identity (you may need to adapt this for your auth system)
+                    var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim("UserId", user.UserCode.ToString())
+            };
+                    var identity = new ClaimsIdentity(claims, "AttendancePassword");
+                    var principal = new ClaimsPrincipal(identity);
+
+                    // Set the user as logged in for this request
+                    await HttpContext.SignInAsync(principal);
+
+                    return Json(new
+                    {
+                        success = true,
+                        username = user.Username,
+                        userCode = user.UserCode,
+                        message = "User authorized and logged in. You may now mark attendance."
+                    });
+                }
+            }
+
+            // If no match
+            return Json(new
+            {
+                success = false,
+                error = "Wrong password or not authorized for this branch."
+            });
+        }
+
         // ==================== REGISTRATION HELPER METHODS ====================
 
+        private string CreateMD5(string input)
+        {
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                var inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                var hashBytes = md5.ComputeHash(inputBytes);
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                    sb.Append(hashBytes[i].ToString("X2"));  // uppercase hex
+                return sb.ToString();
+            }
+        }
         private string GetDetailedEntityError(Exception ex)
         {
             var message = ex.Message;
@@ -1355,6 +1415,53 @@ namespace centrny.Controllers
                 return NotFound("An error occurred while loading the profile.");
             }
         }
+        [HttpGet]
+        [Route("Student/StudentData/{item_key}")]
+        public async Task<IActionResult> StudentData(string item_key)
+        {
+            // You can reuse the same logic as your Profile action:
+            // Get the student/profile data to show in the StudentData view
+            var item = await _context.Items
+                .Include(i => i.StudentCodeNavigation)
+                .ThenInclude(s => s.RootCodeNavigation)
+                .Include(i => i.StudentCodeNavigation)
+                .ThenInclude(s => s.BranchCodeNavigation)
+                .Include(i => i.StudentCodeNavigation)
+                .ThenInclude(s => s.YearCodeNavigation)
+                .ThenInclude(y => y.LevelCodeNavigation)
+                .Where(i => i.ItemKey == item_key && i.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (item == null || item.StudentCodeNavigation == null)
+            {
+                return NotFound("Student profile not found or access denied.");
+            }
+
+            var student = item.StudentCodeNavigation;
+
+            var viewModel = new StudentProfileViewModel
+            {
+                ItemKey = item_key,
+                StudentCode = student.StudentCode,
+                StudentName = student.StudentName,
+                StudentPhone = student.StudentPhone,
+                StudentParentPhone = student.StudentParentPhone,
+                StudentBirthdate = student.StudentBirthdate,
+                StudentGender = student.StudentGender,
+                SubscriptionTime = student.SubscribtionTime,
+                IsActive = student.IsActive,
+                BranchName = student.BranchCodeNavigation?.BranchName,
+                YearName = student.YearCodeNavigation?.YearName,
+                LevelName = student.YearCodeNavigation?.LevelCodeNavigation?.LevelName,
+                RootName = student.RootCodeNavigation?.RootName,
+                RootCode = student.RootCode,
+                YearCode = student.YearCode,
+                Age = CalculateAge(student.StudentBirthdate),
+                CanMarkAttendance = await IsCurrentUserAdmin(student.RootCode, student.BranchCode)
+            };
+
+            return View("StudentData", viewModel);
+        }
 
         /// <summary>
         /// GET: Student/GetUpcomingClasses/{item_key} - API endpoint to get upcoming classes for attendance
@@ -1570,13 +1677,14 @@ namespace centrny.Controllers
         /// <summary>
         /// POST: Student/MarkAttendance - API endpoint to mark student attendance
         /// </summary>
+        // Add this to your StudentController
+
         [HttpPost]
         [Route("Student/MarkAttendance")]
         public async Task<IActionResult> MarkAttendance([FromBody] MarkAttendanceRequest request)
         {
             try
             {
-                // Validate request
                 if (request == null || string.IsNullOrEmpty(request.ItemKey))
                 {
                     return Json(new { success = false, error = "Invalid request." });
@@ -1588,7 +1696,6 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Student not found." });
                 }
 
-                // Get class details
                 var classEntity = await _context.Classes
                     .Include(c => c.ScheduleCodeNavigation)
                     .Include(c => c.HallCodeNavigation)
@@ -1600,32 +1707,56 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Class not found." });
                 }
 
-                // FIX: Use rootCode from student, branchCode from classEntity
                 if (!await IsCurrentUserAdmin(student.RootCode, classEntity.BranchCode))
                 {
                     return Json(new { success = false, error = "Only administrators can mark attendance." });
                 }
 
-                // Check for duplicate attendance
                 var existingAttendance = await _context.Attends
                     .FirstOrDefaultAsync(a => a.StudentId == student.StudentCode &&
-                                            a.ClassId == request.ClassCode);
+                                              a.ClassId == request.ClassCode);
 
                 if (existingAttendance != null)
                 {
                     return Json(new { success = false, error = "Student has already been marked as attended for this class." });
                 }
 
-                // Create attendance record
+                // Find Discount type code robustly (case insensitive, both Arabic and English)
+                int discountTypeCode = 0;
+                var discountType = await _context.Lockups.FirstOrDefaultAsync(l =>
+                    l.PaymentName != null && (
+                        l.PaymentName.ToLower().Contains("discount") ||
+                        l.PaymentName.Contains("خصم")
+                    )
+                );
+                if (discountType != null)
+                    discountTypeCode = discountType.PaymentCode;
+
+                // Log incoming values for debugging
+                _logger.LogInformation("MarkAttendance: Received AttendanceType={AttendanceType}, SessionPrice={SessionPrice}, DiscountTypeCode={DiscountTypeCode}",
+                    request.AttendanceType, request.SessionPrice, discountTypeCode);
+
+                // Use discount price if Discount type selected and SessionPrice is present and positive
+                decimal sessionPriceToSave = classEntity.TotalAmount ?? 0;
+                if (request.AttendanceType == discountTypeCode && request.SessionPrice.HasValue && request.SessionPrice.Value > 0)
+                {
+                    sessionPriceToSave = request.SessionPrice.Value;
+                    _logger.LogInformation("MarkAttendance: Using DISCOUNT session price: {SessionPrice}", sessionPriceToSave);
+                }
+                else
+                {
+                    _logger.LogInformation("MarkAttendance: Using REGULAR session price: {SessionPrice}", sessionPriceToSave);
+                }
+
                 var attendance = new Attend
                 {
                     TeacherCode = classEntity.TeacherCode,
-                    ScheduleCode = classEntity.ScheduleCode, // Use 0 if null
+                    ScheduleCode = classEntity.ScheduleCode,
                     ClassId = request.ClassCode,
                     HallId = classEntity.HallCode,
                     StudentId = student.StudentCode,
                     AttendDate = DateTime.Now,
-                    SessionPrice = classEntity.TotalAmount ?? 0,
+                    SessionPrice = sessionPriceToSave,
                     RootCode = student.RootCode,
                     Type = request.AttendanceType
                 };
@@ -1633,8 +1764,9 @@ namespace centrny.Controllers
                 _context.Attends.Add(attendance);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Marked attendance for student {StudentCode} in class {ClassCode} by user {Username}",
-                    student.StudentCode, request.ClassCode, User.Identity.Name);
+                _logger.LogInformation(
+                    "Marked attendance for student {StudentCode} in class {ClassCode} by user {Username} with price {SessionPrice}",
+                    student.StudentCode, request.ClassCode, User.Identity.Name, sessionPriceToSave);
 
                 return Json(new
                 {
@@ -1652,6 +1784,8 @@ namespace centrny.Controllers
                 return Json(new { success = false, error = errorMessage, stackTrace = ex.StackTrace });
             }
         }
+
+      
 
         /// <summary>
         /// GET: Student/GetAttendanceTypes - API endpoint to get available attendance types
@@ -2324,13 +2458,14 @@ namespace centrny.Controllers
         public int? StudentFee { get; set; }
     }
 
+    // Your request class:
     public class MarkAttendanceRequest
     {
         public string ItemKey { get; set; } = string.Empty;
         public int ClassCode { get; set; }
         public int AttendanceType { get; set; }
+        public int? SessionPrice { get; set; }
     }
-
     // ==================== PUBLIC REGISTRATION MODELS ====================
 
     public class PublicRegistrationViewModel
@@ -2389,6 +2524,11 @@ namespace centrny.Controllers
         [Phone]
         [StringLength(20)]
         public string StudentPhone { get; set; } = string.Empty;
+    }
+    public class AttendancePasswordRequest
+    {
+        public int BranchCode { get; set; }
+        public string Password { get; set; }
     }
 
     public class LinkStudentRequest
