@@ -6,27 +6,30 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 <link href="~/css/Calendar.css" rel="stylesheet" />
+
 <div class="schedule-page">
-    
-        <div class="calendar-container">
-            <!-- Page Header -->
-            <div class="page-header">
-                <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule </h1>
-                <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
-            </div>
+    <div class="calendar-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1><i class="fas fa-calendar-week me-3"></i>Weekly Schedule</h1>
+            <p>Manage your recurring weekly schedules - no dates, just your weekly pattern</p>
+        </div>
 
-            @if (ViewBag.Error == null)
-            {
+        @if (ViewBag.Error == null)
+        {
+            <a href="@Url.Action("Index")" class="btn-modern btn-info">
+                <i class="fas fa-list"></i> List View
+            </a>
 
-                    <a href="@Url.Action("Index")" class="btn-modern btn-info">
-                        <i class="fas fa-list"></i> List View
-                    </a>
-
-                @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
-                {
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="branchFilter" class="form-label">Select Branch</label>
+            <!-- Enhanced Filter Section with Branch, Teacher, and Year -->
+            <div class="filter-section mb-4">
+                <div class="row g-3">
+                    @if (ViewBag.IsCenter == true && ViewBag.GroupBranchCode == null)
+                    {
+                        <div class="col-md-3">
+                            <label for="branchFilter" class="form-label">
+                                <i class="fas fa-building me-2"></i>Branch Filter
+                            </label>
                             <select id="branchFilter" class="form-select" onchange="onBranchFilterChanged()">
                                 <option value="">All Branches</option>
                                 @if (ViewBag.Branches != null)
@@ -38,96 +41,134 @@
                                 }
                             </select>
                         </div>
+                    }
+
+                    <!-- Teacher Filter -->
+                    <div class="col-md-3">
+                        <label for="teacherFilter" class="form-label">
+                            <i class="fas fa-user-tie me-2"></i>Teacher Filter
+                        </label>
+                        <select id="teacherFilter" class="form-select" onchange="onTeacherFilterChanged()">
+                            <option value="">All Teachers</option>
+                            <!-- Teachers will be loaded via JavaScript -->
+                        </select>
                     </div>
-                }
-      
 
-                <!-- Custom Weekly Template Grid -->
-                <div class="weekly-template-grid" style="position: relative;">
-                    <div class="loading-overlay" id="initialLoader">
-                        <div class="spinner"></div>
+                    <!-- Year Filter -->
+                    <div class="col-md-3">
+                        <label for="yearFilter" class="form-label">
+                            <i class="fas fa-graduation-cap me-2"></i>Year Filter
+                        </label>
+                        <select id="yearFilter" class="form-select" onchange="onYearFilterChanged()">
+                            <option value="">All Years</option>
+                            <!-- Years will be loaded via JavaScript -->
+                        </select>
                     </div>
 
-                    <div class="days-grid">
-                        <div class="day-column" data-day="Sunday">
-                            <div class="day-header">Sunday</div>
-                            <div class="day-content" id="day-Sunday">
-                                <div class="empty-day">No Classes</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Sunday')" title="Add schedule for Sunday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Clear Filters Button -->
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="clearAllFilters()">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                    </div>
+                </div>
 
-                        <div class="day-column" data-day="Monday">
-                            <div class="day-header">Monday</div>
-                            <div class="day-content" id="day-Monday">
-                                <div class="empty-day">No schedules</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Monday')" title="Add schedule for Monday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+                <!-- Schedule Count Display -->
+                <div class="schedule-count mt-3" id="scheduleCount" style="display: none;">
+                    Loading schedules...
+                </div>
 
-                        <div class="day-column" data-day="Tuesday">
-                            <div class="day-header">Tuesday</div>
-                            <div class="day-content" id="day-Tuesday">
-                                <div class="empty-day">No schedules</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Tuesday')" title="Add schedule for Tuesday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+                <!-- Active Filters Display -->
+                <div class="active-filters mt-3" id="activeFiltersDisplay" style="display: none;">
+                    <small class="text-muted">Active Filters:</small>
+                    <div class="d-flex flex-wrap gap-2 mt-1" id="activeFilterTags"></div>
+                </div>
+            </div>
 
-                        <div class="day-column" data-day="Wednesday">
-                            <div class="day-header">Wednesday</div>
-                            <div class="day-content" id="day-Wednesday">
-                                <div class="empty-day">No schedules</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Wednesday')" title="Add schedule for Wednesday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+            <!-- Custom Weekly Template Grid -->
+            <div class="weekly-template-grid" style="position: relative;">
+                <div class="loading-overlay" id="initialLoader">
+                    <div class="spinner"></div>
+                </div>
 
-                        <div class="day-column" data-day="Thursday">
-                            <div class="day-header">Thursday</div>
-                            <div class="day-content" id="day-Thursday">
-                                <div class="empty-day">No schedules</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Thursday')" title="Add schedule for Thursday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
+                <div class="days-grid">
+                    <div class="day-column" data-day="Sunday">
+                        <div class="day-header">Sunday</div>
+                        <div class="day-content" id="day-Sunday">
+                            <div class="empty-day">No Classes</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Sunday')" title="Add schedule for Sunday">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="day-column" data-day="Friday">
-                            <div class="day-header">Friday</div>
-                            <div class="day-content" id="day-Friday">
-                                <div class="empty-day">No schedules</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Friday')" title="Add schedule for Friday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
+                    <div class="day-column" data-day="Monday">
+                        <div class="day-header">Monday</div>
+                        <div class="day-content" id="day-Monday">
+                            <div class="empty-day">No schedules</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Monday')" title="Add schedule for Monday">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="day-column" data-day="Saturday">
-                            <div class="day-header">Saturday</div>
-                            <div class="day-content" id="day-Saturday">
-                                <div class="empty-day">No schedules</div>
-                                <button class="add-schedule-btn" onclick="addScheduleForDay('Saturday')" title="Add schedule for Saturday">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
+                    <div class="day-column" data-day="Tuesday">
+                        <div class="day-header">Tuesday</div>
+                        <div class="day-content" id="day-Tuesday">
+                            <div class="empty-day">No schedules</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Tuesday')" title="Add schedule for Tuesday">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="Wednesday">
+                        <div class="day-header">Wednesday</div>
+                        <div class="day-content" id="day-Wednesday">
+                            <div class="empty-day">No schedules</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Wednesday')" title="Add schedule for Wednesday">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="Thursday">
+                        <div class="day-header">Thursday</div>
+                        <div class="day-content" id="day-Thursday">
+                            <div class="empty-day">No schedules</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Thursday')" title="Add schedule for Thursday">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="Friday">
+                        <div class="day-header">Friday</div>
+                        <div class="day-content" id="day-Friday">
+                            <div class="empty-day">No schedules</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Friday')" title="Add schedule for Friday">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="Saturday">
+                        <div class="day-header">Saturday</div>
+                        <div class="day-content" id="day-Saturday">
+                            <div class="empty-day">No schedules</div>
+                            <button class="add-schedule-btn" onclick="addScheduleForDay('Saturday')" title="Add schedule for Saturday">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-   
+            </div>
+        }
+    </div>
 </div>
 
 @if (ViewBag.Error == null)
 {
-
     <!-- Floating Add Button -->
     <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#scheduleModal" title="Add New Schedule">
         <i class="fas fa-plus"></i>
@@ -474,16 +515,193 @@
 @Html.AntiForgeryToken()
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-
 <script src="~/js/schedule-common.js"></script>
+
 <script>
-    // Branch filter for center admins
+    // Enhanced filter system
     window.selectedBranchCode = null;
+    window.selectedTeacherCode = null;
+    window.selectedYearCode = null;
+
+    // Filter change handlers
     function onBranchFilterChanged() {
         var dropdown = document.getElementById('branchFilter');
         window.selectedBranchCode = dropdown ? dropdown.value : null;
+        updateActiveFilters();
         if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
             window.scheduleManager.loadSchedules();
+        }
+    }
+
+    function onTeacherFilterChanged() {
+        var dropdown = document.getElementById('teacherFilter');
+        window.selectedTeacherCode = dropdown ? dropdown.value : null;
+        updateActiveFilters();
+        if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
+            window.scheduleManager.loadSchedules();
+        }
+    }
+
+    function onYearFilterChanged() {
+        var dropdown = document.getElementById('yearFilter');
+        window.selectedYearCode = dropdown ? dropdown.value : null;
+        updateActiveFilters();
+        if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
+            window.scheduleManager.loadSchedules();
+        }
+    }
+
+    function clearAllFilters() {
+        // Reset all filter dropdowns
+        var branchFilter = document.getElementById('branchFilter');
+        var teacherFilter = document.getElementById('teacherFilter');
+        var yearFilter = document.getElementById('yearFilter');
+
+        if (branchFilter) branchFilter.value = '';
+        if (teacherFilter) teacherFilter.value = '';
+        if (yearFilter) yearFilter.value = '';
+
+        // Reset filter variables
+        window.selectedBranchCode = null;
+        window.selectedTeacherCode = null;
+        window.selectedYearCode = null;
+
+        updateActiveFilters();
+
+        // Reload schedules
+        if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
+            window.scheduleManager.loadSchedules();
+        }
+    }
+
+    function updateActiveFilters() {
+        const activeFiltersDisplay = document.getElementById('activeFiltersDisplay');
+        const activeFilterTags = document.getElementById('activeFilterTags');
+
+        if (!activeFiltersDisplay || !activeFilterTags) return;
+
+        // Clear existing tags
+        activeFilterTags.innerHTML = '';
+
+        let hasActiveFilters = false;
+
+        // Add branch filter tag
+        if (window.selectedBranchCode) {
+            const branchFilter = document.getElementById('branchFilter');
+            const branchText = branchFilter?.selectedOptions[0]?.text || 'Selected Branch';
+            addFilterTag('Branch', branchText, 'branchFilter');
+            hasActiveFilters = true;
+        }
+
+        // Add teacher filter tag
+        if (window.selectedTeacherCode) {
+            const teacherFilter = document.getElementById('teacherFilter');
+            const teacherText = teacherFilter?.selectedOptions[0]?.text || 'Selected Teacher';
+            addFilterTag('Teacher', teacherText, 'teacherFilter');
+            hasActiveFilters = true;
+        }
+
+        // Add year filter tag
+        if (window.selectedYearCode) {
+            const yearFilter = document.getElementById('yearFilter');
+            const yearText = yearFilter?.selectedOptions[0]?.text || 'Selected Year';
+            addFilterTag('Year', yearText, 'yearFilter');
+            hasActiveFilters = true;
+        }
+
+        // Show/hide active filters display
+        activeFiltersDisplay.style.display = hasActiveFilters ? 'block' : 'none';
+    }
+
+    function addFilterTag(label, value, filterId) {
+        const activeFilterTags = document.getElementById('activeFilterTags');
+        if (!activeFilterTags) return;
+
+        const tag = document.createElement('span');
+        tag.className = 'badge bg-primary me-2';
+        tag.innerHTML = `
+            ${label}: ${value}
+            <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.6rem;" onclick="clearFilter('${filterId}')"></button>
+        `;
+        activeFilterTags.appendChild(tag);
+    }
+
+    function clearFilter(filterId) {
+        const filter = document.getElementById(filterId);
+        if (filter) {
+            filter.value = '';
+
+            // Trigger the appropriate change handler
+            if (filterId === 'branchFilter') onBranchFilterChanged();
+            else if (filterId === 'teacherFilter') onTeacherFilterChanged();
+            else if (filterId === 'yearFilter') onYearFilterChanged();
+        }
+    }
+
+    // Load filter dropdowns
+    async function loadFilterDropdowns() {
+        try {
+            const isCenter = @Json.Serialize(ViewBag.IsCenter ?? false);
+
+            // Load teachers for filter (only for center users)
+            if (isCenter) {
+                const teachersResponse = await fetch('/Schedule/GetTeachersForCenterUser');
+                const teachersData = await teachersResponse.json();
+
+                if (teachersData.success && teachersData.teachers) {
+                    const teacherFilter = document.getElementById('teacherFilter');
+                    if (teacherFilter) {
+                        // Clear existing options except "All Teachers"
+                        teacherFilter.innerHTML = '<option value="">All Teachers</option>';
+
+                        teachersData.teachers.forEach(teacher => {
+                            const option = document.createElement('option');
+                            option.value = teacher.value;
+                            option.textContent = teacher.text;
+                            teacherFilter.appendChild(option);
+                        });
+                    }
+                }
+            } else {
+                // For teacher users, hide teacher filter or load all teachers
+                const teacherFilter = document.getElementById('teacherFilter');
+                if (teacherFilter) {
+                    const teachersResponse = await fetch('/Schedule/GetTeachersForCenterUser');
+                    const teachersData = await teachersResponse.json();
+
+                    if (teachersData.success && teachersData.teachers) {
+                        teacherFilter.innerHTML = '<option value="">All Teachers</option>';
+                        teachersData.teachers.forEach(teacher => {
+                            const option = document.createElement('option');
+                            option.value = teacher.value;
+                            option.textContent = teacher.text;
+                            teacherFilter.appendChild(option);
+                        });
+                    }
+                }
+            }
+
+            // Load years for filter (works for both user types)
+            const yearsResponse = await fetch('/Schedule/GetYearsForFilter');
+            const yearsData = await yearsResponse.json();
+
+            if (yearsData.success && yearsData.years) {
+                const yearFilter = document.getElementById('yearFilter');
+                if (yearFilter) {
+                    // Clear existing options except "All Years"
+                    yearFilter.innerHTML = '<option value="">All Years</option>';
+
+                    yearsData.years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year.value;
+                        option.textContent = year.text;
+                        yearFilter.appendChild(option);
+                    });
+                }
+            }
+
+        } catch (error) {
+            console.error('Error loading filter dropdowns:', error);
         }
     }
 
@@ -502,6 +720,9 @@
 
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
+        // Load filter dropdowns
+        loadFilterDropdowns();
+
         // Wait for scheduleManager to be ready
         setTimeout(() => {
             if (window.scheduleManager) {

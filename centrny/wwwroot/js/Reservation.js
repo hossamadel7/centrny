@@ -1,4 +1,5 @@
-﻿// --- Localization Helper ---
+﻿// === RESERVATION SYSTEM - MODERN UI/UX ===
+// --- Localization Helper ---
 function getJsString(key) {
     return $('#js-localization').attr('data-' + key.replace(/_/g, '-'));
 }
@@ -9,20 +10,13 @@ $(document).ready(function () {
         ? window.isCenter
         : ($("#rootAddReservationBtn").length === 0);
 
+    console.log('Reservation system mode:', isCenter ? 'Center' : 'Non-Center');
+
     // ================= NON-CENTER FLOW =================
     if (!isCenter) {
-        // Set labels
+        // Set labels with modern styling
         $('#rootDateLabel').text(getJsString('date-label'));
-        $('#rootTeacherLabel').text(getJsString('teacher-label'));
-        $('#rootDescriptionLabel').text(getJsString('description-label'));
-        $('#rootCapacityLabel').text(getJsString('capacity-label'));
-        $('#rootCostLabel').text(getJsString('cost-label'));
-        $('#rootStartTimeLabel').text(getJsString('start-time-label'));
-        $('#rootEndTimeLabel').text(getJsString('end-time-label'));
-        $('#rootPeriodLabel').text(getJsString('period-label'));
-        $('#rootDepositLabel').text(getJsString('deposit-label'));
-        $('#rootFinalCostLabel').text(getJsString('final-cost-label'));
-        $('#rootReservationSaveBtn').text(getJsString('add-reservation-btn'));
+        $('#rootAddBtnText').text(getJsString('add-reservation-btn'));
 
         let singleTeacher = null;
         let selectedDate = new Date().toISOString().slice(0, 10);
@@ -37,50 +31,80 @@ $(document).ready(function () {
                     singleTeacher = { teacherCode: data.teacherCode, teacherName: data.teacherName };
                     if (cb) cb(singleTeacher);
                 } else {
-                    alert(data.message || 'Teacher not found.');
+                    showReservationAlert(data.message || 'Teacher not found.', 'danger');
                 }
             });
         }
 
         function loadRootReservations() {
-            $('#rootReservationsList').html('<div class="text-muted text-center py-4">Loading...</div>');
+            $('#rootReservationsList').html(`
+                <div class="reservation-loading">
+                    <div class="reservation-spinner"></div>
+                    Loading reservations...
+                </div>
+            `);
+
             $.get('/Reservation/GetRootReservations', { reservationDate: selectedDate }, function (data) {
                 if (!data.success) {
-                    $('#rootReservationsList').html(`<div class="text-danger">${data.message || 'Failed to load reservations.'}</div>`);
+                    $('#rootReservationsList').html(`
+                        <div class="reservation-empty">
+                            <div class="reservation-empty-icon">⚠️</div>
+                            <div class="reservation-empty-title">Error Loading Reservations</div>
+                            <div class="reservation-empty-text">${data.message || 'Failed to load reservations.'}</div>
+                        </div>
+                    `);
                     return;
                 }
+
                 if (!data.reservations.length) {
-                    $('#rootReservationsList').html(`<div class="text-muted text-center py-4">${getJsString('no-data-found')}</div>`);
+                    $('#rootReservationsList').html(`
+                        <div class="reservation-empty">
+                            <div class="reservation-empty-icon">📅</div>
+                            <div class="reservation-empty-title">No Reservations Found</div>
+                            <div class="reservation-empty-text">No reservations scheduled for this date.</div>
+                            <button class="reservation-btn reservation-btn-primary" onclick="$('#rootAddReservationBtn').click()">
+                                <i class="bi bi-plus-circle"></i>
+                                Add First Reservation
+                            </button>
+                        </div>
+                    `);
                     return;
                 }
+
                 let cards = '';
                 data.reservations.forEach(function (r) {
-                    // --- Horizontal Card Design ---
                     cards += `
-                        <div class="reservation-horizontal-card mb-3">
-                            <div class="card-horizontal-content d-flex align-items-center py-3 px-4">
-                                <div class="card-info flex-grow-1">
-                                    <div class="card-title-row d-flex align-items-center mb-2">
-                                        <span class="teacher-name fw-bold me-3">
-                                            <i class="bi bi-person-circle text-primary"></i>
+                        <div class="reservation-horizontal-card">
+                            <div class="reservation-card-content">
+                                <div class="reservation-card-info">
+                                    <div class="reservation-card-title">
+                                        <div class="reservation-teacher-name">
+                                            <i class="bi bi-person-circle"></i>
                                             ${r.teacherName}
-                                        </span>
-                                        <span class="description text-muted ms-2">${r.description || ''}</span>
+                                        </div>
+                                        <div class="reservation-description">${r.description || ''}</div>
                                     </div>
-                                    <div class="card-details-row d-flex align-items-center flex-wrap gap-3 mb-1">
-                                        <span class="price badge bg-success px-2 py-1">
-                                            <i class="bi bi-currency-dollar"></i> ${r.cost || '0'}
-                                        </span>
-                                        <span class="time badge bg-primary px-2 py-1">
-                                            <i class="bi bi-clock"></i> ${r.reservationStartTime || ''} - ${r.reservationEndTime || ''}
-                                        </span>
+                                    <div class="reservation-card-details">
+                                        <div class="reservation-badge reservation-badge-price">
+                                            <i class="bi bi-currency-dollar"></i>
+                                            ${r.cost || '0'}
+                                        </div>
+                                        <div class="reservation-badge reservation-badge-time">
+                                            <i class="bi bi-clock"></i>
+                                            ${r.reservationStartTime || ''} - ${r.reservationEndTime || ''}
+                                        </div>
+                                        ${r.capacity ? `<div class="reservation-badge" style="background: #e0f2fe; color: #0277bd;"><i class="bi bi-people"></i> ${r.capacity}</div>` : ''}
                                     </div>
                                 </div>
-                                <div class="card-actions ms-3 d-flex flex-column gap-2 align-items-end">
-                                    <button class="modern-btn edit-btn edit-root-btn" title="${getJsString('edit-btn')}" data-res='${JSON.stringify(r)}'>
+                                <div class="reservation-card-actions">
+                                    <button class="reservation-btn reservation-btn-icon reservation-btn-edit edit-root-btn" 
+                                            title="${getJsString('edit-btn')}" 
+                                            data-res='${JSON.stringify(r)}'>
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="modern-btn delete-btn delete-root-btn" title="${getJsString('delete-btn')}" data-res-code="${r.reservationCode}">
+                                    <button class="reservation-btn reservation-btn-icon reservation-btn-delete delete-root-btn" 
+                                            title="${getJsString('delete-btn')}" 
+                                            data-res-code="${r.reservationCode}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -89,6 +113,14 @@ $(document).ready(function () {
                     `;
                 });
                 $('#rootReservationsList').html(cards);
+            }).fail(function () {
+                $('#rootReservationsList').html(`
+                    <div class="reservation-empty">
+                        <div class="reservation-empty-icon">❌</div>
+                        <div class="reservation-empty-title">Connection Error</div>
+                        <div class="reservation-empty-text">Unable to connect to server. Please try again.</div>
+                    </div>
+                `);
             });
         }
 
@@ -101,16 +133,17 @@ $(document).ready(function () {
                 let startMin = parseInt(s[0]) * 60 + parseInt(s[1]);
                 let endMin = parseInt(e[0]) * 60 + parseInt(e[1]);
                 let diff = (endMin - startMin) / 60;
-                $('#rootPeriod').val(diff > 0 ? diff : '');
+                $('#rootPeriod').val(diff > 0 ? diff.toFixed(2) : '');
             } else {
                 $('#rootPeriod').val('');
             }
         }
 
+        // Event Handlers
         $('#rootAddReservationBtn').on('click', function () {
             fetchSingleTeacher(function (t) {
                 $('#rootReservationModalLabel').text(getJsString('add-reservation-title'));
-                $('#rootReservationSaveBtn').text(getJsString('add-reservation-btn'));
+                $('#rootReservationSaveBtn').html('<i class="bi bi-plus-circle"></i> ' + getJsString('add-reservation-btn'));
                 $('#rootReservationForm')[0].reset();
                 $('#rootReservationCode').val('');
                 $('#rootTeacherCode').val(t.teacherCode);
@@ -126,7 +159,7 @@ $(document).ready(function () {
             let r = $(this).data('res');
             fetchSingleTeacher(function (t) {
                 $('#rootReservationModalLabel').text(getJsString('edit-reservation-title'));
-                $('#rootReservationSaveBtn').text(getJsString('save-changes-btn'));
+                $('#rootReservationSaveBtn').html('<i class="bi bi-check-circle"></i> ' + getJsString('save-changes-btn'));
                 $('#rootReservationForm')[0].reset();
                 $('#rootReservationCode').val(r.reservationCode);
                 $('#rootTeacherCode').val(t.teacherCode);
@@ -148,6 +181,13 @@ $(document).ready(function () {
             e.preventDefault();
             var isEdit = !!$('#rootReservationCode').val();
             var url = isEdit ? '/Reservation/EditRootReservation' : '/Reservation/AddRootReservation';
+
+            // Show loading state
+            var $submitBtn = $('#rootReservationSaveBtn');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Saving...');
+            $submitBtn.prop('disabled', true);
+
             $.ajax({
                 url: url,
                 type: 'POST',
@@ -155,9 +195,15 @@ $(document).ready(function () {
                 success: function () {
                     $('#rootReservationModal').modal('hide');
                     loadRootReservations();
+                    showReservationAlert(isEdit ? 'Reservation updated successfully!' : 'Reservation added successfully!', 'success');
                 },
                 error: function (xhr) {
-                    alert((isEdit ? getJsString('failed-edit-reservation') : getJsString('failed-add-reservation')) + (xhr.responseText || ''));
+                    var errorMsg = isEdit ? getJsString('failed-edit-reservation') : getJsString('failed-add-reservation');
+                    showReservationAlert(errorMsg + (xhr.responseText || ''), 'danger');
+                },
+                complete: function () {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
         });
@@ -165,15 +211,20 @@ $(document).ready(function () {
         $(document).on('click', '.delete-root-btn', function () {
             if (!confirm(getJsString('delete-confirm'))) return;
             var code = $(this).data('res-code');
+            var $btn = $(this);
+            $btn.html('<i class="reservation-spinner" style="width: 12px; height: 12px;"></i>');
+
             $.ajax({
                 url: '/Reservation/DeleteRootReservation',
                 type: 'POST',
                 data: { reservationCode: code },
                 success: function () {
                     loadRootReservations();
+                    showReservationAlert('Reservation deleted successfully!', 'success');
                 },
                 error: function () {
-                    alert(getJsString('failed-delete-reservation'));
+                    showReservationAlert(getJsString('failed-delete-reservation'), 'danger');
+                    $btn.html('<i class="bi bi-trash"></i>');
                 }
             });
         });
@@ -186,12 +237,13 @@ $(document).ready(function () {
 
         $('#rootStartTime, #rootEndTime').on('change', calculatePeriod);
 
+        // Initialize
         fetchSingleTeacher(function () {
             loadRootReservations();
         });
     }
 
-    // ================ CENTER FLOW: Existing logic ================
+    // ================ CENTER FLOW ================
     if (isCenter) {
         let selectedBranch = null;
         let selectedDate = new Date().toISOString().slice(0, 10);
@@ -199,13 +251,12 @@ $(document).ready(function () {
         let hallsCache = [];
 
         function setLabels() {
-            $('#reservationsTitle').text(getJsString('reservations-title'));
             $('#branchLabel').text(getJsString('branch-label'));
             $('#dateLabel').text(getJsString('date-label'));
             $('#branchSelect').html(`<option value="">${getJsString('select-branch-option')}</option>`);
             $('#addReservationModalLabel').text(getJsString('add-reservation-title'));
             $('#addTeacherLabel').text(getJsString('teacher-label'));
-            $('#firstTimeTeacherBtn').text(getJsString('first-time-btn')).addClass('modern-btn btn-cancel');
+            $('#firstTimeText').text(getJsString('first-time-btn'));
             $('#addDescriptionLabel').text(getJsString('description-label'));
             $('#addCapacityLabel').text(getJsString('capacity-label'));
             $('#addCostLabel').text(getJsString('cost-label'));
@@ -218,32 +269,35 @@ $(document).ready(function () {
             $('#teacherNameLabel').text(getJsString('teacher-name-label'));
             $('#teacherPhoneLabel').text(getJsString('teacher-phone-label'));
             $('#teacherAddressLabel').text(getJsString('teacher-address-label'));
-            $('#addTeacherBtn').text(getJsString('add-teacher-btn')).addClass('modern-btn');
-            $('#closeTeacherBtn').text(getJsString('close-btn')).addClass('modern-btn btn-cancel');
+            $('#addTeacherBtn').text(getJsString('add-teacher-btn'));
+            $('#closeTeacherBtn').text(getJsString('close-btn'));
             $('#editReservationModalLabel').text(getJsString('edit-reservation-title'));
             $('#editTeacherLabel').text(getJsString('teacher-label'));
             $('#editDescriptionLabel').text(getJsString('description-label'));
             $('#editStartTimeLabel').text(getJsString('start-time-label'));
             $('#editEndTimeLabel').text(getJsString('end-time-label'));
-            $('#saveChangesBtn').text(getJsString('save-changes-btn')).addClass('modern-btn');
-            $('#addReservationBtn').addClass('modern-btn');
+            $('#saveChangesBtn').text(getJsString('save-changes-btn'));
         }
         setLabels();
-
-        $('select').addClass('modern-input styled-select');
-        $('input[type="text"], input[type="number"], input[type="date"], input[type="time"]').addClass('modern-input');
 
         function loadBranches() {
             $.getJSON('/Reservation/GetBranchCodes', function (branches) {
                 let options = `<option value="">${getJsString('select-branch-option')}</option>`;
                 branches.forEach(b => options += `<option value="${b.branchCode}">${b.branchName}</option>`);
                 $('#branchSelect').html(options);
+            }).fail(function () {
+                showReservationAlert('Failed to load branches', 'danger');
             });
         }
 
         function loadHallsForBranch(branchCode) {
             $.getJSON('/Reservation/GetHalls?branchCode=' + branchCode, function (halls) {
-                hallsCache = halls;
+                hallsCache = halls.sort((a, b) => a.hallCode - b.hallCode);
+                console.log('Halls loaded for branch:', branchCode, hallsCache);
+            }).fail(function () {
+                console.error('Failed to load halls for branch:', branchCode);
+                hallsCache = [];
+                showReservationAlert('Failed to load halls for selected branch', 'warning');
             });
         }
 
@@ -254,73 +308,93 @@ $(document).ready(function () {
                     options += `<option value="${t.teacherCode}" ${(selectedVal == t.teacherCode ? "selected" : "")}>${t.teacherName}</option>`;
                 });
                 $(selectId).html(options);
+            }).fail(function () {
+                showReservationAlert('Failed to load teachers', 'warning');
             });
         }
-
-        $(document).on('click', '#firstTimeTeacherBtn', function () {
-            $('#addTeacherForm')[0].reset();
-            $('#teacherAddMsg').addClass('d-none').text('');
-            $('#addTeacherModal').modal('show');
-        });
-
-        $('#addTeacherForm').on('submit', function (e) {
-            e.preventDefault();
-            $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
-                $('#teacherAddMsg').removeClass('d-none').addClass('text-success').removeClass('text-danger').text(getJsString('success-add-teacher'));
-                loadTeachers('#addTeacherSelect', data.teacherCode);
-                setTimeout(() => {
-                    $('#addTeacherModal').modal('hide');
-                }, 1000);
-            }).fail(function () {
-                $('#teacherAddMsg').removeClass('d-none').removeClass('text-success').addClass('text-danger').text(getJsString('failed-add-teacher'));
-            });
-        });
-
-        $('#addReservationModal').on('show.bs.modal', function () {
-            loadTeachers('#addTeacherSelect');
-        });
 
         function loadReservationGrid() {
             if (!selectedBranch) {
                 $('#reservationGridTable thead').html('');
-                $('#reservationGridTable tbody').html(`<tr><td colspan="12" class="text-center text-muted">${getJsString('no-branch-selected')}</td></tr>`);
+                $('#reservationGridTable tbody').html(`
+                    <tr>
+                        <td colspan="12" class="reservation-empty">
+                            <div class="reservation-empty-icon">🏢</div>
+                            <div class="reservation-empty-title">Select a Branch</div>
+                            <div class="reservation-empty-text">Please select a branch to view reservations</div>
+                        </td>
+                    </tr>
+                `);
                 return;
             }
+
+            // Show loading state
+            $('#reservationGridTable tbody').html(`
+                <tr>
+                    <td colspan="12" class="reservation-loading">
+                        <div class="reservation-spinner"></div>
+                        Loading reservation grid...
+                    </td>
+                </tr>
+            `);
+
             $.ajax({
                 url: '/Reservation/GetReservationGrid',
                 data: { reservationDate: selectedDate, branchCode: selectedBranch },
                 type: 'GET',
                 success: function (data) {
                     periods = data.periods;
-                    let thead = `<tr><th class="sticky-col bg-white text-dark bold-rendered">${getJsString('hall-header')}</th>`;
-                    if (periods && periods.length)
+
+                    console.log('Grid Response:', data);
+                    console.log('Halls from response:', data.halls);
+
+                    if (data.halls) {
+                        hallsCache = data.halls;
+                        console.log('Updated hallsCache:', hallsCache);
+                    } else {
+                        console.error('No halls data in response!');
+                    }
+
+                    let thead = `<tr><th class="sticky-col">${getJsString('hall-header')}</th>`;
+                    if (periods && periods.length) {
                         periods.forEach((p, idx) => {
                             thead += `<th>${getJsString('session_' + (idx + 1))}</th>`;
                         });
+                    }
                     thead += '</tr>';
                     $('#reservationGridTable thead').html(thead);
 
                     let tbody = '';
                     if (data.grid && data.grid.length > 0) {
                         data.grid.forEach((row, hallIdx) => {
-                            let hallCode = hallsCache[hallIdx] ? hallsCache[hallIdx].hallCode : '';
+                            let hallCode = (data.halls && data.halls[hallIdx]) ? data.halls[hallIdx].hallCode : '';
+
+                            console.log(`Hall Index: ${hallIdx}, Hall Code: ${hallCode}, Hall Name: ${row[0]}, Available halls:`, data.halls);
+
                             tbody += '<tr>';
                             row.forEach((cell, idx) => {
                                 if (idx === 0) {
-                                    tbody += `<th class="sticky-col bg-white align-middle bold-rendered text-dark">${cell}</th>`;
+                                    tbody += `<th class="sticky-col">${cell}</th>`;
                                 } else {
                                     tbody += `<td>`;
                                     if (cell && typeof cell === "object" && !Array.isArray(cell)) {
                                         tbody += `
-                                            <div class="reservation-slot bg-light rounded-3 shadow-sm p-2 mb-2">
-                                                <div class="fw-bold text-primary fs-6">${cell.teacherName}</div>
-                                                <div class="small text-muted mb-1">${cell.description}</div>
-                                                <span class="badge bg-primary mb-1">${cell.start} - ${cell.end}</span>
-                                                <div class="d-flex justify-content-center gap-2 mt-2">
-                                                    <button class="modern-btn edit-btn edit-res-btn" title="${getJsString('edit-btn')}" data-res='${JSON.stringify(cell)}'>
+                                            <div class="reservation-slot">
+                                                <div class="reservation-slot-teacher">
+                                                    <i class="bi bi-person-circle"></i>
+                                                    ${cell.teacherName}
+                                                </div>
+                                                <div class="reservation-slot-description">${cell.description}</div>
+                                                <div class="reservation-slot-time">${cell.start} - ${cell.end}</div>
+                                                <div class="reservation-slot-actions">
+                                                    <button class="reservation-btn reservation-btn-icon reservation-btn-edit edit-res-btn" 
+                                                            title="${getJsString('edit-btn')}" 
+                                                            data-res='${JSON.stringify(cell)}'>
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button class="modern-btn delete-btn delete-res-btn" title="${getJsString('delete-btn')}" data-res-code="${cell.reservationCode}">
+                                                    <button class="reservation-btn reservation-btn-icon reservation-btn-delete delete-res-btn" 
+                                                            title="${getJsString('delete-btn')}" 
+                                                            data-res-code="${cell.reservationCode}">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -329,15 +403,22 @@ $(document).ready(function () {
                                     } else if (cell && Array.isArray(cell) && cell.length) {
                                         cell.forEach(res => {
                                             tbody += `
-                                                <div class="reservation-slot bg-light rounded-3 shadow-sm p-2 mb-2">
-                                                    <div class="fw-bold text-primary fs-6">${res.teacherName}</div>
-                                                    <div class="small text-muted mb-1">${res.description}</div>
-                                                    <span class="badge bg-primary mb-1">${res.start} - ${res.end}</span>
-                                                    <div class="d-flex justify-content-center gap-2 mt-2">
-                                                        <button class="modern-btn edit-btn edit-res-btn" title="${getJsString('edit-btn')}" data-res='${JSON.stringify(res)}'>
+                                                <div class="reservation-slot">
+                                                    <div class="reservation-slot-teacher">
+                                                        <i class="bi bi-person-circle"></i>
+                                                        ${res.teacherName}
+                                                    </div>
+                                                    <div class="reservation-slot-description">${res.description}</div>
+                                                    <div class="reservation-slot-time">${res.start} - ${res.end}</div>
+                                                    <div class="reservation-slot-actions">
+                                                        <button class="reservation-btn reservation-btn-icon reservation-btn-edit edit-res-btn" 
+                                                                title="${getJsString('edit-btn')}" 
+                                                                data-res='${JSON.stringify(res)}'>
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
-                                                        <button class="modern-btn delete-btn delete-res-btn" title="${getJsString('delete-btn')}" data-res-code="${res.reservationCode}">
+                                                        <button class="reservation-btn reservation-btn-icon reservation-btn-delete delete-res-btn" 
+                                                                title="${getJsString('delete-btn')}" 
+                                                                data-res-code="${res.reservationCode}">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </div>
@@ -345,10 +426,20 @@ $(document).ready(function () {
                                             `;
                                         });
                                     } else {
-                                        tbody += `
-                                        <button class="modern-btn btn-table add-res-btn w-100 mt-1" data-hall-idx="${hallIdx}" data-hall-code="${hallCode}" data-period-idx="${idx}" title="${getJsString('add-reservation-btn')}">
-                                            <i class="bi bi-plus"></i>
-                                        </button>`;
+                                        if (!hallCode) {
+                                            console.error(`Missing hall code for hall index ${hallIdx}`);
+                                            tbody += `<div class="reservation-alert reservation-alert-danger">Hall code missing</div>`;
+                                        } else {
+                                            tbody += `
+                                                <button class="reservation-add-cell-btn add-res-btn" 
+                                                        data-hall-idx="${hallIdx}" 
+                                                        data-hall-code="${hallCode}" 
+                                                        data-period-idx="${idx}" 
+                                                        title="${getJsString('add-reservation-btn')}">
+                                                    <i class="bi bi-plus-lg"></i>
+                                                </button>
+                                            `;
+                                        }
                                     }
                                     tbody += `</td>`;
                                 }
@@ -356,22 +447,71 @@ $(document).ready(function () {
                             tbody += '</tr>';
                         });
                     } else {
-                        tbody = `<tr><td colspan="${(periods && periods.length ? periods.length + 1 : 12)}" class="text-center text-muted">${getJsString('no-data-found')}</td></tr>`;
+                        tbody = `
+                            <tr>
+                                <td colspan="${(periods && periods.length ? periods.length + 1 : 12)}" class="reservation-empty">
+                                    <div class="reservation-empty-icon">📅</div>
+                                    <div class="reservation-empty-title">No Data Found</div>
+                                    <div class="reservation-empty-text">No reservations for this date and branch</div>
+                                </td>
+                            </tr>
+                        `;
                     }
                     $('#reservationGridTable tbody').html(tbody);
                 },
                 error: function () {
                     $('#reservationGridTable thead').html('');
-                    $('#reservationGridTable tbody').html(`<tr><td colspan="12" class="text-danger text-center">${getJsString('failed-to-load-grid')}</td></tr>`);
+                    $('#reservationGridTable tbody').html(`
+                        <tr>
+                            <td colspan="12" class="reservation-empty">
+                                <div class="reservation-empty-icon">❌</div>
+                                <div class="reservation-empty-title">Error Loading Grid</div>
+                                <div class="reservation-empty-text">Failed to load reservation data</div>
+                            </td>
+                        </tr>
+                    `);
+                    showReservationAlert('Failed to load reservation grid', 'danger');
                 }
             });
         }
+
+        // Event Handlers
+        $(document).on('click', '#firstTimeTeacherBtn', function () {
+            $('#addTeacherForm')[0].reset();
+            $('#teacherAddMsg').addClass('d-none').text('');
+            $('#addTeacherModal').modal('show');
+        });
+
+        $('#addTeacherForm').on('submit', function (e) {
+            e.preventDefault();
+            var $submitBtn = $('#addTeacherBtn');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Adding...');
+            $submitBtn.prop('disabled', true);
+
+            $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
+                $('#teacherAddMsg').removeClass('d-none').addClass('reservation-alert-success').removeClass('reservation-alert-danger').text(getJsString('success-add-teacher'));
+                loadTeachers('#addTeacherSelect', data.teacherCode);
+                setTimeout(() => {
+                    $('#addTeacherModal').modal('hide');
+                }, 1500);
+            }).fail(function () {
+                $('#teacherAddMsg').removeClass('d-none').removeClass('reservation-alert-success').addClass('reservation-alert-danger').text(getJsString('failed-add-teacher'));
+            }).always(function () {
+                $submitBtn.html(originalText);
+                $submitBtn.prop('disabled', false);
+            });
+        });
+
+        $('#addReservationModal').on('show.bs.modal', function () {
+            loadTeachers('#addTeacherSelect');
+        });
 
         $(document).on('click', '.add-res-btn', function () {
             let hallCode = $(this).data('hall-code');
             let periodIdx = $(this).data('period-idx') || 1;
             if (!hallCode) {
-                alert("Could not find hall code for this hall. Please reload the page or contact admin.");
+                showReservationAlert("Could not find hall code for this hall. Please reload the page or contact admin.", 'danger');
                 return;
             }
             $('#addHallCode').val(hallCode);
@@ -398,26 +538,50 @@ $(document).ready(function () {
                 let endHour = parseInt(end.split(':')[0]);
                 let endMin = parseInt(end.split(':')[1]);
                 let duration = (endHour + endMin / 60) - (startHour + startMin / 60);
-                $('#addPeriod').val(duration > 0 ? duration : '');
+                $('#addPeriod').val(duration > 0 ? duration.toFixed(2) : '');
             }
         });
 
         $(document).on('submit', '#addReservationForm', function (e) {
             e.preventDefault();
             if (!$('#addHallCode').val()) {
-                alert('Hall code not set. Please try again.');
+                showReservationAlert('Hall code not set. Please try again.', 'danger');
                 return;
             }
+
+            var $submitBtn = $('#addReservationBtn');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Adding...');
+            $submitBtn.prop('disabled', true);
+
             $.ajax({
                 url: '/Reservation/AddReservation',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function () {
+                success: function (response) {
+                    if (response && response.alert && response.message) {
+                        showReservationAlert(response.message, 'warning');
+                        return;
+                    }
                     $('#addReservationModal').modal('hide');
                     loadReservationGrid();
+                    showReservationAlert('Reservation added successfully!', 'success');
                 },
                 error: function (xhr) {
-                    alert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'));
+                    try {
+                        var errorResponse = JSON.parse(xhr.responseText);
+                        if (errorResponse && errorResponse.alert && errorResponse.message) {
+                            showReservationAlert(errorResponse.message, 'warning');
+                            return;
+                        }
+                    } catch (e) {
+                        // If not JSON or no alert property, show default error
+                    }
+                    showReservationAlert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'), 'danger');
+                },
+                complete: function () {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
         });
@@ -434,16 +598,39 @@ $(document).ready(function () {
 
         $(document).on('submit', '#editReservationForm', function (e) {
             e.preventDefault();
+            var $submitBtn = $('#saveChangesBtn');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Saving...');
+            $submitBtn.prop('disabled', true);
+
             $.ajax({
                 url: '/Reservation/EditReservation',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function () {
+                success: function (response) {
+                    if (response && response.alert && response.message) {
+                        showReservationAlert(response.message, 'warning');
+                        return;
+                    }
                     $('#editReservationModal').modal('hide');
                     loadReservationGrid();
+                    showReservationAlert('Reservation updated successfully!', 'success');
                 },
                 error: function (xhr) {
-                    alert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'));
+                    try {
+                        var errorResponse = JSON.parse(xhr.responseText);
+                        if (errorResponse && errorResponse.alert && errorResponse.message) {
+                            showReservationAlert(errorResponse.message, 'warning');
+                            return;
+                        }
+                    } catch (e) {
+                        // If not JSON or no alert property, show default error
+                    }
+                    showReservationAlert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'), 'danger');
+                },
+                complete: function () {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
         });
@@ -451,22 +638,29 @@ $(document).ready(function () {
         $(document).on('click', '.delete-res-btn', function () {
             if (!confirm(getJsString('delete-confirm'))) return;
             let code = $(this).data('res-code');
+            var $btn = $(this);
+            $btn.html('<i class="reservation-spinner" style="width: 12px; height: 12px;"></i>');
+
             $.ajax({
                 url: '/Reservation/DeleteReservation',
                 type: 'POST',
                 data: { reservationCode: code },
                 success: function () {
                     loadReservationGrid();
+                    showReservationAlert('Reservation deleted successfully!', 'success');
                 },
                 error: function () {
-                    alert(getJsString('failed-delete-reservation'));
+                    showReservationAlert(getJsString('failed-delete-reservation'), 'danger');
+                    $btn.html('<i class="bi bi-trash"></i>');
                 }
             });
         });
 
         $(document).on('change', '#branchSelect', function () {
             selectedBranch = $(this).val();
-            loadHallsForBranch(selectedBranch);
+            if (selectedBranch) {
+                loadHallsForBranch(selectedBranch);
+            }
             loadReservationGrid();
         });
 
@@ -476,21 +670,50 @@ $(document).ready(function () {
             loadReservationGrid();
         });
 
-        function ensureFirstTimeTeacherBtn() {
-            if ($('#firstTimeTeacherBtn').length === 0) {
-                let $teacherDiv = $('#addTeacherSelect').parent();
-                if ($teacherDiv.find('#firstTimeTeacherBtn').length === 0) {
-                    $('<button class="modern-btn btn-cancel" type="button" id="firstTimeTeacherBtn" tabindex="-1">' + getJsString('first-time-btn') + '</button>')
-                        .insertAfter('#addTeacherSelect');
-                }
-            }
-        }
-        $('#addReservationModal').on('shown.bs.modal', ensureFirstTimeTeacherBtn);
-
+        // Initialize
         loadBranches();
         setTimeout(() => {
             if (selectedBranch) loadHallsForBranch(selectedBranch);
             loadReservationGrid();
         }, 300);
+    }
+
+    // ================ SHARED UTILITIES ================
+    function showReservationAlert(message, type = 'info', duration = 5000) {
+        const alertId = 'reservation-alert-' + Date.now();
+        const alertHtml = `
+            <div id="${alertId}" class="reservation-alert reservation-alert-${type}" style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; animation: slideInRight 0.3s;">
+                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" style="float: right; background: none; border: none; font-size: 1.2rem; opacity: 0.7;" onclick="$('#${alertId}').remove()">×</button>
+            </div>
+        `;
+
+        $('body').append(alertHtml);
+
+        // Auto remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                $(`#${alertId}`).fadeOut(300, function () {
+                    $(this).remove();
+                });
+            }, duration);
+        }
+    }
+
+    // Add CSS for slide animation
+    if (!$('#reservation-animations').length) {
+        $('<style id="reservation-animations">').appendTo('head').text(`
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            .sticky-col {
+                position: sticky;
+                left: 0;
+                background: white !important;
+                z-index: 5;
+            }
+        `);
     }
 });

@@ -1,4 +1,4 @@
-﻿/* ENHANCED CALENDAR CSS WITH MODERN DESIGN */
+﻿/* ENHANCED CALENDAR CSS WITH MODERN DESIGN AND FILTER SECTION */
 
 /* --- CSS Variables for Consistent Theming --- */
 :root {
@@ -62,6 +62,78 @@ body, .schedule-page {
         font-weight: 400;
     }
 
+/* --- Enhanced Filter Section --- */
+.filter-section {
+    background: #fff;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    border-left: 4px solid #667eea;
+}
+
+    .filter-section .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .filter-section .form-select {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+
+        .filter-section .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+        }
+
+        .filter-section .form-select:hover {
+            border-color: #a0aec0;
+        }
+
+/* --- Active Filters Display --- */
+.active-filters {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+    .active-filters .badge {
+        background: var(--primary-gradient) !important;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+        .active-filters .badge .btn-close {
+            background: none;
+            border: none;
+            font-size: 0.6rem;
+            opacity: 0.8;
+            padding: 0;
+            margin: 0;
+        }
+
+            .active-filters .badge .btn-close:hover {
+                opacity: 1;
+            }
+
 /* --- Fixed Controls Section --- */
 .controls-section {
     position: fixed;
@@ -104,14 +176,27 @@ body, .schedule-page {
         background: var(--info-gradient) !important;
     }
 
-    .btn-modern:hover, .btn-modern:focus, .btn:hover, .add-schedule-btn:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: var(--shadow-lg) !important;
+.btn-outline-secondary {
+    background: #fff !important;
+    color: var(--text-secondary) !important;
+    border: 2px solid var(--border-color) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+    .btn-outline-secondary:hover {
+        background: #f8f9fa !important;
+        border-color: #a0aec0 !important;
+        color: var(--text-primary) !important;
     }
 
-    .btn-modern:active {
-        transform: translateY(0) !important;
-    }
+.btn-modern:hover, .btn-modern:focus, .btn:hover, .add-schedule-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.btn-modern:active {
+    transform: translateY(0) !important;
+}
 
 /* --- Enhanced Floating Add Button --- */
 .floating-add-btn {
@@ -227,6 +312,20 @@ body, .schedule-page {
         display: flex;
         align-items: center;
         gap: 0.3rem;
+    }
+
+    .schedule-event .event-year {
+        font-size: 0.8rem;
+        color: #667eea;
+        margin-bottom: 0.2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        margin-top: 0.3rem;
     }
 
 /* --- Enhanced Empty Day State --- */
@@ -365,6 +464,33 @@ body, .schedule-page {
     margin-bottom: 1rem !important;
 }
 
+/* --- Schedule Count Display --- */
+.schedule-count {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #2d3748;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+    .schedule-count.many-results {
+        background: linear-gradient(135deg, #e6fffa 0%, #f0fff4 100%);
+        border: 1px solid #81e6d9;
+    }
+
+    .schedule-count.few-results {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+        border: 1px solid #f6d55c;
+    }
+
+    .schedule-count.no-results {
+        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+        border: 1px solid #fc8181;
+    }
+
 /* --- Responsive Design --- */
 @media (max-width: 1200px) {
     .days-grid {
@@ -389,6 +515,14 @@ body, .schedule-page {
     .floating-add-btn {
         bottom: 2rem;
         right: 2rem;
+    }
+
+    .filter-section .row {
+        flex-direction: column;
+    }
+
+    .filter-section .col-md-3 {
+        margin-bottom: 1rem;
     }
 }
 

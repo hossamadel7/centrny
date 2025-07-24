@@ -1,5 +1,5 @@
-﻿// schedule-common.js - Complete updated version with teacher/center display logic, now with full localization support
-// Updated: 2025-07-10 23:57:23 UTC by Copilot
+﻿// schedule-common.js - Enhanced version with teacher and year filters
+// Updated with filter support for teacher and year filtering
 
 // Helper for localization: fetch strings from #js-localization
 function getJsString(key) {
@@ -12,6 +12,7 @@ function getJsString(key) {
 class ScheduleManager {
     constructor() {
         this.schedules = [];
+        this.allSchedules = []; // Store unfiltered schedules for client-side filtering
         this.editMode = false;
         this.currentScheduleId = null;
         this.lastViewedScheduleCode = null;
@@ -115,23 +116,93 @@ class ScheduleManager {
         };
     }
 
-    // Main Schedules Loader
+    // Enhanced loadSchedules method with filter support
     async loadSchedules() {
         this.showLoader && this.showLoader();
         try {
             let url = '/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31';
+
+            // Add filter parameters
+            const filters = [];
             if (window.selectedBranchCode) {
-                url += '&branchCode=' + encodeURIComponent(window.selectedBranchCode);
+                filters.push(`branchCode=${encodeURIComponent(window.selectedBranchCode)}`);
             }
+            if (window.selectedTeacherCode) {
+                filters.push(`teacherCode=${encodeURIComponent(window.selectedTeacherCode)}`);
+            }
+            if (window.selectedYearCode) {
+                filters.push(`yearCode=${encodeURIComponent(window.selectedYearCode)}`);
+            }
+
+            if (filters.length > 0) {
+                url += '&' + filters.join('&');
+            }
+
             const res = await fetch(url);
             const data = await res.json();
             this.schedules = Array.isArray(data) ? data : [];
+            this.allSchedules = [...this.schedules]; // Store copy for client-side filtering
             this.renderWeeklyGrid();
+
+            // Update schedule count display if element exists
+            this.updateScheduleCount();
+
         } catch (e) {
+            console.error('Error loading schedules:', e);
             this.showToast && this.showToast('Failed to load schedules', 'error');
         } finally {
             this.hideLoader && this.hideLoader();
         }
+    }
+
+    // Update schedule count display
+    updateScheduleCount() {
+        const countElement = document.getElementById('scheduleCount');
+        if (countElement) {
+            const count = this.schedules.length;
+            countElement.textContent = `${count} schedule${count !== 1 ? 's' : ''} found`;
+            countElement.style.display = 'block';
+
+            // Add color coding based on count
+            countElement.className = 'schedule-count mt-3';
+            if (count === 0) {
+                countElement.classList.add('no-results');
+            } else if (count <= 5) {
+                countElement.classList.add('few-results');
+            } else {
+                countElement.classList.add('many-results');
+            }
+        }
+    }
+
+    // Apply client-side filtering (alternative approach)
+    applyClientSideFilters() {
+        let filteredSchedules = [...this.allSchedules];
+
+        // Filter by branch
+        if (window.selectedBranchCode) {
+            filteredSchedules = filteredSchedules.filter(s =>
+                s.extendedProps?.branchCode == window.selectedBranchCode
+            );
+        }
+
+        // Filter by teacher
+        if (window.selectedTeacherCode) {
+            filteredSchedules = filteredSchedules.filter(s =>
+                s.extendedProps?.teacherCode == window.selectedTeacherCode
+            );
+        }
+
+        // Filter by year
+        if (window.selectedYearCode) {
+            filteredSchedules = filteredSchedules.filter(s =>
+                s.extendedProps?.yearCode == window.selectedYearCode
+            );
+        }
+
+        this.schedules = filteredSchedules;
+        this.renderWeeklyGrid();
+        this.updateScheduleCount();
     }
 
     // Save (Create/Edit) Schedule
@@ -180,6 +251,7 @@ class ScheduleManager {
             this.showModalLoader(false);
         }
     }
+
     // Delete Schedule (from modal confirm only)
     async deleteSchedule(id) {
         this.showModalDeleteSpinner(true);
@@ -248,8 +320,6 @@ class ScheduleManager {
             this.showToast(`Error loading ${selectId}`, 'error');
         }
     }
-
-    // ...inside ScheduleManager class...
 
     async preloadDropdownsForModal(schedule = null) {
         console.log('[DEBUG] preloadDropdownsForModal called with schedule:', schedule);
@@ -360,6 +430,7 @@ class ScheduleManager {
 
         console.log('[DEBUG] preloadDropdownsForModal completed');
     }
+
     setupDropdownListeners() {
         this.dom.centerCode?.addEventListener('change', async (e) => {
             const val = e.target.value;
@@ -629,8 +700,6 @@ class ScheduleManager {
     }
 
     // Show validation messages in modal
-    // REPLACE your existing showValidationMessages function with this:
-
     showValidationMessages(errors, warnings) {
         // Remove any existing validation messages from modal (cleanup)
         const modalBody = this.dom.scheduleModal?.querySelector('.modal-body');
@@ -655,7 +724,6 @@ class ScheduleManager {
             });
         }
     }
-    // 2. REPLACE your existing convertTo24Hour function with this improved version:
 
     convertTo24Hour(time12h) {
         if (!time12h || typeof time12h !== 'string') return '';
@@ -672,7 +740,7 @@ class ScheduleManager {
         }
     }
 
-    // UPDATED: Weekly grid rendering with teacher/center display logic
+    // Enhanced Weekly grid rendering with teacher/center display logic
     renderWeeklyGrid() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -694,8 +762,6 @@ class ScheduleManager {
                     // Convert to minutes for numerical comparison
                     const minutesA = this.timeToMinutes(time24A);
                     const minutesB = this.timeToMinutes(time24B);
-
-                    console.log(`Comparing: ${startTimeA} (${time24A}, ${minutesA}min) vs ${startTimeB} (${time24B}, ${minutesB}min)`);
 
                     return minutesA - minutesB;
                 });
@@ -742,6 +808,11 @@ class ScheduleManager {
                         if (s?.teacherName) {
                             html += `<div class="event-details">👨‍🏫 ${s.teacherName}</div>`;
                         }
+                    }
+
+                    // Always show year prominently if available
+                    if (s?.yearName) {
+                        html += `<div class="event-year">🎓 ${s.yearName}</div>`;
                     }
 
                     // Always show subject if available
@@ -799,7 +870,7 @@ class ScheduleManager {
         this.openModal('eventDetailsModal');
     }
 
-    // UPDATED: Schedule details with teacher/center display logic
+    // Enhanced Schedule details with teacher/center display logic
     generateScheduleDetailsHTML(schedule) {
         const s = schedule.extendedProps;
         const isCurrentUserTeacher = window.userContext?.isTeacher === true;
@@ -833,12 +904,15 @@ class ScheduleManager {
             }
         }
 
-        // Always show subject and amount if available
+        // Always show subject, year and amount if available
         if (s.subjectName) {
             html += `<div class="detail-item"><strong>Subject:</strong> ${s.subjectName}</div>`;
         }
+        if (s.yearName) {
+            html += `<div class="detail-item"><strong>Year:</strong> ${s.yearName}</div>`;
+        }
         if (s.scheduleAmount) {
-            html += `<div class="detail-item"><strong>Amount:</strong> $${parseFloat(s.scheduleAmount).toFixed(2)}</div>`;
+            html += `<div class="detail-item"><strong>Amount:</strong> ${parseFloat(s.scheduleAmount).toFixed(2)}</div>`;
         }
 
         html += `
@@ -889,6 +963,7 @@ class ScheduleManager {
         if (this.dom.endTime) this.dom.endTime.value = this.convertTo24Hour(s.endTime);
         if (this.dom.scheduleAmount) this.dom.scheduleAmount.value = s.scheduleAmount || '';
     }
+
     resetForm() {
         if (this.dom.scheduleForm) {
             ['scheduleName', 'dayOfWeek', 'startTime', 'endTime', 'rootCode', 'centerCode', 'hallCode', 'eduYearCode', 'teacherCode', 'subjectCode', 'yearCode', 'scheduleAmount'].forEach(id => {
@@ -923,6 +998,7 @@ class ScheduleManager {
 
         this.removeStuckBackdrop();
     }
+
     // Loader, Modal, Toast
 
     showLoader() {

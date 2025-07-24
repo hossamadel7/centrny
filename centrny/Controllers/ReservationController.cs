@@ -208,7 +208,6 @@ namespace centrny1.Controllers
             return Json(branches);
         }
 
-        // Reservation grid (sessions arranged by time order per hall)
         [HttpGet("GetReservationGrid")]
         public async Task<IActionResult> GetReservationGrid(DateTime? reservationDate, int? branchCode)
         {
@@ -217,7 +216,7 @@ namespace centrny1.Controllers
                 return Json(new { success = false, message = "Access denied." });
             }
             if (!branchCode.HasValue)
-                return Json(new { periods = new List<string>(), grid = new List<List<object>>() });
+                return Json(new { periods = new List<string>(), grid = new List<List<object>>(), halls = new List<object>() });
 
             int sessionCount = 10; // Change as needed
 
@@ -282,8 +281,16 @@ namespace centrny1.Controllers
             var result = new
             {
                 periods = sessionHeaders,
-                grid
+                grid,
+                halls = halls.Select(h => new { hallCode = h.HallCode, hallName = h.HallName }).ToList()
             };
+
+            // Debug logging
+            Console.WriteLine($"DEBUG: Returning {halls.Count} halls");
+            foreach (var hall in halls)
+            {
+                Console.WriteLine($"DEBUG: Hall {hall.HallCode} - {hall.HallName}");
+            }
 
             return Json(result);
         }
@@ -328,6 +335,48 @@ namespace centrny1.Controllers
                 return Json(new { success = false, message = "Access denied." });
             }
 
+            // Check for schedule conflicts
+            var reservationDate = DateOnly.FromDateTime(DateTime.Parse(Request.Form["RTime"]));
+            var dayOfWeek = reservationDate.ToDateTime(TimeOnly.MinValue).ToString("dddd"); // Gets "Sunday", "Monday", etc.
+
+            var conflictingSchedules = await _context.Schedules
+                .Where(s => s.BranchCode == reservation.BranchCode &&
+                           s.HallCode == reservation.HallCode &&
+                           s.DayOfWeek == dayOfWeek &&
+                           s.StartTime.HasValue &&
+                           s.EndTime.HasValue)
+                .Include(s => s.TeacherCodeNavigation)
+                .Include(s => s.SubjectCodeNavigation)
+                .ToListAsync();
+
+            foreach (var schedule in conflictingSchedules)
+            {
+                var scheduleStart = TimeOnly.FromDateTime(schedule.StartTime.Value);
+                var scheduleEnd = TimeOnly.FromDateTime(schedule.EndTime.Value);
+
+                // Check for time overlap
+                if (reservation.ReservationStartTime.HasValue && reservation.ReservationEndTime.HasValue)
+                {
+                    var reservationStart = reservation.ReservationStartTime.Value;
+                    var reservationEnd = reservation.ReservationEndTime.Value;
+
+                    // Check if times overlap: (start1 < end2) && (start2 < end1)
+                    if (reservationStart < scheduleEnd && scheduleStart < reservationEnd)
+                    {
+                        var teacherName = schedule.TeacherCodeNavigation?.TeacherName ?? "Unknown Teacher";
+                        var subjectName = schedule.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject";
+
+                        return Json(new
+                        {
+                            success = false,
+                            alert = true,
+                            message = $"Time conflict detected! There is a scheduled class on {dayOfWeek} from {scheduleStart:HH:mm} to {scheduleEnd:HH:mm} with Teacher: {teacherName}, Subject: {subjectName}"
+                        });
+                    }
+                }
+            }
+
+            // No conflicts found, proceed with adding reservation
             if (string.IsNullOrWhiteSpace(reservation.Description)) reservation.Description = null;
             await _context.Reservations.AddAsync(reservation);
             await _context.SaveChangesAsync();
@@ -344,6 +393,44 @@ namespace centrny1.Controllers
 
             var reservation = await _context.Reservations.FindAsync(ReservationCode);
             if (reservation == null) return NotFound();
+
+            // Get the reservation date and day of week
+            var reservationDate = reservation.RTime;
+            var dayOfWeek = reservationDate.ToDateTime(TimeOnly.MinValue).ToString("dddd"); // Gets "Sunday", "Monday", etc.
+
+            // Check for schedule conflicts (excluding current reservation)
+            var conflictingSchedules = await _context.Schedules
+                .Where(s => s.BranchCode == reservation.BranchCode &&
+                           s.HallCode == reservation.HallCode &&
+                           s.DayOfWeek == dayOfWeek &&
+                           s.StartTime.HasValue &&
+                           s.EndTime.HasValue)
+                .Include(s => s.TeacherCodeNavigation)
+                .Include(s => s.SubjectCodeNavigation)
+                .ToListAsync();
+
+            foreach (var schedule in conflictingSchedules)
+            {
+                var scheduleStart = TimeOnly.FromDateTime(schedule.StartTime.Value);
+                var scheduleEnd = TimeOnly.FromDateTime(schedule.EndTime.Value);
+
+                // Check for time overlap with the NEW times
+                // Check if times overlap: (start1 < end2) && (start2 < end1)
+                if (ReservationStartTime < scheduleEnd && scheduleStart < ReservationEndTime)
+                {
+                    var teacherName = schedule.TeacherCodeNavigation?.TeacherName ?? "Unknown Teacher";
+                    var subjectName = schedule.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject";
+
+                    return Json(new
+                    {
+                        success = false,
+                        alert = true,
+                        message = $"Time conflict detected! There is a scheduled class on {dayOfWeek} from {scheduleStart:HH:mm} to {scheduleEnd:HH:mm} with Teacher: {teacherName}, Subject: {subjectName}"
+                    });
+                }
+            }
+
+            // No conflicts found, proceed with updating reservation
             reservation.Description = Description;
             reservation.TeacherCode = TeacherCode;
             reservation.ReservationStartTime = ReservationStartTime;
@@ -351,7 +438,6 @@ namespace centrny1.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-
         [HttpPost("DeleteReservation")]
         public async Task<IActionResult> DeleteReservation([FromForm] int reservationCode)
         {
