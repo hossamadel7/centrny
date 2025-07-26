@@ -4,6 +4,7 @@ using System.Linq;
 using centrny.Models;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using System.Globalization; // Added for culture detection
 
 namespace centrny.Controllers
 {
@@ -28,7 +29,10 @@ namespace centrny.Controllers
         public static List<SidebarPageViewModel> GetSidebarPagesForUser(CenterContext db, ClaimsPrincipal user, ISession session)
         {
             var sessionKey = "SidebarPages";
-            if (session != null && session.TryGetValue(sessionKey, out var cachedBytes))
+            // Remove cache if culture changes (for proper language switch)
+            var currentCulture = CultureInfo.CurrentUICulture.Name;
+            var cultureInSession = session?.GetString("SidebarPagesCulture");
+            if (session != null && session.TryGetValue(sessionKey, out var cachedBytes) && cultureInSession == currentCulture)
             {
                 var cachedJson = System.Text.Encoding.UTF8.GetString(cachedBytes);
                 var cached = System.Text.Json.JsonSerializer.Deserialize<List<SidebarPageViewModel>>(cachedJson);
@@ -56,6 +60,8 @@ namespace centrny.Controllers
                 return new List<SidebarPageViewModel>();
             }
 
+            var isArabic = currentCulture.StartsWith("ar");
+
             // 2. Fetch allowed pages for this group, ordered by PageSort (if present)
             var allowedPages = db.Pages
                 .Where(p => groupPageCodes.Contains(p.PageCode))
@@ -65,13 +71,14 @@ namespace centrny.Controllers
                     Controller = GetControllerFromPath(p.PagePath),
                     Action = GetActionFromPath(p.PagePath),
                     Icon = GetIconForPage(p.PageName),
-                    Text = p.PageName
+                    Text = isArabic && !string.IsNullOrEmpty(p.PageNameAr) ? p.PageNameAr : p.PageName
                 }).ToList();
 
             if (session != null)
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(allowedPages);
                 session.Set(sessionKey, System.Text.Encoding.UTF8.GetBytes(json));
+                session.SetString("SidebarPagesCulture", currentCulture); // Save current culture in session
             }
 
             return allowedPages;

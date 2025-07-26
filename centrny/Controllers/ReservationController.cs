@@ -258,7 +258,7 @@ namespace centrny1.Controllers
                 return Json(new { periods = new List<string>(), grid = new List<List<object>>() });
             }
             if (!branchCode.HasValue)
-                return Json(new { periods = new List<string>(), grid = new List<List<object>>() });
+                return Json(new { periods = new List<string>(), grid = new List<List<object>>(), halls = new List<object>() });
 
             int sessionCount = 10; // Change as needed
 
@@ -321,8 +321,16 @@ namespace centrny1.Controllers
             var result = new
             {
                 periods = sessionHeaders,
-                grid
+                grid,
+                halls = halls.Select(h => new { hallCode = h.HallCode, hallName = h.HallName }).ToList()
             };
+
+            // Debug logging
+            Console.WriteLine($"DEBUG: Returning {halls.Count} halls");
+            foreach (var hall in halls)
+            {
+                Console.WriteLine($"DEBUG: Hall {hall.HallCode} - {hall.HallName}");
+            }
 
             return Json(result);
         }
@@ -366,40 +374,45 @@ namespace centrny1.Controllers
                 return Json(new { success = false, message = "Access denied." });
             }
 
-            // Defensive validation: required fields
-            if (reservation.HallCode == null || reservation.RTime == default ||
-                reservation.ReservationStartTime == null || reservation.ReservationEndTime == null)
+            // Check for schedule conflicts
+            var reservationDate = DateOnly.FromDateTime(DateTime.Parse(Request.Form["RTime"]));
+            var dayOfWeek = reservationDate.ToDateTime(TimeOnly.MinValue).ToString("dddd"); // Gets "Sunday", "Monday", etc.
+
+            var conflictingSchedules = await _context.Schedules
+                .Where(s => s.BranchCode == reservation.BranchCode &&
+                           s.HallCode == reservation.HallCode &&
+                           s.DayOfWeek == dayOfWeek &&
+                           s.StartTime.HasValue &&
+                           s.EndTime.HasValue)
+                .Include(s => s.TeacherCodeNavigation)
+                .Include(s => s.SubjectCodeNavigation)
+                .ToListAsync();
+
+            foreach (var schedule in conflictingSchedules)
             {
-                return Json(new { success = false, message = "Missing required reservation data." });
-            }
+                var scheduleStart = TimeOnly.FromDateTime(schedule.StartTime.Value);
+                var scheduleEnd = TimeOnly.FromDateTime(schedule.EndTime.Value);
 
-            var rTime = reservation.RTime;
-            var hallCode = reservation.HallCode;
-            var newStart = reservation.ReservationStartTime;
-            var newEnd = reservation.ReservationEndTime;
+                // Check for time overlap
+                if (reservation.ReservationStartTime.HasValue && reservation.ReservationEndTime.HasValue)
+                {
+                    var reservationStart = reservation.ReservationStartTime.Value;
+                    var reservationEnd = reservation.ReservationEndTime.Value;
 
-            // 1. Check other reservations with non-null times
-            var overlappingReservation = await _context.Reservations
-                .Where(r => r.RTime == rTime && r.HallCode == hallCode &&
-                            r.ReservationStartTime != null && r.ReservationEndTime != null &&
-                            r.ReservationStartTime < newEnd && r.ReservationEndTime > newStart)
-                .FirstOrDefaultAsync();
+                    // Check if times overlap: (start1 < end2) && (start2 < end1)
+                    if (reservationStart < scheduleEnd && scheduleStart < reservationEnd)
+                    {
+                        var teacherName = schedule.TeacherCodeNavigation?.TeacherName ?? "Unknown Teacher";
+                        var subjectName = schedule.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject";
 
-            if (overlappingReservation != null)
-            {
-                return Json(new { success = false, message = "This hall is not available at the selected time. Please choose a different time or hall." });
-            }
-
-            // 2. Check classes (if you have a Classes table with similar fields)
-            var overlappingClass = await _context.Classes
-                .Where(c => c.ClassDate == rTime && c.HallCode == hallCode &&
-                            c.ClassStartTime != null && c.ClassEndTime != null &&
-                            c.ClassStartTime < newEnd && c.ClassEndTime > newStart)
-                .FirstOrDefaultAsync();
-
-            if (overlappingClass != null)
-            {
-                return Json(new { success = false, message = "This hall is already scheduled for a class at this time. Please choose a different time or hall." });
+                        return Json(new
+                        {
+                            success = false,
+                            alert = true,
+                            message = $"Time conflict detected! There is a scheduled class on {dayOfWeek} from {scheduleStart:HH:mm} to {scheduleEnd:HH:mm} with Teacher: {teacherName}, Subject: {subjectName}"
+                        });
+                    }
+                }
             }
 
             if (string.IsNullOrWhiteSpace(reservation.Description)) reservation.Description = null;
@@ -421,39 +434,6 @@ namespace centrny1.Controllers
 
             var reservation = await _context.Reservations.FindAsync(ReservationCode);
             if (reservation == null) return NotFound();
-
-            var rTime = reservation.RTime;
-            var hallCode = reservation.HallCode;
-
-            // Defensive: check for nulls
-            if (hallCode == null || rTime == default ||
-                ReservationStartTime == null || ReservationEndTime == null)
-            {
-                return Json(new { success = false, message = "Missing required reservation data." });
-            }
-
-            var overlappingReservation = await _context.Reservations
-                .Where(r => r.RTime == rTime && r.HallCode == hallCode && r.ReservationCode != ReservationCode
-                    && r.ReservationStartTime != null && r.ReservationEndTime != null
-                    && r.ReservationStartTime < ReservationEndTime && r.ReservationEndTime > ReservationStartTime)
-                .FirstOrDefaultAsync();
-
-            if (overlappingReservation != null)
-            {
-                return Json(new { success = false, message = "This hall is not available at the selected time. Please choose a different time or hall." });
-            }
-
-            var overlappingClass = await _context.Classes
-                .Where(c => c.ClassDate == rTime && c.HallCode == hallCode
-                    && c.ClassStartTime != null && c.ClassEndTime != null
-                    && c.ClassStartTime < ReservationEndTime && c.ClassEndTime > ReservationStartTime)
-                .FirstOrDefaultAsync();
-
-            if (overlappingClass != null)
-            {
-                return Json(new { success = false, message = "This hall is already scheduled for a class at this time. Please choose a different time or hall." });
-            }
-
             reservation.Description = Description;
             reservation.TeacherCode = TeacherCode;
             reservation.ReservationStartTime = ReservationStartTime;
@@ -461,7 +441,6 @@ namespace centrny1.Controllers
             await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
-
         [HttpPost("DeleteReservation")]
         public async Task<IActionResult> DeleteReservation([FromForm] int reservationCode)
         {

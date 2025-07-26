@@ -432,7 +432,8 @@ namespace centrny.Controllers
                 .Select(t => t.TeacherCode)
                 .Distinct()
                 .ToList();
-            var teacherList = teachers.Select(t => new {
+            var teacherList = teachers.Select(t => new
+            {
                 teacherCode = t,
                 teacherName = _context.Teachers.FirstOrDefault(x => x.TeacherCode == t)?.TeacherName ?? "N/A"
             }).ToList();
@@ -451,7 +452,8 @@ namespace centrny.Controllers
                 .Select(t => t.SubjectCode)
                 .Distinct()
                 .ToList();
-            var subjectList = subjects.Select(s => new {
+            var subjectList = subjects.Select(s => new
+            {
                 subjectCode = s,
                 subjectName = _context.Subjects.FirstOrDefault(x => x.SubjectCode == s)?.SubjectName ?? "N/A"
             }).ToList();

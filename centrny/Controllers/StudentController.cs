@@ -24,7 +24,7 @@ namespace centrny.Controllers
             _context = context;
             _logger = logger;
         }
-       
+
         // ==================== REGISTRATION METHODS ====================
 
         /// <summary>
@@ -863,7 +863,7 @@ namespace centrny.Controllers
                     StudentParentPhone = request.StudentParentPhone?.Trim(),
                     StudentBirthdate = request.BirthDate,
                     StudentGender = request.Gender,
-                    BranchCode =27,
+                    BranchCode = 27,
                     YearCode = request.YearCode,
                     RootCode = root_code,
                     IsActive = true,
@@ -1785,7 +1785,7 @@ namespace centrny.Controllers
             }
         }
 
-      
+
 
         /// <summary>
         /// GET: Student/GetAttendanceTypes - API endpoint to get available attendance types
@@ -2148,7 +2148,7 @@ namespace centrny.Controllers
                             subjectName = exam.SubjectCodeNavigation != null ? exam.SubjectCodeNavigation.SubjectName : "N/A",
                             teacherName = exam.TeacherCodeNavigation != null ? exam.TeacherCodeNavigation.TeacherName : "N/A",
                             attended = attendedExamCodes.Contains(exam.ExamCode),
-                              isExam = exam.IsExam,      // <-- ADD THIS
+                            isExam = exam.IsExam,      // <-- ADD THIS
                             isDone = exam.IsDone
                         });
                     }
@@ -2212,7 +2212,7 @@ namespace centrny.Controllers
                             subjectName = exam.SubjectCodeNavigation != null ? exam.SubjectCodeNavigation.SubjectName : "N/A",
                             teacherName = exam.TeacherCodeNavigation != null ? exam.TeacherCodeNavigation.TeacherName : "N/A",
                             attended = attendedExamCodes.Contains(exam.ExamCode),
-                              isExam = exam.IsExam,      // <-- ADD THIS
+                            isExam = exam.IsExam,      // <-- ADD THIS
                             isDone = exam.IsDone
                         });
                     }

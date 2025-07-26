@@ -549,7 +549,7 @@ namespace centrny.Controllers
 
             return Json(new { teachers });
         }
-       
+
         [HttpPost]
         [RequirePageAccess("DailyClass", "insert")]
         public async Task<IActionResult> CreateClass([FromBody] DailyClassModel model)

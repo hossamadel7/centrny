@@ -1,5 +1,5 @@
-﻿// schedule-common.js - Complete updated version with teacher/center display logic, now with full localization support
-// Updated: 2025-07-10 23:57:23 UTC by Copilot
+﻿// schedule-common.js - Enhanced version with teacher and year filters
+// Updated with filter support for teacher and year filtering
 
 // Helper for localization: fetch strings from #js-localization
 function getJsString(key) {
@@ -12,6 +12,7 @@ function getJsString(key) {
 class ScheduleManager {
     constructor() {
         this.schedules = [];
+        this.allSchedules = []; // Store unfiltered schedules for client-side filtering
         this.editMode = false;
         this.currentScheduleId = null;
         this.lastViewedScheduleCode = null;
@@ -115,32 +116,116 @@ class ScheduleManager {
         };
     }
 
-    // Main Schedules Loader
+    // Enhanced loadSchedules method with filter support
     async loadSchedules() {
         this.showLoader && this.showLoader();
         try {
             let url = '/Schedule/GetCalendarEvents?start=2000-01-01&end=2030-12-31';
+
+            // Add filter parameters
+            const filters = [];
             if (window.selectedBranchCode) {
-                url += '&branchCode=' + encodeURIComponent(window.selectedBranchCode);
+                filters.push(`branchCode=${encodeURIComponent(window.selectedBranchCode)}`);
             }
+            if (window.selectedTeacherCode) {
+                filters.push(`teacherCode=${encodeURIComponent(window.selectedTeacherCode)}`);
+            }
+            if (window.selectedYearCode) {
+                filters.push(`yearCode=${encodeURIComponent(window.selectedYearCode)}`);
+            }
+
+            if (filters.length > 0) {
+                url += '&' + filters.join('&');
+            }
+
             const res = await fetch(url);
             const data = await res.json();
             this.schedules = Array.isArray(data) ? data : [];
+            this.allSchedules = [...this.schedules]; // Store copy for client-side filtering
             this.renderWeeklyGrid();
+
+            // Update schedule count display if element exists
+            this.updateScheduleCount();
+
         } catch (e) {
+            console.error('Error loading schedules:', e);
             this.showToast && this.showToast('Failed to load schedules', 'error');
         } finally {
             this.hideLoader && this.hideLoader();
         }
     }
 
+    // Update schedule count display
+    updateScheduleCount() {
+        const countElement = document.getElementById('scheduleCount');
+        if (countElement) {
+            const count = this.schedules.length;
+            countElement.textContent = `${count} schedule${count !== 1 ? 's' : ''} found`;
+            countElement.style.display = 'block';
+
+            // Add color coding based on count
+            countElement.className = 'schedule-count mt-3';
+            if (count === 0) {
+                countElement.classList.add('no-results');
+            } else if (count <= 5) {
+                countElement.classList.add('few-results');
+            } else {
+                countElement.classList.add('many-results');
+            }
+        }
+    }
+
+    // Apply client-side filtering (alternative approach)
+    applyClientSideFilters() {
+        let filteredSchedules = [...this.allSchedules];
+
+        // Filter by branch
+        if (window.selectedBranchCode) {
+            filteredSchedules = filteredSchedules.filter(s =>
+                s.extendedProps?.branchCode == window.selectedBranchCode
+            );
+        }
+
+        // Filter by teacher
+        if (window.selectedTeacherCode) {
+            filteredSchedules = filteredSchedules.filter(s =>
+                s.extendedProps?.teacherCode == window.selectedTeacherCode
+            );
+        }
+
+        // Filter by year
+        if (window.selectedYearCode) {
+            filteredSchedules = filteredSchedules.filter(s =>
+                s.extendedProps?.yearCode == window.selectedYearCode
+            );
+        }
+
+        this.schedules = filteredSchedules;
+        this.renderWeeklyGrid();
+        this.updateScheduleCount();
+    }
+
     // Save (Create/Edit) Schedule
     async saveSchedule(formData) {
         this.showModalLoader(true);
+
         try {
+            // Validate conflicts
+            const validation = this.validateScheduleConflicts(formData);
+
+            // Show validation messages
+            this.showValidationMessages(validation.errors, validation.warnings);
+
+            // Block save if there are errors
+            if (validation.errors.length > 0) {
+                this.showModalLoader(false);
+                return;
+            }
+
             const url = this.editMode && this.currentScheduleId
                 ? `/Schedule/EditScheduleEvent/${this.currentScheduleId}`
                 : '/Schedule/CreateScheduleEvent';
+
             const res = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -149,7 +234,9 @@ class ScheduleManager {
                 },
                 body: JSON.stringify(formData)
             });
+
             const result = await res.json();
+
             if (result.success) {
                 this.closeModal('scheduleModal');
                 this.resetForm();
@@ -233,8 +320,6 @@ class ScheduleManager {
             this.showToast(`Error loading ${selectId}`, 'error');
         }
     }
-
-    // ...inside ScheduleManager class...
 
     async preloadDropdownsForModal(schedule = null) {
         console.log('[DEBUG] preloadDropdownsForModal called with schedule:', schedule);
@@ -345,6 +430,7 @@ class ScheduleManager {
 
         console.log('[DEBUG] preloadDropdownsForModal completed');
     }
+
     setupDropdownListeners() {
         this.dom.centerCode?.addEventListener('change', async (e) => {
             const val = e.target.value;
@@ -537,20 +623,156 @@ class ScheduleManager {
         };
     }
 
-    // UPDATED: Weekly grid rendering with teacher/center display logic
+    timeToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+
+    // Check if two time ranges intersect (touching boundaries are acceptable)
+    timesIntersect(start1, end1, start2, end2) {
+        const start1Min = this.timeToMinutes(start1);
+        const end1Min = this.timeToMinutes(end1);
+        const start2Min = this.timeToMinutes(start2);
+        const end2Min = this.timeToMinutes(end2);
+
+        // True overlap (not just touching)
+        return start1Min < end2Min && start2Min < end1Min;
+    }
+
+    // Validate schedule conflicts
+    validateScheduleConflicts(formData) {
+        const errors = [];
+        const warnings = [];
+
+        const currentDay = formData.dayOfWeek;
+        const currentStart = formData.startTime;
+        const currentEnd = formData.endTime;
+        const currentTeacher = formData.teacherCode;
+        const currentHall = formData.hallCode;
+        const currentYear = formData.yearCode;
+
+        if (!currentDay || !currentStart || !currentEnd) {
+            return { errors, warnings };
+        }
+
+        // Filter schedules for same day, excluding current schedule if editing
+        const sameDaySchedules = this.schedules.filter(s => {
+            const scheduleDay = s.extendedProps?.dayOfWeek;
+            const scheduleCode = s.extendedProps?.scheduleCode;
+
+            // Exclude current schedule when editing
+            if (this.editMode && this.currentScheduleId && scheduleCode === this.currentScheduleId) {
+                return false;
+            }
+
+            return scheduleDay === currentDay;
+        });
+
+        for (const schedule of sameDaySchedules) {
+            const s = schedule.extendedProps;
+            const scheduleStart = this.convertTo24Hour(s.startTime);
+            const scheduleEnd = this.convertTo24Hour(s.endTime);
+
+            if (!scheduleStart || !scheduleEnd) continue;
+
+            const hasTimeConflict = this.timesIntersect(currentStart, currentEnd, scheduleStart, scheduleEnd);
+
+            if (hasTimeConflict) {
+                // Check teacher conflict (blocking error)
+                if (currentTeacher && s.teacherCode === currentTeacher) {
+                    errors.push(`Teacher conflict: This teacher already has a schedule from ${s.startTime} to ${s.endTime} on ${currentDay}`);
+                }
+
+                // Check hall conflict (blocking error)
+                if (currentHall && s.hallCode === currentHall) {
+                    errors.push(`Hall conflict: This hall is already booked from ${s.startTime} to ${s.endTime} on ${currentDay} for "${schedule.title}"`);
+                }
+
+                // Check year conflict with different teachers (warning)
+                if (currentYear && s.yearCode === currentYear && currentTeacher && s.teacherCode && s.teacherCode !== currentTeacher) {
+                    warnings.push(`Year overlap warning: Another teacher already has this year from ${s.startTime} to ${s.endTime} on ${currentDay} for "${schedule.title}"`);
+                }
+            }
+        }
+
+        return { errors, warnings };
+    }
+
+    // Show validation messages in modal
+    showValidationMessages(errors, warnings) {
+        // Remove any existing validation messages from modal (cleanup)
+        const modalBody = this.dom.scheduleModal?.querySelector('.modal-body');
+        if (modalBody) {
+            const existingAlert = modalBody.querySelector('.validation-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+        }
+
+        // Show errors as popup notifications
+        if (errors.length > 0) {
+            errors.forEach(error => {
+                this.showToast(error, 'error');
+            });
+        }
+
+        // Show warnings as popup notifications
+        if (warnings.length > 0) {
+            warnings.forEach(warning => {
+                this.showToast(warning, 'warning');
+            });
+        }
+    }
+
+    convertTo24Hour(time12h) {
+        if (!time12h || typeof time12h !== 'string') return '';
+        try {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes] = time.split(':');
+            if (hours === '12') hours = '00';
+            if (modifier && modifier.toUpperCase() === 'PM') {
+                hours = parseInt(hours, 10) + 12;
+            }
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        } catch (error) {
+            return '';
+        }
+    }
+
+    // Enhanced Weekly grid rendering with teacher/center display logic
     renderWeeklyGrid() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
         for (const day of days) {
             const dayContainer = document.getElementById(`day-${day}`);
             if (!dayContainer) continue;
-            const daySchedules = this.schedules.filter(s => s.extendedProps?.dayOfWeek === day);
+
+            // Get schedules for this day and sort by start time
+            const daySchedules = this.schedules
+                .filter(s => s.extendedProps?.dayOfWeek === day)
+                .sort((a, b) => {
+                    const startTimeA = a.extendedProps?.startTime || '';
+                    const startTimeB = b.extendedProps?.startTime || '';
+
+                    // Convert 12-hour format to 24-hour for comparison
+                    const time24A = this.convertTo24Hour(startTimeA);
+                    const time24B = this.convertTo24Hour(startTimeB);
+
+                    // Convert to minutes for numerical comparison
+                    const minutesA = this.timeToMinutes(time24A);
+                    const minutesB = this.timeToMinutes(time24B);
+
+                    return minutesA - minutesB;
+                });
+
             if (daySchedules.length === 0) {
                 dayContainer.innerHTML = `
-                    <div class="empty-day">No schedules</div>
-                    <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                `;
+                <div class="empty-day">No schedules</div>
+                <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            `;
             } else {
                 let html = '';
                 for (const schedule of daySchedules) {
@@ -562,14 +784,14 @@ class ScheduleManager {
                     const isCurrentUserTeacher = window.userContext?.isTeacher === true;
 
                     html += `
-                        <div class="schedule-event ${eventClass}" onclick="scheduleManager.showScheduleDetails(${s?.scheduleCode || 0})">
-                            <div class="event-title">
-                                <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
-                                ${schedule.title || 'Untitled'}
-                            </div>
-                            <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
-                            ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
-                    `;
+                    <div class="schedule-event ${eventClass}" onclick="scheduleManager.showScheduleDetails(${s?.scheduleCode || 0})">
+                        <div class="event-title">
+                            <i class="fas fa-${s?.isCenter ? 'building' : 'user'}"></i>
+                            ${schedule.title || 'Untitled'}
+                        </div>
+                        <div class="event-time">${s?.startTime || ''} - ${s?.endTime || ''}</div>
+                        ${s?.hallName ? `<div class="event-details">📍 ${s.hallName}</div>` : ''}
+                `;
 
                     // Show different information based on current user type
                     if (isCurrentUserTeacher) {
@@ -588,25 +810,30 @@ class ScheduleManager {
                         }
                     }
 
+                    // Always show year prominently if available
+                    if (s?.yearName) {
+                        html += `<div class="event-year">🎓 ${s.yearName}</div>`;
+                    }
+
                     // Always show subject if available
                     if (s?.subjectName) {
                         html += `<div class="event-details">📚 ${s.subjectName}</div>`;
                     }
 
                     html += `
-                                <div style="margin-top:6px">
-                                    <button class="btn btn-sm btn-light" onclick="event.stopPropagation();scheduleManager.editSchedule(${s?.scheduleCode})" title="Edit"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();scheduleManager.handleDeleteRequest(${s?.scheduleCode})" title="Delete"><i class="fas fa-trash"></i></button>
-                                </div>
+                            <div style="margin-top:6px">
+                                <button class="btn btn-sm btn-light" onclick="event.stopPropagation();scheduleManager.editSchedule(${s?.scheduleCode})" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();scheduleManager.handleDeleteRequest(${s?.scheduleCode})" title="Delete"><i class="fas fa-trash"></i></button>
                             </div>
-                        `;
+                        </div>
+                    `;
                 }
 
                 html += `
-                    <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                `;
+                <button class="add-schedule-btn" onclick="scheduleManager.addScheduleForDay('${day}')" title="Add schedule for ${day}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            `;
 
                 dayContainer.innerHTML = html;
             }
@@ -643,7 +870,7 @@ class ScheduleManager {
         this.openModal('eventDetailsModal');
     }
 
-    // UPDATED: Schedule details with teacher/center display logic
+    // Enhanced Schedule details with teacher/center display logic
     generateScheduleDetailsHTML(schedule) {
         const s = schedule.extendedProps;
         const isCurrentUserTeacher = window.userContext?.isTeacher === true;
@@ -677,12 +904,15 @@ class ScheduleManager {
             }
         }
 
-        // Always show subject and amount if available
+        // Always show subject, year and amount if available
         if (s.subjectName) {
             html += `<div class="detail-item"><strong>Subject:</strong> ${s.subjectName}</div>`;
         }
+        if (s.yearName) {
+            html += `<div class="detail-item"><strong>Year:</strong> ${s.yearName}</div>`;
+        }
         if (s.scheduleAmount) {
-            html += `<div class="detail-item"><strong>Amount:</strong> $${parseFloat(s.scheduleAmount).toFixed(2)}</div>`;
+            html += `<div class="detail-item"><strong>Amount:</strong> ${parseFloat(s.scheduleAmount).toFixed(2)}</div>`;
         }
 
         html += `
@@ -756,21 +986,17 @@ class ScheduleManager {
                 this.dom.eduYearCode.dispatchEvent(new Event('change'));
             }
         }
-        this.removeStuckBackdrop();
-    }
-    convertTo24Hour(time12h) {
-        if (!time12h || typeof time12h !== 'string') return '';
-        try {
-            const [time, modifier] = time12h.split(' ');
-            let [hours, minutes] = time.split(':');
-            if (hours === '12') hours = '00';
-            if (modifier && modifier.toUpperCase() === 'PM') {
-                hours = parseInt(hours, 10) + 12;
+
+        // Clear validation messages
+        const modalBody = this.dom.scheduleModal?.querySelector('.modal-body');
+        if (modalBody) {
+            const existingAlert = modalBody.querySelector('.validation-alert');
+            if (existingAlert) {
+                existingAlert.remove();
             }
-            return `${hours.toString().padStart(2, '0')}:${minutes}`;
-        } catch (error) {
-            return '';
         }
+
+        this.removeStuckBackdrop();
     }
 
     // Loader, Modal, Toast
@@ -838,29 +1064,57 @@ class ScheduleManager {
         }
         this.removeStuckBackdrop();
     }
+
     showToast(msg, type = 'info') {
         // Good UX: Use a toast/snackbar if available, else fallback to alert
         if (window.bootstrap && window.bootstrap.Toast && document.querySelector('.toast-container')) {
             const toastDiv = document.createElement('div');
-            toastDiv.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'info')} border-0`;
+
+            // Determine background color based on type
+            let bgClass;
+            switch (type) {
+                case 'error':
+                    bgClass = 'bg-danger';
+                    break;
+                case 'success':
+                    bgClass = 'bg-success';
+                    break;
+                case 'warning':
+                    bgClass = 'bg-warning text-dark'; // Dark text for better contrast on yellow
+                    break;
+                default:
+                    bgClass = 'bg-info';
+            }
+
+            toastDiv.className = `toast align-items-center text-white ${bgClass} border-0`;
             toastDiv.setAttribute('role', 'alert');
             toastDiv.setAttribute('aria-live', 'assertive');
             toastDiv.setAttribute('aria-atomic', 'true');
+
+            // Use appropriate close button color
+            const closeButtonClass = type === 'warning' ? 'btn-close' : 'btn-close btn-close-white';
+
             toastDiv.innerHTML = `
-                <div class="d-flex">
-                  <div class="toast-body">${msg}</div>
-                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            `;
+            <div class="d-flex">
+              <div class="toast-body">${msg}</div>
+              <button type="button" class="${closeButtonClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
             document.querySelector('.toast-container').appendChild(toastDiv);
-            const toast = new bootstrap.Toast(toastDiv, { delay: 3500 });
+
+            // Set different delays based on message type
+            const delay = type === 'error' ? 6000 : (type === 'warning' ? 5000 : 3500);
+            const toast = new bootstrap.Toast(toastDiv, { delay: delay });
             toast.show();
+
             toastDiv.addEventListener('hidden.bs.toast', () => toastDiv.remove());
         } else {
-            alert(msg);
+            // Fallback to alert with type prefix
+            const prefix = type === 'error' ? '❌ Error: ' : (type === 'warning' ? '⚠️ Warning: ' : (type === 'success' ? '✅ ' : 'ℹ️ '));
+            alert(prefix + msg);
         }
     }
-
     removeStuckBackdrop() {
         document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
         document.body.classList.remove('modal-open');

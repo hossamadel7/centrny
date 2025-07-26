@@ -179,7 +179,8 @@ namespace centrny.Controllers
 
                 var subjects = await query
                     .Include(t => t.SubjectCodeNavigation)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.SubjectCode,
                         text = t.SubjectCodeNavigation.SubjectName
                     })
@@ -221,7 +222,8 @@ namespace centrny.Controllers
                 var branches = await _context.Branches
                     .AsNoTracking()
                     .Where(b => b.CenterCode == centerCode.Value && b.RootCode == userRootCode.Value && b.IsActive)
-                    .Select(b => new {
+                    .Select(b => new
+                    {
                         value = b.BranchCode,
                         text = b.BranchName
                     })
@@ -257,7 +259,8 @@ namespace centrny.Controllers
                     .AsNoTracking()
                     .Where(t => t.RootCode == userRootCode.Value && t.IsActive == true)
                     .OrderBy(t => t.TeacherName)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.TeacherCode,
                         text = t.TeacherName
                     })
@@ -292,7 +295,8 @@ namespace centrny.Controllers
                 var branches = await _context.Branches
                     .AsNoTracking()
                     .Where(b => b.CenterCode == centerCode && b.RootCode == userRootCode.Value && b.IsActive)
-                    .Select(b => new {
+                    .Select(b => new
+                    {
                         value = b.BranchCode,
                         text = b.BranchName
                     })
@@ -328,7 +332,8 @@ namespace centrny.Controllers
                 var halls = await _context.Halls
                     .AsNoTracking()
                     .Where(h => h.BranchCode == branchCode && h.RootCode == userRootCode.Value)
-                    .Select(h => new {
+                    .Select(h => new
+                    {
                         value = h.HallCode,
                         text = h.HallName,
                         capacity = h.HallCapacity
@@ -515,7 +520,7 @@ namespace centrny.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCalendarEvents(DateTime start, DateTime end, int? branchCode = null)
+        public async Task<IActionResult> GetCalendarEvents(DateTime start, DateTime end, int? branchCode = null, int? teacherCode = null, int? yearCode = null)
         {
             try
             {
@@ -535,6 +540,18 @@ namespace centrny.Controllers
                         query = query.Where(s => s.BranchCode == groupBranchCode.Value);
                     else if (branchCode.HasValue && branchCode > 0)
                         query = query.Where(s => s.BranchCode == branchCode.Value);
+                }
+
+                // Teacher filtering:
+                if (teacherCode.HasValue && teacherCode > 0)
+                {
+                    query = query.Where(s => s.TeacherCode == teacherCode.Value);
+                }
+
+                // Year filtering:
+                if (yearCode.HasValue && yearCode > 0)
+                {
+                    query = query.Where(s => s.YearCode == yearCode.Value);
                 }
 
                 var schedules = await query
@@ -578,6 +595,7 @@ namespace centrny.Controllers
                         branchCode = schedule.BranchCode,
                         eduYearCode = schedule.EduYearCode,
                         yearCode = schedule.YearCode,
+                        yearName = schedule.YearCodeNavigation?.YearName, // Added year name
                         amount = schedule.ScheduleAmount?.ToString("F2"),
                         scheduleAmount = schedule.ScheduleAmount,
                         isCenter = schedule.RootCodeNavigation?.IsCenter ?? false
@@ -588,10 +606,12 @@ namespace centrny.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading calendar events");
+                _logger.LogError(ex, "Error loading calendar events with filters - branchCode: {BranchCode}, teacherCode: {TeacherCode}, yearCode: {YearCode}",
+                    branchCode, teacherCode, yearCode);
                 return Json(new { error = ex.Message });
             }
         }
+
         [HttpPost]
         [RequirePageAccess("Schedule", "insert")]
         public async Task<IActionResult> CreateScheduleEvent([FromBody] ScheduleEventModel model)
@@ -1155,6 +1175,93 @@ namespace centrny.Controllers
             return View(schedule);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetYearsForFilter()
+        {
+            try
+            {
+                var userRootCode = GetCurrentUserRootCode();
+                if (!userRootCode.HasValue)
+                {
+                    return Json(new { success = false, error = "Unable to determine your root assignment." });
+                }
+
+                var years = new List<object>();
+
+                // Get years based on user type
+                if (IsCurrentUserTeacher())
+                {
+                    // For teachers, get years from their teaching assignments
+                    var teacherCode = await GetCurrentUserTeacherCode();
+                    if (teacherCode.HasValue)
+                    {
+                        years = await (from teach in _context.Teaches
+                                       join year in _context.Years on teach.YearCode equals year.YearCode
+                                       where teach.TeacherCode == teacherCode.Value &&
+                                             teach.RootCode == userRootCode.Value &&
+                                             teach.IsActive
+                                       select new
+                                       {
+                                           value = year.YearCode,
+                                           text = year.YearName,
+                                           yearSort = year.YearSort
+                                       })
+                                      .Distinct()
+                                      .OrderBy(y => y.yearSort)
+                                      .ToListAsync<object>();
+                    }
+                }
+                else
+                {
+                    // For center users, get all years from active educational year
+                    var activeEduYear = await _context.EduYears
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(e => e.RootCode == userRootCode.Value && e.IsActive);
+
+                    if (activeEduYear != null)
+                    {
+                        years = await _context.Years
+                            .AsNoTracking()
+                            .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                            .OrderBy(y => y.YearSort)
+                            .Select(y => new
+                            {
+                                value = y.YearCode,
+                                text = y.YearName,
+                                yearSort = y.YearSort
+                            })
+                            .ToListAsync<object>();
+                    }
+                }
+
+                // If no years found through the above methods, get all years for the root
+                if (!years.Any())
+                {
+                    years = await _context.Years
+                        .AsNoTracking()
+                        .Join(_context.EduYears, y => y.EduYearCode, e => e.EduCode, (y, e) => new { Year = y, EduYear = e })
+                        .Where(joined => joined.EduYear.RootCode == userRootCode.Value)
+                        .OrderBy(joined => joined.Year.YearSort)
+                        .Select(joined => new
+                        {
+                            value = joined.Year.YearCode,
+                            text = joined.Year.YearName,
+                            yearSort = joined.Year.YearSort
+                        })
+                        .Distinct()
+                        .ToListAsync<object>();
+                }
+
+                _logger.LogInformation("Found {Count} years for user root {RootCode}", years.Count, userRootCode);
+
+                return Json(new { success = true, years = years });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting years for filter");
+                return Json(new { success = false, error = $"Error retrieving years: {ex.Message}" });
+            }
+        }
         [RequirePageAccess("Schedule", "delete")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -1261,7 +1368,8 @@ namespace centrny.Controllers
 
                 var subjects = await query
                     .Include(t => t.SubjectCodeNavigation)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.SubjectCode,
                         text = t.SubjectCodeNavigation.SubjectName
                     })
@@ -1466,7 +1574,8 @@ namespace centrny.Controllers
                     .AsNoTracking()
                     .Where(y => y.EduYearCode == eduYearCode)
                     .OrderBy(y => y.YearSort)
-                    .Select(y => new {
+                    .Select(y => new
+                    {
                         value = y.YearCode,
                         text = y.YearName,
                         yearSort = y.YearSort
@@ -1512,7 +1621,8 @@ namespace centrny.Controllers
 
                 var subjects = await query
                     .Include(t => t.SubjectCodeNavigation)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.SubjectCode,
                         text = t.SubjectCodeNavigation.SubjectName
                     })

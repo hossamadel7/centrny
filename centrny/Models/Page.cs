@@ -27,6 +27,8 @@ public partial class Page
 
     public DateTime? LastUpdateTime { get; set; }
 
+    public string? PageNameAr { get; set; }
+
     public virtual ICollection<GroupPage> GroupPages { get; set; } = new List<GroupPage>();
 
     public virtual User InsertUserNavigation { get; set; } = null!;

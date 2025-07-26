@@ -28,6 +28,9 @@
             }
         }
     }
+    // For AR language, translate static labels
+    string logoutText = isRtl ? "تسجيل الخروج" : "Logout";
+    string loginText = isRtl ? "تسجيل الدخول" : "Login";
 }
 <!DOCTYPE html>
 <html lang="@culture.Name" dir="@dir">
@@ -517,14 +520,14 @@
             {
                 <a class="nav-link logout-link" href="#" id="logoutBtn">
                     <i class="fas fa-sign-out-alt nav-icon"></i>
-                    <span class="nav-text">Logout</span>
+                    <span class="nav-text">@logoutText</span>
                 </a>
             }
             else
             {
                 <a class="nav-link" asp-controller="Login" asp-action="Index">
                     <i class="fas fa-sign-in-alt nav-icon"></i>
-                    <span class="nav-text">Login</span>
+                    <span class="nav-text">@loginText</span>
                 </a>
             }
         </div>

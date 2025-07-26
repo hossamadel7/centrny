@@ -25,112 +25,19 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     }
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="~/css/Hamody.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        html[dir="rtl"] body,
-        html[dir="rtl"] .container,
-        html[dir="rtl"] .modal-content {
-            direction: rtl;
-            text-align: right;
-        }
-        /* Unified horizontal reservation card style */
-        .reservation-horizontal-card {
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 2px 12px rgba(44, 62, 80, 0.09);
-            border: 1px solid #eef2f7;
-            transition: box-shadow 0.2s;
-            margin-bottom: 1rem;
-            width: 100%;
-            max-width: 780px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .card-horizontal-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .card-info {
-            flex-grow: 1;
-            min-width: 0;
-        }
-
-        .card-title-row {
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .teacher-name {
-            color: #1a73e8;
-            font-weight: 600;
-        }
-
-        .description {
-            font-size: 1rem;
-            color: #444;
-        }
-
-        .card-details-row {
-            font-size: 1rem;
-            gap: 1.2rem;
-            margin-bottom: 0.2rem;
-        }
-
-        .price {
-            background: #e9fbe8 !important;
-            color: #1c9942 !important;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-
-        .time {
-            background: #e5f1fb !important;
-            color: #1a73e8 !important;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-
-        .card-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.7rem;
-        }
-
-        .btn-edit, .btn-delete {
-            min-width: 38px;
-            min-height: 38px;
-            border-radius: 50%;
-            border: none;
-            background: #f4f6fb;
-            color: #1a73e8;
-            transition: background 0.2s, color 0.2s;
-            box-shadow: 0 1px 4px rgba(44,62,80,0.04);
-            font-size: 1.25rem;
-        }
-
-            .btn-edit:hover {
-                background: #d1f0ff;
-                color: #005cb2;
-            }
-
-        .btn-delete {
-            color: #d13f3f;
-        }
-
-            .btn-delete:hover {
-                background: #ffeaea;
-                color: #9e2727;
-            }
-        /* End unified card style */
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/reservation.css" />
 </head>
-<body>
+<body class="reservation-page">
+    <!-- Pass isCenter to JavaScript -->
+    <script>
+        window.isCenter = @Json.Serialize(isCenter);
+        console.log('IsCenter from backend:', window.isCenter);
+    </script>
+
     <div id="js-localization"
          data-reservations-title="@Localizer["ReservationsTitle"]"
          data-branch-label="@Localizer["BranchLabel"]"
@@ -183,246 +90,361 @@
          data-hall-not-available="@Localizer["HallNotAvailable"]"
          data-hall-has-class="@Localizer["HallHasClass"]"></div>
 
-    <div class="questions-header">
-        <h2>
-            <i class="fa-solid fa-calendar-check"></i>
-            @Localizer["ReservationsTitle"]
-        </h2>
+    <div class="reservation-header">
+        <div class="reservation-container">
+            <h2>
+                <i class="fa-solid fa-calendar-check"></i>
+                @Localizer["ReservationsTitle"]
+            </h2>
+        </div>
     </div>
 
-    @if (!isCenter)
-    {
-        <!-- ---------- NON-CENTER DESIGN ---------- -->
-        <div class="container py-4">
-            <div class="d-flex align-items-center mb-4 gap-2">
-                <button type="button" class="modern-btn" id="rootAddReservationBtn">
-                    <i class="bi bi-plus"></i> @Localizer["AddReservationBtn"]
-                </button>
-                <label for="rootDateSelect" class="form-label mb-0 ms-2" id="rootDateLabel"></label>
-                <input type="date" id="rootDateSelect" class="form-control modern-input" />
-            </div>
-            <div id="rootReservationsList"></div>
-        </div>
-
-        <!-- Add/Edit Modal -->
-        <div class="modal fade" id="rootReservationModal" tabindex="-1" aria-labelledby="rootReservationModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <form id="rootReservationForm">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="rootReservationModalLabel"></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" id="rootReservationCode" name="ReservationCode" />
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootTeacherLabel"></label>
-                                <input type="text" class="form-control modern-input" id="rootTeacherName" name="TeacherName" readonly />
-                                <input type="hidden" id="rootTeacherCode" name="TeacherCode" />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootDescriptionLabel"></label>
-                                <input type="text" class="form-control modern-input" id="rootDescription" name="Description" required />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootCapacityLabel"></label>
-                                <input type="number" class="form-control modern-input" id="rootCapacity" name="Capacity" min="1" required />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootCostLabel"></label>
-                                <input type="number" class="form-control modern-input" id="rootCost" name="Cost" min="0" step="0.01" required />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootStartTimeLabel"></label>
-                                <input type="time" class="form-control modern-input" id="rootStartTime" name="ReservationStartTime" required />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootEndTimeLabel"></label>
-                                <input type="time" class="form-control modern-input" id="rootEndTime" name="ReservationEndTime" required />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootPeriodLabel"></label>
-                                <input type="number" class="form-control modern-input" id="rootPeriod" name="Period" readonly />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootDepositLabel"></label>
-                                <input type="number" class="form-control modern-input" id="rootDeposit" name="Deposit" min="0" step="0.01" />
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="form-label" id="rootFinalCostLabel"></label>
-                                <input type="number" class="form-control modern-input" id="rootFinalCost" name="FinalCost" min="0" step="0.01" />
-                            </div>
-                            <input type="hidden" id="rootRTime" name="RTime" />
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="modern-btn" id="rootReservationSaveBtn"></button>
-                        </div>
+    <div class="reservation-container">
+        @if (!isCenter)
+        {
+            <!-- ---------- NON-CENTER DESIGN ---------- -->
+            <div class="reservation-filter-panel">
+                <div class="reservation-filter-title">
+                    <i class="bi bi-funnel"></i>
+                    Filters & Actions
+                </div>
+                <div class="d-flex align-items-end gap-3 flex-wrap">
+                    <div class="reservation-form-group mb-0">
+                        <label for="rootDateSelect" class="reservation-form-label" id="rootDateLabel"></label>
+                        <input type="date" id="rootDateSelect" class="reservation-form-control" />
                     </div>
-                </form>
+                    <button type="button" class="reservation-btn reservation-btn-primary" id="rootAddReservationBtn">
+                        <i class="bi bi-plus-circle"></i>
+                        <span id="rootAddBtnText">@Localizer["AddReservationBtn"]</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    }
-    else
-    {
-        <!-- ---------- CURRENT/CENTER DESIGN ---------- -->
-        <div class="container py-4">
-            <div class="filter-panel mb-4">
+
+            <div id="rootReservationsList">
+                <div class="reservation-loading">
+                    <div class="reservation-spinner"></div>
+                    Loading reservations...
+                </div>
+            </div>
+
+            <!-- Add/Edit Modal -->
+            <div class="modal fade reservation-modal" id="rootReservationModal" tabindex="-1" aria-labelledby="rootReservationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <form id="rootReservationForm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="rootReservationModalLabel"></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="rootReservationCode" name="ReservationCode" />
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootTeacherLabel"></label>
+                                            <input type="text" class="reservation-form-control" id="rootTeacherName" name="TeacherName" readonly />
+                                            <input type="hidden" id="rootTeacherCode" name="TeacherCode" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootDescriptionLabel"></label>
+                                            <input type="text" class="reservation-form-control" id="rootDescription" name="Description" required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootCapacityLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="rootCapacity" name="Capacity" min="1" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootCostLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="rootCost" name="Cost" min="0" step="0.01" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootDepositLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="rootDeposit" name="Deposit" min="0" step="0.01" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootStartTimeLabel"></label>
+                                            <input type="time" class="reservation-form-control" id="rootStartTime" name="ReservationStartTime" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootEndTimeLabel"></label>
+                                            <input type="time" class="reservation-form-control" id="rootEndTime" name="ReservationEndTime" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="rootPeriodLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="rootPeriod" name="Period" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="rootFinalCostLabel"></label>
+                                    <input type="number" class="reservation-form-control" id="rootFinalCost" name="FinalCost" min="0" step="0.01" />
+                                </div>
+
+                                <input type="hidden" id="rootRTime" name="RTime" />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="reservation-btn reservation-btn-outline" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle"></i>
+                                    Cancel
+                                </button>
+                                <button type="submit" class="reservation-btn reservation-btn-primary" id="rootReservationSaveBtn"></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- ---------- CENTER DESIGN ---------- -->
+            <div class="reservation-filter-panel">
+                <div class="reservation-filter-title">
+                    <i class="bi bi-funnel"></i>
+                    Filters
+                </div>
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4 col-lg-3">
-                        <label for="branchSelect" class="form-label" id="branchLabel"></label>
-                        <select id="branchSelect" class="form-select modern-input styled-select"></select>
+                        <div class="reservation-form-group mb-0">
+                            <label for="branchSelect" class="reservation-form-label" id="branchLabel"></label>
+                            <select id="branchSelect" class="reservation-form-control reservation-form-select"></select>
+                        </div>
                     </div>
                     <div class="col-md-4 col-lg-3">
-                        <label for="dateSelect" class="form-label" id="dateLabel"></label>
-                        <input type="date" id="dateSelect" class="form-control modern-input" />
+                        <div class="reservation-form-group mb-0">
+                            <label for="dateSelect" class="reservation-form-label" id="dateLabel"></label>
+                            <input type="date" id="dateSelect" class="reservation-form-control" />
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="table-card table-responsive position-relative">
-                <table class="table table-bordered align-middle text-center reservation-table gradient-table" id="reservationGridTable">
-                    <thead>
-                        <!-- Filled by JS -->
-                    </thead>
-                    <tbody>
-                        <!-- Filled by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <!-- Add Reservation Modal -->
-        <div class="modal fade" id="addReservationModal" tabindex="-1" aria-labelledby="addReservationModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <form id="addReservationForm">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="addReservationModalLabel"></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" id="addBranchCode" name="BranchCode">
-                            <input type="hidden" id="addHallCode" name="HallCode">
-                            <input type="hidden" id="addReservationDate" name="RTime">
-                            <div class="form-group">
-                                <label class="form-label" id="addTeacherLabel"></label>
-                                <div class="input-group">
-                                    <select class="form-select modern-input styled-select" id="addTeacherSelect" name="TeacherCode" required></select>
-                                    <button class="modern-btn btn-cancel" type="button" id="firstTimeTeacherBtn" tabindex="-1"></button>
+            <div class="reservation-table-container">
+                <div class="table-responsive">
+                    <table class="reservation-table" id="reservationGridTable">
+                        <thead>
+                            <!-- Filled by JS -->
+                        </thead>
+                        <tbody>
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add Reservation Modal -->
+            <div class="modal fade reservation-modal" id="addReservationModal" tabindex="-1" aria-labelledby="addReservationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <form id="addReservationForm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addReservationModalLabel"></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="addBranchCode" name="BranchCode">
+                                <input type="hidden" id="addHallCode" name="HallCode">
+                                <input type="hidden" id="addReservationDate" name="RTime">
+
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="addTeacherLabel"></label>
+                                    <div class="d-flex gap-2">
+                                        <select class="reservation-form-control reservation-form-select flex-grow-1" id="addTeacherSelect" name="TeacherCode" required></select>
+                                        <button class="reservation-btn reservation-btn-outline" type="button" id="firstTimeTeacherBtn">
+                                            <i class="bi bi-person-plus"></i>
+                                            <span id="firstTimeText">New Teacher</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addDescriptionLabel"></label>
+                                            <input type="text" class="reservation-form-control" id="addDescription" name="Description" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addCapacityLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="addCapacity" name="Capacity" min="1" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addCostLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="addCost" name="Cost" min="0" step="0.01" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addDepositLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="addDeposit" name="Deposit" min="0" step="0.01">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addFinalCostLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="addFinalCost" name="FinalCost" min="0" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addStartTimeLabel"></label>
+                                            <input type="time" class="reservation-form-control" id="addStartTime" name="ReservationStartTime" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addEndTimeLabel"></label>
+                                            <input type="time" class="reservation-form-control" id="addEndTime" name="ReservationEndTime" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="addPeriodLabel"></label>
+                                            <input type="number" class="reservation-form-control" id="addPeriod" name="Period" readonly>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addDescriptionLabel"></label>
-                                <input type="text" class="form-control modern-input" id="addDescription" name="Description" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addCapacityLabel"></label>
-                                <input type="number" class="form-control modern-input" id="addCapacity" name="Capacity" min="1" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addCostLabel"></label>
-                                <input type="number" class="form-control modern-input" id="addCost" name="Cost" min="0" step="0.01" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addStartTimeLabel"></label>
-                                <input type="time" class="form-control modern-input" id="addStartTime" name="ReservationStartTime" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addEndTimeLabel"></label>
-                                <input type="time" class="form-control modern-input" id="addEndTime" name="ReservationEndTime" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addPeriodLabel"></label>
-                                <input type="number" class="form-control modern-input" id="addPeriod" name="Period" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addDepositLabel"></label>
-                                <input type="number" class="form-control modern-input" id="addDeposit" name="Deposit" min="0" step="0.01">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="addFinalCostLabel"></label>
-                                <input type="number" class="form-control modern-input" id="addFinalCost" name="FinalCost" min="0" step="0.01">
+                            <div class="modal-footer">
+                                <button type="button" class="reservation-btn reservation-btn-outline" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle"></i>
+                                    Cancel
+                                </button>
+                                <button type="submit" class="reservation-btn reservation-btn-primary" id="addReservationBtn">
+                                    <i class="bi bi-plus-circle"></i>
+                                    @Localizer["AddReservationBtn"]
+                                </button>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="modern-btn" id="addReservationBtn">@Localizer["AddReservationBtn"]</button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Add Teacher Modal -->
-        <div class="modal fade" id="addTeacherModal" tabindex="-1" aria-labelledby="addTeacherModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <form id="addTeacherForm">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="addTeacherModalLabel"></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label class="form-label" id="teacherNameLabel"></label>
-                                <input type="text" class="form-control modern-input" id="teacherName" name="TeacherName" required>
+            <!-- Add Teacher Modal -->
+            <div class="modal fade reservation-modal" id="addTeacherModal" tabindex="-1" aria-labelledby="addTeacherModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form id="addTeacherForm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addTeacherModalLabel"></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" id="teacherPhoneLabel"></label>
-                                <input type="text" class="form-control modern-input" id="teacherPhone" name="TeacherPhone" required>
+                            <div class="modal-body">
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="teacherNameLabel"></label>
+                                    <input type="text" class="reservation-form-control" id="teacherName" name="TeacherName" required>
+                                </div>
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="teacherPhoneLabel"></label>
+                                    <input type="text" class="reservation-form-control" id="teacherPhone" name="TeacherPhone" required>
+                                </div>
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="teacherAddressLabel"></label>
+                                    <input type="text" class="reservation-form-control" id="teacherAddress" name="TeacherAddress">
+                                </div>
+                                <div id="teacherAddMsg" class="reservation-alert reservation-alert-success d-none"></div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" id="teacherAddressLabel"></label>
-                                <input type="text" class="form-control modern-input" id="teacherAddress" name="TeacherAddress">
+                            <div class="modal-footer">
+                                <button type="button" class="reservation-btn reservation-btn-outline" data-bs-dismiss="modal" id="closeTeacherBtn">
+                                    <i class="bi bi-x-circle"></i>
+                                    Cancel
+                                </button>
+                                <button type="submit" class="reservation-btn reservation-btn-success" id="addTeacherBtn">
+                                    <i class="bi bi-person-plus"></i>
+                                    Add Teacher
+                                </button>
                             </div>
-                            <div id="teacherAddMsg" class="text-success d-none"></div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="modern-btn" id="addTeacherBtn"></button>
-                            <button type="button" class="modern-btn btn-cancel" data-bs-dismiss="modal" id="closeTeacherBtn"></button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Edit Reservation Modal -->
-        <div class="modal fade" id="editReservationModal" tabindex="-1" aria-labelledby="editReservationModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <form id="editReservationForm">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editReservationModalLabel"></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- Edit Reservation Modal -->
+            <div class="modal fade reservation-modal" id="editReservationModal" tabindex="-1" aria-labelledby="editReservationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <form id="editReservationForm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editReservationModalLabel"></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="editReservationCode" name="ReservationCode">
+
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="editTeacherLabel"></label>
+                                    <select class="reservation-form-control reservation-form-select" id="editTeacherSelect" name="TeacherCode" required></select>
+                                </div>
+
+                                <div class="reservation-form-group">
+                                    <label class="reservation-form-label" id="editDescriptionLabel"></label>
+                                    <input type="text" class="reservation-form-control" id="editDescription" name="Description" required>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="editStartTimeLabel"></label>
+                                            <input type="time" class="reservation-form-control" id="editStartTime" name="ReservationStartTime" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="reservation-form-group">
+                                            <label class="reservation-form-label" id="editEndTimeLabel"></label>
+                                            <input type="time" class="reservation-form-control" id="editEndTime" name="ReservationEndTime" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="reservation-btn reservation-btn-outline" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle"></i>
+                                    Cancel
+                                </button>
+                                <button type="submit" class="reservation-btn reservation-btn-primary" id="saveChangesBtn">
+                                    <i class="bi bi-check-circle"></i>
+                                    Save Changes
+                                </button>
+                            </div>
                         </div>
-                        <div class="modal-body">
-                            <input type="hidden" id="editReservationCode" name="ReservationCode">
-                            <div class="form-group">
-                                <label class="form-label" id="editTeacherLabel"></label>
-                                <select class="form-select modern-input styled-select" id="editTeacherSelect" name="TeacherCode" required></select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="editDescriptionLabel"></label>
-                                <input type="text" class="form-control modern-input" id="editDescription" name="Description" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="editStartTimeLabel"></label>
-                                <input type="time" class="form-control modern-input" id="editStartTime" name="ReservationStartTime" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" id="editEndTimeLabel"></label>
-                                <input type="time" class="form-control modern-input" id="editEndTime" name="ReservationEndTime" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="modern-btn" id="saveChangesBtn"></button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/Reservation.js"></script>
+    <script src="~/js/reservation.js"></script>
 </body>
 </html>

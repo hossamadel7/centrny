@@ -1050,6 +1050,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.PageName)
                 .HasMaxLength(50)
                 .HasColumnName("Page_Name");
+            entity.Property(e => e.PageNameAr)
+                .HasMaxLength(50)
+                .HasColumnName("Page_Name_Ar");
             entity.Property(e => e.PageParent).HasColumnName("Page_Parent");
             entity.Property(e => e.PagePath)
                 .HasMaxLength(50)

@@ -28,7 +28,6 @@
     }
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <style>
-        /* Exam view only RTL/LTR fix and unified root look */
         html[dir="rtl"] .exam-index-card,
         html[dir="rtl"] .gradient-table,
         html[dir="rtl"] .exam-index-table,
@@ -36,7 +35,6 @@
             direction: rtl;
             text-align: right;
         }
-
         html[dir="ltr"] .exam-index-card,
         html[dir="ltr"] .gradient-table,
         html[dir="ltr"] .exam-index-table,
@@ -44,65 +42,51 @@
             direction: ltr;
             text-align: left;
         }
-            /* Table column alignment fix for exam table only */
-            html[dir="ltr"] .gradient-table th:first-child,
-            html[dir="ltr"] .gradient-table td:first-child {
-                text-align: left;
-            }
-
-            html[dir="ltr"] .gradient-table th:last-child,
-            html[dir="ltr"] .gradient-table td:last-child {
-                text-align: right;
-            }
-
+        html[dir="ltr"] .gradient-table th:first-child,
+        html[dir="ltr"] .gradient-table td:first-child {
+            text-align: left;
+        }
+        html[dir="ltr"] .gradient-table th:last-child,
+        html[dir="ltr"] .gradient-table td:last-child {
+            text-align: right;
+        }
         html[dir="rtl"] .gradient-table th:first-child,
         html[dir="rtl"] .gradient-table td:first-child {
             text-align: right;
         }
-
         html[dir="rtl"] .gradient-table th:last-child,
         html[dir="rtl"] .gradient-table td:last-child {
             text-align: left;
         }
-        /* Stats button for exam view */
         .btn-table.stats {
             background: var(--info-gradient) !important;
             color: #fff !important;
         }
-        /* Unified badge colors for exam view (looks like root) */
         .badge.exam-type-exam {
             background: var(--primary-gradient) !important;
         }
-
         .badge.exam-type-assignment {
             background: var(--info-gradient) !important;
         }
-
         .badge.exam-status-done {
             background: var(--success-gradient) !important;
         }
-
         .badge.exam-status-pending {
             background: var(--warning-gradient) !important;
         }
-
         .badge.exam-mode-online {
             background: var(--info-gradient) !important;
         }
-
         .badge.exam-mode-offline {
             background: var(--danger-gradient) !important;
             color: #fff !important;
         }
-
         .badge.exam-duration {
             background: var(--info-gradient) !important;
         }
-
         .badge.exam-degree {
             background: var(--primary-gradient) !important;
         }
-        /* Card and header just like root */
         .table-card {
             background: var(--bg-white);
             border-radius: var(--border-radius);
@@ -116,7 +100,6 @@
             flex-direction: column;
             align-items: center;
         }
-
         .exam-header-block {
             width: 100%;
             text-align: center;
@@ -128,28 +111,25 @@
             border: 1px solid rgba(108,92,231,0.11);
             position: relative;
         }
-
-            .exam-header-block h2 {
-                font-size: 2.5rem;
-                font-weight: 800;
-                margin-bottom: 0.3rem;
-                letter-spacing: -.01em;
-                background: var(--primary-gradient-horizontal);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                color: transparent;
-                display: inline-block;
-                text-align: center;
-            }
-
-            .exam-header-block p {
-                color: var(--text-muted);
-                font-size: 1.13rem;
-                margin: 0;
-                font-weight: 500;
-            }
-        /* spacing for add button */
+        .exam-header-block h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            letter-spacing: -.01em;
+            background: var(--primary-gradient-horizontal);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            text-align: center;
+        }
+        .exam-header-block p {
+            color: var(--text-muted);
+            font-size: 1.13rem;
+            margin: 0;
+            font-weight: 500;
+        }
         .exam-header-actions {
             display: flex;
             align-items: center;
@@ -243,9 +223,7 @@
                     <span class="text-muted">@Localizer["PageContext"]</span>
                     <span class="badge teacher ms-2">@Localizer["Teacher"]</span>
                 </div>
-                <div>
-                    <span class="text-muted">@Localizer["RootCodeLabel"] @rootCode</span>
-                </div>
+                <!-- RootCode display removed as requested -->
             </div>
         </div>
 
@@ -277,7 +255,6 @@
                 <div class="table-responsive">
                     <div id="exam-table-info"></div>
                     <div id="exam-pagination"></div>
-                    <!-- The table will be rendered by JS, so no need to change here -->
                     <div id="exam-details">
                         <div class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
@@ -315,6 +292,8 @@
     <div class="modal fade" id="examModal" tabindex="-1" aria-labelledby="examModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="examForm" class="modal-content" autocomplete="off">
+                <input type="hidden" name="ExamCode" id="ExamCode" />
+                <input type="hidden" name="RootCode" id="RootCode" value="@rootCode" />
                 <div class="modal-header">
                     <h5 class="modal-title" id="examModalLabel">
                         <i class="fas fa-plus me-2"></i>@Localizer["AddExamBtn"]
@@ -438,6 +417,13 @@
     <div class="modal fade" id="editExamModal" tabindex="-1" aria-labelledby="editExamModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <form id="editExamForm" class="modal-content">
+                <input type="hidden" name="ExamCode" id="EditExamCode" />
+                <input type="hidden" name="RootCode" id="EditRootCode" value="@rootCode" />
+                <input type="hidden" name="TeacherCode" id="EditTeacherCode" />
+                <input type="hidden" name="SubjectCode" id="EditSubjectCode" />
+                <input type="hidden" name="YearCode" id="EditYearCode" />
+                <input type="hidden" name="BranchCode" id="EditBranchCode" />
+                <input type="hidden" name="EduYearCode" id="EditEduYearCode" />
                 <div class="modal-header">
                     <h5 class="modal-title" id="editExamModalLabel">
                         <i class="fas fa-pencil me-2"></i>@Localizer["EditExamBtn"]
@@ -446,13 +432,6 @@
                 </div>
                 <div class="modal-body">
                     <div id="editExamError" class="alert alert-danger" style="display:none"></div>
-                    <!-- Hidden fields for required properties -->
-                    <input type="hidden" name="ExamCode" id="EditExamCode" />
-                    <input type="hidden" name="TeacherCode" id="EditTeacherCode" />
-                    <input type="hidden" name="SubjectCode" id="EditSubjectCode" />
-                    <input type="hidden" name="YearCode" id="EditYearCode" />
-                    <input type="hidden" name="BranchCode" id="EditBranchCode" />
-                    <input type="hidden" name="EduYearCode" id="EditEduYearCode" />
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -519,7 +498,6 @@
                     <input type="hidden" id="questionsExamCode" name="ExamCode">
                     <div class="row g-3 h-100">
                         <div class="col-lg-6 d-flex flex-column">
-                            <!-- Question Search Bar -->
                             <div id="exam-question-search-bar" class="mb-3">
                                 <div class="input-group">
                                     <input type="text" id="examQuestionSearchInput" class="form-control"
@@ -528,8 +506,7 @@
                                         <i class="fas fa-search"></i> @Localizer["SearchBtn"]
                                     </button>
                                     <button id="examQuestionSearchClearBtn" class="btn-table delete" type="button" style="display:none;">
-                                        <i class="fas fa-times"></i> @Localizer["ClearBtn"]
-                                    </button>
+                                        <i class="fas fa-times"></i> @Localizer["ClearBtn"]</button>
                                 </div>
                             </div>
                             <div id="exam-question-search-results" class="mb-2" style="display:none;"></div>
