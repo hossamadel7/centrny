@@ -1,0 +1,350 @@
+﻿@{
+    ViewData["Title"] = "Reports Dashboard";
+    var isTeacher = ViewBag.IsTeacher as bool? ?? false;
+    var branchCode = ViewBag.BranchCode as int?;
+    var rootCode = ViewBag.RootCode as int?;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2><i class="fas fa-chart-bar"></i> Reports Dashboard</h2>
+            <p class="text-muted">Comprehensive reporting system for educational management</p>
+        </div>
+    </div>
+
+    <div class="row">
+        @if (!isTeacher)
+        {
+            <!-- Center Admin Reports -->
+            <div class="col-12 mb-4">
+                <h3 class="text-primary mb-3">
+                    <i class="fas fa-building"></i> Center Management Reports
+                </h3>
+            </div>
+
+            <!-- Financial Reports -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-dollar-sign text-primary fa-2x"></i>
+                            </div>
+                            <span class="badge bg-primary">Revenue</span>
+                        </div>
+                        <h5 class="card-title">Financial Summary</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Revenue, expenses, and profitability analysis<br>
+                            <small class="text-muted">Filter by:</small> Date range, branch, subject<br>
+                            <small class="text-muted">Export:</small> PDF, Excel formats available
+                        </p>
+                        <a href="@Url.Action("FinancialSummary", "Reports")" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Enrollment Report -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-users text-info fa-2x"></i>
+                            </div>
+                            <span class="badge bg-info">Students</span>
+                        </div>
+                        <h5 class="card-title">Student Enrollment</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Student registration and enrollment trends<br>
+                            <small class="text-muted">Filter by:</small> Branch, subject, year, enrollment date<br>
+                            <small class="text-muted">Includes:</small> Contact info, subscription status
+                        </p>
+                        <a href="@Url.Action("StudentEnrollmentReport", "Reports")" class="btn btn-info">
+                            <i class="fas fa-user-graduate"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Performance Report -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-chalkboard-teacher text-success fa-2x"></i>
+                            </div>
+                            <span class="badge bg-success">Performance</span>
+                        </div>
+                        <h5 class="card-title">Teacher Performance</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Teaching effectiveness and attendance rates<br>
+                            <small class="text-muted">Filter by:</small> Teacher, subject, date range<br>
+                            <small class="text-muted">Metrics:</small> Attendance rates, earnings, class count
+                        </p>
+                        <a href="@Url.Action("TeacherPerformanceReport", "Reports")" class="btn btn-success">
+                            <i class="fas fa-award"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Performance Report -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-clipboard-list text-warning fa-2x"></i>
+                            </div>
+                            <span class="badge bg-warning text-dark">Academic</span>
+                        </div>
+                        <h5 class="card-title">Exam Performance</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Overall exam results and success rates<br>
+                            <small class="text-muted">Filter by:</small> Branch, subject, teacher, exam type<br>
+                            <small class="text-muted">Analytics:</small> Pass rates, average scores, trends
+                        </p>
+                        <a href="@Url.Action("ExamPerformanceReport", "Reports")" class="btn btn-warning text-dark">
+                            <i class="fas fa-chart-pie"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (isTeacher)
+        {
+            <!-- Teacher Reports -->
+            <div class="col-12 mb-4">
+                <h3 class="text-primary mb-3">
+                    <i class="fas fa-user-tie"></i> My Teaching Reports
+                </h3>
+            </div>
+
+            <!-- My Classes Report -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-calendar-alt text-primary fa-2x"></i>
+                            </div>
+                            <span class="badge bg-primary">Classes</span>
+                        </div>
+                        <h5 class="card-title">My Classes</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Your scheduled and completed classes<br>
+                            <small class="text-muted">Filter by:</small> Date range, subject<br>
+                            <small class="text-muted">Includes:</small> Attendance rates, earnings
+                        </p>
+                        <a href="@Url.Action("MyClassesReport", "Reports")" class="btn btn-primary">
+                            <i class="fas fa-calendar-check"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Student Performance -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-user-graduate text-info fa-2x"></i>
+                            </div>
+                            <span class="badge bg-info">Students</span>
+                        </div>
+                        <h5 class="card-title">My Students</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Performance of your enrolled students<br>
+                            <small class="text-muted">Filter by:</small> Subject, year level<br>
+                            <small class="text-muted">Includes:</small> Attendance rates, contact info
+                        </p>
+                        <a href="@Url.Action("MyStudentPerformance", "Reports")" class="btn btn-info">
+                            <i class="fas fa-chart-line"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Earnings Report -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-money-bill-wave text-success fa-2x"></i>
+                            </div>
+                            <span class="badge bg-success">Earnings</span>
+                        </div>
+                        <h5 class="card-title">My Earnings</h5>
+                        <p class="card-text">
+                            <small class="text-muted">View:</small> Your teaching earnings and payments<br>
+                            <small class="text-muted">Filter by:</small> Date range, subject<br>
+                            <small class="text-muted">Breakdown:</small> Per class, monthly, quarterly totals
+                        </p>
+                        <a href="@Url.Action("MyEarningsReport", "Reports")" class="btn btn-success">
+                            <i class="fas fa-dollar-sign"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Common Reports Section -->
+        <div class="col-12 mb-4 mt-4">
+            <h3 class="text-primary mb-3">
+                <i class="fas fa-clipboard-check"></i> Attendance & Class Reports
+            </h3>
+        </div>
+
+        <!-- Class Attendance Report -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <i class="fas fa-clipboard-check text-secondary fa-2x"></i>
+                        </div>
+                        <span class="badge bg-secondary">Attendance</span>
+                    </div>
+                    <h5 class="card-title">Class Attendance</h5>
+                    <p class="card-text">
+                        <small class="text-muted">Compare:</small> Enrolled vs attended students per class<br>
+                        <small class="text-muted">Filter by:</small> Teacher, subject, specific date<br>
+                        <small class="text-muted">Shows:</small> Present/absent lists with contact info
+                    </p>
+                    <a href="@Url.Action("ClassAttendanceReport", "Reports")" class="btn btn-secondary">
+                        <i class="fas fa-list-check"></i> View Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (!isTeacher)
+        {
+            <!-- Coming Soon Reports -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <i class="fas fa-building text-muted fa-2x"></i>
+                            </div>
+                            <span class="badge bg-light text-dark">Coming Soon</span>
+                        </div>
+                        <h5 class="card-title text-muted">Branch Performance</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Compare:</small> Performance across all branches<br>
+                            <small class="text-muted">Metrics:</small> Revenue, enrollment, attendance<br>
+                            <small class="text-muted">Period:</small> Monthly, quarterly, yearly
+                        </p>
+                        <button class="btn btn-outline-secondary" disabled>
+                            <i class="fas fa-chart-bar"></i> Coming Soon
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Quick Stats Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-primary mb-3">
+                <i class="fas fa-tachometer-alt"></i> Quick Statistics
+            </h3>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-primary mb-2">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Active Students</h5>
+                    <p class="text-primary fs-4" id="totalStudents">Loading...</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-success mb-2">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Classes This Month</h5>
+                    <p class="text-success fs-4" id="monthlyClasses">Loading...</p>
+                </div>
+            </div>
+        </div>
+        @if (!isTeacher)
+        {
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="text-info mb-2">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Monthly Revenue</h5>
+                        <p class="text-info fs-4" id="monthlyRevenue">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-warning mb-2">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Attendance Rate</h5>
+                    <p class="text-warning fs-4" id="attendanceRate">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Load quick statistics
+    $(document).ready(function() {
+        loadQuickStats();
+    });
+
+    function loadQuickStats() {
+        // Show placeholder values for now
+        setTimeout(function() {
+            $('#totalStudents').text('1,248');
+            $('#monthlyClasses').text('156');
+            $('#monthlyRevenue').text('$12,450');
+            $('#attendanceRate').text('87.5%');
+        }, 1000);
+
+        // TODO: Implement actual AJAX call to GetDashboardStats
+        /*
+        $.ajax({
+            url: '@Url.Action("GetDashboardStats", "Reports")',
+            type: 'GET',
+            success: function(data) {
+                $('#totalStudents').text(data.totalStudents.toLocaleString());
+                $('#monthlyClasses').text(data.monthlyClasses);
+                if (!@isTeacher.ToString().ToLower()) {
+                    $('#monthlyRevenue').text('$' + data.monthlyRevenue.toLocaleString());
+                }
+                $('#attendanceRate').text(data.attendanceRate.toFixed(1) + '%');
+            },
+            error: function() {
+                $('#totalStudents').text('Error');
+                $('#monthlyClasses').text('Error');
+                $('#monthlyRevenue').text('Error');
+                $('#attendanceRate').text('Error');
+            }
+        });
+        */
+    }
+</script>

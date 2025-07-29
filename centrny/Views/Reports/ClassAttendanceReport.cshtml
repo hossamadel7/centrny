@@ -1,0 +1,113 @@
+﻿@{
+    ViewData["Title"] = "Class Attendance Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/ClassAttendanceReport.css" rel="stylesheet" />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Clean Header -->
+            <div class="attendance-header mb-3">
+                <h1 class="attendance-title">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Class Attendance
+                </h1>
+                <p class="attendance-subtitle">Monitor and manage student attendance</p>
+            </div>
+
+            <!-- Compact Filter Panel -->
+            <div class="enhanced-filter-panel mb-3">
+                <div class="filter-body">
+                    <form id="filterForm" class="filter-form">
+                        @if (!ViewBag.IsTeacher)
+                        {
+                            <div class="filter-group">
+                                <label for="teacherCode" class="filter-label">Teacher</label>
+                                <select id="teacherCode" name="teacherCode" class="enhanced-select">
+                                    <option value="">All Teachers</option>
+                                    @foreach (var teacher in ViewBag.Teachers)
+                                    {
+                                        <option value="@teacher.TeacherCode">@teacher.TeacherName</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <div class="filter-group">
+                            <label for="subjectCode" class="filter-label">Subject</label>
+                            <select id="subjectCode" name="subjectCode" class="enhanced-select">
+                                <option value="">All Subjects</option>
+                                @foreach (var subject in ViewBag.Subjects)
+                                {
+                                    <option value="@subject.SubjectCode">@subject.SubjectName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="classDate" class="filter-label">Date</label>
+                            <input type="date" id="classDate" name="classDate" class="enhanced-input">
+                        </div>
+
+                        <div class="filter-actions">
+                            <button type="submit" class="enhanced-btn enhanced-btn-primary">
+                                <i class="fas fa-search me-1"></i>Apply
+                            </button>
+                            <button type="button" id="clearFilters" class="enhanced-btn enhanced-btn-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-container" style="display: none;">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <p class="loading-text">Loading attendance data...</p>
+            </div>
+
+
+
+            <!-- Classes Container -->
+            <div id="attendanceContainer" class="enhanced-classes-container">
+                <!-- Classes will be loaded here via AJAX -->
+            </div>
+
+            <!-- No Data Message -->
+            <div id="noDataMessage" class="enhanced-no-data" style="display: none;">
+                <div class="no-data-content">
+                    <div class="no-data-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <h4 class="no-data-title">No Classes Found</h4>
+                    <p class="no-data-text">No classes match the selected criteria. Try adjusting your filters to see more results.</p>
+                    <button id="clearFiltersBtn" class="enhanced-btn enhanced-btn-primary">
+                        <i class="fas fa-refresh me-1"></i>Reset Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <nav id="paginationContainer" class="enhanced-pagination" style="display: none;">
+                <div class="pagination-wrapper">
+                    <div class="pagination-info">
+                        <span id="paginationInfo" class="pagination-text">
+                            <!-- Pagination info will be inserted here -->
+                        </span>
+                    </div>
+                    <ul class="pagination-list" id="paginationLinks">
+                        <!-- Pagination links will be inserted here -->
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/js/ClassAttendanceReport.js"></script>
