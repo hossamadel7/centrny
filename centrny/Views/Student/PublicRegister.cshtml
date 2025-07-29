@@ -1,13 +1,18 @@
 @using centrny.Controllers
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
 @model PublicRegistrationViewModel
 
 @{
-    ViewData["Title"] = "Student Registration";
+    var Localizer = LocalizerFactory.Create("Register", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title_StudentRegistration"];
     Layout = null; // No layout for clean registration experience
+    var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@lang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -45,17 +50,17 @@
             padding: 40px 30px;
         }
 
-        .registration-header h1 {
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 600;
-        }
+            .registration-header h1 {
+                margin: 0;
+                font-size: 2rem;
+                font-weight: 600;
+            }
 
-        .registration-header p {
-            margin: 10px 0 0 0;
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
+            .registration-header p {
+                margin: 10px 0 0 0;
+                opacity: 0.9;
+                font-size: 1.1rem;
+            }
 
         .registration-body {
             padding: 40px 30px;
@@ -75,10 +80,10 @@
             transition: all 0.3s ease;
         }
 
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
+            .form-control:focus, .form-select:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -91,10 +96,10 @@
             width: 100%;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
 
         .text-danger {
             color: #dc3545;
@@ -123,20 +128,20 @@
             margin-bottom: 30px;
         }
 
-        .instructions h5 {
-            color: #667eea;
-            margin-bottom: 15px;
-        }
+            .instructions h5 {
+                color: #667eea;
+                margin-bottom: 15px;
+            }
 
-        .instructions ul {
-            margin: 0;
-            padding-left: 20px;
-        }
+            .instructions ul {
+                margin: 0;
+                padding-left: 20px;
+            }
 
-        .instructions li {
-            margin-bottom: 8px;
-            color: #6c757d;
-        }
+            .instructions li {
+                margin-bottom: 8px;
+                color: #6c757d;
+            }
     </style>
 </head>
 
@@ -146,20 +151,20 @@
             <!-- Header -->
             <div class="registration-header">
                 <i class="fas fa-user-plus fa-3x mb-3"></i>
-                <h1>Join @Model.RootName</h1>
-                <p>Start your learning journey with us</p>
+                <h1>@Localizer["Header_Join"] @Model.RootName</h1>
+                <p>@Localizer["Header_Journey"]</p>
             </div>
 
             <!-- Body -->
             <div class="registration-body">
                 <!-- Instructions -->
                 <div class="instructions">
-                    <h5><i class="fas fa-info-circle me-2"></i>Registration Process</h5>
+                    <h5><i class="fas fa-info-circle me-2"></i>@Localizer["Instructions_Title"]</h5>
                     <ul>
-                        <li>Complete this form with your basic information</li>
-                        <li>You'll receive your access key from the center</li>
-                        <li>Use your access key to complete academic enrollment</li>
-                        <li>Select your subjects, teachers, and schedules</li>
+                        <li>@Localizer["Instruction_1"]</li>
+                        <li>@Localizer["Instruction_2"]</li>
+                        <li>@Localizer["Instruction_3"]</li>
+                        <li>@Localizer["Instruction_4"]</li>
                     </ul>
                 </div>
 
@@ -167,7 +172,7 @@
                 @if (!ViewData.ModelState.IsValid)
                 {
                     <div class="alert alert-danger">
-                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:</h6>
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>@Localizer["Error_Header"]</h6>
                         <ul class="mb-0">
                             @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                             {
@@ -179,15 +184,15 @@
 
                 <!-- Registration Form -->
                 <form method="post" asp-action="PublicRegister" asp-route-root_code="@Model.RootCode">
-                    
+
                     <!-- Student Name -->
                     <div class="mb-3">
                         <label class="form-label" for="studentName">
-                            Full Name <span class="text-danger">*</span>
+                            @Localizer["Label_FullName"] <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control" id="studentName" name="StudentName" 
-                               value="@ViewBag.StudentName" required maxlength="100" 
-                               placeholder="Enter your full name">
+                        <input type="text" class="form-control" id="studentName" name="StudentName"
+                               value="@ViewBag.StudentName" required maxlength="100"
+                               placeholder="@Localizer["Placeholder_FullName"]">
                         @Html.ValidationMessage("StudentName", "", new { @class = "text-danger" })
                     </div>
 
@@ -196,22 +201,22 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label" for="studentPhone">
-                                    Your Phone Number <span class="text-danger">*</span>
+                                    @Localizer["Label_StudentPhone"] <span class="text-danger">*</span>
                                 </label>
-                                <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" 
+                                <input type="tel" class="form-control" id="studentPhone" name="StudentPhone"
                                        value="@ViewBag.StudentPhone" required maxlength="20"
-                                       placeholder="Your phone number">
+                                       placeholder="@Localizer["Placeholder_Phone"]">
                                 @Html.ValidationMessage("StudentPhone", "", new { @class = "text-danger" })
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label" for="parentPhone">
-                                    Parent/Guardian Phone <span class="text-danger">*</span>
+                                    @Localizer["Label_ParentPhone"] <span class="text-danger">*</span>
                                 </label>
-                                <input type="tel" class="form-control" id="parentPhone" name="StudentParentPhone" 
+                                <input type="tel" class="form-control" id="parentPhone" name="StudentParentPhone"
                                        value="@ViewBag.StudentParentPhone" required maxlength="20"
-                                       placeholder="Parent/Guardian phone">
+                                       placeholder="@Localizer["Placeholder_ParentPhone"]">
                                 @Html.ValidationMessage("StudentParentPhone", "", new { @class = "text-danger" })
                             </div>
                         </div>
@@ -222,26 +227,26 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label" for="birthDate">
-                                    Date of Birth <span class="text-danger">*</span>
+                                    @Localizer["Label_Birthdate"] <span class="text-danger">*</span>
                                 </label>
-                                <input type="date" class="form-control" id="birthDate" name="BirthDate" 
+                                <input type="date" class="form-control" id="birthDate" name="BirthDate"
                                        value="@ViewBag.BirthDate" required>
                                 @Html.ValidationMessage("BirthDate", "", new { @class = "text-danger" })
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Gender</label>
+                                <label class="form-label">@Localizer["Label_Gender"]</label>
                                 <div class="d-flex gap-3 mt-2">
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="Gender" id="genderMale" value="true"
-                                               @(ViewBag.Gender?.ToString() == "True" ? "checked" : "")>
-                                        <label class="form-check-label" for="genderMale">Male</label>
+                                        @(ViewBag.Gender?.ToString() == "True" ? "checked" : "")>
+                                        <label class="form-check-label" for="genderMale">@Localizer["Label_Male"]</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="Gender" id="genderFemale" value="false"
-                                               @(ViewBag.Gender?.ToString() == "False" ? "checked" : "")>
-                                        <label class="form-check-label" for="genderFemale">Female</label>
+                                        @(ViewBag.Gender?.ToString() == "False" ? "checked" : "")>
+                                        <label class="form-check-label" for="genderFemale">@Localizer["Label_Female"]</label>
                                     </div>
                                 </div>
                             </div>
@@ -253,10 +258,10 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label" for="yearCode">
-                                    Academic Year/Level <span class="text-danger">*</span>
+                                    @Localizer["Label_AcademicYear"] <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-select" id="yearCode" name="YearCode" required>
-                                    <option value="">Select your year/level</option>
+                                    <option value="">@Localizer["Dropdown_AcademicYearDefault"]</option>
                                     @foreach (var year in Model.AvailableYears)
                                     {
                                         <option value="@year.Value" selected="@(ViewBag.YearCode?.ToString() == year.Value ? "selected" : null)">
@@ -272,7 +277,7 @@
                     <!-- Submit Button -->
                     <div class="mt-4">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-user-plus me-2"></i>Complete Registration
+                            <i class="fas fa-user-plus me-2"></i>@Localizer["Btn_CompleteRegistration"]
                         </button>
                     </div>
 
@@ -280,7 +285,7 @@
                     <div class="text-center mt-4">
                         <small class="text-muted">
                             <i class="fas fa-lock me-1"></i>
-                            Your information is secure and will only be used for educational purposes.
+                            @Localizer["Info_Secure"]
                         </small>
                     </div>
                 </form>

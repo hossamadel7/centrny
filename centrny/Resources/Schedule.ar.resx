@@ -1,87 +1,340 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<!-- UI Labels -->
-	<data name="Title" xml:space="preserve"><value>إدارة الجداول</value></data>
-	<data name="CalendarTitle" xml:space="preserve"><value>تقويم الجدول</value></data>
-	<data name="WeeklyTemplateTitle" xml:space="preserve"><value>نموذج الجدول الأسبوعي</value></data>
-	<data name="ListView" xml:space="preserve"><value>عرض القائمة</value></data>
-	<data name="AddScheduleBtn" xml:space="preserve"><value>إضافة جدول</value></data>
-	<data name="CreateNewScheduleBtn" xml:space="preserve"><value>إنشاء جدول جديد</value></data>
-	<data name="SaveScheduleBtn" xml:space="preserve"><value>حفظ الجدول</value></data>
-	<data name="CancelBtn" xml:space="preserve"><value>إلغاء</value></data>
-	<data name="DeleteScheduleBtn" xml:space="preserve"><value>حذف الجدول</value></data>
-	<data name="EditBtn" xml:space="preserve"><value>تعديل</value></data>
-	<data name="ViewDetailsBtn" xml:space="preserve"><value>عرض التفاصيل</value></data>
-	<data name="RefreshBtn" xml:space="preserve"><value>تحديث</value></data>
-	<data name="CloseBtn" xml:space="preserve"><value>إغلاق</value></data>
-	<data name="ConfirmDeleteTitle" xml:space="preserve"><value>تأكيد الحذف</value></data>
-	<data name="ConfirmDeleteWarning" xml:space="preserve"><value>لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من حذف هذا الجدول؟</value></data>
-	<data name="NoSchedulesFound" xml:space="preserve"><value>لا توجد جداول</value></data>
-	<data name="GetStartedMsg" xml:space="preserve"><value>ابدأ بإنشاء أول جدول لك.</value></data>
-	<data name="NoSchedulesForDay" xml:space="preserve"><value>لا توجد جداول</value></data>
-	<data name="AddScheduleForDay" xml:space="preserve"><value>إضافة جدول ليوم {0}</value></data>
-	<data name="LegendMultipleClasses" xml:space="preserve"><value>يمكن تشغيل عدة صفوف في نفس الوقت</value></data>
-	<data name="LegendClickToEdit" xml:space="preserve"><value>انقر على أي جدول لعرض/تعديل/حذف</value></data>
-
-	<!-- Table Headers -->
-	<data name="ScheduleName" xml:space="preserve"><value>اسم الجدول</value></data>
-	<data name="Day" xml:space="preserve"><value>اليوم</value></data>
-	<data name="Time" xml:space="preserve"><value>الوقت</value></data>
-	<data name="Type" xml:space="preserve"><value>النوع</value></data>
-	<data name="Hall" xml:space="preserve"><value>القاعة</value></data>
-	<data name="CenterBranch" xml:space="preserve"><value>المركز / الفرع</value></data>
-	<data name="TeacherSubject" xml:space="preserve"><value>المعلم / المادة</value></data>
-	<data name="Amount" xml:space="preserve"><value>المبلغ</value></data>
-	<data name="Actions" xml:space="preserve"><value>الإجراءات</value></data>
-
-	<!-- Form Labels -->
-	<data name="ScheduleNameLabel" xml:space="preserve"><value>اسم الجدول</value></data>
-	<data name="DayOfWeekLabel" xml:space="preserve"><value>يوم الأسبوع</value></data>
-	<data name="StartTimeLabel" xml:space="preserve"><value>وقت البدء</value></data>
-	<data name="EndTimeLabel" xml:space="preserve"><value>وقت الانتهاء</value></data>
-	<data name="BranchLabel" xml:space="preserve"><value>الفرع</value></data>
-	<data name="CenterLabel" xml:space="preserve"><value>المركز</value></data>
-	<data name="HallLabel" xml:space="preserve"><value>القاعة</value></data>
-	<data name="EducationalYearLabel" xml:space="preserve"><value>السنة الدراسية</value></data>
-	<data name="YearLabel" xml:space="preserve"><value>السنة</value></data>
-	<data name="TeacherLabel" xml:space="preserve"><value>المعلم</value></data>
-	<data name="SubjectLabel" xml:space="preserve"><value>المادة</value></data>
-	<data name="AmountLabel" xml:space="preserve"><value>المبلغ</value></data>
-	<data name="NoteCenterUser" xml:space="preserve"><value>سيتم إنشاء هذا الجدول لـ {0} (المركز - رمز الجذر: {1})</value></data>
-	<data name="SelectBranchMsg" xml:space="preserve"><value>اختر الفرع لهذا الجدول</value></data>
-	<data name="SelectYearMsg" xml:space="preserve"><value>اختر السنة أولاً لعرض المواد الخاصة بك</value></data>
-	<data name="AvailableSubjectsMsg" xml:space="preserve"><value>ستظهر المواد المتاحة بعد اختيار المعلم</value></data>
-	<data name="SelectOption" xml:space="preserve"><value>اختر...</value></data>
-	<data name="SelectDayOption" xml:space="preserve"><value>اختر اليوم</value></data>
-	<data name="SelectCenterOption" xml:space="preserve"><value>اختر المركز (اختياري)</value></data>
-	<data name="SelectBranchOption" xml:space="preserve"><value>اختر الفرع (اختياري)</value></data>
-	<data name="SelectHallOption" xml:space="preserve"><value>اختر القاعة</value></data>
-	<data name="SelectYearOption" xml:space="preserve"><value>اختر السنة</value></data>
-	<data name="SelectTeacherOption" xml:space="preserve"><value>اختر المعلم</value></data>
-	<data name="SelectSubjectOption" xml:space="preserve"><value>اختر المادة (اختياري)</value></data>
-
-	<!-- Days of Week -->
-	<data name="Sunday" xml:space="preserve"><value>الأحد</value></data>
-	<data name="Monday" xml:space="preserve"><value>الاثنين</value></data>
-	<data name="Tuesday" xml:space="preserve"><value>الثلاثاء</value></data>
-	<data name="Wednesday" xml:space="preserve"><value>الأربعاء</value></data>
-	<data name="Thursday" xml:space="preserve"><value>الخميس</value></data>
-	<data name="Friday" xml:space="preserve"><value>الجمعة</value></data>
-	<data name="Saturday" xml:space="preserve"><value>السبت</value></data>
-
-	<!-- Toasts / Messages / Errors -->
-	<data name="Saved" xml:space="preserve"><value>تم الحفظ!</value></data>
-	<data name="Failed" xml:space="preserve"><value>فشل.</value></data>
-	<data name="ErrorOccurred" xml:space="preserve"><value>حدث خطأ.</value></data>
-	<data name="Loading" xml:space="preserve"><value>جاري التحميل...</value></data>
-	<data name="ScheduleCreated" xml:space="preserve"><value>تم إنشاء الجدول!</value></data>
-	<data name="ScheduleUpdated" xml:space="preserve"><value>تم تحديث الجدول!</value></data>
-	<data name="ScheduleDeleted" xml:space="preserve"><value>تم حذف الجدول!</value></data>
-	<data name="ScheduleNotFound" xml:space="preserve"><value>لم يتم العثور على الجدول.</value></data>
-	<data name="WelcomeCalendarLoaded" xml:space="preserve"><value>تم تحميل التقويم لـ {0}</value></data>
-	<data name="Warning" xml:space="preserve"><value>تحذير</value></data>
-
-	<!-- Miscellaneous -->
-	<data name="AmountCurrency" xml:space="preserve"><value>دولار</value></data>
-	<data name="EmptyStateIcon" xml:space="preserve"><value>fas fa-calendar-times</value></data>
+	<!-- Strings for HTML file (Razor page) -->
+	<data name="Title_ScheduleCalendar" xml:space="preserve">
+    <value>جدول الحصص الأسبوعي</value>
+  </data>
+	<data name="Header_WeeklySchedule" xml:space="preserve">
+    <value>جدول الحصص الأسبوعي</value>
+  </data>
+	<data name="Description_WeeklySchedule" xml:space="preserve">
+    <value>يمكنك هنا عرض وإدارة جدول حصصك الأسبوعي.</value>
+  </data>
+	<data name="Btn_ListView" xml:space="preserve">
+    <value>عرض القائمة</value>
+  </data>
+	<data name="Label_BranchFilter" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+	<data name="Dropdown_AllBranches" xml:space="preserve">
+    <value>كل الفروع</value>
+  </data>
+	<data name="Label_TeacherFilter" xml:space="preserve">
+    <value>المعلم</value>
+  </data>
+	<data name="Dropdown_AllTeachers" xml:space="preserve">
+    <value>كل المعلمين</value>
+  </data>
+	<data name="Label_YearFilter" xml:space="preserve">
+    <value>السنة</value>
+  </data>
+	<data name="Dropdown_AllYears" xml:space="preserve">
+    <value>كل السنوات</value>
+  </data>
+	<data name="Btn_ClearFilters" xml:space="preserve">
+    <value>مسح الفلاتر</value>
+  </data>
+	<data name="Loading_Schedules" xml:space="preserve">
+    <value>جاري تحميل الجداول...</value>
+  </data>
+	<data name="Lbl_ActiveFilters" xml:space="preserve">
+    <value>الفلاتر المفعلة:</value>
+  </data>
+	<data name="Lbl_NoSchedules" xml:space="preserve">
+    <value>لا توجد جداول</value>
+  </data>
+	<data name="Tooltip_AddScheduleForDay" xml:space="preserve">
+    <value>إضافة جدول ليوم {0}</value>
+  </data>
+	<data name="Tooltip_AddNewSchedule" xml:space="preserve">
+    <value>إضافة جدول جديد</value>
+  </data>
+	<data name="Title_AddNewSchedule" xml:space="preserve">
+    <value>إضافة جدول جديد</value>
+  </data>
+	<data name="Lbl_ForUser" xml:space="preserve">
+    <value>لـ {0}</value>
+  </data>
+	<data name="Lbl_Note" xml:space="preserve">
+    <value>ملاحظة:</value>
+  </data>
+	<data name="Msg_ScheduleForUser" xml:space="preserve">
+    <value>إنشاء جدول للمستخدم {0}</value>
+  </data>
+	<data name="Lbl_Center" xml:space="preserve">
+    <value>المركز</value>
+  </data>
+	<data name="Lbl_RootCode" xml:space="preserve">
+    <value>كود الجذر</value>
+  </data>
+	<data name="Lbl_At" xml:space="preserve">
+    <value>في</value>
+  </data>
+	<data name="Msg_CenterAutoAssign" xml:space="preserve">
+    <value>تعيين المركز يتم تلقائياً.</value>
+  </data>
+	<data name="Label_ScheduleName" xml:space="preserve">
+    <value>اسم الجدول</value>
+  </data>
+	<data name="Placeholder_ScheduleName" xml:space="preserve">
+    <value>أدخل اسم الجدول</value>
+  </data>
+	<data name="Label_DayOfWeek" xml:space="preserve">
+    <value>اليوم</value>
+  </data>
+	<data name="Dropdown_SelectDay" xml:space="preserve">
+    <value>اختر اليوم</value>
+  </data>
+	<data name="Label_StartTime" xml:space="preserve">
+    <value>وقت البداية</value>
+  </data>
+	<data name="Label_EndTime" xml:space="preserve">
+    <value>وقت النهاية</value>
+  </data>
+	<data name="Label_Branch" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+	<data name="Dropdown_SelectBranchOptional" xml:space="preserve">
+    <value>اختر الفرع (اختياري)</value>
+  </data>
+	<data name="Msg_SelectBranchForSchedule" xml:space="preserve">
+    <value>يرجى اختيار الفرع إذا لزم الأمر.</value>
+  </data>
+	<data name="Label_EducationalYear" xml:space="preserve">
+    <value>السنة الدراسية</value>
+  </data>
+	<data name="Dropdown_SelectYearOptional" xml:space="preserve">
+    <value>اختر السنة (اختياري)</value>
+  </data>
+	<data name="Msg_AutoAssignedBranch" xml:space="preserve">
+    <value>تم تعيين الفرع تلقائياً.</value>
+  </data>
+	<data name="Dropdown_SelectCenterOptional" xml:space="preserve">
+    <value>اختر المركز (اختياري)</value>
+  </data>
+	<data name="Dropdown_SelectCenterFirst" xml:space="preserve">
+    <value>اختر المركز أولاً</value>
+  </data>
+	<data name="Label_Hall" xml:space="preserve">
+    <value>القاعة</value>
+  </data>
+	<data name="Dropdown_SelectBranchFirst" xml:space="preserve">
+    <value>اختر الفرع أولاً</value>
+  </data>
+	<data name="Msg_SelectBranchToSeeHalls" xml:space="preserve">
+    <value>اختر الفرع لعرض القاعات.</value>
+  </data>
+	<data name="Label_Year" xml:space="preserve">
+    <value>السنة</value>
+  </data>
+	<data name="Dropdown_SelectYear" xml:space="preserve">
+    <value>اختر السنة</value>
+  </data>
+	<data name="Label_Teacher" xml:space="preserve">
+    <value>المعلم</value>
+  </data>
+	<data name="Dropdown_SelectTeacher" xml:space="preserve">
+    <value>اختر المعلم</value>
+  </data>
+	<data name="Dropdown_NoTeachers" xml:space="preserve">
+    <value>لا يوجد معلمين متاحين</value>
+  </data>
+	<data name="Label_Subject" xml:space="preserve">
+    <value>المادة</value>
+  </data>
+	<data name="Dropdown_SelectSubjectOptional" xml:space="preserve">
+    <value>اختر المادة (اختياري)</value>
+  </data>
+	<data name="Msg_SelectYearToSeeSubjects" xml:space="preserve">
+    <value>اختر السنة لعرض المواد.</value>
+  </data>
+	<data name="Msg_SubjectsAfterTeacher" xml:space="preserve">
+    <value>ستظهر المواد بعد اختيار المعلم.</value>
+  </data>
+	<data name="Label_Amount" xml:space="preserve">
+    <value>المبلغ</value>
+  </data>
+	<data name="Btn_Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+	<data name="Btn_SaveSchedule" xml:space="preserve">
+    <value>حفظ الجدول</value>
+  </data>
+	<data name="Loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+	<data name="Title_ScheduleDetails" xml:space="preserve">
+    <value>تفاصيل الجدول</value>
+  </data>
+	<data name="Btn_Close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+	<data name="Btn_Edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+	<data name="Btn_Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+	<data name="Title_ConfirmDelete" xml:space="preserve">
+    <value>تأكيد الحذف</value>
+  </data>
+	<data name="Lbl_Warning" xml:space="preserve">
+    <value>تحذير!</value>
+  </data>
+	<data name="Msg_DeleteWarning" xml:space="preserve">
+    <value>لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من حذف الجدول؟</value>
+  </data>
+	<data name="Btn_DeleteSchedule" xml:space="preserve">
+    <value>حذف الجدول</value>
+  </data>
+	<data name="Toast_CalendarLoaded" xml:space="preserve">
+    <value>تم تحميل التقويم لـ {0}</value>
+  </data>
+	<data name="Day_Sunday" xml:space="preserve">
+    <value>الأحد</value>
+  </data>
+	<data name="Day_Monday" xml:space="preserve">
+    <value>الاثنين</value>
+  </data>
+	<data name="Day_Tuesday" xml:space="preserve">
+    <value>الثلاثاء</value>
+  </data>
+	<data name="Day_Wednesday" xml:space="preserve">
+    <value>الأربعاء</value>
+  </data>
+	<data name="Day_Thursday" xml:space="preserve">
+    <value>الخميس</value>
+  </data>
+	<data name="Day_Friday" xml:space="preserve">
+    <value>الجمعة</value>
+  </data>
+	<data name="Day_Saturday" xml:space="preserve">
+    <value>السبت</value>
+  </data>
+	<!-- Add more as needed for all html UI -->
+	<!-- Strings for JS (schedule-common.js) -->
+	<data name="scheduleName" xml:space="preserve">
+    <value>اسم الجدول</value>
+  </data>
+	<data name="day" xml:space="preserve">
+    <value>اليوم</value>
+  </data>
+	<data name="time" xml:space="preserve">
+    <value>الوقت</value>
+  </data>
+	<data name="type" xml:space="preserve">
+    <value>النوع</value>
+  </data>
+	<data name="hall" xml:space="preserve">
+    <value>القاعة</value>
+  </data>
+	<data name="centerBranch" xml:space="preserve">
+    <value>المركز / الفرع</value>
+  </data>
+	<data name="teacherSubject" xml:space="preserve">
+    <value>المعلم / المادة</value>
+  </data>
+	<data name="amount" xml:space="preserve">
+    <value>المبلغ</value>
+  </data>
+	<data name="actions" xml:space="preserve">
+    <value>الإجراءات</value>
+  </data>
+	<data name="selectDayOption" xml:space="preserve">
+    <value>اختر اليوم</value>
+  </data>
+	<data name="selectCenterOption" xml:space="preserve">
+    <value>اختر المركز</value>
+  </data>
+	<data name="selectBranchOption" xml:space="preserve">
+    <value>اختر الفرع</value>
+  </data>
+	<data name="selectHallOption" xml:space="preserve">
+    <value>اختر القاعة</value>
+  </data>
+	<data name="selectYearOption" xml:space="preserve">
+    <value>اختر السنة</value>
+  </data>
+	<data name="selectTeacherOption" xml:space="preserve">
+    <value>اختر المعلم</value>
+  </data>
+	<data name="selectSubjectOption" xml:space="preserve">
+    <value>اختر المادة</value>
+  </data>
+	<data name="failedToLoadSchedules" xml:space="preserve">
+    <value>فشل تحميل الجداول</value>
+  </data>
+	<data name="scheduleCountFound" xml:space="preserve">
+    <value>تم العثور على {count} جدول</value>
+  </data>
+	<data name="scheduleUpdated" xml:space="preserve">
+    <value>تم تحديث الجدول!</value>
+  </data>
+	<data name="scheduleCreated" xml:space="preserve">
+    <value>تم إنشاء الجدول!</value>
+  </data>
+	<data name="scheduleDeleted" xml:space="preserve">
+    <value>تم حذف الجدول!</value>
+  </data>
+	<data name="errorSavingSchedule" xml:space="preserve">
+    <value>خطأ في حفظ الجدول</value>
+  </data>
+	<data name="errorDeletingSchedule" xml:space="preserve">
+    <value>خطأ في حذف الجدول</value>
+  </data>
+	<data name="errorLoadingDropdown" xml:space="preserve">
+    <value>خطأ في تحميل {name}</value>
+  </data>
+	<data name="failedToLoadTeacherInfo" xml:space="preserve">
+    <value>فشل تحميل بيانات المعلم</value>
+  </data>
+	<data name="noSchedules" xml:space="preserve">
+    <value>لا توجد جداول</value>
+  </data>
+	<data name="addScheduleForDay" xml:space="preserve">
+    <value>إضافة جدول ليوم {day}</value>
+  </data>
+	<data name="scheduleNotFound" xml:space="preserve">
+    <value>الجدول غير موجود</value>
+  </data>
+	<data name="edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+	<data name="delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+	<data name="untitled" xml:space="preserve">
+    <value>بدون عنوان</value>
+  </data>
+	<data name="for" xml:space="preserve">
+    <value>لـ</value>
+  </data>
+	<data name="close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+	<data name="teacherConflict" xml:space="preserve">
+    <value>تعارض مع المعلم: هذا المعلم لديه جدول بالفعل من {start} إلى {end} في {day}</value>
+  </data>
+	<data name="hallConflict" xml:space="preserve">
+    <value>تعارض قاعة: هذه القاعة محجوزة بالفعل من {start} إلى {end} في {day} لـ "{title}"</value>
+  </data>
+	<data name="yearOverlapWarning" xml:space="preserve">
+    <value>تحذير تداخل سنة: معلم آخر لديه نفس السنة من {start} إلى {end} في {day} لـ "{title}"</value>
+  </data>
+	<data name="loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+	<data name="errorPrefix" xml:space="preserve">
+    <value>❌ خطأ: </value>
+  </data>
+	<data name="warningPrefix" xml:space="preserve">
+    <value>⚠️ تحذير: </value>
+  </data>
+	<data name="successPrefix" xml:space="preserve">
+    <value>✅ </value>
+  </data>
+	<data name="infoPrefix" xml:space="preserve">
+    <value>ℹ️ </value>
+  </data>
+	<!-- Add more JS strings as needed -->
 </root>

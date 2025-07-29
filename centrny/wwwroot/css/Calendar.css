@@ -354,7 +354,7 @@ body, .schedule-page {
     margin: 0.8rem auto 0 auto;
     padding: 0.6rem !important;
     border-radius: 50% !important;
-    background: var(--success-gradient) !important;
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
     box-shadow: 0 3px 10px rgba(17, 153, 142, 0.3) !important;
     position: relative;
     font-size: 0.9rem !important;
@@ -571,4 +571,26 @@ body, .schedule-page {
 
     .days-grid::-webkit-scrollbar-thumb:hover {
         background: var(--info-gradient);
+    }
+/* --- Custom Action Button Colors to Match Screenshot --- */
+.btn-edit {
+    background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+        color: #fff !important;
+    border: none !important;
+    box-shadow: var(--shadow);
+}
+
+    .btn-edit:hover, .btn-edit:focus {
+        background: linear-gradient(90deg, #38a7d8 0%, #43c6ec 100%) !important;
+    }
+
+.btn-delete {
+    background: #f56b6b !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: var(--shadow);
+}
+
+    .btn-delete:hover, .btn-delete:focus {
+        background: #d63c3c !important;
     }

@@ -1,87 +1,340 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<!-- UI Labels -->
-	<data name="Title" xml:space="preserve"><value>Schedule Management</value></data>
-	<data name="CalendarTitle" xml:space="preserve"><value>Schedule Calendar</value></data>
-	<data name="WeeklyTemplateTitle" xml:space="preserve"><value>Weekly Schedule Template</value></data>
-	<data name="ListView" xml:space="preserve"><value>List View</value></data>
-	<data name="AddScheduleBtn" xml:space="preserve"><value>Add Schedule</value></data>
-	<data name="CreateNewScheduleBtn" xml:space="preserve"><value>Create New Schedule</value></data>
-	<data name="SaveScheduleBtn" xml:space="preserve"><value>Save Schedule</value></data>
-	<data name="CancelBtn" xml:space="preserve"><value>Cancel</value></data>
-	<data name="DeleteScheduleBtn" xml:space="preserve"><value>Delete Schedule</value></data>
-	<data name="EditBtn" xml:space="preserve"><value>Edit</value></data>
-	<data name="ViewDetailsBtn" xml:space="preserve"><value>View Details</value></data>
-	<data name="RefreshBtn" xml:space="preserve"><value>Refresh</value></data>
-	<data name="CloseBtn" xml:space="preserve"><value>Close</value></data>
-	<data name="ConfirmDeleteTitle" xml:space="preserve"><value>Confirm Delete</value></data>
-	<data name="ConfirmDeleteWarning" xml:space="preserve"><value>This action cannot be undone. Are you sure you want to delete this schedule?</value></data>
-	<data name="NoSchedulesFound" xml:space="preserve"><value>No Schedules Found</value></data>
-	<data name="GetStartedMsg" xml:space="preserve"><value>Get started by creating your first schedule.</value></data>
-	<data name="NoSchedulesForDay" xml:space="preserve"><value>No schedules</value></data>
-	<data name="AddScheduleForDay" xml:space="preserve"><value>Add schedule for {0}</value></data>
-	<data name="LegendMultipleClasses" xml:space="preserve"><value>Multiple classes can run simultaneously</value></data>
-	<data name="LegendClickToEdit" xml:space="preserve"><value>Click any schedule to view/edit/delete</value></data>
-
-	<!-- Table Headers -->
-	<data name="ScheduleName" xml:space="preserve"><value>Schedule Name</value></data>
-	<data name="Day" xml:space="preserve"><value>Day</value></data>
-	<data name="Time" xml:space="preserve"><value>Time</value></data>
-	<data name="Type" xml:space="preserve"><value>Type</value></data>
-	<data name="Hall" xml:space="preserve"><value>Hall</value></data>
-	<data name="CenterBranch" xml:space="preserve"><value>Center / Branch</value></data>
-	<data name="TeacherSubject" xml:space="preserve"><value>Teacher / Subject</value></data>
-	<data name="Amount" xml:space="preserve"><value>Amount</value></data>
-	<data name="Actions" xml:space="preserve"><value>Actions</value></data>
-
-	<!-- Form Labels -->
-	<data name="ScheduleNameLabel" xml:space="preserve"><value>Schedule Name</value></data>
-	<data name="DayOfWeekLabel" xml:space="preserve"><value>Day of Week</value></data>
-	<data name="StartTimeLabel" xml:space="preserve"><value>Start Time</value></data>
-	<data name="EndTimeLabel" xml:space="preserve"><value>End Time</value></data>
-	<data name="BranchLabel" xml:space="preserve"><value>Branch</value></data>
-	<data name="CenterLabel" xml:space="preserve"><value>Center</value></data>
-	<data name="HallLabel" xml:space="preserve"><value>Hall</value></data>
-	<data name="EducationalYearLabel" xml:space="preserve"><value>Educational Year</value></data>
-	<data name="YearLabel" xml:space="preserve"><value>Year</value></data>
-	<data name="TeacherLabel" xml:space="preserve"><value>Teacher</value></data>
-	<data name="SubjectLabel" xml:space="preserve"><value>Subject</value></data>
-	<data name="AmountLabel" xml:space="preserve"><value>Amount</value></data>
-	<data name="NoteCenterUser" xml:space="preserve"><value>This schedule will be created for {0} (Center - Root Code: {1})</value></data>
-	<data name="SelectBranchMsg" xml:space="preserve"><value>Select branch for this schedule</value></data>
-	<data name="SelectYearMsg" xml:space="preserve"><value>Select year first to see your subjects</value></data>
-	<data name="AvailableSubjectsMsg" xml:space="preserve"><value>Available subjects will appear after selecting a teacher</value></data>
-	<data name="SelectOption" xml:space="preserve"><value>Select...</value></data>
-	<data name="SelectDayOption" xml:space="preserve"><value>Select Day</value></data>
-	<data name="SelectCenterOption" xml:space="preserve"><value>Select Center (Optional)</value></data>
-	<data name="SelectBranchOption" xml:space="preserve"><value>Select Branch (Optional)</value></data>
-	<data name="SelectHallOption" xml:space="preserve"><value>Select Hall</value></data>
-	<data name="SelectYearOption" xml:space="preserve"><value>Select Year</value></data>
-	<data name="SelectTeacherOption" xml:space="preserve"><value>Select Teacher</value></data>
-	<data name="SelectSubjectOption" xml:space="preserve"><value>Select Subject (Optional)</value></data>
-
-	<!-- Days of Week -->
-	<data name="Sunday" xml:space="preserve"><value>Sunday</value></data>
-	<data name="Monday" xml:space="preserve"><value>Monday</value></data>
-	<data name="Tuesday" xml:space="preserve"><value>Tuesday</value></data>
-	<data name="Wednesday" xml:space="preserve"><value>Wednesday</value></data>
-	<data name="Thursday" xml:space="preserve"><value>Thursday</value></data>
-	<data name="Friday" xml:space="preserve"><value>Friday</value></data>
-	<data name="Saturday" xml:space="preserve"><value>Saturday</value></data>
-
-	<!-- Toasts / Messages / Errors -->
-	<data name="Saved" xml:space="preserve"><value>Saved!</value></data>
-	<data name="Failed" xml:space="preserve"><value>Failed.</value></data>
-	<data name="ErrorOccurred" xml:space="preserve"><value>An error occurred.</value></data>
-	<data name="Loading" xml:space="preserve"><value>Loading...</value></data>
-	<data name="ScheduleCreated" xml:space="preserve"><value>Schedule created!</value></data>
-	<data name="ScheduleUpdated" xml:space="preserve"><value>Schedule updated!</value></data>
-	<data name="ScheduleDeleted" xml:space="preserve"><value>Schedule deleted!</value></data>
-	<data name="ScheduleNotFound" xml:space="preserve"><value>Schedule not found.</value></data>
-	<data name="WelcomeCalendarLoaded" xml:space="preserve"><value>Calendar loaded for {0}</value></data>
-	<data name="Warning" xml:space="preserve"><value>Warning</value></data>
-
-	<!-- Miscellaneous -->
-	<data name="AmountCurrency" xml:space="preserve"><value>$</value></data>
-	<data name="EmptyStateIcon" xml:space="preserve"><value>fas fa-calendar-times</value></data>
+	<!-- Strings for HTML file (Razor page) -->
+	<data name="Title_ScheduleCalendar" xml:space="preserve">
+    <value>Weekly Schedule Calendar</value>
+  </data>
+	<data name="Header_WeeklySchedule" xml:space="preserve">
+    <value>Weekly Schedule</value>
+  </data>
+	<data name="Description_WeeklySchedule" xml:space="preserve">
+    <value>View and manage your weekly class schedules here.</value>
+  </data>
+	<data name="Btn_ListView" xml:space="preserve">
+    <value>List View</value>
+  </data>
+	<data name="Label_BranchFilter" xml:space="preserve">
+    <value>Branch</value>
+  </data>
+	<data name="Dropdown_AllBranches" xml:space="preserve">
+    <value>All Branches</value>
+  </data>
+	<data name="Label_TeacherFilter" xml:space="preserve">
+    <value>Teacher</value>
+  </data>
+	<data name="Dropdown_AllTeachers" xml:space="preserve">
+    <value>All Teachers</value>
+  </data>
+	<data name="Label_YearFilter" xml:space="preserve">
+    <value>Year</value>
+  </data>
+	<data name="Dropdown_AllYears" xml:space="preserve">
+    <value>All Years</value>
+  </data>
+	<data name="Btn_ClearFilters" xml:space="preserve">
+    <value>Clear Filters</value>
+  </data>
+	<data name="Loading_Schedules" xml:space="preserve">
+    <value>Loading schedules...</value>
+  </data>
+	<data name="Lbl_ActiveFilters" xml:space="preserve">
+    <value>Active filters:</value>
+  </data>
+	<data name="Lbl_NoSchedules" xml:space="preserve">
+    <value>No schedules</value>
+  </data>
+	<data name="Tooltip_AddScheduleForDay" xml:space="preserve">
+    <value>Add schedule for {0}</value>
+  </data>
+	<data name="Tooltip_AddNewSchedule" xml:space="preserve">
+    <value>Add new schedule</value>
+  </data>
+	<data name="Title_AddNewSchedule" xml:space="preserve">
+    <value>Add New Schedule</value>
+  </data>
+	<data name="Lbl_ForUser" xml:space="preserve">
+    <value>for {0}</value>
+  </data>
+	<data name="Lbl_Note" xml:space="preserve">
+    <value>Note:</value>
+  </data>
+	<data name="Msg_ScheduleForUser" xml:space="preserve">
+    <value>Creating schedule for user {0}</value>
+  </data>
+	<data name="Lbl_Center" xml:space="preserve">
+    <value>Center</value>
+  </data>
+	<data name="Lbl_RootCode" xml:space="preserve">
+    <value>Root Code</value>
+  </data>
+	<data name="Lbl_At" xml:space="preserve">
+    <value>at</value>
+  </data>
+	<data name="Msg_CenterAutoAssign" xml:space="preserve">
+    <value>Center assignments are auto-managed.</value>
+  </data>
+	<data name="Label_ScheduleName" xml:space="preserve">
+    <value>Schedule Name</value>
+  </data>
+	<data name="Placeholder_ScheduleName" xml:space="preserve">
+    <value>Enter schedule name</value>
+  </data>
+	<data name="Label_DayOfWeek" xml:space="preserve">
+    <value>Day of Week</value>
+  </data>
+	<data name="Dropdown_SelectDay" xml:space="preserve">
+    <value>Select Day</value>
+  </data>
+	<data name="Label_StartTime" xml:space="preserve">
+    <value>Start Time</value>
+  </data>
+	<data name="Label_EndTime" xml:space="preserve">
+    <value>End Time</value>
+  </data>
+	<data name="Label_Branch" xml:space="preserve">
+    <value>Branch</value>
+  </data>
+	<data name="Dropdown_SelectBranchOptional" xml:space="preserve">
+    <value>Select Branch (Optional)</value>
+  </data>
+	<data name="Msg_SelectBranchForSchedule" xml:space="preserve">
+    <value>Please select a branch if required.</value>
+  </data>
+	<data name="Label_EducationalYear" xml:space="preserve">
+    <value>Educational Year</value>
+  </data>
+	<data name="Dropdown_SelectYearOptional" xml:space="preserve">
+    <value>Select Year (Optional)</value>
+  </data>
+	<data name="Msg_AutoAssignedBranch" xml:space="preserve">
+    <value>This branch is auto-assigned.</value>
+  </data>
+	<data name="Dropdown_SelectCenterOptional" xml:space="preserve">
+    <value>Select Center (Optional)</value>
+  </data>
+	<data name="Dropdown_SelectCenterFirst" xml:space="preserve">
+    <value>Select Center First</value>
+  </data>
+	<data name="Label_Hall" xml:space="preserve">
+    <value>Hall</value>
+  </data>
+	<data name="Dropdown_SelectBranchFirst" xml:space="preserve">
+    <value>Select Branch First</value>
+  </data>
+	<data name="Msg_SelectBranchToSeeHalls" xml:space="preserve">
+    <value>Select a branch to see halls.</value>
+  </data>
+	<data name="Label_Year" xml:space="preserve">
+    <value>Year</value>
+  </data>
+	<data name="Dropdown_SelectYear" xml:space="preserve">
+    <value>Select Year</value>
+  </data>
+	<data name="Label_Teacher" xml:space="preserve">
+    <value>Teacher</value>
+  </data>
+	<data name="Dropdown_SelectTeacher" xml:space="preserve">
+    <value>Select Teacher</value>
+  </data>
+	<data name="Dropdown_NoTeachers" xml:space="preserve">
+    <value>No teachers available</value>
+  </data>
+	<data name="Label_Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+	<data name="Dropdown_SelectSubjectOptional" xml:space="preserve">
+    <value>Select Subject (Optional)</value>
+  </data>
+	<data name="Msg_SelectYearToSeeSubjects" xml:space="preserve">
+    <value>Select a year to view subjects.</value>
+  </data>
+	<data name="Msg_SubjectsAfterTeacher" xml:space="preserve">
+    <value>Subjects will appear after you select a teacher.</value>
+  </data>
+	<data name="Label_Amount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+	<data name="Btn_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+	<data name="Btn_SaveSchedule" xml:space="preserve">
+    <value>Save Schedule</value>
+  </data>
+	<data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+	<data name="Title_ScheduleDetails" xml:space="preserve">
+    <value>Schedule Details</value>
+  </data>
+	<data name="Btn_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+	<data name="Btn_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+	<data name="Btn_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+	<data name="Title_ConfirmDelete" xml:space="preserve">
+    <value>Confirm Delete</value>
+  </data>
+	<data name="Lbl_Warning" xml:space="preserve">
+    <value>Warning!</value>
+  </data>
+	<data name="Msg_DeleteWarning" xml:space="preserve">
+    <value>This action cannot be undone. Are you sure you want to delete this schedule?</value>
+  </data>
+	<data name="Btn_DeleteSchedule" xml:space="preserve">
+    <value>Delete Schedule</value>
+  </data>
+	<data name="Toast_CalendarLoaded" xml:space="preserve">
+    <value>Calendar loaded for {0}</value>
+  </data>
+	<data name="Day_Sunday" xml:space="preserve">
+    <value>Sunday</value>
+  </data>
+	<data name="Day_Monday" xml:space="preserve">
+    <value>Monday</value>
+  </data>
+	<data name="Day_Tuesday" xml:space="preserve">
+    <value>Tuesday</value>
+  </data>
+	<data name="Day_Wednesday" xml:space="preserve">
+    <value>Wednesday</value>
+  </data>
+	<data name="Day_Thursday" xml:space="preserve">
+    <value>Thursday</value>
+  </data>
+	<data name="Day_Friday" xml:space="preserve">
+    <value>Friday</value>
+  </data>
+	<data name="Day_Saturday" xml:space="preserve">
+    <value>Saturday</value>
+  </data>
+	<!-- Add more as needed for all html UI -->
+	<!-- Strings for JS (schedule-common.js) -->
+	<data name="scheduleName" xml:space="preserve">
+    <value>Schedule Name</value>
+  </data>
+	<data name="day" xml:space="preserve">
+    <value>Day</value>
+  </data>
+	<data name="time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+	<data name="type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+	<data name="hall" xml:space="preserve">
+    <value>Hall</value>
+  </data>
+	<data name="centerBranch" xml:space="preserve">
+    <value>Center / Branch</value>
+  </data>
+	<data name="teacherSubject" xml:space="preserve">
+    <value>Teacher / Subject</value>
+  </data>
+	<data name="amount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+	<data name="actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+	<data name="selectDayOption" xml:space="preserve">
+    <value>Select Day</value>
+  </data>
+	<data name="selectCenterOption" xml:space="preserve">
+    <value>Select Center</value>
+  </data>
+	<data name="selectBranchOption" xml:space="preserve">
+    <value>Select Branch</value>
+  </data>
+	<data name="selectHallOption" xml:space="preserve">
+    <value>Select Hall</value>
+  </data>
+	<data name="selectYearOption" xml:space="preserve">
+    <value>Select Year</value>
+  </data>
+	<data name="selectTeacherOption" xml:space="preserve">
+    <value>Select Teacher</value>
+  </data>
+	<data name="selectSubjectOption" xml:space="preserve">
+    <value>Select Subject</value>
+  </data>
+	<data name="failedToLoadSchedules" xml:space="preserve">
+    <value>Failed to load schedules</value>
+  </data>
+	<data name="scheduleCountFound" xml:space="preserve">
+    <value>{count} schedule(s) found</value>
+  </data>
+	<data name="scheduleUpdated" xml:space="preserve">
+    <value>Schedule updated!</value>
+  </data>
+	<data name="scheduleCreated" xml:space="preserve">
+    <value>Schedule created!</value>
+  </data>
+	<data name="scheduleDeleted" xml:space="preserve">
+    <value>Schedule deleted!</value>
+  </data>
+	<data name="errorSavingSchedule" xml:space="preserve">
+    <value>Error saving schedule</value>
+  </data>
+	<data name="errorDeletingSchedule" xml:space="preserve">
+    <value>Error deleting schedule</value>
+  </data>
+	<data name="errorLoadingDropdown" xml:space="preserve">
+    <value>Error loading {name}</value>
+  </data>
+	<data name="failedToLoadTeacherInfo" xml:space="preserve">
+    <value>Failed to load teacher info</value>
+  </data>
+	<data name="noSchedules" xml:space="preserve">
+    <value>No schedules</value>
+  </data>
+	<data name="addScheduleForDay" xml:space="preserve">
+    <value>Add schedule for {day}</value>
+  </data>
+	<data name="scheduleNotFound" xml:space="preserve">
+    <value>Schedule not found</value>
+  </data>
+	<data name="edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+	<data name="delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+	<data name="untitled" xml:space="preserve">
+    <value>Untitled</value>
+  </data>
+	<data name="for" xml:space="preserve">
+    <value>for</value>
+  </data>
+	<data name="close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+	<data name="teacherConflict" xml:space="preserve">
+    <value>Teacher conflict: This teacher already has a schedule from {start} to {end} on {day}</value>
+  </data>
+	<data name="hallConflict" xml:space="preserve">
+    <value>Hall conflict: This hall is already booked from {start} to {end} on {day} for "{title}"</value>
+  </data>
+	<data name="yearOverlapWarning" xml:space="preserve">
+    <value>Year overlap warning: Another teacher already has this year from {start} to {end} on {day} for "{title}"</value>
+  </data>
+	<data name="loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+	<data name="errorPrefix" xml:space="preserve">
+    <value>❌ Error: </value>
+  </data>
+	<data name="warningPrefix" xml:space="preserve">
+    <value>⚠️ Warning: </value>
+  </data>
+	<data name="successPrefix" xml:space="preserve">
+    <value>✅ </value>
+  </data>
+	<data name="infoPrefix" xml:space="preserve">
+    <value>ℹ️ </value>
+  </data>
+	<!-- Add more JS strings as needed -->
 </root>

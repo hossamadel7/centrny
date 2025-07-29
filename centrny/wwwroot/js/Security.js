@@ -371,6 +371,12 @@ $(document).ready(function () {
         }
     });
 
+    // Add a password field for user creation (optional, send as plain text)
+    // If you want default password only, no change needed in modal or here.
+    // For custom password:
+    // <input type="password" id="createUserPassword" class="form-control" placeholder="Password (leave blank for default)">
+    // Add the field in your HTML form if desired.
+
     $('#groupsContainer').on('click', '.create-user-btn', function () {
         var groupCode = $(this).data('group-code');
         $('#createUserGroupCode').val(groupCode);
@@ -382,6 +388,8 @@ $(document).ready(function () {
         $('#createUserIsActive').prop('checked', true);
         $('#createUserSuccess').addClass('d-none').removeClass('alert-danger').addClass('alert-success').text('');
         $('#createInsertUserCode').val('');
+        // If you add password field, also reset its value here:
+        if ($('#createUserPassword').length) $('#createUserPassword').val('');
         var createUserModal = new bootstrap.Modal(document.getElementById('createUserModal'));
         createUserModal.show();
     });
@@ -409,14 +417,16 @@ $(document).ready(function () {
         var groupCode = $('#createUserGroupCode').val();
         var isActive = $('#createUserIsActive').is(':checked');
         var insertUserCode = $('#createInsertUserCode').val();
-
+        // If you add a password field:
+        var password = $('#createUserPassword').length ? $('#createUserPassword').val() : '';
+        // Send plain text (empty will use default on backend)
         $.ajax({
             url: '/Security/CreateUser',
             type: 'POST',
             data: {
                 name: name,
                 username: username,
-                password: '',
+                password: password,
                 groupCode: groupCode,
                 isActive: isActive,
                 insertUserCode: insertUserCode
@@ -469,7 +479,7 @@ $(document).ready(function () {
                 userCode: userCode,
                 name: name,
                 isActive: isActive,
-                password: password // pass password for change
+                password: password // pass password for change (plain text)
             },
             success: function (result) {
                 var $toggleBtn = $(`.toggle-users[data-group-code]`).filter(function () {

@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, ...</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value>
+	</resheader>
+	<!-- General -->
+	<data name="Title_StudentRegistration" xml:space="preserve"><value>Student Registration</value></data>
+	<data name="Header_Join" xml:space="preserve"><value>Join</value></data>
+	<data name="Header_Journey" xml:space="preserve"><value>Start your learning journey with us</value></data>
+	<data name="Instructions_Title" xml:space="preserve"><value>Registration Process</value></data>
+	<data name="Instruction_1" xml:space="preserve"><value>Complete this form with your basic information</value></data>
+	<data name="Instruction_2" xml:space="preserve"><value>You'll receive your access key from the center</value></data>
+	<data name="Instruction_3" xml:space="preserve"><value>Use your access key to complete academic enrollment</value></data>
+	<data name="Instruction_4" xml:space="preserve"><value>Select your subjects, teachers, and schedules</value></data>
+	<data name="Error_Header" xml:space="preserve"><value>Please correct the following errors:</value></data>
+	<!-- Labels -->
+	<data name="Label_FullName" xml:space="preserve"><value>Full Name</value></data>
+	<data name="Label_StudentPhone" xml:space="preserve"><value>Your Phone Number</value></data>
+	<data name="Label_ParentPhone" xml:space="preserve"><value>Parent/Guardian Phone</value></data>
+	<data name="Label_Birthdate" xml:space="preserve"><value>Date of Birth</value></data>
+	<data name="Label_Gender" xml:space="preserve"><value>Gender</value></data>
+	<data name="Label_Male" xml:space="preserve"><value>Male</value></data>
+	<data name="Label_Female" xml:space="preserve"><value>Female</value></data>
+	<data name="Label_AcademicYear" xml:space="preserve"><value>Academic Year/Level</value></data>
+	<data name="Label_PersonalInformation" xml:space="preserve"><value>Personal Information</value></data>
+	<data name="Label_AcademicInformation" xml:space="preserve"><value>Academic Information</value></data>
+	<data name="Label_SubjectSelection" xml:space="preserve"><value>Select Your Subjects</value></data>
+	<data name="Label_ScheduleSelection" xml:space="preserve"><value>Select Class Schedules</value></data>
+	<data name="Label_Confirmation" xml:space="preserve"><value>Confirm Your Registration</value></data>
+	<data name="Label_ItemKey" xml:space="preserve"><value>Item Key</value></data>
+	<data name="Label_Teacher" xml:space="preserve"><value>Teacher</value></data>
+	<data name="Label_NotSelected" xml:space="preserve"><value>Not selected</value></data>
+	<data name="Label_EduYear" xml:space="preserve"><value>Education Year</value></data>
+	<data name="Label_Schedule" xml:space="preserve"><value>Schedule</value></data>
+	<data name="Label_Branch" xml:space="preserve"><value>Branch</value></data>
+	<data name="Label_ReviewUpdate" xml:space="preserve"><value>(Review &amp; Update)</value></data>
+	<data name="Label_SelectBranch" xml:space="preserve"><value>Select Branch</value></data>
+	<data name="Label_SelectedSubjects" xml:space="preserve"><value>Selected Subjects</value></data>
+	<!-- Placeholders -->
+	<data name="Placeholder_FullName" xml:space="preserve"><value>Enter your full name</value></data>
+	<data name="Placeholder_Phone" xml:space="preserve"><value>Your phone number</value></data>
+	<data name="Placeholder_ParentPhone" xml:space="preserve"><value>Parent/Guardian phone</value></data>
+	<data name="Dropdown_AcademicYearDefault" xml:space="preserve"><value>Select your year/level</value></data>
+	<data name="Dropdown_BranchDefault" xml:space="preserve"><value>Choose your branch...</value></data>
+	<data name="Dropdown_EduYearDefault" xml:space="preserve"><value>Choose education year...</value></data>
+	<!-- Buttons -->
+	<data name="Btn_CompleteRegistration" xml:space="preserve"><value>Complete Registration</value></data>
+	<data name="Btn_Next" xml:space="preserve"><value>Next</value></data>
+	<data name="Btn_Prev" xml:space="preserve"><value>Previous</value></data>
+	<data name="Btn_Confirm" xml:space="preserve"><value>Confirm</value></data>
+	<!-- Info / Misc -->
+	<data name="Info_Secure" xml:space="preserve"><value>Your information is secure and will only be used for educational purposes.</value></data>
+	<data name="Info_StudentProfileLinked" xml:space="preserve"><value>Student Profile Linked! Your basic information is already saved. You can review and update it below, then continue to select your subjects and schedules.</value></data>
+	<data name="Info_StudentProfileBasicSaved" xml:space="preserve"><value>Your basic information is already saved.</value></data>
+	<data name="Info_StudentProfileReviewAndUpdate" xml:space="preserve"><value>You can review and update it below, then continue to select your subjects and schedules.</value></data>
+	<data name="Info_SelectSubjects" xml:space="preserve"><value>Select the subjects you want to study and choose your preferred teachers.</value></data>
+	<data name="Info_CompletePrevStepsToSeeSubjects" xml:space="preserve"><value>Please complete the previous steps to see available subjects</value></data>
+	<data name="Info_CompletePrevStepsToSeeSchedules" xml:space="preserve"><value>Please complete the previous steps to see available schedules</value></data>
+	<data name="Info_SelectSchedules" xml:space="preserve"><value>Choose your preferred class schedule for each subject. Check available time slots and capacity.</value></data>
+	<data name="Info_ReviewBeforeSubmit" xml:space="preserve"><value>Please review your information before submitting your registration.</value></data>
+	<data name="Info_NoSubjectsAvailable" xml:space="preserve"><value>No subjects available for the selected branch and year.</value></data>
+	<data name="Info_NoTeachersAvailable" xml:space="preserve"><value>No teachers available for this subject at the selected branch.</value></data>
+	<data name="Info_NoSubjectsSelected" xml:space="preserve"><value>No subjects selected. Please go back and select subjects first.</value></data>
+	<!-- Step Indicators -->
+	<data name="StepIndicator_1" xml:space="preserve"><value>Personal Info</value></data>
+	<data name="StepIndicator_2" xml:space="preserve"><value>Academic Info</value></data>
+	<data name="StepIndicator_3" xml:space="preserve"><value>Subjects</value></data>
+	<data name="StepIndicator_4" xml:space="preserve"><value>Schedules</value></data>
+	<data name="StepIndicator_5" xml:space="preserve"><value>Confirmation</value></data>
+	<!-- Alerts -->
+	<data name="Alert_SelectAtLeastOneSubject" xml:space="preserve"><value>Please select at least one subject.</value></data>
+	<data name="Alert_SelectScheduleForAllSubjects" xml:space="preserve"><value>Please select a schedule for all subjects.</value></data>
+	<data name="Alert_FieldRequired" xml:space="preserve"><value>This field is required.</value></data>
+	<data name="Alert_ValidPhoneRequired" xml:space="preserve"><value>Please enter a valid phone number.</value></data>
+	<data name="Alert_ValidBirthdateRequired" xml:space="preserve"><value>Please enter a valid birth date.</value></data>
+	<data name="Alert_TermsRequired" xml:space="preserve"><value>Please accept the terms and conditions.</value></data>
+	<data name="Alert_FillAllFields" xml:space="preserve"><value>Please fill in all required fields.</value></data>
+	<data name="Alert_FailedToLoadYears" xml:space="preserve"><value>Failed to load years for selected education year.</value></data>
+	<data name="Alert_FailedToLoadSubjects" xml:space="preserve"><value>Failed to load subjects. Please try again.</value></data>
+	<data name="Alert_FailedToLoadSchedules" xml:space="preserve"><value>Failed to load schedules. Please try again.</value></data>
+	<data name="Alert_RegistrationFailed" xml:space="preserve"><value>Registration failed. Please check your internet connection and try again.</value></data>
+	<data name="Alert_NoSubjectsAvailable" xml:space="preserve"><value>No subjects available for the selected branch and year.</value></data>
+	<data name="Alert_NoTeachersAvailable" xml:space="preserve"><value>No teachers available for this subject at the selected branch.</value></data>
+	<data name="Alert_NoSchedulesAvailable" xml:space="preserve"><value>No schedules available for this subject and teacher combination.</value></data>
+	<data name="Alert_NoSubjectsSelected" xml:space="preserve"><value>No subjects selected. Please go back and select subjects first.</value></data>
+	<data name="Alert_SubjectRemoved" xml:space="preserve"><value>The subject has been removed.</value></data>
+	<data name="Alert_AcceptTerms" xml:space="preserve"><value>Please accept the terms and conditions.</value></data>
+	<data name="Alert_EnterName" xml:space="preserve"><value>Please enter your name.</value></data>
+	<data name="Alert_EnterPhone" xml:space="preserve"><value>Please enter your phone number.</value></data>
+	<data name="Alert_EnterParentPhone" xml:space="preserve"><value>Please enter your parent/guardian phone number.</value></data>
+	<data name="Alert_SelectBirthDate" xml:space="preserve"><value>Please select your birth date.</value></data>
+	<data name="Alert_SelectBranch" xml:space="preserve"><value>Please select a branch.</value></data>
+	<data name="Alert_PleaseSelectSubject" xml:space="preserve"><value>Please select at least one subject.</value></data>
+	<data name="Alert_PleaseSelectSchedules" xml:space="preserve"><value>Please select schedules for all subjects.</value></data>
+	<data name="Alert_RegistrationFailedConnection" xml:space="preserve"><value>Registration failed. Please check your internet connection and try again.</value></data>
+	<data name="Alert_NoSchedules" xml:space="preserve"><value>No schedules available for this subject and teacher combination.</value></data>
+	<!-- Validation -->
+	<data name="Validation_ValidPhone" xml:space="preserve"><value>Please enter a valid phone number.</value></data>
+	<!-- Form Agreement -->
+	<data name="Form_AgreeToTerms" xml:space="preserve"><value>I agree to the terms and conditions and confirm that all information provided is accurate.</value></data>
+	<!-- Summary -->
+	<data name="Summary_PersonalInfo" xml:space="preserve"><value>Personal Information</value></data>
+	<data name="Summary_AcademicInfo" xml:space="preserve"><value>Academic Information</value></data>
+	<data name="Summary_SelectedSubjects" xml:space="preserve"><value>Selected Subjects</value></data>
+	<!-- JS dynamic messages -->
+	<data name="JS_ProcessingRegistration" xml:space="preserve"><value>Processing your registration...</value></data>
+	<data name="JS_StudentNameRequired" xml:space="preserve"><value>Please enter your name.</value></data>
+	<data name="JS_StudentPhoneRequired" xml:space="preserve"><value>Please enter your phone number.</value></data>
+	<data name="JS_ParentPhoneRequired" xml:space="preserve"><value>Please enter your parent/guardian phone number.</value></data>
+	<data name="JS_BirthDateRequired" xml:space="preserve"><value>Please select your birth date.</value></data>
+	<data name="JS_BranchRequired" xml:space="preserve"><value>Please select a branch.</value></data>
+	<data name="JS_SubjectRequired" xml:space="preserve"><value>Please select at least one subject.</value></data>
+	<data name="JS_ScheduleRequired" xml:space="preserve"><value>Please select schedules for all subjects.</value></data>
+	<data name="JS_TermsRequired" xml:space="preserve"><value>Please accept the terms and conditions.</value></data>
+	<!-- Registration Success -->
+	<data name="Title_RegistrationSuccess" xml:space="preserve"><value>Registration Successful</value></data>
+	<data name="Header_RegistrationSuccess" xml:space="preserve"><value>Registration Successful!</value></data>
+	<data name="Header_Welcome" xml:space="preserve"><value>Welcome to</value></data>
+	<data name="Header_CreateProfile" xml:space="preserve"><value>Create Student Profile</value></data>
+	<data name="Success_Message" xml:space="preserve"><value>Your registration was completed successfully.</value></data>
+	<data name="Title_StudentDetails" xml:space="preserve"><value>Your Registration Details</value></data>
+	<data name="Label_StudentID" xml:space="preserve"><value>Student ID:</value></data>
+	<data name="Label_RegistrationDate" xml:space="preserve"><value>Registration Date:</value></data>
+	<data name="Label_Center" xml:space="preserve"><value>Center:</value></data>
+	<data name="NextSteps_Title" xml:space="preserve"><value>What's Next?</value></data>
+	<data name="NextSteps_1" xml:space="preserve"><value>&lt;strong&gt;Wait for Your Access Key:&lt;/strong&gt; The center will provide you with a unique access key</value></data>
+	<data name="NextSteps_2" xml:space="preserve"><value>&lt;strong&gt;Complete Registration:&lt;/strong&gt; Use your access key to select your branch and complete enrollment</value></data>
+	<data name="NextSteps_3" xml:space="preserve"><value>&lt;strong&gt;Choose Your Subjects:&lt;/strong&gt; Select subjects, teachers, and class schedules</value></data>
+	<data name="NextSteps_4" xml:space="preserve"><value>&lt;strong&gt;Start Learning:&lt;/strong&gt; Begin attending your classes and tracking your progress</value></data>
+	<data name="Btn_RegisterAnother" xml:space="preserve"><value>Register Another Student</value></data>
+	<data name="Contact_Title" xml:space="preserve"><value>Need Help?</value></data>
+	<data name="Contact_Text" xml:space="preserve"><value>Contact {0} for assistance with your access key or any questions about the registration process.</value></data>
+	<data name="Label_NotSpecified" xml:space="preserve"><value>Not specified</value></data>
+	<data name="Label_SelectTeacher" xml:space="preserve"><value>Select Teacher</value></data>
+	<data name="Label_Available" xml:space="preserve"><value>available</value></data>
+	<!-- ADD ANY NEW KEYS BELOW AS NEEDED, MATCHING ARABIC -->
+</root>

@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, ...</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value>
+	</resheader>
+	<!-- General -->
+	<data name="Title_StudentRegistration" xml:space="preserve"><value>تسجيل الطالب</value></data>
+	<data name="Header_Join" xml:space="preserve"><value>انضم إلى</value></data>
+	<data name="Header_Journey" xml:space="preserve"><value>ابدأ رحلتك التعليمية معنا</value></data>
+	<data name="Instructions_Title" xml:space="preserve"><value>عملية التسجيل</value></data>
+	<data name="Instruction_1" xml:space="preserve"><value>أكمل هذا النموذج بمعلوماتك الأساسية</value></data>
+	<data name="Instruction_2" xml:space="preserve"><value>سوف تستلم رمز الوصول من المركز</value></data>
+	<data name="Instruction_3" xml:space="preserve"><value>استخدم رمز الوصول لإكمال القبول الأكاديمي</value></data>
+	<data name="Instruction_4" xml:space="preserve"><value>اختر موادك الدراسية، المدرسين، والجداول</value></data>
+	<data name="Error_Header" xml:space="preserve"><value>يرجى تصحيح الأخطاء التالية:</value></data>
+	<!-- Find Profile / Search Student -->
+	<data name="Title_FindProfile" xml:space="preserve"><value>ابحث عن ملفك</value></data>
+	<data name="Header_LinkProfile" xml:space="preserve"><value>اربط ملفك الطلابي الحالي للوصول إلى حسابك</value></data>
+	<data name="Label_ItemKey" xml:space="preserve"><value>مفتاح العنصر</value></data>
+	<data name="Label_EnterPhone" xml:space="preserve"><value>أدخل رقم هاتفك</value></data>
+	<data name="Label_PhoneNumber" xml:space="preserve"><value>رقم هاتفك</value></data>
+	<data name="Placeholder_Phone" xml:space="preserve"><value>أدخل رقم هاتفك</value></data>
+	<data name="Btn_Search" xml:space="preserve"><value>بحث</value></data>
+	<data name="Title_FoundProfiles" xml:space="preserve"><value>الملفات الموجودة</value></data>
+	<data name="NoProfile_Title" xml:space="preserve"><value>لم يتم العثور على ملف</value></data>
+	<data name="NoProfile_Description" xml:space="preserve"><value>لم نعثر على ملف طالب بهذا الرقم.</value></data>
+	<data name="Btn_CreateProfile" xml:space="preserve"><value>إنشاء ملف جديد</value></data>
+	<data name="Alt_DontHaveProfile" xml:space="preserve"><value>ليس لديك ملف بعد؟</value></data>
+	<data name="Alt_CreateOneHere" xml:space="preserve"><value>أنشئ واحداً هنا</value></data>
+	<data name="Loading_Searching" xml:space="preserve"><value>جارٍ البحث عن ملفك...</value></data>
+	<data name="Error_SearchFailed" xml:space="preserve"><value>فشل البحث. حاول مرة أخرى.</value></data>
+	<data name="Error_Network" xml:space="preserve"><value>حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.</value></data>
+	<data name="Dialog_ConfirmLink" xml:space="preserve"><value>هل أنت متأكد أنك تريد ربط الملف للطالب "{0}"؟</value></data>
+	<data name="Error_LinkFailed" xml:space="preserve"><value>فشل ربط ملف الطالب.</value></data>
+	<data name="Btn_LinkProfile" xml:space="preserve"><value>ربط هذا الملف</value></data>
+	<data name="Label_Name" xml:space="preserve"><value>الاسم</value></data>
+	<data name="Label_BirthDate" xml:space="preserve"><value>تاريخ الميلاد</value></data>
+	<data name="Label_Age" xml:space="preserve"><value>العمر</value></data>
+	<data name="Label_YearName" xml:space="preserve"><value>السنة/المرحلة</value></data>
+	<!-- Labels -->
+	<data name="Label_FullName" xml:space="preserve"><value>الاسم الكامل</value></data>
+	<data name="Label_StudentPhone" xml:space="preserve"><value>رقم الطالب</value></data>
+	<data name="Label_ParentPhone" xml:space="preserve"><value>هاتف ولي الأمر</value></data>
+	<data name="Label_Birthdate" xml:space="preserve"><value>تاريخ الميلاد</value></data>
+	<data name="Label_Gender" xml:space="preserve"><value>الجنس</value></data>
+	<data name="Label_Male" xml:space="preserve"><value>ذكر</value></data>
+	<data name="Label_Female" xml:space="preserve"><value>أنثى</value></data>
+	<data name="Label_AcademicYear" xml:space="preserve"><value>السنة/المرحلة الدراسية</value></data>
+	<data name="Label_PersonalInformation" xml:space="preserve"><value>المعلومات الشخصية</value></data>
+	<data name="Label_AcademicInformation" xml:space="preserve"><value>المعلومات الأكاديمية</value></data>
+	<data name="Label_SubjectSelection" xml:space="preserve"><value>اختر موادك</value></data>
+	<data name="Label_ScheduleSelection" xml:space="preserve"><value>اختر الجداول الدراسية</value></data>
+	<data name="Label_Confirmation" xml:space="preserve"><value>تأكيد التسجيل</value></data>
+	<data name="Label_Teacher" xml:space="preserve"><value>المعلم</value></data>
+	<data name="Label_NotSelected" xml:space="preserve"><value>غير محدد</value></data>
+	<data name="Label_EduYear" xml:space="preserve"><value>السنة التعليمية</value></data>
+	<data name="Label_Schedule" xml:space="preserve"><value>الجدول</value></data>
+	<data name="Label_Branch" xml:space="preserve"><value>الفرع</value></data>
+	<data name="Label_ReviewUpdate" xml:space="preserve"><value>(مراجعة وتحديث)</value></data>
+	<data name="Label_SelectBranch" xml:space="preserve"><value>اختر الفرع</value></data>
+	<data name="Label_SelectedSubjects" xml:space="preserve"><value>المواد المختارة</value></data>
+	<data name="Label_StudentID" xml:space="preserve"><value>رقم الطالب:</value></data>
+	<data name="Label_RegistrationDate" xml:space="preserve"><value>تاريخ التسجيل:</value></data>
+	<data name="Label_Center" xml:space="preserve"><value>المركز:</value></data>
+	<data name="Label_NotSpecified" xml:space="preserve"><value>غير محدد</value></data>
+	<data name="Label_SelectTeacher" xml:space="preserve"><value>اختر المعلم</value></data>
+	<data name="Label_Available" xml:space="preserve"><value>متاح</value></data>
+	<!-- Placeholders -->
+	<data name="Placeholder_FullName" xml:space="preserve"><value>أدخل اسمك الكامل</value></data>
+	<data name="Placeholder_Phone" xml:space="preserve"><value>أدخل رقم هاتفك</value></data>
+	<data name="Placeholder_ParentPhone" xml:space="preserve"><value>هاتف ولي الأمر</value></data>
+	<data name="Dropdown_AcademicYearDefault" xml:space="preserve"><value>اختر السنة/المرحلة الدراسية</value></data>
+	<data name="Dropdown_BranchDefault" xml:space="preserve"><value>اختر الفرع...</value></data>
+	<data name="Dropdown_EduYearDefault" xml:space="preserve"><value>اختر السنة التعليمية...</value></data>
+	<!-- Buttons -->
+	<data name="Btn_CompleteRegistration" xml:space="preserve"><value>إكمال التسجيل</value></data>
+	<data name="Btn_Next" xml:space="preserve"><value>التالي</value></data>
+	<data name="Btn_Prev" xml:space="preserve"><value>السابق</value></data>
+	<data name="Btn_Confirm" xml:space="preserve"><value>تأكيد</value></data>
+	<!-- Info / Misc -->
+	<data name="Info_Secure" xml:space="preserve"><value>معلوماتك آمنة ولن تُستخدم إلا لأغراض تعليمية.</value></data>
+	<data name="Info_StudentProfileLinked" xml:space="preserve"><value>تم ربط ملف الطالب! معلوماتك الأساسية محفوظة بالفعل. يمكنك مراجعتها وتحديثها أدناه، ثم متابعة اختيار المواد والجداول.</value></data>
+	<data name="Info_StudentProfileBasicSaved" xml:space="preserve"><value>معلوماتك الأساسية محفوظة بالفعل.</value></data>
+	<data name="Info_StudentProfileReviewAndUpdate" xml:space="preserve"><value>يمكنك مراجعتها وتحديثها أدناه، ثم متابعة اختيار المواد والجداول.</value></data>
+	<data name="Info_SelectSubjects" xml:space="preserve"><value>اختر المواد التي ترغب في دراستها واختر معلمك المفضل.</value></data>
+	<data name="Info_CompletePrevStepsToSeeSubjects" xml:space="preserve"><value>يرجى إكمال الخطوات السابقة لرؤية المواد المتاحة</value></data>
+	<data name="Info_CompletePrevStepsToSeeSchedules" xml:space="preserve"><value>يرجى إكمال الخطوات السابقة لرؤية الجداول المتاحة</value></data>
+	<data name="Info_SelectSchedules" xml:space="preserve"><value>اختر الجدول الدراسي المفضل لكل مادة. تحقق من الأوقات المتاحة والسعة.</value></data>
+	<data name="Info_ReviewBeforeSubmit" xml:space="preserve"><value>يرجى مراجعة معلوماتك قبل إرسال التسجيل.</value></data>
+	<data name="Info_NoSubjectsAvailable" xml:space="preserve"><value>لا توجد مواد متاحة للفرع والسنة المختارين.</value></data>
+	<data name="Info_NoTeachersAvailable" xml:space="preserve"><value>لا يوجد مدرسون لهذه المادة في الفرع المختار.</value></data>
+	<data name="Info_NoSubjectsSelected" xml:space="preserve"><value>لم يتم اختيار مواد. يرجى العودة واختيار المواد أولاً.</value></data>
+	<!-- Step Indicators -->
+	<data name="StepIndicator_1" xml:space="preserve"><value>معلومات شخصية</value></data>
+	<data name="StepIndicator_2" xml:space="preserve"><value>معلومات أكاديمية</value></data>
+	<data name="StepIndicator_3" xml:space="preserve"><value>المواد</value></data>
+	<data name="StepIndicator_4" xml:space="preserve"><value>الجداول</value></data>
+	<data name="StepIndicator_5" xml:space="preserve"><value>تأكيد</value></data>
+	<!-- Alerts -->
+	<data name="Alert_SelectAtLeastOneSubject" xml:space="preserve"><value>يرجى اختيار مادة واحدة على الأقل.</value></data>
+	<data name="Alert_SelectScheduleForAllSubjects" xml:space="preserve"><value>يرجى اختيار جدول لجميع المواد.</value></data>
+	<data name="Alert_FieldRequired" xml:space="preserve"><value>هذا الحقل مطلوب.</value></data>
+	<data name="Alert_ValidPhoneRequired" xml:space="preserve"><value>يرجى إدخال رقم هاتف صحيح.</value></data>
+	<data name="Alert_ValidBirthdateRequired" xml:space="preserve"><value>يرجى إدخال تاريخ ميلاد صحيح.</value></data>
+	<data name="Alert_TermsRequired" xml:space="preserve"><value>يرجى قبول الشروط والأحكام.</value></data>
+	<data name="Alert_FillAllFields" xml:space="preserve"><value>يرجى تعبئة جميع الحقول المطلوبة.</value></data>
+	<data name="Alert_FailedToLoadYears" xml:space="preserve"><value>فشل تحميل السنوات للسنة التعليمية المختارة.</value></data>
+	<data name="Alert_FailedToLoadSubjects" xml:space="preserve"><value>فشل تحميل المواد. حاول مرة أخرى.</value></data>
+	<data name="Alert_FailedToLoadSchedules" xml:space="preserve"><value>فشل تحميل الجداول. حاول مرة أخرى.</value></data>
+	<data name="Alert_RegistrationFailed" xml:space="preserve"><value>فشل التسجيل. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.</value></data>
+	<data name="Alert_NoSubjectsAvailable" xml:space="preserve"><value>لا توجد مواد متاحة للفرع والسنة المختارين.</value></data>
+	<data name="Alert_NoTeachersAvailable" xml:space="preserve"><value>لا يوجد مدرسون لهذه المادة في الفرع المختار.</value></data>
+	<data name="Alert_NoSchedulesAvailable" xml:space="preserve"><value>لا توجد جداول متاحة لهذا الجمع بين المادة والمدرس.</value></data>
+	<data name="Alert_NoSubjectsSelected" xml:space="preserve"><value>لم يتم اختيار مواد. يرجى العودة واختيار المواد أولاً.</value></data>
+	<data name="Alert_SubjectRemoved" xml:space="preserve"><value>تمت إزالة المادة.</value></data>
+	<data name="Alert_AcceptTerms" xml:space="preserve"><value>يرجى قبول الشروط والأحكام.</value></data>
+	<data name="Alert_EnterName" xml:space="preserve"><value>يرجى إدخال الاسم.</value></data>
+	<data name="Alert_EnterPhone" xml:space="preserve"><value>يرجى إدخال رقم الهاتف.</value></data>
+	<data name="Alert_EnterParentPhone" xml:space="preserve"><value>يرجى إدخال هاتف ولي الأمر.</value></data>
+	<data name="Alert_SelectBirthDate" xml:space="preserve"><value>يرجى اختيار تاريخ الميلاد.</value></data>
+	<data name="Alert_SelectBranch" xml:space="preserve"><value>يرجى اختيار الفرع.</value></data>
+	<data name="Alert_PleaseSelectSubject" xml:space="preserve"><value>يرجى اختيار مادة واحدة على الأقل.</value></data>
+	<data name="Alert_PleaseSelectSchedules" xml:space="preserve"><value>يرجى اختيار جداول لجميع المواد.</value></data>
+	<data name="Alert_RegistrationFailedConnection" xml:space="preserve"><value>فشل التسجيل. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.</value></data>
+	<data name="Alert_NoSchedules" xml:space="preserve"><value>لا توجد جداول متاحة لهذا الجمع بين المادة والمدرس.</value></data>
+	<!-- Validation -->
+	<data name="Validation_Required" xml:space="preserve"><value>يرجى إدخال رقم الهاتف.</value></data>
+	<data name="Validation_ValidPhone" xml:space="preserve"><value>يرجى إدخال رقم هاتف صحيح.</value></data>
+	<!-- Form Agreement -->
+	<data name="Form_AgreeToTerms" xml:space="preserve"><value>أوافق على الشروط والأحكام وأؤكد أن جميع المعلومات المقدمة دقيقة.</value></data>
+	<!-- Summary -->
+	<data name="Summary_PersonalInfo" xml:space="preserve"><value>المعلومات الشخصية</value></data>
+	<data name="Summary_AcademicInfo" xml:space="preserve"><value>المعلومات الأكاديمية</value></data>
+	<data name="Summary_SelectedSubjects" xml:space="preserve"><value>المواد المختارة</value></data>
+	<!-- JS dynamic messages -->
+	<data name="JS_ProcessingRegistration" xml:space="preserve"><value>جاري معالجة التسجيل...</value></data>
+	<data name="JS_StudentNameRequired" xml:space="preserve"><value>يرجى إدخال الاسم.</value></data>
+	<data name="JS_StudentPhoneRequired" xml:space="preserve"><value>يرجى إدخال رقم الهاتف.</value></data>
+	<data name="JS_ParentPhoneRequired" xml:space="preserve"><value>يرجى إدخال هاتف ولي الأمر.</value></data>
+	<data name="JS_BirthDateRequired" xml:space="preserve"><value>يرجى اختيار تاريخ الميلاد.</value></data>
+	<data name="JS_BranchRequired" xml:space="preserve"><value>يرجى اختيار الفرع.</value></data>
+	<data name="JS_SubjectRequired" xml:space="preserve"><value>يرجى اختيار مادة واحدة على الأقل.</value></data>
+	<data name="JS_ScheduleRequired" xml:space="preserve"><value>يرجى اختيار جداول لجميع المواد.</value></data>
+	<data name="JS_TermsRequired" xml:space="preserve"><value>يرجى قبول الشروط والأحكام.</value></data>
+	<!-- Registration Success -->
+	<data name="Title_RegistrationSuccess" xml:space="preserve"><value>تم التسجيل بنجاح</value></data>
+	<data name="Header_RegistrationSuccess" xml:space="preserve"><value>تم التسجيل بنجاح!</value></data>
+	<data name="Header_Welcome" xml:space="preserve"><value>مرحباً بك في</value></data>
+	<data name="Header_CreateProfile" xml:space="preserve"><value>إنشاء ملف الطالب</value></data>
+	<data name="Success_Message" xml:space="preserve"><value>اكتمل تسجيلك بنجاح.</value></data>
+	<data name="Title_StudentDetails" xml:space="preserve"><value>تفاصيل تسجيلك</value></data>
+	<data name="NextSteps_Title" xml:space="preserve"><value>ما هي الخطوة التالية؟</value></data>
+	<data name="NextSteps_1" xml:space="preserve"><value>&lt;strong&gt;انتظر رمز الوصول الخاص بك:&lt;/strong&gt; سيزودك المركز برمز وصول فريد</value></data>
+	<data name="NextSteps_2" xml:space="preserve"><value>&lt;strong&gt;أكمل التسجيل:&lt;/strong&gt; استخدم رمز الوصول لاختيار الفرع وإكمال القبول</value></data>
+	<data name="NextSteps_3" xml:space="preserve"><value>&lt;strong&gt;اختر موادك:&lt;/strong&gt; اختر المواد، المدرسين والجداول</value></data>
+	<data name="NextSteps_4" xml:space="preserve"><value>&lt;strong&gt;ابدأ التعلم:&lt;/strong&gt; ابدأ حضور الدروس وتتبع تقدمك</value></data>
+	<data name="Btn_RegisterAnother" xml:space="preserve"><value>تسجيل طالب آخر</value></data>
+	<data name="Contact_Title" xml:space="preserve"><value>هل تحتاج مساعدة؟</value></data>
+	<data name="Contact_Text" xml:space="preserve"><value>تواصل مع {0} للمساعدة بشأن رمز الوصول أو أي أسئلة حول عملية التسجيل.</value></data>
+</root>

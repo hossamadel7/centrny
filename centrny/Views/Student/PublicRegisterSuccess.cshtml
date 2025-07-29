@@ -1,10 +1,15 @@
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
+
 @{
-    ViewData["Title"] = "Registration Successful";
+    var Localizer = LocalizerFactory.Create("Register", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title_RegistrationSuccess"];
     Layout = null;
+    var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@lang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -53,9 +58,11 @@
                 transform: scale(0);
                 opacity: 0;
             }
+
             50% {
                 transform: scale(1.2);
             }
+
             100% {
                 transform: scale(1);
                 opacity: 1;
@@ -79,11 +86,11 @@
             margin: 30px 0;
         }
 
-        .student-info h5 {
-            color: #28a745;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
+            .student-info h5 {
+                color: #28a745;
+                margin-bottom: 20px;
+                font-weight: 600;
+            }
 
         .info-item {
             display: flex;
@@ -93,9 +100,9 @@
             border-bottom: 1px solid #e9ecef;
         }
 
-        .info-item:last-child {
-            border-bottom: none;
-        }
+            .info-item:last-child {
+                border-bottom: none;
+            }
 
         .info-label {
             font-weight: 600;
@@ -115,20 +122,20 @@
             border-radius: 0 10px 10px 0;
         }
 
-        .next-steps h5 {
-            color: #007bff;
-            margin-bottom: 15px;
-        }
+            .next-steps h5 {
+                color: #007bff;
+                margin-bottom: 15px;
+            }
 
-        .next-steps ol {
-            margin: 0;
-            padding-left: 20px;
-        }
+            .next-steps ol {
+                margin: 0;
+                padding-left: 20px;
+            }
 
-        .next-steps li {
-            margin-bottom: 10px;
-            color: #495057;
-        }
+            .next-steps li {
+                margin-bottom: 10px;
+                color: #495057;
+            }
 
         .btn-primary {
             background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
@@ -140,10 +147,10 @@
             transition: all 0.3s ease;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
-        }
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+            }
 
         .btn-outline-secondary {
             border: 2px solid #6c757d;
@@ -154,9 +161,9 @@
             transition: all 0.3s ease;
         }
 
-        .btn-outline-secondary:hover {
-            transform: translateY(-2px);
-        }
+            .btn-outline-secondary:hover {
+                transform: translateY(-2px);
+            }
 
         .contact-info {
             background: #fff3cd;
@@ -166,15 +173,15 @@
             margin-top: 30px;
         }
 
-        .contact-info h6 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
+            .contact-info h6 {
+                color: #856404;
+                margin-bottom: 10px;
+            }
 
-        .contact-info p {
-            color: #856404;
-            margin: 0;
-        }
+            .contact-info p {
+                color: #856404;
+                margin: 0;
+            }
 
         .success-message {
             font-size: 1.2rem;
@@ -193,13 +200,13 @@
                 <div class="success-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <h1>Registration Successful!</h1>
-                <p>Welcome to @ViewBag.RootName</p>
+                <h1>@Localizer["Header_RegistrationSuccess"]</h1>
+                <p>@Localizer["Header_Welcome"] @ViewBag.RootName</p>
             </div>
 
             <!-- Body -->
             <div class="success-body">
-                
+
                 <!-- Success Message -->
                 <div class="success-message">
                     @ViewBag.SuccessMessage
@@ -209,17 +216,17 @@
                 @if (ViewBag.StudentCode != null)
                 {
                     <div class="student-info">
-                        <h5><i class="fas fa-user-circle me-2"></i>Your Registration Details</h5>
+                        <h5><i class="fas fa-user-circle me-2"></i>@Localizer["Title_StudentDetails"]</h5>
                         <div class="info-item">
-                            <span class="info-label">Student ID:</span>
+                            <span class="info-label">@Localizer["Label_StudentID"]</span>
                             <span class="info-value">#@ViewBag.StudentCode</span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label">Registration Date:</span>
+                            <span class="info-label">@Localizer["Label_RegistrationDate"]</span>
                             <span class="info-value">@DateTime.Today.ToString("MMMM dd, yyyy")</span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label">Center:</span>
+                            <span class="info-label">@Localizer["Label_Center"]</span>
                             <span class="info-value">@ViewBag.RootName</span>
                         </div>
                     </div>
@@ -227,33 +234,33 @@
 
                 <!-- Next Steps -->
                 <div class="next-steps">
-                    <h5><i class="fas fa-list-check me-2"></i>What's Next?</h5>
+                    <h5><i class="fas fa-list-check me-2"></i>@Localizer["NextSteps_Title"]</h5>
                     <ol>
-                        <li><strong>Wait for Your Access Key:</strong> The center will provide you with a unique access key</li>
-                        <li><strong>Complete Registration:</strong> Use your access key to select your branch and complete enrollment</li>
-                        <li><strong>Choose Your Subjects:</strong> Select subjects, teachers, and class schedules</li>
-                        <li><strong>Start Learning:</strong> Begin attending your classes and tracking your progress</li>
+                        <li>@Html.Raw(Localizer["NextSteps_1"])</li>
+                        <li>@Html.Raw(Localizer["NextSteps_2"])</li>
+                        <li>@Html.Raw(Localizer["NextSteps_3"])</li>
+                        <li>@Html.Raw(Localizer["NextSteps_4"])</li>
                     </ol>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-center">
                     <a href="/Register/@ViewBag.RootCode" class="btn btn-outline-secondary">
-                        <i class="fas fa-user-plus me-2"></i>Register Another Student
+                        <i class="fas fa-user-plus me-2"></i>@Localizer["Btn_RegisterAnother"]
                     </a>
                 </div>
 
                 <!-- Contact Information -->
                 <div class="contact-info">
-                    <h6><i class="fas fa-phone me-2"></i>Need Help?</h6>
-                    <p>Contact @ViewBag.RootName for assistance with your access key or any questions about the registration process.</p>
+                    <h6><i class="fas fa-phone me-2"></i>@Localizer["Contact_Title"]</h6>
+                    <p>@string.Format(Localizer["Contact_Text"], @ViewBag.RootName)</p>
                 </div>
 
                 <!-- Additional Information -->
                 <div class="text-center mt-4">
                     <small class="text-muted">
                         <i class="fas fa-shield-alt me-1"></i>
-                        Your registration is secure and your academic journey with us begins now!
+                        @Localizer["Info_Secure"]
                     </small>
                 </div>
             </div>
@@ -262,7 +269,7 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Auto-refresh prevention -->
     <script>
         // Prevent back button from showing cached form
