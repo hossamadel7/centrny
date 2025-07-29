@@ -534,22 +534,22 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTeachersForBranch(int branchCode)
         {
-            // Join Teach and Teacher tables to get only teachers assigned to this branch
+            // Join Teach and Teacher tables to get only teachers assigned to this branch,
+            // and include IsStaff property for proper filtering on frontend
             var teachers = await _context.Teaches
                 .Where(t => t.BranchCode == branchCode)
                 .Select(t => new
                 {
                     value = t.TeacherCode,
-                    text = t.TeacherCodeNavigation.TeacherName // assumes navigation property
+                    text = t.TeacherCodeNavigation.TeacherName,
+                    isStaff = t.TeacherCodeNavigation.IsStaff // <-- This property must exist in your Teacher entity/table
                 })
                 .Distinct()
                 .ToListAsync();
 
             return Json(new { teachers });
         }
-        /// <summary>
-        /// POST: DailyClass/CreateClass - Create new class (OPTIMIZED)
-        /// </summary>
+
         [HttpPost]
         [RequirePageAccess("DailyClass", "insert")]
         public async Task<IActionResult> CreateClass([FromBody] DailyClassModel model)
@@ -995,6 +995,106 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             return Json(new { halls });
+        }
+        [HttpPost]
+        public async Task<IActionResult> CheckClassConflicts([FromBody] DailyClassModel model)
+        {
+            var (userRootCode, rootName, isCenter) = await GetUserContext();
+            if (!userRootCode.HasValue)
+                return Json(new { success = false, error = "Unable to determine your root assignment." });
+
+            model.RootCode = userRootCode.Value;
+
+            // Parse times and date
+            if (!TimeOnly.TryParse(model.StartTime, out TimeOnly startTime) ||
+                !TimeOnly.TryParse(model.EndTime, out TimeOnly endTime))
+            {
+                return Json(new { success = false, error = "Invalid time format." });
+            }
+            if (startTime >= endTime)
+            {
+                return Json(new { success = false, error = "End time must be after start time." });
+            }
+
+            var classDate = model.ClassDate?.Date ?? DateTime.Today;
+            var classDateOnly = DateOnly.FromDateTime(classDate);
+
+            // 1. Hall Conflict: any class or reservation in ANY branch with same hall, and overlapping time
+            bool hallConflict = false;
+            if (model.HallCode.HasValue)
+            {
+                var hallClasses = await _context.Classes
+                    .AsNoTracking()
+                    .Where(c =>
+                        c.HallCode == model.HallCode &&
+                        c.ClassDate == classDateOnly &&
+                        (
+                            (c.ClassStartTime < endTime && c.ClassEndTime > startTime)
+                        )
+                    ).AnyAsync();
+
+                var hallReservations = await _context.Reservations
+                    .AsNoTracking()
+                    .Where(r =>
+                        r.HallCode == model.HallCode &&
+                        r.RTime == classDateOnly &&
+                        (
+                            (r.ReservationStartTime < endTime && r.ReservationEndTime > startTime)
+                        )
+                    ).AnyAsync();
+
+                hallConflict = hallClasses || hallReservations;
+            }
+
+            // 2. Teacher Conflict: any class with same teacher, same date, overlap time, ANY branch
+            bool teacherConflict = false;
+            if (model.TeacherCode.HasValue)
+            {
+                teacherConflict = await _context.Classes
+                    .AsNoTracking()
+                    .Where(c =>
+                        c.TeacherCode == model.TeacherCode &&
+                        c.ClassDate == classDateOnly &&
+                        (
+                            (c.ClassStartTime < endTime && c.ClassEndTime > startTime)
+                        )
+                    ).AnyAsync();
+            }
+
+            // 3. Same Year Conflict: any other class for the same year, same branch, same date, overlap time
+            bool sameYearConflict = false;
+            string conflictingTeacherName = null;
+            if (model.EduYearCode.HasValue && model.BranchCode.HasValue)
+            {
+                var yearConflicts = await _context.Classes
+                    .Include(c => c.TeacherCodeNavigation)
+                    .Where(c =>
+                        c.EduYearCode == model.EduYearCode &&
+                        c.BranchCode == model.BranchCode &&
+                        c.ClassDate == classDateOnly &&
+                        (
+                            (c.ClassStartTime < endTime && c.ClassEndTime > startTime)
+                        )
+                    ).ToListAsync();
+
+                // Exclude the currently added teacher if present
+                if (yearConflicts.Any(c => c.TeacherCode != model.TeacherCode))
+                {
+                    sameYearConflict = true;
+                    conflictingTeacherName = string.Join(", ", yearConflicts
+                        .Where(c => c.TeacherCode != model.TeacherCode)
+                        .Select(c => c.TeacherCodeNavigation.TeacherName).Distinct());
+                }
+            }
+
+            return Json(new
+            {
+                success = true,
+                hallConflict,
+                teacherConflict,
+                sameYearConflict,
+                conflictingTeacherName
+            });
         }
         // ==================== WEEKLY CLASS GENERATION METHODS ====================
 

@@ -1,5 +1,5 @@
 ﻿$(document).ready(function () {
-    var examItemsPerPage = 10;
+    var examItemsPerPage = 5;
     var examCurrentPage = 1;
     var examTotalPages = 1;
     // =============================
@@ -377,7 +377,7 @@
         // Table header
         var html = '<table class="gradient-table exam-index-table align-middle mb-0">';
         html += '<thead><tr>';
-        html += `<th>${getJsString('CodeHeader')}</th>`;
+
         html += `<th>${getJsString('NameHeader')}</th>`;
         html += `<th>${getJsString('ModeHeader')}</th>`;
         html += `<th>${getJsString('TypeHeader')}</th>`;
@@ -394,7 +394,7 @@
 
         data.forEach(function (exam) {
             html += `<tr>
-            <td class="fw-bold text-primary text-end">${exam.examCode ?? ''}</td>
+     
             <td>${exam.examName ?? ''}</td>
             <td>
                 <span class="badge exam-mode-${exam.isOnline ? 'online' : 'offline'}">
@@ -1280,25 +1280,25 @@
         createPaginationControls('availablePaginationTop', availableCurrentPage, availableTotalPages, function (page) {
             availableCurrentPage = page;
             renderQuestionsLists();
-            $('#availableQuestions').parent().scrollTop(0);
+            $('#availableQuestions').parent().scrollTop($('#availableQuestions').parent()[0].scrollHeight);
         });
 
         createPaginationControls('availablePagination', availableCurrentPage, availableTotalPages, function (page) {
             availableCurrentPage = page;
             renderQuestionsLists();
-            $('#availableQuestions').parent().scrollTop(0);
+            $('#availableQuestions').parent().scrollTop($('#availableQuestions').parent()[0].scrollHeight);
         });
 
         createPaginationControls('chosenPaginationTop', chosenCurrentPage, chosenTotalPages, function (page) {
             chosenCurrentPage = page;
             renderQuestionsLists();
-            $('#chosenQuestions').parent().scrollTop(0);
+            $('#chosenQuestions').parent().scrollTop($('#chosenQuestions').parent()[0].scrollHeight);
         });
 
         createPaginationControls('chosenPagination', chosenCurrentPage, chosenTotalPages, function (page) {
             chosenCurrentPage = page;
             renderQuestionsLists();
-            $('#chosenQuestions').parent().scrollTop(0);
+            $('#chosenQuestions').parent().scrollTop($('#chosenQuestions').parent()[0].scrollHeight);
         });
 
         $('#availableInfo').text(`${getJsString('AvailableQuestions')}: ${availableQuestions.length} (${getJsString('Page')} ${availableCurrentPage} ${getJsString('Of')} ${availableTotalPages})`);
@@ -1336,8 +1336,8 @@
             }
         });
 
-        $('#availableQuestions').parent().scrollTop(0);
-        $('#chosenQuestions').parent().scrollTop(0);
+        $('#availableQuestions').parent().scrollTop($('#availableQuestions').parent()[0].scrollHeight);
+        $('#chosenQuestions').parent().scrollTop($('#chosenQuestions').parent()[0].scrollHeight);
     }
 
     $(document).on('click', '.chapter-header', function () {

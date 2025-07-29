@@ -165,7 +165,8 @@ namespace centrny.Controllers
         {
             var roots = await _context.Roots
                 .Where(r => r.IsCenter == isCenter && r.IsActive == isActive)
-                .Select(r => new {
+                .Select(r => new
+                {
                     rootCode = r.RootCode,
                     rootName = r.RootName,
                     isCenter = r.IsCenter

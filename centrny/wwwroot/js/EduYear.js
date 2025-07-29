@@ -9,7 +9,7 @@ const resxAddYear = document.getElementById("resxAddYear").value;
 const resxAddLevel = document.getElementById("resxAddLevel")?.value || "Add Level";
 const resxYes = document.getElementById("resxYes").value;
 const resxNo = document.getElementById("resxNo").value;
-const resxEduYearCode = document.getElementById("resxEduYearCode")?.value || "Edu Year Code";
+// Removed resxEduYearCode since code is not shown/used in UI
 const resxEduYearName = document.getElementById("resxEduYearName")?.value || "Edu Year Name";
 const resxIsActive = document.getElementById("resxIsActive")?.value || "Active";
 const resxActions = document.getElementById("resxActions")?.value || "Actions";
@@ -31,7 +31,7 @@ const eduErrorDiv = document.getElementById('addEduYearError');
 const eduTbody = document.getElementById('eduyear-body');
 const eduMsg = document.getElementById('eduyear-message');
 const eduModalTitle = document.getElementById('eduModalTitle');
-const eduCodeInput = document.getElementById('eduCode');
+// Removed: const eduCodeInput = document.getElementById('eduCode');
 
 const levelsContainer = document.getElementById('levels-years-container');
 
@@ -69,19 +69,23 @@ function openEduModal(isEdit = false, eduYear = null) {
     eduForm.reset();
     eduEditMode = isEdit;
     eduModalTitle.textContent = isEdit ? resxEdit + " " + resxAddEduYear : resxAddEduYear;
-    eduCodeInput.value = '';
+    // Removed: eduCodeInput.value = '';
     const submitBtn = eduForm.querySelector('button[type="submit"]');
     submitBtn.disabled = false;
     submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
     if (isEdit && eduYear) {
-        eduCodeInput.value = eduYear.eduCode;
+        // Removed: eduCodeInput.value = eduYear.eduCode;
         eduForm.eduName.value = eduYear.eduName;
         eduForm.isActive.value = eduYear.isActive ? "true" : "false";
+        eduForm.setAttribute("data-edit-code", eduYear.eduCode); // keep code for edit/delete
+    } else {
+        eduForm.removeAttribute("data-edit-code");
     }
 }
 function closeEduModalFunc() {
     eduModal.style.display = "none";
     eduEditMode = false;
+    eduForm.removeAttribute("data-edit-code");
 }
 if (openEduBtn) openEduBtn.onclick = () => openEduModal(false);
 if (closeEduBtn) closeEduBtn.onclick = closeEduModalFunc;
@@ -102,7 +106,8 @@ eduForm.onsubmit = function (e) {
 
     const eduName = eduForm.eduName.value.trim();
     const isActive = eduForm.isActive.value === "true";
-    const eduCode = eduCodeInput.value;
+    // Removed: const eduCode = eduCodeInput.value;
+    const editCode = eduForm.getAttribute("data-edit-code");
 
     if (!eduName) {
         eduErrorDiv.textContent = resxLoading;
@@ -112,9 +117,9 @@ eduForm.onsubmit = function (e) {
     }
 
     let url, body;
-    if (eduEditMode && eduCode) {
+    if (eduEditMode && editCode) {
         url = '/EduYear/EditEduYear';
-        body = JSON.stringify({ eduCode, eduName, isActive });
+        body = JSON.stringify({ eduCode: editCode, eduName, isActive });
     } else {
         url = '/EduYear/AddEduYear';
         body = JSON.stringify({ eduName, isActive });
@@ -144,7 +149,6 @@ eduForm.onsubmit = function (e) {
 
 function eduYearRowHTML(eduYear) {
     return `
-        <td>${eduYear.eduCode ?? ''}</td>
         <td>${eduYear.eduName ?? ''}</td>
         <td>${eduYear.isActive ? resxYes : resxNo}</td>
         <td>

@@ -4,32 +4,46 @@
     var culture = System.Threading.Thread.CurrentThread.CurrentUICulture;
     var isRtl = culture.Name.StartsWith("ar");
     var dir = isRtl ? "rtl" : "ltr";
+    // Sidebar now shows pages according to GroupPages (group's authorized pages)
     var sidebarPages = User.Identity.IsAuthenticated
         ? LayoutController.GetSidebarPagesForUser(DbContext, User, Context.Session)
         : new List<SidebarPageViewModel>();
+
+    // Fetch the root name for the logged-in user (fallback to "Centrny")
+    string rootName = "Centrny";
+    if (User.Identity.IsAuthenticated)
+    {
+        var username = User.Identity.Name;
+        var currentUser = DbContext.Users.FirstOrDefault(u => u.Username == username);
+        if (currentUser != null)
+        {
+            var group = DbContext.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
+            if (group != null)
+            {
+                var root = DbContext.Roots.FirstOrDefault(r => r.RootCode == group.RootCode);
+                if (root != null && !string.IsNullOrEmpty(root.RootName))
+                {
+                    rootName = root.RootName;
+                }
+            }
+        }
+    }
+    // For AR language, translate static labels
+    string logoutText = isRtl ? "تسجيل الخروج" : "Logout";
+    string loginText = isRtl ? "تسجيل الدخول" : "Login";
 }
 <!DOCTYPE html>
 <html lang="@culture.Name" dir="@dir">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - centrny</title>
+    <title>@ViewData["Title"] - @rootName</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/centrny.styles.css" asp-append-version="true" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
     <style>
-        body[dir="rtl"], html[dir="rtl"] {
-            direction: rtl;
-            text-align: right;
-        }
-
-        body[dir="ltr"], html[dir="ltr"] {
-            direction: ltr;
-            text-align: left;
-        }
-
         :root {
             --sidebar-width: 280px;
             --sidebar-bg: linear-gradient(135deg, #032a9b 0%, #3c78d5 50%, #2450a1 100%);
@@ -40,17 +54,21 @@
             --transition-speed: 0.3s;
         }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #f8fafc;
+        html[dir="rtl"] body,
+        html[dir="rtl"] .modern-sidebar {
+            direction: rtl;
+            text-align: right;
+        }
+
+        html[dir="ltr"] body,
+        html[dir="ltr"] .modern-sidebar {
+            direction: ltr;
+            text-align: left;
         }
 
         .modern-sidebar {
             position: fixed;
             top: 0;
-            left: 0;
             width: var(--sidebar-width);
             height: 100vh;
             background: var(--sidebar-bg);
@@ -58,18 +76,37 @@
             z-index: 1040;
             display: flex;
             flex-direction: column;
-            transform: translateX(-100%);
-            transition: transform var(--transition-speed) cubic-bezier(0.4,0,0.2,1);
-            box-shadow: 4px 0 24px rgba(0,0,0,0.08);
             will-change: transform;
             border-radius: 0;
             font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            transition: transform var(--transition-speed) cubic-bezier(0.4,0,0.2,1);
         }
 
-        .modern-sidebar.open {
-            transform: translateX(0);
+        /* LTR: sidebar on left, closed = translateX(-100%) */
+        html[dir="ltr"] .modern-sidebar {
+            left: 0;
+            right: auto;
+            transform: translateX(-100%);
+            box-shadow: 4px 0 24px rgba(0,0,0,0.08);
         }
 
+            html[dir="ltr"] .modern-sidebar.open {
+                transform: translateX(0);
+            }
+
+        /* RTL: sidebar on right, closed = translateX(100%) */
+        html[dir="rtl"] .modern-sidebar {
+            left: auto;
+            right: 0;
+            transform: translateX(100%);
+            box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+        }
+
+            html[dir="rtl"] .modern-sidebar.open {
+                transform: translateX(0);
+            }
+
+        /* Overlay covers content */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -83,10 +120,10 @@
             transition: opacity 0.2s;
         }
 
-        .sidebar-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
 
         .sidebar-header {
             display: flex;
@@ -100,20 +137,18 @@
             display: flex;
             align-items: center;
             gap: 0.8rem;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             font-weight: 700;
         }
 
-        .sidebar-brand .fa-graduation-cap {
-            color: #fbbf24;
-            font-size: 1.7rem;
-        }
+            .sidebar-brand .fa-graduation-cap {
+                color: #fbbf24;
+                font-size: 1.7rem;
+            }
 
         .brand-text {
             font-size: 1.3rem;
             font-weight: 700;
             color: #fff;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             letter-spacing: 0.03em;
         }
 
@@ -128,9 +163,9 @@
             transition: background 0.2s;
         }
 
-        .sidebar-toggle-btn:hover {
-            background: var(--sidebar-hover);
-        }
+            .sidebar-toggle-btn:hover {
+                background: var(--sidebar-hover);
+            }
 
         .sidebar-user-profile {
             display: flex;
@@ -140,7 +175,6 @@
             border-bottom: 1px solid rgba(255,255,255,0.08);
             background: rgba(255,255,255,0.03);
             border-radius: 0;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
         .user-avatar {
@@ -165,7 +199,6 @@
             background: rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             padding: 0.5rem 0.75rem;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
         .user-name {
@@ -188,14 +221,6 @@
             font-weight: 700;
             letter-spacing: 0.01em;
             opacity: 0.95;
-        }
-
-        .user-root {
-            font-size: 0.90rem;
-            color: #cbd5e1;
-            margin-top: 2px;
-            font-weight: 600;
-            letter-spacing: 0.01em;
         }
 
         .sidebar-user-profile:hover {
@@ -231,15 +256,14 @@
             font-weight: 700;
             font-size: 1.12rem;
             min-height: 52px;
-            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             letter-spacing: 0.015em;
         }
 
-        .nav-link:hover, .nav-link.active {
-            background: var(--sidebar-hover);
-            color: #fff;
-            transform: translateX(5px);
-        }
+            .nav-link:hover, .nav-link.active {
+                background: var(--sidebar-hover);
+                color: #fff;
+                transform: translateX(5px);
+            }
 
         .nav-icon {
             font-size: 1.13rem;
@@ -260,14 +284,25 @@
             color: #fca5a5 !important;
         }
 
-        .logout-link:hover {
-            background: rgba(251,113,133,0.08) !important;
-            color: #fee2e2 !important;
-        }
+            .logout-link:hover {
+                background: rgba(251,113,133,0.08) !important;
+                color: #fee2e2 !important;
+            }
 
         .main-wrapper {
             min-height: 100vh;
-            transition: margin-left 0.3s;
+            transition: margin-left 0.3s, margin-right 0.3s;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        /* LTR: push content right */
+        html[dir="ltr"] .modern-sidebar.open ~ .main-wrapper {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+        /* RTL: push content left */
+        html[dir="rtl"] .modern-sidebar.open ~ .main-wrapper {
+            margin-right: var(--sidebar-width);
             margin-left: 0;
         }
 
@@ -301,10 +336,10 @@
             transition: background 0.18s;
         }
 
-        .menu-toggle-btn:hover {
-            background: #f3f4f6;
-            color: #3730a3;
-        }
+            .menu-toggle-btn:hover {
+                background: #f3f4f6;
+                color: #3730a3;
+            }
 
         .page-title {
             font-size: 1.15rem;
@@ -323,19 +358,95 @@
             padding: 2rem 1.7rem;
             background: #f8fafc;
         }
+        /* Modern Language Toggle Switch */
+        .lang-toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 85px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 62px;
+            height: 32px;
+            margin: 0 8px;
+        }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: -3px;
+            left: 5px;
+            right: -6px;
+            bottom: 0;
+            background-color: #bdbdbd;
+            transition: .4s;
+            border-radius: 32px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 24px;
+                width: 24px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        .switch input:checked + .slider {
+            background-color: #2450a1;
+        }
+
+            .switch input:checked + .slider:before {
+                transform: translateX(30px);
+            }
+
+        .lang-label {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            font-size: 1rem;
+            color: #2450a1;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .lang-en {
+            left: 10px;
+        }
+
+        .lang-ar {
+            right: 1px;
+        }
+
+        .switch input:checked ~ .lang-en {
+            color: #fff;
+        }
+
+        .switch input:not(:checked) ~ .lang-ar {
+            color: #fff;
+        }
 
         @@media (max-width: 992px) {
             .modern-sidebar {
                 width: var(--sidebar-width);
-                transform: translateX(-100%);
-            }
-
-            .modern-sidebar.open {
-                transform: translateX(0);
             }
 
             .main-wrapper {
                 margin-left: 0 !important;
+                margin-right: 0 !important;
             }
 
             .sidebar-overlay {
@@ -344,22 +455,6 @@
         }
 
         @@media (min-width: 993px) {
-            .modern-sidebar {
-                transform: translateX(-100%);
-            }
-
-            .modern-sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-wrapper {
-                margin-left: 0;
-            }
-
-            .modern-sidebar.open ~ .main-wrapper {
-                margin-left: var(--sidebar-width);
-            }
-
             .sidebar-overlay {
                 display: none !important;
             }
@@ -382,7 +477,7 @@
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <i class="fas fa-graduation-cap"></i>
-                <span class="brand-text">Centrny</span>
+                <span class="brand-text">@rootName</span>
             </div>
             <button class="sidebar-toggle-btn" type="button" id="sidebarCloseBtn">
                 <i class="fas fa-times"></i>
@@ -396,13 +491,10 @@
                 </div>
                 <div class="user-info">
                     <div class="user-name">
-                        @User.FindFirst("FullName")?.Value ?? @User.Identity.Name
+                        @User.Identity.Name
                     </div>
                     <div class="user-role">
-                        @User.FindFirst("GroupName")?.Value ?? "User"
-                    </div>
-                    <div class="user-root">
-                        @User.FindFirst("RootName")?.Value ?? "No Root"
+                        @User.FindFirst("GroupName")?.Value
                     </div>
                 </div>
             </div>
@@ -421,10 +513,6 @@
                         </li>
                     }
                 }
-                else
-                {
-                    <!-- Empty sidebar if no modules assigned -->
-                }
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -432,14 +520,14 @@
             {
                 <a class="nav-link logout-link" href="#" id="logoutBtn">
                     <i class="fas fa-sign-out-alt nav-icon"></i>
-                    <span class="nav-text">Logout</span>
+                    <span class="nav-text">@logoutText</span>
                 </a>
             }
             else
             {
                 <a class="nav-link" asp-controller="Login" asp-action="Index">
                     <i class="fas fa-sign-in-alt nav-icon"></i>
-                    <span class="nav-text">Login</span>
+                    <span class="nav-text">@loginText</span>
                 </a>
             }
         </div>
@@ -453,26 +541,17 @@
                 <span class="page-title">@ViewData["Title"]</span>
             </div>
             <div class="header-right">
-                <form id="langForm" method="post" asp-controller="Home" asp-action="SetLanguage" style="display:inline;">
-                    <select name="culture" onchange="document.getElementById('langForm').submit();" class="form-select form-select-sm" style="width: auto; display:inline;">
-                        @if (culture.Name.StartsWith("en"))
-                        {
-                            <option value="en" selected>English</option>
-                        }
-                        else
-                        {
-                            <option value="en">English</option>
-                        }
-                        @if (culture.Name.StartsWith("ar"))
-                        {
-                            <option value="ar" selected>العربية</option>
-                        }
-                        else
-                        {
-                            <option value="ar">العربية</option>
-                        }
-                    </select>
-                </form>
+                <div class="lang-toggle-switch">
+                    <form id="langForm" method="post" asp-controller="Home" asp-action="SetLanguage" style="display:inline;">
+                        <input type="hidden" name="culture" id="langHiddenInput" value="@(culture.Name.StartsWith("ar") ? "ar" : "en")" />
+                        <label class="switch">
+                            <input type="checkbox" id="langSwitch" @(culture.Name.StartsWith("ar") ? "checked" : "")>
+                            <span class="slider"></span>
+                            <span class="lang-label lang-en">EN</span>
+                            <span class="lang-label lang-ar">AR</span>
+                        </label>
+                    </form>
+                </div>
             </div>
         </header>
         <main class="main-content">
@@ -489,6 +568,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/Layout.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var langSwitch = document.getElementById('langSwitch');
+            var langForm = document.getElementById('langForm');
+            var langHiddenInput = document.getElementById('langHiddenInput');
+            if(langSwitch) {
+                langSwitch.addEventListener('change', function() {
+                    langHiddenInput.value = langSwitch.checked ? 'ar' : 'en';
+                    langForm.submit();
+                });
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

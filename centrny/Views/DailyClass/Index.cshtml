@@ -125,13 +125,28 @@
         .container-fluid {
             overflow-x: visible !important;
         }
+
+        /* Toast fixes: ensure always above overlay and clickable */
+        .toast-container {
+            position: fixed !important;
+            z-index: 10800 !important;
+            top: 2rem;
+            right: 2rem;
+            left: auto;
+            pointer-events: auto !important;
+        }
+
+        .toast {
+            opacity: 1 !important;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
     <input type="hidden" id="resxSelectOption" value="@DailyClassView.SelectOption" />
     <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
     <input type="hidden" id="isCenter" value="@(ViewBag.IsCenter ? "True" : "False")">
-    <span id="formSelectedDate" data-username="@ViewBag.UserRootName"></span>
+    <span id="formSelectedDate" data-username="@ViewBag.UserRootName" class="visually-hidden"></span>
 
     <div class="container-fluid daily-classes-page">
         <div class="daily-container">
@@ -149,24 +164,7 @@
             }
             else if (ViewBag.CurrentUserRootCode != null)
             {
-                <div class="user-context-banner" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);">
-                    <h6>
-                        <i class="fas fa-user-circle me-2"></i>
-                        @DailyClassView.UserContextBanner <strong>@ViewBag.UserRootName</strong>
-                        <span class="badge ms-2">
-                            @DailyClassView.RootCodeLabel: @ViewBag.CurrentUserRootCode
-                        </span>
-                        @if (ViewBag.IsCenter == true)
-                        {
-                            <span class="badge bg-success ms-2">@DailyClassView.IsCenterLabel</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning ms-2">@DailyClassView.IsTeacherLabel</span>
-                        }
-                    </h6>
-                    <small>@DailyClassView.UserContextBannerSub</small>
-                </div>
+                <!-- REMOVED: user-context-banner block as marked in screenshot -->
             }
 
             @if (ViewBag.Error == null)
@@ -249,7 +247,7 @@
                         <div class="spinner"></div>
                     </div>
 
-                    <div class="calendar-day-header">
+                    <div class="calendar-day-header visually-hidden" aria-hidden="true">
                         <i class="fas fa-calendar-day me-2"></i>
                         @DailyClassView.CalendarDayHeader
                         @if (ViewBag.UserRootName != null)
@@ -263,13 +261,7 @@
 
                     <div class="calendar-day-content">
                         <!-- Add Class Section -->
-                        <div class="add-class-section">
-                            <button type="button" class="add-class-btn-main" data-bs-toggle="modal" data-bs-target="#addClassModal">
-                                <i class="fas fa-plus"></i>
-                                <span>@DailyClassView.AddClassBtn</span>
-                            </button>
-                        </div>
-
+                        <!-- REMOVED: Add New Class big button as marked in screenshot -->
                         <!-- Unified day content for classes & reservations as cards -->
                         <div id="dayContent" class="classes-grid"></div>
                     </div>

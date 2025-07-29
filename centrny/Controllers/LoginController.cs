@@ -25,6 +25,11 @@ namespace centrny.Controllers
             // If already logged in, redirect to Root
             if (User.Identity.IsAuthenticated)
             {
+                // If logged in but forced to update password, redirect to change password view
+                if (IsDefaultPassword(User))
+                {
+                    return RedirectToAction("ForceChangePassword");
+                }
                 return RedirectToAction("Index", "Root");
             }
             return View();
@@ -121,6 +126,12 @@ namespace centrny.Controllers
                     }
                 }
 
+                // Add custom claim if user still has default password
+                if (user.Password == "123456789")
+                {
+                    claims.Add(new Claim("ForcePasswordChange", "true"));
+                }
+
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var authProperties = new AuthenticationProperties
                 {
@@ -132,6 +143,12 @@ namespace centrny.Controllers
                     new ClaimsPrincipal(claimsIdentity), authProperties);
 
                 _logger.LogInformation("Successful login for user: {Username}", username);
+
+                // After login, check for forced password change
+                if (user.Password == "123456789")
+                {
+                    return RedirectToAction("ForceChangePassword");
+                }
 
                 // Redirect to return URL or Root
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -165,6 +182,88 @@ namespace centrny.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             _logger.LogInformation("User logged out: {Username}", User.Identity.Name);
             return RedirectToAction("Index");
+        }
+
+        // Helper method to check if the logged-in user has default password
+        private bool IsDefaultPassword(ClaimsPrincipal user)
+        {
+            // You may want to cache this in claims, but for now, check DB for the current user
+            if (user.Identity.IsAuthenticated)
+            {
+                var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    var dbUser = _context.Users.Find(int.Parse(userId));
+                    if (dbUser != null && dbUser.Password == "123456789")
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // View for forcing the user to change their password
+        [Authorize]
+        public IActionResult ForceChangePassword()
+        {
+            // If user already changed password, don't show force page
+            if (!IsDefaultPassword(User))
+            {
+                return RedirectToAction("Index", "Root");
+            }
+            // Use ChangePassword.cshtml view instead of default
+            return View("ChangePassword");
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForceChangePassword(string newPassword, string confirmPassword)
+        {
+            if (!IsDefaultPassword(User))
+            {
+                return RedirectToAction("Index", "Root");
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                ViewBag.Error = "Please enter the new password and confirm it.";
+                return View("ChangePassword");
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                ViewBag.Error = "The new password and confirmation do not match.";
+                return View("ChangePassword");
+            }
+
+            if (newPassword == "123456789")
+            {
+                ViewBag.Error = "You cannot use the default password as your new password.";
+                return View("ChangePassword");
+            }
+
+            // Update the user's password
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return RedirectToAction("Index", "Root");
+            }
+
+            var dbUser = await _context.Users.FindAsync(int.Parse(userId));
+            if (dbUser != null)
+            {
+                dbUser.Password = newPassword; // No hashing since you use plain text
+                await _context.SaveChangesAsync();
+
+                // Log out & force re-login with new password
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Error = "Unable to update password.";
+            return View("ChangePassword");
         }
 
         // MD5 password verification to match your database trigger

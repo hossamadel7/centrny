@@ -79,7 +79,47 @@ function setupEventListeners() {
     document.getElementById('addClassModal')?.addEventListener('hidden.bs.modal', resetModalForCreate);
     document.getElementById('saveClassBtn')?.addEventListener('click', saveClass);
 
-    // Teacher scenario: center and branch selection drives subject/year dropdowns
+    // --- CENTER USER FLOW (custom cycle as requested) ---
+    document.getElementById('teacherCode')?.addEventListener('change', function () {
+        if (!userContext.isCenter) return;
+
+        // Disable and clear all dependent fields
+        disable('hallCode');
+        populateSelectAsync('hallCode', []);
+        disable('subjectCode');
+        populateSelectAsync('subjectCode', []);
+        disable('yearCode');
+        populateSelectAsync('yearCode', []);
+
+        const teacherId = this.value;
+        const eduYearCode = document.getElementById('eduYearCode').value;
+        if (teacherId && userContext.groupBranchCode && eduYearCode) {
+            // Enable and populate halls for this branch (group branch)
+            enable('hallCode');
+            loadHallsForBranch(userContext.groupBranchCode);
+
+            // Enable and populate subjects (Teach table filtered by teacher, branch, eduYear)
+            enable('subjectCode');
+            fetchSubjectsForTeacherEduYearBranch(teacherId, eduYearCode, userContext.groupBranchCode, true); // true = center user
+        }
+    });
+
+    document.getElementById('subjectCode')?.addEventListener('change', function () {
+        if (!userContext.isCenter) return;
+        disable('yearCode');
+        populateSelectAsync('yearCode', []);
+
+        const subjectId = this.value;
+        const teacherId = document.getElementById('teacherCode').value;
+        const eduYearCode = document.getElementById('eduYearCode').value;
+        const branchCode = userContext.groupBranchCode;
+        if (subjectId && teacherId && branchCode && eduYearCode) {
+            enable('yearCode');
+            loadYearsForTeach(branchCode, teacherId, subjectId, eduYearCode, true); // true = center user
+        }
+    });
+
+    // --- TEACHER FLOW (legacy, not changed) ---
     document.getElementById('centerCode')?.addEventListener('change', function () {
         let centerId = this.value;
         if (centerId) {
@@ -111,67 +151,40 @@ function setupEventListeners() {
     });
 
     document.getElementById('eduYearCode')?.addEventListener('change', function () {
+        // --- Custom: always reset all dependents for both center and teacher ---
+        // Do not disable teacherCode here!
+        populateSelectAsync('teacherCode', []);
+        disable('hallCode');
+        populateSelectAsync('hallCode', []);
         disable('subjectCode');
-        disable('yearCode');
         populateSelectAsync('subjectCode', []);
+        disable('yearCode');
         populateSelectAsync('yearCode', []);
-        let eduYearCode = this.value;
-        let branchId = document.getElementById('branchCode').value;
-        let centerId = document.getElementById('centerCode').value;
-        if (eduYearCode && branchId && centerId) {
-            enable('subjectCode');
-            fetchSubjectsForTeacherEduYearBranch(userContext.teacherCode, eduYearCode, branchId);
-        }
-        // Always reload years for this eduYear in year dropdown if needed
-        loadYearsByEduYear(eduYearCode);
-    });
 
-    document.getElementById('subjectCode')?.addEventListener('change', function () {
-        let subjectId = this.value;
-        let branchId = document.getElementById('branchCode').value;
-        let teacherCode = userContext.teacherCode;
-        if (subjectId && branchId && teacherCode) {
-            enable('yearCode');
-            loadYearsForTeach(branchId, teacherCode, subjectId);
-        } else {
-            disable('yearCode');
-            populateSelectAsync('yearCode', []);
-        }
-    });
-
-    // Center scenario: teacher dropdown changes subject and year
-    document.getElementById('teacherCode')?.addEventListener('change', function () {
-        const teacherId = this.value;
-        let branchId = userContext.isCenter ? userContext.groupBranchCode : document.getElementById('branchCode')?.value;
-        if (teacherId && branchId) {
-            loadSubjectsForTeacherAndBranch(teacherId, branchId);
-            const subjectId = document.getElementById('subjectCode')?.value;
-            if (subjectId) {
-                loadYearsForTeach(branchId, teacherId, subjectId);
+        if (userContext.isCenter) {
+            // Reload teachers for group branch, only staff
+            if (userContext.groupBranchCode) {
+                loadStaffTeachersForBranch(userContext.groupBranchCode);
             }
+            // Set eduYear as disabled if only one (handled below)
         } else {
-            populateSelectAsync('subjectCode', []);
-            populateSelectAsync('yearCode', []);
+            // legacy: teacher flow
+            let eduYearCode = this.value;
+            let branchId = document.getElementById('branchCode').value;
+            let centerId = document.getElementById('centerCode').value;
+            if (eduYearCode && branchId && centerId) {
+                enable('subjectCode');
+                fetchSubjectsForTeacherEduYearBranch(userContext.teacherCode, eduYearCode, branchId);
+            }
+            loadYearsByEduYear(eduYearCode);
         }
     });
 
-    // Center scenario: branch change
+    // Center scenario: branch change (for halls/teachers)
     document.getElementById('branchCode')?.addEventListener('change', function () {
-        const branchId = this.value;
-        loadHallsForBranch(branchId);
         if (!userContext.isCenter) {
-            loadTeachersForBranch(branchId);
-        }
-        const teacherId = document.getElementById('teacherCode')?.value;
-        if (teacherId && branchId) {
-            loadSubjectsForTeacherAndBranch(teacherId, branchId);
-            const subjectId = document.getElementById('subjectCode')?.value;
-            if (subjectId) {
-                loadYearsForTeach(branchId, teacherId, subjectId);
-            }
-        } else {
-            populateSelectAsync('subjectCode', []);
-            populateSelectAsync('yearCode', []);
+            loadHallsForBranch(this.value);
+            loadTeachersForBranch(this.value);
         }
     });
 
@@ -195,18 +208,109 @@ function setupEventListeners() {
 function enable(id) { document.getElementById(id).disabled = false; }
 function disable(id) { document.getElementById(id).disabled = true; }
 
-// --- Dropdown Population ---
+// --- Center User: Only staff teachers for this branch (groupBranchCode) ---
+async function loadStaffTeachersForBranch(branchCode) {
+    try {
+        const res = await fetch(`/DailyClass/GetTeachersForBranch?branchCode=${branchCode}`);
+        const data = await res.json();
+        let teachers = Array.isArray(data.teachers) ? data.teachers : [];
+        // Don't filter by isStaff; show all teachers as requested
+        populateSelectAsync('teacherCode', teachers);
+        enable('teacherCode');
+    } catch {
+        populateSelectAsync('teacherCode', []);
+        enable('teacherCode'); // Don't leave it disabled
+    }
+}
+
+// --- Center/Teacher: Subjects for teacher/branch/eduYear (Teach table logic) ---
+async function fetchSubjectsForTeacherEduYearBranch(teacherCode, eduYearCode, branchCode, isCenter = false) {
+    if (!teacherCode || !eduYearCode || !branchCode) {
+        populateSelectAsync('subjectCode', []);
+        disable('subjectCode');
+        return;
+    }
+    try {
+        const res = await fetch(`/DailyClass/GetSubjectsForTeacherRootEduYearBranch?teacherCode=${teacherCode}&eduYearCode=${eduYearCode}&branchCode=${branchCode}`);
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+            populateSelectAsync('subjectCode', data);
+            enable('subjectCode');
+        } else {
+            populateSelectAsync('subjectCode', []);
+            disable('subjectCode');
+            showErrorToast("No subjects available for the selected options");
+        }
+    } catch {
+        populateSelectAsync('subjectCode', []);
+        disable('subjectCode');
+        showErrorToast("No subjects available for the selected options");
+    }
+}
+
+// --- Center/Teacher: Years for subject/teacher/branch/eduYear (Teach table logic) ---
+async function loadYearsForTeach(branchCode, teacherCode, subjectCode, eduYearCode = null, isCenter = false) {
+    if (!branchCode || !teacherCode || !subjectCode) {
+        populateSelectAsync('yearCode', []);
+        disable('yearCode');
+        return;
+    }
+    let url = `/DailyClass/GetYearsForTeach?branchCode=${branchCode}&teacherCode=${teacherCode}&subjectCode=${subjectCode}`;
+    if (eduYearCode) url += `&eduYearCode=${eduYearCode}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        let years = Array.isArray(data.years) ? data.years : [];
+        populateSelectAsync('yearCode', years);
+        enable('yearCode');
+    } catch {
+        populateSelectAsync('yearCode', []);
+        disable('yearCode');
+    }
+}
+
+// --- EduYear: Only active one for this root, set and disable if only one ---
+async function loadEduYearsForRoot() {
+    try {
+        const res = await fetch('/DailyClass/GetEduYearsForRoot');
+        const data = await res.json();
+        const eduYears = data.eduYears || [];
+        const select = document.getElementById('eduYearCode');
+        populateSelectAsync('eduYearCode', eduYears);
+        if (eduYears.length === 1) {
+            select.value = eduYears[0].value;
+            select.disabled = true;
+            select.dispatchEvent(new Event('change'));
+        } else {
+            select.disabled = false;
+            if (eduYears.length > 0) {
+                select.value = eduYears[0].value;
+                select.dispatchEvent(new Event('change'));
+            }
+        }
+    } catch {
+        populateSelectAsync('eduYearCode', []);
+        document.getElementById('eduYearCode').disabled = true;
+    }
+}
+
+// --- Teacher Flow (legacy) ---
 function loadYearsByEduYear(eduYearCode) {
     if (!eduYearCode) {
         populateSelectAsync('yearCode', []);
+        disable('yearCode');
         return;
     }
     fetch(`/DailyClass/GetYearsForEduYear?eduYearCode=${eduYearCode}`)
         .then(res => res.json())
         .then(data => {
             populateSelectAsync('yearCode', Array.isArray(data.years) ? data.years : []);
+            enable('yearCode');
         })
-        .catch(() => populateSelectAsync('yearCode', []));
+        .catch(() => {
+            populateSelectAsync('yearCode', []);
+            disable('yearCode');
+        });
 }
 
 function refreshClasses() {
@@ -378,7 +482,6 @@ function resetModalForCreate() {
     setupModalFields();
     resetFormFields();
 
-    // For teacher user, fetch own teacher code (from claims/session) via API if needed
     if (!userContext.isCenter) {
         fetch('/DailyClass/GetCurrentTeacherCode')
             .then(res => res.json())
@@ -394,21 +497,22 @@ function resetModalForCreate() {
         `<i class="fas fa-plus-circle me-2"></i>${L("AddClassBtn")}` +
         (userContext.userRootName ? `<small class="text-muted">${L("ForUser") || "for"} ${userContext.userRootName}</small>` : '');
 
-    loadEduYearsForRoot();
     if (userContext.isCenter) {
+        // FIX: Ensure branch is loaded before edu years so groupBranchCode is set before teacher list load
         loadUserBranch().then(() => {
             if (userContext.groupBranchCode) {
-                loadHallsForBranch(userContext.groupBranchCode);
-                loadTeachersForBranch(userContext.groupBranchCode);
+                loadEduYearsForRoot();
             }
         });
     } else {
+        loadEduYearsForRoot();
         loadCentersForUserRoot();
         disable('branchCode');
         disable('subjectCode');
         disable('yearCode');
     }
 }
+
 function resetFormFields() {
     const fieldIds = ['className', 'startTime', 'endTime', 'subjectCode', 'branchCode', 'hallCode', 'eduYearCode', 'yearCode', 'totalAmount', 'teacherAmount', 'centerAmount'];
     if (userContext.isCenter) {
@@ -480,30 +584,6 @@ async function loadBranchesByCenter(centerId) {
     }
 }
 
-async function fetchSubjectsForTeacherEduYearBranch(teacherCode, eduYearCode, branchCode) {
-    if (!teacherCode || !eduYearCode || !branchCode) {
-        populateSelectAsync('subjectCode', []);
-        disable('subjectCode');
-        return;
-    }
-    try {
-        const res = await fetch(`/DailyClass/GetSubjectsForTeacherRootEduYearBranch?teacherCode=${teacherCode}&eduYearCode=${eduYearCode}&branchCode=${branchCode}`);
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-            populateSelectAsync('subjectCode', data);
-            enable('subjectCode');
-        } else {
-            populateSelectAsync('subjectCode', []);
-            disable('subjectCode');
-            showErrorToast("No subjects available for the selected options");
-        }
-    } catch {
-        populateSelectAsync('subjectCode', []);
-        disable('subjectCode');
-        showErrorToast("No subjects available for the selected options");
-    }
-}
-
 async function loadHallsForBranch(branchCode) {
     if (!branchCode) {
         populateSelectAsync('hallCode', []);
@@ -527,8 +607,10 @@ async function loadTeachersForBranch(branchCode) {
         const res = await fetch(`/DailyClass/GetTeachersForBranch?branchCode=${branchCode}`);
         const data = await res.json();
         populateSelectAsync('teacherCode', data.teachers || []);
+        enable('teacherCode');
     } catch {
         populateSelectAsync('teacherCode', []);
+        enable('teacherCode');
     }
 }
 
@@ -543,35 +625,6 @@ async function loadSubjectsForTeacherAndBranch(teacherCode, branchCode) {
         populateSelectAsync('subjectCode', Array.isArray(data) ? data : []);
     } catch {
         populateSelectAsync('subjectCode', []);
-    }
-}
-
-async function loadEduYearsForRoot() {
-    try {
-        const res = await fetch('/DailyClass/GetEduYearsForRoot');
-        const data = await res.json();
-        const eduYears = data.eduYears || [];
-        populateSelectAsync('eduYearCode', eduYears);
-        if (eduYears.length > 0) {
-            const select = document.getElementById('eduYearCode');
-            select.value = eduYears[0].value;
-            select.dispatchEvent(new Event('change'));
-        }
-    } catch {
-        populateSelectAsync('eduYearCode', []);
-    }
-}
-async function loadYearsForTeach(branchCode, teacherCode, subjectCode) {
-    if (!branchCode || !teacherCode || !subjectCode) {
-        populateSelectAsync('yearCode', []);
-        return;
-    }
-    try {
-        const res = await fetch(`/DailyClass/GetYearsForTeach?branchCode=${branchCode}&teacherCode=${teacherCode}&subjectCode=${subjectCode}`);
-        const data = await res.json();
-        populateSelectAsync('yearCode', Array.isArray(data.years) ? data.years : []);
-    } catch {
-        populateSelectAsync('yearCode', []);
     }
 }
 
@@ -590,8 +643,8 @@ function populateSelectAsync(selectId, options) {
     });
 }
 
-// --- Save Logic ---
-function saveClass() {
+// --- Save Logic (with conflict check) ---
+async function saveClass() {
     if (userContext.hasError) {
         showErrorToast(L("SaveError"));
         return;
@@ -661,47 +714,112 @@ function saveClass() {
         formData.teacherCode = userContext.teacherCode;
     }
 
-    const url = isEditMode ? `/DailyClass/EditClass/${editingClassId}` : '/DailyClass/CreateClass';
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-    })
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                showSuccessToast(isEditMode ? L("UpdateSuccess") : L("SaveSuccess"));
-                bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
-                resetFormFields();
-                resetModalForCreate();
-                loadDayContent();
-            } else {
-                showErrorToast((isEditMode ? L("UpdateError") : L("CreateError")) + (data.error || L("UnknownError")));
-                enableScreen();
-            }
-        })
-        .catch(error => {
-            showErrorToast(L("NetworkError") + error.message);
-            enableScreen();
-        })
-        .finally(() => {
+    // ---- Conflict check before actual save ----
+    try {
+        const checkResponse = await fetch('/DailyClass/CheckClassConflicts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        const check = await checkResponse.json();
+
+        if (!check.success) {
+            showErrorToast(check.error || "Error checking conflicts");
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            enableScreen();
+            return;
+        }
+
+        // 1. Hall Conflict: prevent for center users, just alert for teachers
+        if (check.hallConflict) {
+            showErrorToast("This hall is already occupied during this time. Please select another hall or time.");
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            enableScreen();
+            if (userContext.isCenter) return;
+        }
+
+        // 2. Teacher Conflict: prevent for center users, just alert for teachers
+        if (check.teacherConflict) {
+            showErrorToast("This teacher already has a class during this time. Please select another teacher or time.");
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            enableScreen();
+            if (userContext.isCenter) return;
+        }
+
+        // 3. Year Conflict: allow proceed with confirmation
+        if (check.sameYearConflict) {
+            let msg = "A class for this year already exists in this branch at this time.";
+            if (check.conflictingTeacherName)
+                msg += `\nConflicting teacher(s): ${check.conflictingTeacherName}`;
+            msg += "\nDo you want to proceed?";
+            if (!confirm(msg)) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                enableScreen();
+                return;
+            }
+        }
+
+        // 4. Free class confirmation
+        if (!formData.totalAmount || formData.totalAmount === 0) {
+            if (!confirm("Are you sure you want to make this class for free?")) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                enableScreen();
+                return;
+            }
+        }
+
+        // --- If we reach here, proceed with actual saving ---
+        const url = isEditMode ? `/DailyClass/EditClass/${editingClassId}` : '/DailyClass/CreateClass';
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
         });
+        const data = await response.json();
+        if (data.success) {
+            showSuccessToast(isEditMode ? L("UpdateSuccess") : L("SaveSuccess"));
+            bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
+            resetFormFields();
+            resetModalForCreate();
+            loadDayContent();
+        } else {
+            showErrorToast((isEditMode ? L("UpdateError") : L("CreateError")) + (data.error || L("UnknownError")));
+            enableScreen();
+        }
+    } catch (error) {
+        showErrorToast(L("NetworkError") + error.message);
+        enableScreen();
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
 }
 
 // --- Enable/Disable Screen ---
 function disableScreen() {
-    // Optionally add a semi-transparent overlay & disable all buttons/inputs in main container
     document.body.classList.add('screen-disabled');
-    document.querySelectorAll('button, input, select').forEach(el => el.disabled = true);
+    document.querySelectorAll('button, input, select')
+        .forEach(el => {
+            // Don't disable toasts or their children!
+            if (!el.closest('.toast-container')) {
+                el.disabled = true;
+            }
+        });
 }
 function enableScreen() {
     document.body.classList.remove('screen-disabled');
-    document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
+    document.querySelectorAll('button, input, select')
+        .forEach(el => {
+            // Don't enable toasts or their children, let Bootstrap manage them
+            if (!el.closest('.toast-container')) {
+                el.disabled = false;
+            }
+        });
 }
 
 // --- Edit Logic ---

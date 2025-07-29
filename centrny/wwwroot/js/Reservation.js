@@ -1,20 +1,20 @@
-﻿// === RESERVATION SYSTEM - MODERN UI/UX ===
-// --- Localization Helper ---
+﻿// --- Localization Helper ---
 function getJsString(key) {
     return $('#js-localization').attr('data-' + key.replace(/_/g, '-'));
 }
 
+function resetSubmitButton($btn, defaultText) {
+    $btn.text(defaultText).prop('disabled', false);
+}
+
 $(document).ready(function () {
-    // Detect which mode we're in
     var isCenter = typeof window.isCenter !== 'undefined'
         ? window.isCenter
         : ($("#rootAddReservationBtn").length === 0);
 
-    console.log('Reservation system mode:', isCenter ? 'Center' : 'Non-Center');
-
     // ================= NON-CENTER FLOW =================
     if (!isCenter) {
-        // Set labels with modern styling
+        // Set labels
         $('#rootDateLabel').text(getJsString('date-label'));
         $('#rootAddBtnText').text(getJsString('add-reservation-btn'));
 
@@ -143,7 +143,7 @@ $(document).ready(function () {
         $('#rootAddReservationBtn').on('click', function () {
             fetchSingleTeacher(function (t) {
                 $('#rootReservationModalLabel').text(getJsString('add-reservation-title'));
-                $('#rootReservationSaveBtn').html('<i class="bi bi-plus-circle"></i> ' + getJsString('add-reservation-btn'));
+                $('#rootReservationSaveBtn').text(getJsString('add-reservation-btn'));
                 $('#rootReservationForm')[0].reset();
                 $('#rootReservationCode').val('');
                 $('#rootTeacherCode').val(t.teacherCode);
@@ -159,7 +159,7 @@ $(document).ready(function () {
             let r = $(this).data('res');
             fetchSingleTeacher(function (t) {
                 $('#rootReservationModalLabel').text(getJsString('edit-reservation-title'));
-                $('#rootReservationSaveBtn').html('<i class="bi bi-check-circle"></i> ' + getJsString('save-changes-btn'));
+                $('#rootReservationSaveBtn').text(getJsString('save-changes-btn'));
                 $('#rootReservationForm')[0].reset();
                 $('#rootReservationCode').val(r.reservationCode);
                 $('#rootTeacherCode').val(t.teacherCode);
@@ -180,6 +180,17 @@ $(document).ready(function () {
         $('#rootReservationForm').on('submit', function (e) {
             e.preventDefault();
             var isEdit = !!$('#rootReservationCode').val();
+            var $btn = $('#rootReservationSaveBtn');
+            var defaultText = isEdit ? getJsString('save-changes-btn') : getJsString('add-reservation-btn');
+            $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
+
+            // Defensive: check required fields before ajax
+            if (!$('#rootStartTime').val() || !$('#rootEndTime').val()) {
+                alert(getJsString('start-time-label') + " and " + getJsString('end-time-label') + " are required.");
+                resetSubmitButton($btn, defaultText);
+                return;
+            }
+
             var url = isEdit ? '/Reservation/EditRootReservation' : '/Reservation/AddRootReservation';
 
             // Show loading state
@@ -192,20 +203,27 @@ $(document).ready(function () {
                 url: url,
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function () {
+                success: function (data) {
+                    if (data && data.success === false && data.message) {
+                        alert(data.message);
+                        resetSubmitButton($btn, defaultText);
+                        return;
+                    }
                     $('#rootReservationModal').modal('hide');
+                    resetSubmitButton($btn, defaultText);
                     loadRootReservations();
                     showReservationAlert(isEdit ? 'Reservation updated successfully!' : 'Reservation added successfully!', 'success');
                 },
                 error: function (xhr) {
-                    var errorMsg = isEdit ? getJsString('failed-edit-reservation') : getJsString('failed-add-reservation');
-                    showReservationAlert(errorMsg + (xhr.responseText || ''), 'danger');
-                },
-                complete: function () {
-                    $submitBtn.html(originalText);
-                    $submitBtn.prop('disabled', false);
+                    alert((isEdit ? getJsString('failed-edit-reservation') : getJsString('failed-add-reservation')) + (xhr.responseText || ''));
                 }
             });
+        });
+
+        $('#rootReservationModal').on('hidden.bs.modal', function () {
+            var isEdit = !!$('#rootReservationCode').val();
+            var defaultText = isEdit ? getJsString('save-changes-btn') : getJsString('add-reservation-btn');
+            resetSubmitButton($('#rootReservationSaveBtn'), defaultText);
         });
 
         $(document).on('click', '.delete-root-btn', function () {
@@ -243,7 +261,7 @@ $(document).ready(function () {
         });
     }
 
-    // ================ CENTER FLOW ================
+    // ================ CENTER FLOW: Existing logic ================
     if (isCenter) {
         let selectedBranch = null;
         let selectedDate = new Date().toISOString().slice(0, 10);
@@ -312,6 +330,29 @@ $(document).ready(function () {
                 showReservationAlert('Failed to load teachers', 'warning');
             });
         }
+
+        $(document).on('click', '#firstTimeTeacherBtn', function () {
+            $('#addTeacherForm')[0].reset();
+            $('#teacherAddMsg').addClass('d-none').text('');
+            $('#addTeacherModal').modal('show');
+        });
+
+        $('#addTeacherForm').on('submit', function (e) {
+            e.preventDefault();
+            $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
+                $('#teacherAddMsg').removeClass('d-none').addClass('text-success').removeClass('text-danger').text(getJsString('success-add-teacher'));
+                loadTeachers('#addTeacherSelect', data.teacherCode);
+                setTimeout(() => {
+                    $('#addTeacherModal').modal('hide');
+                }, 1000);
+            }).fail(function () {
+                $('#teacherAddMsg').removeClass('d-none').removeClass('text-success').addClass('text-danger').text(getJsString('failed-add-teacher'));
+            });
+        });
+
+        $('#addReservationModal').on('show.bs.modal', function () {
+            loadTeachers('#addTeacherSelect');
+        });
 
         function loadReservationGrid() {
             if (!selectedBranch) {
@@ -525,6 +566,7 @@ $(document).ready(function () {
             $('#addDeposit').val('');
             $('#addFinalCost').val('');
             $('#addPeriod').val('');
+            resetSubmitButton($('#addReservationBtn'), getJsString('add-reservation-btn'));
             loadTeachers('#addTeacherSelect');
             $('#addReservationModal').modal('show');
         });
@@ -544,8 +586,17 @@ $(document).ready(function () {
 
         $(document).on('submit', '#addReservationForm', function (e) {
             e.preventDefault();
+            var $btn = $('#addReservationBtn');
+            $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
+
+            // Defensive: check required fields before ajax
+            if (!$('#addStartTime').val() || !$('#addEndTime').val()) {
+                alert(getJsString('start-time-label') + " and " + getJsString('end-time-label') + " are required.");
+                resetSubmitButton($btn, getJsString('add-reservation-btn'));
+                return;
+            }
             if (!$('#addHallCode').val()) {
-                showReservationAlert('Hall code not set. Please try again.', 'danger');
+                alert('Hall code not set. Please try again.');
                 return;
             }
 
@@ -558,36 +609,21 @@ $(document).ready(function () {
                 url: '/Reservation/AddReservation',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function (response) {
-                    if (response && response.alert && response.message) {
-                        showReservationAlert(response.message, 'warning');
-                        return;
-                    }
+                success: function () {
                     $('#addReservationModal').modal('hide');
+                    resetSubmitButton($btn, getJsString('add-reservation-btn'));
                     loadReservationGrid();
                     showReservationAlert('Reservation added successfully!', 'success');
                 },
                 error: function (xhr) {
-                    try {
-                        var errorResponse = JSON.parse(xhr.responseText);
-                        if (errorResponse && errorResponse.alert && errorResponse.message) {
-                            showReservationAlert(errorResponse.message, 'warning');
-                            return;
-                        }
-                    } catch (e) {
-                        // If not JSON or no alert property, show default error
-                    }
-                    showReservationAlert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'), 'danger');
-                },
-                complete: function () {
-                    $submitBtn.html(originalText);
-                    $submitBtn.prop('disabled', false);
+                    alert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'));
                 }
             });
         });
 
         $(document).on('click', '.edit-res-btn', function () {
             let res = $(this).data('res');
+            resetSubmitButton($('#saveChangesBtn'), getJsString('save-changes-btn'));
             $('#editReservationCode').val(res.reservationCode);
             $('#editDescription').val(res.description);
             $('#editStartTime').val(res.start);
@@ -598,39 +634,18 @@ $(document).ready(function () {
 
         $(document).on('submit', '#editReservationForm', function (e) {
             e.preventDefault();
-            var $submitBtn = $('#saveChangesBtn');
-            var originalText = $submitBtn.html();
-            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Saving...');
-            $submitBtn.prop('disabled', true);
-
             $.ajax({
                 url: '/Reservation/EditReservation',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function (response) {
-                    if (response && response.alert && response.message) {
-                        showReservationAlert(response.message, 'warning');
-                        return;
-                    }
+                success: function () {
                     $('#editReservationModal').modal('hide');
+                    resetSubmitButton($btn, getJsString('save-changes-btn'));
                     loadReservationGrid();
                     showReservationAlert('Reservation updated successfully!', 'success');
                 },
                 error: function (xhr) {
-                    try {
-                        var errorResponse = JSON.parse(xhr.responseText);
-                        if (errorResponse && errorResponse.alert && errorResponse.message) {
-                            showReservationAlert(errorResponse.message, 'warning');
-                            return;
-                        }
-                    } catch (e) {
-                        // If not JSON or no alert property, show default error
-                    }
-                    showReservationAlert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'), 'danger');
-                },
-                complete: function () {
-                    $submitBtn.html(originalText);
-                    $submitBtn.prop('disabled', false);
+                    alert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'));
                 }
             });
         });

@@ -3,12 +3,12 @@ using centrny.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.Json;
-using centrny.Attributes; // Add this for RequirePageAccess
-using Microsoft.Extensions.Localization; // For localization
+using centrny.Attributes;
+using Microsoft.Extensions.Localization;
 
 namespace centrny.Controllers
 {
-    [RequirePageAccess("Question")] // Add page access requirement
+    [RequirePageAccess("Question")]
     public class QuestionController : Controller
     {
         private readonly CenterContext _context;
@@ -65,7 +65,7 @@ namespace centrny.Controllers
             {
                 return userId;
             }
-            return 1; // Fallback
+            return 1;
         }
 
         private bool IsCurrentUserCenter()
@@ -109,15 +109,31 @@ namespace centrny.Controllers
         }
 
         // =========================
-        // CHAPTERS, LESSONS, QUESTIONS
+        // CHAPTERS, LESSONS, QUESTIONS (with pagination)
         // =========================
 
         [HttpGet]
-        public JsonResult GetChaptersWithLessonsAndQuestions(int page = 1, int pageSize = 5, int? subjectCode = null, int? yearCode = null)
+        public JsonResult GetChaptersWithLessonsAndQuestions(
+            int page = 1,
+            int pageSize = 5,
+            int? subjectCode = null,
+            int? yearCode = null,
+            string lessonPages = null,
+            string questionPages = null,
+            int lessonsPageSize = 5,
+            int questionsPageSize = 5)
         {
             var rootCode = GetCurrentUserRootCode();
             if (!rootCode.HasValue)
                 return Json(new { chapters = new List<object>(), totalCount = 0 });
+
+            // Parse lessonPages and questionPages maps
+            var lessonPagesDict = !string.IsNullOrEmpty(lessonPages)
+                ? JsonSerializer.Deserialize<Dictionary<int, int>>(lessonPages)
+                : new Dictionary<int, int>();
+            var questionPagesDict = !string.IsNullOrEmpty(questionPages)
+                ? JsonSerializer.Deserialize<Dictionary<int, int>>(questionPages)
+                : new Dictionary<int, int>();
 
             var query = _context.Lessons
                 .Where(l => l.ChapterCode == null && l.RootCode == rootCode.Value);
@@ -133,31 +149,75 @@ namespace centrny.Controllers
                 .OrderBy(l => l.LessonCode)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(chapter => new
+                .ToList()
+                .Select(chapter =>
                 {
-                    chapterName = chapter.LessonName,
-                    chapterCode = chapter.LessonCode,
-                    rootCode = chapter.RootCode,
-                    yearCode = chapter.YearCode,
-                    eduYearCode = chapter.EduYearCode,
-                    teacherCode = chapter.TeacherCode,
-                    subjectCode = chapter.SubjectCode,
-                    lessons = _context.Lessons
-                        .Where(l => l.ChapterCode == chapter.LessonCode && l.RootCode == rootCode.Value)
-                        .Select(l => new
+                    int chapterLessonsPage = lessonPagesDict.ContainsKey(chapter.LessonCode) ? lessonPagesDict[chapter.LessonCode] : 1;
+
+                    // Lessons for this chapter
+                    var lessonQuery = _context.Lessons
+                        .Where(l => l.ChapterCode == chapter.LessonCode && l.RootCode == rootCode.Value);
+
+                    int lessonTotalCount = lessonQuery.Count();
+
+                    var lessons = lessonQuery
+                        .OrderBy(l => l.LessonCode)
+                        .Skip((chapterLessonsPage - 1) * lessonsPageSize)
+                        .Take(lessonsPageSize)
+                        .ToList()
+                        .Select(l =>
                         {
-                            lessonName = l.LessonName,
-                            lessonCode = l.LessonCode,
-                            questions = _context.Questions
-                                .Where(q => q.LessonCode == l.LessonCode)
+                            int lessonQuestionsPage = questionPagesDict.ContainsKey(l.LessonCode) ? questionPagesDict[l.LessonCode] : 1;
+
+                            // Questions for this lesson
+                            var questionsQuery = _context.Questions
+                                .Where(q => q.LessonCode == l.LessonCode);
+
+                            int questionTotalCount = questionsQuery.Count();
+
+                            var questions = questionsQuery
+                                .OrderBy(q => q.QuestionCode)
+                                .Skip((lessonQuestionsPage - 1) * questionsPageSize)
+                                .Take(questionsPageSize)
                                 .Select(q => new
                                 {
                                     questionCode = q.QuestionCode,
                                     questionContent = q.QuestionContent,
                                     examCode = q.ExamCode,
                                     lessonCode = q.LessonCode
-                                }).ToList()
-                        }).ToList()
+                                }).ToList();
+
+                            return new
+                            {
+                                lessonName = l.LessonName,
+                                lessonCode = l.LessonCode,
+                                questions = new
+                                {
+                                    items = questions,
+                                    totalCount = questionTotalCount,
+                                    page = lessonQuestionsPage,
+                                    pageSize = questionsPageSize
+                                }
+                            };
+                        }).ToList();
+
+                    return new
+                    {
+                        chapterName = chapter.LessonName,
+                        chapterCode = chapter.LessonCode,
+                        rootCode = chapter.RootCode,
+                        yearCode = chapter.YearCode,
+                        eduYearCode = chapter.EduYearCode,
+                        teacherCode = chapter.TeacherCode,
+                        subjectCode = chapter.SubjectCode,
+                        lessons = new
+                        {
+                            items = lessons,
+                            totalCount = lessonTotalCount,
+                            page = chapterLessonsPage,
+                            pageSize = lessonsPageSize
+                        }
+                    };
                 }).ToList();
 
             return Json(new { chapters, totalCount });
@@ -351,7 +411,7 @@ namespace centrny.Controllers
 
             var years = (from teach in _context.Teaches
                          join eduyear in _context.EduYears on teach.EduYearCode equals eduyear.EduCode
-                         where teach.RootCode == rootCode.Value && eduyear.IsActive // Only active years
+                         where teach.RootCode == rootCode.Value && eduyear.IsActive
                          select new { teach.EduYearCode, eduyear.EduName })
                         .Distinct()
                         .OrderBy(y => y.EduYearCode)
@@ -372,7 +432,8 @@ namespace centrny.Controllers
                 .Select(t => t.TeacherCode)
                 .Distinct()
                 .ToList();
-            var teacherList = teachers.Select(t => new {
+            var teacherList = teachers.Select(t => new
+            {
                 teacherCode = t,
                 teacherName = _context.Teachers.FirstOrDefault(x => x.TeacherCode == t)?.TeacherName ?? "N/A"
             }).ToList();
@@ -391,7 +452,8 @@ namespace centrny.Controllers
                 .Select(t => t.SubjectCode)
                 .Distinct()
                 .ToList();
-            var subjectList = subjects.Select(s => new {
+            var subjectList = subjects.Select(s => new
+            {
                 subjectCode = s,
                 subjectName = _context.Subjects.FirstOrDefault(x => x.SubjectCode == s)?.SubjectName ?? "N/A"
             }).ToList();
@@ -415,11 +477,9 @@ namespace centrny.Controllers
                 if (!userRootCode.HasValue)
                     return Json(new { success = false, message = _localizer["UnableToDetermineRootAssignment"] });
 
-                // Always get TeacherCode from root's teacher for teacher users
                 bool isCenterUser = IsCurrentUserCenter();
                 if (!isCenterUser)
                 {
-                    // Get the only teacher for this root
                     TeacherCode = _context.Teachers
                         .Where(t => t.RootCode == userRootCode.Value)
                         .Select(t => (int?)t.TeacherCode)
@@ -432,7 +492,6 @@ namespace centrny.Controllers
                 int? yearCode = YearCode;
                 int? eduYearCode = EduYearCode;
 
-                // For center users, yearCode might be inferred via Teach
                 if (isCenterUser && (!yearCode.HasValue && TeacherCode.HasValue && EduYearCode.HasValue))
                 {
                     var teach = _context.Teaches.FirstOrDefault(t =>
@@ -447,7 +506,6 @@ namespace centrny.Controllers
                         return Json(new { success = false, message = _localizer["MatchingTeachNotFound"] });
                 }
 
-                // Require all fields
                 if (!eduYearCode.HasValue || !TeacherCode.HasValue || !yearCode.HasValue || SubjectCode == 0)
                     return Json(new { success = false, message = _localizer["MissingRequiredFields"] });
 

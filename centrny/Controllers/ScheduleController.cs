@@ -179,7 +179,8 @@ namespace centrny.Controllers
 
                 var subjects = await query
                     .Include(t => t.SubjectCodeNavigation)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.SubjectCode,
                         text = t.SubjectCodeNavigation.SubjectName
                     })
@@ -221,7 +222,8 @@ namespace centrny.Controllers
                 var branches = await _context.Branches
                     .AsNoTracking()
                     .Where(b => b.CenterCode == centerCode.Value && b.RootCode == userRootCode.Value && b.IsActive)
-                    .Select(b => new {
+                    .Select(b => new
+                    {
                         value = b.BranchCode,
                         text = b.BranchName
                     })
@@ -257,7 +259,8 @@ namespace centrny.Controllers
                     .AsNoTracking()
                     .Where(t => t.RootCode == userRootCode.Value && t.IsActive == true)
                     .OrderBy(t => t.TeacherName)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.TeacherCode,
                         text = t.TeacherName
                     })
@@ -292,7 +295,8 @@ namespace centrny.Controllers
                 var branches = await _context.Branches
                     .AsNoTracking()
                     .Where(b => b.CenterCode == centerCode && b.RootCode == userRootCode.Value && b.IsActive)
-                    .Select(b => new {
+                    .Select(b => new
+                    {
                         value = b.BranchCode,
                         text = b.BranchName
                     })
@@ -328,7 +332,8 @@ namespace centrny.Controllers
                 var halls = await _context.Halls
                     .AsNoTracking()
                     .Where(h => h.BranchCode == branchCode && h.RootCode == userRootCode.Value)
-                    .Select(h => new {
+                    .Select(h => new
+                    {
                         value = h.HallCode,
                         text = h.HallName,
                         capacity = h.HallCapacity
@@ -1219,7 +1224,8 @@ namespace centrny.Controllers
                             .AsNoTracking()
                             .Where(y => y.EduYearCode == activeEduYear.EduCode)
                             .OrderBy(y => y.YearSort)
-                            .Select(y => new {
+                            .Select(y => new
+                            {
                                 value = y.YearCode,
                                 text = y.YearName,
                                 yearSort = y.YearSort
@@ -1236,7 +1242,8 @@ namespace centrny.Controllers
                         .Join(_context.EduYears, y => y.EduYearCode, e => e.EduCode, (y, e) => new { Year = y, EduYear = e })
                         .Where(joined => joined.EduYear.RootCode == userRootCode.Value)
                         .OrderBy(joined => joined.Year.YearSort)
-                        .Select(joined => new {
+                        .Select(joined => new
+                        {
                             value = joined.Year.YearCode,
                             text = joined.Year.YearName,
                             yearSort = joined.Year.YearSort
@@ -1361,7 +1368,8 @@ namespace centrny.Controllers
 
                 var subjects = await query
                     .Include(t => t.SubjectCodeNavigation)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.SubjectCode,
                         text = t.SubjectCodeNavigation.SubjectName
                     })
@@ -1566,7 +1574,8 @@ namespace centrny.Controllers
                     .AsNoTracking()
                     .Where(y => y.EduYearCode == eduYearCode)
                     .OrderBy(y => y.YearSort)
-                    .Select(y => new {
+                    .Select(y => new
+                    {
                         value = y.YearCode,
                         text = y.YearName,
                         yearSort = y.YearSort
@@ -1612,7 +1621,8 @@ namespace centrny.Controllers
 
                 var subjects = await query
                     .Include(t => t.SubjectCodeNavigation)
-                    .Select(t => new {
+                    .Select(t => new
+                    {
                         value = t.SubjectCode,
                         text = t.SubjectCodeNavigation.SubjectName
                     })

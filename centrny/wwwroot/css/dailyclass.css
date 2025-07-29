@@ -734,16 +734,24 @@ body {
 
 /* Toast Notifications */
 .toast-container {
-    position: fixed;
+    position: fixed !important;
+    z-index: 10800 !important; /* Higher than modals and overlays */
     top: 2rem;
     right: 2rem;
-    z-index: 1050;
+    left: auto;
+    pointer-events: auto;
 }
 
 .toast {
+  
+    opacity: 1 !important;
+    pointer-events: auto;
     border: none !important;
     border-radius: var(--border-radius) !important;
     box-shadow: var(--shadow-lg) !important;
+}
+.screen-disabled::after {
+    z-index: 10799; /* Lower than toast-container */
 }
 
 /* Responsive Design */

@@ -1,13 +1,17 @@
 ﻿@using centrny.Controllers
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
 @model StudentRegistrationViewModel
 
 @{
-    ViewData["Title"] = "Student Registration";
+    var Localizer = LocalizerFactory.Create("Register", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["Title_StudentRegistration"];
     Layout = null; // No layout for clean registration experience
+    var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@lang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,10 +27,10 @@
             <!-- Header -->
             <div class="registration-header">
                 <i class="fas fa-graduation-cap fa-3x mb-3"></i>
-                <h1>Welcome to @Model.RootName</h1>
-                <p>Create your student profile to get started</p>
+                <h1>@Localizer["Header_Welcome"] @Model.RootName</h1>
+                <p>@Localizer["Header_CreateProfile"]</p>
                 <div class="item-key-display">
-                    Item Key: @Model.ItemKey
+                    @Localizer["Label_ItemKey"]: @Model.ItemKey
                 </div>
             </div>
 
@@ -52,17 +56,17 @@
                         {
                             <div class="alert alert-success">
                                 <i class="fas fa-check-circle me-2"></i>
-                                <strong>Student Profile Linked!</strong> Your basic information is already saved.
-                                You can review and update it below, then continue to select your subjects and schedules.
+                                <strong>@Localizer["Info_StudentProfileLinked"]</strong> @Localizer["Info_StudentProfileBasicSaved"]
+                                @Localizer["Info_StudentProfileReviewAndUpdate"]
                             </div>
                         }
 
                         <h3 class="mb-4">
                             <i class="fas fa-user text-primary me-2"></i>
-                            Personal Information
+                            @Localizer["Label_PersonalInformation"]
                             @if (Model.HasExistingStudent)
                             {
-                                <small class="text-muted">(Review & Update)</small>
+                                <small class="text-muted">(@Localizer["Label_ReviewUpdate"])</small>
                             }
                         </h3>
 
@@ -70,10 +74,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label" for="studentName">
-                                        Full Name <span class="text-danger">*</span>
+                                        @Localizer["Label_FullName"] <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control" id="studentName" required
-                                           placeholder="Enter your full name"
+                                           placeholder="@Localizer["Placeholder_FullName"]"
                                            value="@(Model.ExistingStudentName ?? "")">
                                     <div class="invalid-feedback"></div>
                                 </div>
@@ -81,7 +85,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label" for="birthDate">
-                                        Date of Birth <span class="text-danger">*</span>
+                                        @Localizer["Label_Birthdate"] <span class="text-danger">*</span>
                                     </label>
                                     <input type="date" class="form-control" id="birthDate" required
                                            value="@(Model.ExistingBirthDate?.ToString("yyyy-MM-dd") ?? "")">
@@ -94,10 +98,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label" for="studentPhone">
-                                        Your Phone Number <span class="text-danger">*</span>
+                                        @Localizer["Label_StudentPhone"] <span class="text-danger">*</span>
                                     </label>
                                     <input type="tel" class="form-control" id="studentPhone" required
-                                           placeholder="Your phone number"
+                                           placeholder="@Localizer["Placeholder_Phone"]"
                                            value="@(Model.ExistingStudentPhone ?? "")">
                                     <div class="invalid-feedback"></div>
                                 </div>
@@ -105,10 +109,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label" for="parentPhone">
-                                        Parent/Guardian Phone <span class="text-danger">*</span>
+                                        @Localizer["Label_ParentPhone"] <span class="text-danger">*</span>
                                     </label>
                                     <input type="tel" class="form-control" id="parentPhone" required
-                                           placeholder="Parent/Guardian phone"
+                                           placeholder="@Localizer["Placeholder_ParentPhone"]"
                                            value="@(Model.ExistingStudentParentPhone ?? "")">
                                     <div class="invalid-feedback"></div>
                                 </div>
@@ -116,20 +120,20 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Gender</label>
+                            <label class="form-label">@Localizer["Label_Gender"]</label>
                             <div class="d-flex gap-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="gender" id="genderMale" value="true"
                                     @(Model.ExistingGender == true ? "checked" : "")>
                                     <label class="form-check-label" for="genderMale">
-                                        <i class="fas fa-mars me-1"></i> Male
+                                        <i class="fas fa-mars me-1"></i> @Localizer["Label_Male"]
                                     </label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="false"
                                     @(Model.ExistingGender == false ? "checked" : "")>
                                     <label class="form-check-label" for="genderFemale">
-                                        <i class="fas fa-venus me-1"></i> Female
+                                        <i class="fas fa-venus me-1"></i> @Localizer["Label_Female"]
                                     </label>
                                 </div>
                             </div>
@@ -140,17 +144,17 @@
                     <div class="form-step" id="step2Content">
                         <h3 class="mb-4">
                             <i class="fas fa-school text-primary me-2"></i>
-                            Academic Information
+                            @Localizer["Label_AcademicInformation"]
                         </h3>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label" for="branchCode">
-                                        Select Branch <span class="text-danger">*</span>
+                                        @Localizer["Label_SelectBranch"] <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select" id="branchCode" required>
-                                        <option value="">Choose your branch...</option>
+                                        <option value="">@Localizer["Dropdown_BranchDefault"]</option>
                                         @foreach (var branch in Model.AvailableBranches)
                                         {
                                             <option value="@branch.Value" selected="@(Model.ExistingBranchCode?.ToString() == branch.Value ? "selected" : null)">
@@ -164,10 +168,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label" for="yearCode">
-                                        Academic Year/Level
+                                        @Localizer["Label_AcademicYear"]
                                     </label>
                                     <select class="form-select" id="yearCode" style="background-color:#fff;color:#212529;">
-                                        <option value="">Choose your year/level...</option>
+                                        <option value="">@Localizer["Dropdown_AcademicYearDefault"]</option>
                                         @foreach (var year in Model.AvailableYears)
                                         {
                                             <option value="@year.Value" selected="@(Model.ExistingYearCode?.ToString() == year.Value ? "selected" : null)">
@@ -181,10 +185,10 @@
 
                         <div class="form-group">
                             <label class="form-label" for="eduYearCode">
-                                Education Year
+                                @Localizer["Label_EduYear"]
                             </label>
                             <select class="form-select" id="eduYearCode">
-                                <option value="">Choose education year...</option>
+                                <option value="">@Localizer["Dropdown_EduYearDefault"]</option>
                                 @foreach (var eduYear in Model.AvailableEduYears)
                                 {
                                     <option value="@eduYear.Value">@eduYear.Text</option>
@@ -197,23 +201,23 @@
                     <div class="form-step" id="step3Content">
                         <h3 class="mb-4">
                             <i class="fas fa-books text-primary me-2"></i>
-                            Select Your Subjects
+                            @Localizer["Label_SubjectSelection"]
                         </h3>
 
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            Select the subjects you want to study and choose your preferred teachers.
+                            @Localizer["Info_SelectSubjects"]
                         </div>
 
                         <div id="availableSubjects">
                             <div class="text-center py-4">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                Please complete the previous steps to see available subjects
+                                @Localizer["Info_CompletePrevStepsToSeeSubjects"]
                             </div>
                         </div>
 
                         <div id="selectedSubjectsSummary" class="mt-4" style="display: none;">
-                            <h5>Selected Subjects:</h5>
+                            <h5>@Localizer["Label_SelectedSubjects"]</h5>
                             <div id="selectedSubjectsList"></div>
                         </div>
                     </div>
@@ -222,18 +226,18 @@
                     <div class="form-step" id="step4Content">
                         <h3 class="mb-4">
                             <i class="fas fa-calendar-alt text-primary me-2"></i>
-                            Select Class Schedules
+                            @Localizer["Label_ScheduleSelection"]
                         </h3>
 
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            Choose your preferred class schedule for each subject. Check available time slots and capacity.
+                            @Localizer["Info_SelectSchedules"]
                         </div>
 
                         <div id="scheduleSelection">
                             <div class="text-center py-4">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                Please complete the previous steps to see available schedules
+                                @Localizer["Info_CompletePrevStepsToSeeSchedules"]
                             </div>
                         </div>
                     </div>
@@ -242,12 +246,12 @@
                     <div class="form-step" id="step5Content">
                         <h3 class="mb-4">
                             <i class="fas fa-check-circle text-success me-2"></i>
-                            Confirm Your Registration
+                            @Localizer["Label_Confirmation"]
                         </h3>
 
                         <div class="alert alert-success">
                             <i class="fas fa-info-circle me-2"></i>
-                            Please review your information before submitting your registration.
+                            @Localizer["Info_ReviewBeforeSubmit"]
                         </div>
 
                         <div id="registrationSummary">
@@ -257,7 +261,7 @@
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" id="termsAccepted" required>
                             <label class="form-check-label" for="termsAccepted">
-                                I agree to the terms and conditions and confirm that all information provided is accurate.
+                                @Localizer["Form_AgreeToTerms"]
                             </label>
                         </div>
                     </div>
@@ -265,14 +269,14 @@
                     <!-- Navigation Buttons -->
                     <div class="navigation-buttons">
                         <button type="button" class="btn-navigation btn-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
-                            <i class="fas fa-arrow-left me-2"></i>Previous
+                            <i class="fas fa-arrow-left me-2"></i>@Localizer["Btn_Prev"]
                         </button>
                         <div></div> <!-- Spacer -->
                         <button type="button" class="btn-navigation btn-primary" id="nextBtn" onclick="changeStep(1)">
-                            Next<i class="fas fa-arrow-right ms-2"></i>
+                            @Localizer["Btn_Next"]<i class="fas fa-arrow-right ms-2"></i>
                         </button>
                         <button type="button" class="btn-navigation btn-success" id="submitBtn" onclick="submitRegistration()" style="display: none;">
-                            <i class="fas fa-check me-2"></i>Complete Registration
+                            <i class="fas fa-check me-2"></i>@Localizer["Btn_CompleteRegistration"]
                         </button>
                     </div>
                 </form>
@@ -284,7 +288,7 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner">
             <div class="spinner-border" role="status"></div>
-            <p class="mt-3 mb-0">Processing your registration...</p>
+            <p class="mt-3 mb-0">@Localizer["JS_ProcessingRegistration"]</p>
         </div>
     </div>
 
@@ -306,7 +310,7 @@
             document.getElementById('eduYearCode').addEventListener('change', async function() {
                 const eduYearCode = this.value;
                 const yearSelect = document.getElementById('yearCode');
-                yearSelect.innerHTML = '<option value="">Choose your year/level...</option>';
+                yearSelect.innerHTML = '<option value="">@Localizer["Dropdown_AcademicYearDefault"]</option>';
                 if (!eduYearCode) return;
                 try {
                     const response = await fetch(`/Student/GetYearsForEduYear/${eduYearCode}`);
@@ -322,7 +326,7 @@
                         yearSelect.appendChild(opt);
                     });
                 } catch (error) {
-                    showAlert('Failed to load years for selected education year.', 'danger');
+                    showAlert('@Localizer["Alert_FailedToLoadYears"]', 'danger');
                 }
             });
         });
@@ -407,7 +411,7 @@
             });
 
             if (currentStep === 3 && selectedSubjects.length === 0) {
-                showAlert('Please select at least one subject.', 'danger');
+                showAlert('@Localizer["Alert_PleaseSelectSubject"]', 'danger');
                 isValid = false;
             }
 
@@ -415,7 +419,7 @@
                 // Validate that all subjects have schedules selected
                 const missingSchedules = selectedSubjects.filter(s => !s.scheduleCode);
                 if (missingSchedules.length > 0) {
-                    showAlert('Please select a schedule for all subjects.', 'danger');
+                    showAlert('@Localizer["Alert_PleaseSelectSchedules"]', 'danger');
                     isValid = false;
                 }
             }
@@ -437,14 +441,14 @@
             // Required field validation
             if (field.hasAttribute('required') && !value) {
                 isValid = false;
-                message = 'This field is required.';
+                message = '@Localizer["Validation_RequiredField"]';
             }
 
             // Specific field validations
             if (value && field.type === 'tel') {
                 if (!/^[\+]?[0-9\s\-\(\)]{10,}$/.test(value)) {
                     isValid = false;
-                    message = 'Please enter a valid phone number.';
+                    message = '@Localizer["Validation_ValidPhone"]';
                 }
             }
 
@@ -454,7 +458,7 @@
                 const age = today.getFullYear() - birthDate.getFullYear();
                 if (age < 5 || age > 100) {
                     isValid = false;
-                    message = 'Please enter a valid birth date.';
+                    message = '@Localizer["Validation_ValidBirthDate"]';
                 }
             }
 
@@ -496,7 +500,7 @@
                 renderSubjects();
                 await loadAvailableTeachers();
             } catch (error) {
-                showAlert('Failed to load subjects. Please try again.', 'danger');
+                showAlert('@Localizer["Alert_FailedToLoadSubjects"]', 'danger');
             } finally {
                 hideLoading();
             }
@@ -536,7 +540,7 @@
                 document.getElementById('scheduleSelection').innerHTML = `
                     <div class="text-center py-4 text-muted">
                         <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                        <p>No subjects selected. Please go back and select subjects first.</p>
+                        <p>@Localizer["Info_NoSubjectsSelected"]</p>
                     </div>
                 `;
                 return;
@@ -563,7 +567,7 @@
                 availableSchedules = schedules;
                 renderScheduleSelection();
             } catch (error) {
-                showAlert('Failed to load schedules. Please try again.', 'danger');
+                showAlert('@Localizer["Alert_FailedToLoadSchedules"]', 'danger');
             } finally {
                 hideLoading();
             }
@@ -577,7 +581,7 @@
                 container.innerHTML = `
                     <div class="text-center py-4 text-muted">
                         <i class="fas fa-book fa-3x mb-3"></i>
-                        <p>No subjects available for the selected branch and year.</p>
+                        <p>@Localizer["Info_NoSubjectsAvailable"]</p>
                     </div>
                 `;
                 return;
@@ -604,7 +608,7 @@
 
                         ${subjectTeachers.length > 0 ? `
                             <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
-                                <label class="form-label small">Select Teacher:</label>
+                                <label class="form-label small">@Localizer["Label_SelectTeacher"]</label>
                                 ${subjectTeachers.map(teacher => `
                                     <div class="teacher-option" onclick="selectTeacher(${subject.subjectCode}, ${teacher.teacherCode})">
                                         <div class="form-check">
@@ -623,7 +627,7 @@
                         ` : `
                             <div class="text-muted small">
                                 <i class="fas fa-info-circle me-1"></i>
-                                No teachers available for this subject at the selected branch.
+        @Localizer["Info_NoTeachersAvailable"]
                             </div>
                         `}
                     </div>
@@ -639,7 +643,7 @@
                 container.innerHTML = `
                     <div class="text-center py-4 text-muted">
                         <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                        <p>No subjects selected.</p>
+                        <p>@Localizer["Info_NoSubjectsSelected"]</p>
                     </div>
                 `;
                 return;
@@ -677,7 +681,7 @@
                                                         <br>
                                                         <small class="text-info">
                                                             <i class="fas fa-users me-1"></i>
-                                                            ${schedule.capacity - schedule.currentStudents}/${schedule.capacity} available
+                                                            ${schedule.capacity - schedule.currentStudents}/${schedule.capacity} @Localizer["Label_Available"]
                                                         </small>
                                                     </div>
                                                 </label>
@@ -689,7 +693,7 @@
                         ` : `
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                No schedules available for this subject and teacher combination.
+        @Localizer["Alert_NoSchedules"]
                             </div>
                         `}
                     </div>
@@ -779,7 +783,7 @@
                 <div class="d-flex justify-content-between align-items-center p-2 border rounded mb-2">
                     <div>
                         <strong>${subject.subjectName}</strong>
-                        ${subject.teacherName ? `<br><small class="text-muted">Teacher: ${subject.teacherName}</small>` : ''}
+                        ${subject.teacherName ? `<br><small class="text-muted">@Localizer["Label_Teacher"]: ${subject.teacherName}</small>` : ''}
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSubject(${subject.subjectCode})">
                         <i class="fas fa-times"></i>
@@ -805,33 +809,33 @@
             summary.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
-                        <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                        <h5><i class="fas fa-user me-2"></i>@Localizer["Label_PersonalInformation"]</h5>
                         <ul class="list-unstyled">
-                            <li><strong>Name:</strong> ${formData.StudentName}</li>
-                            <li><strong>Birth Date:</strong> ${formData.BirthDate}</li>
-                            <li><strong>Phone:</strong> ${formData.StudentPhone}</li>
-                            <li><strong>Parent Phone:</strong> ${formData.StudentParentPhone}</li>
-                            <li><strong>Gender:</strong> ${formData.Gender === true ? 'Male' : formData.Gender === false ? 'Female' : 'Not specified'}</li>
+                            <li><strong>@Localizer["Label_FullName"]:</strong> ${formData.StudentName}</li>
+                            <li><strong>@Localizer["Label_Birthdate"]:</strong> ${formData.BirthDate}</li>
+                            <li><strong>@Localizer["Label_StudentPhone"]:</strong> ${formData.StudentPhone}</li>
+                            <li><strong>@Localizer["Label_ParentPhone"]:</strong> ${formData.StudentParentPhone}</li>
+                            <li><strong>@Localizer["Label_Gender"]:</strong> ${formData.Gender === true ? '@Localizer["Label_Male"]' : formData.Gender === false ? '@Localizer["Label_Female"]' : '@Localizer["Label_NotSpecified"]'}</li>
                         </ul>
                     </div>
                     <div class="col-md-6">
-                        <h5><i class="fas fa-school me-2"></i>Academic Information</h5>
+                        <h5><i class="fas fa-school me-2"></i>@Localizer["Label_AcademicInformation"]</h5>
                         <ul class="list-unstyled">
-                            <li><strong>Branch:</strong> ${document.getElementById('branchCode').selectedOptions[0]?.text || 'Not selected'}</li>
-                            <li><strong>Year/Level:</strong> ${document.getElementById('yearCode').selectedOptions[0]?.text || 'Not selected'}</li>
-                            <li><strong>Education Year:</strong> ${document.getElementById('eduYearCode').selectedOptions[0]?.text || 'Not selected'}</li>
+                            <li><strong>@Localizer["Label_Branch"]:</strong> ${document.getElementById('branchCode').selectedOptions[0]?.text || '@Localizer["Label_NotSelected"]'}</li>
+                            <li><strong>@Localizer["Label_AcademicYear"]:</strong> ${document.getElementById('yearCode').selectedOptions[0]?.text || '@Localizer["Label_NotSelected"]'}</li>
+                            <li><strong>@Localizer["Label_EduYear"]:</strong> ${document.getElementById('eduYearCode').selectedOptions[0]?.text || '@Localizer["Label_NotSelected"]'}</li>
                         </ul>
                     </div>
                 </div>
 
-                <h5><i class="fas fa-books me-2"></i>Selected Subjects (${selectedSubjects.length})</h5>
+                <h5><i class="fas fa-books me-2"></i>@Localizer["Label_SelectedSubjects"] (${selectedSubjects.length})</h5>
                 <div class="row">
                     ${selectedSubjects.map(subject => `
                         <div class="col-md-12 mb-2">
                             <div class="border rounded p-2">
                                 <strong>${subject.subjectName}</strong>
-                                ${subject.teacherName ? `<br><small class="text-muted">Teacher: ${subject.teacherName}</small>` : ''}
-                                ${subject.scheduleName ? `<br><small class="text-info">Schedule: ${subject.scheduleName}</small>` : ''}
+                                ${subject.teacherName ? `<br><small class="text-muted">@Localizer["Label_Teacher"]: ${subject.teacherName}</small>` : ''}
+                                ${subject.scheduleName ? `<br><small class="text-info">@Localizer["Label_Schedule"]: ${subject.scheduleName}</small>` : ''}
                             </div>
                         </div>
                     `).join('')}
@@ -873,7 +877,7 @@
         // Submit registration
         async function submitRegistration() {
             if (!document.getElementById('termsAccepted').checked) {
-                showAlert('Please accept the terms and conditions.', 'danger');
+                showAlert('@Localizer["Alert_AcceptTerms"]', 'danger');
                 return;
             }
 
@@ -881,39 +885,39 @@
 
             // Additional client-side validation
             if (!formData.StudentName) {
-                showAlert('Please enter your name.', 'danger');
+                showAlert('@Localizer["Alert_EnterName"]', 'danger');
                 return;
             }
 
             if (!formData.StudentPhone) {
-                showAlert('Please enter your phone number.', 'danger');
+                showAlert('@Localizer["Alert_EnterPhone"]', 'danger');
                 return;
             }
 
             if (!formData.StudentParentPhone) {
-                showAlert('Please enter your parent/guardian phone number.', 'danger');
+                showAlert('@Localizer["Alert_EnterParentPhone"]', 'danger');
                 return;
             }
 
             if (!formData.BirthDate) {
-                showAlert('Please select your birth date.', 'danger');
+                showAlert('@Localizer["Alert_SelectBirthDate"]', 'danger');
                 return;
             }
 
             if (!formData.BranchCode || formData.BranchCode === 0) {
-                showAlert('Please select a branch.', 'danger');
+                showAlert('@Localizer["Alert_SelectBranch"]', 'danger');
                 return;
             }
 
             if (selectedSubjects.length === 0) {
-                showAlert('Please select at least one subject.', 'danger');
+                showAlert('@Localizer["Alert_PleaseSelectSubject"]', 'danger');
                 return;
             }
 
             // Check if all subjects have schedules
             const missingSchedules = selectedSubjects.filter(s => !s.scheduleCode);
             if (missingSchedules.length > 0) {
-                showAlert('Please select schedules for all subjects.', 'danger');
+                showAlert('@Localizer["Alert_PleaseSelectSchedules"]', 'danger');
                 return;
             }
 
@@ -941,12 +945,12 @@
                     if (result.errors && Array.isArray(result.errors)) {
                         showAlert(result.errors.join('<br>'), 'danger');
                     } else {
-                        showAlert(result.error || 'Registration failed.', 'danger');
+                        showAlert(result.error || '@Localizer["Alert_RegistrationFailed"]', 'danger');
                     }
                 }
             } catch (error) {
                 console.error('Registration error:', error);
-                showAlert('Registration failed. Please check your internet connection and try again.', 'danger');
+                showAlert('@Localizer["Alert_RegistrationFailedConnection"]', 'danger');
             } finally {
                 hideLoading();
             }
@@ -965,9 +969,9 @@
             // Remove existing alerts
             const existingAlerts = document.querySelectorAll('.alert');
             existingAlerts.forEach(alert => {
-                if (!alert.innerHTML.includes('Please review your information') &&
-                    !alert.innerHTML.includes('Choose your preferred class schedule') &&
-                    !alert.innerHTML.includes('Select the subjects you want')) {
+                if (!alert.innerHTML.includes('@Localizer["Info_ReviewBeforeSubmit"]') &&
+                    !alert.innerHTML.includes('@Localizer["Info_SelectSchedules"]') &&
+                    !alert.innerHTML.includes('@Localizer["Info_SelectSubjects"]')) {
                     alert.remove();
                 }
             });

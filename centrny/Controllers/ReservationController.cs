@@ -34,7 +34,6 @@ namespace centrny1.Controllers
                 .Select(ug => ug.GroupCode)
                 .ToList();
 
-            // Use your page path as stored in Pages (adjust as needed)
             var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Reservation/Index");
             if (page == null)
                 return false;
@@ -60,7 +59,6 @@ namespace centrny1.Controllers
             int rootCode = group.RootCode;
             var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == rootCode);
             bool isCenter = root?.IsCenter ?? true;
-            // Debug output
             Console.WriteLine($"DEBUG ReservationController User: UserCode={userCode}, GroupCode={groupCode}, RootCode={rootCode}, IsCenter={isCenter}");
             return (userCode, groupCode, rootCode, isCenter);
         }
@@ -78,7 +76,6 @@ namespace centrny1.Controllers
             return View();
         }
 
-        // For IsCenter == false, get the only teacher for this root (NO IsStaff filter)
         [HttpGet("GetSingleTeacherForRoot")]
         public async Task<IActionResult> GetSingleTeacherForRoot()
         {
@@ -89,7 +86,6 @@ namespace centrny1.Controllers
             return Json(new { success = true, teacherCode = teacher.TeacherCode, teacherName = teacher.TeacherName });
         }
 
-        // For IsCenter == false, show all reservations for root and date (no branch, no hall, NO IsStaff filter)
         [HttpGet("GetRootReservations")]
         public async Task<IActionResult> GetRootReservations(DateTime? reservationDate)
         {
@@ -133,7 +129,6 @@ namespace centrny1.Controllers
             });
         }
 
-        // Add reservation for non-center root (branch/hall are null)
         [HttpPost("AddRootReservation")]
         public async Task<IActionResult> AddRootReservation([FromForm] Reservation reservation)
         {
@@ -142,15 +137,42 @@ namespace centrny1.Controllers
             {
                 return Json(new { success = false, message = "Access denied." });
             }
-            // assign branch and hall to null explicitly
+
             reservation.BranchCode = null;
             reservation.HallCode = null;
+
+            // Defensive validation
+            if (reservation.TeacherCode == 0 || reservation.RTime == default ||
+                reservation.ReservationStartTime == null || reservation.ReservationEndTime == null)
+            {
+                return Json(new { success = false, message = "Missing required reservation data." });
+            }
+
+            var newStart = reservation.ReservationStartTime;
+            var newEnd = reservation.ReservationEndTime;
+            var date = reservation.RTime;
+            var teacherCode = reservation.TeacherCode;
+
+            // Only compare with reservations that have non-null times
+            var overlappingReservation = await _context.Reservations
+                .Where(r => r.RTime == date && r.TeacherCode == teacherCode
+                    && r.ReservationStartTime != null && r.ReservationEndTime != null
+                    && r.ReservationStartTime < newEnd && r.ReservationEndTime > newStart)
+                .FirstOrDefaultAsync();
+
+            if (overlappingReservation != null)
+            {
+                return Json(new { success = false, message = "This teacher already has a reservation at the selected time. Please choose a different time." });
+            }
+
             await _context.Reservations.AddAsync(reservation);
-            await _context.SaveChangesAsync();
-            return Ok();
+            var result = await _context.SaveChangesAsync();
+            if (result > 0)
+                return Json(new { success = true });
+            else
+                return Json(new { success = false, message = "Reservation not saved." });
         }
 
-        // Edit reservation for non-center root
         [HttpPost("EditRootReservation")]
         public async Task<IActionResult> EditRootReservation([FromForm] int ReservationCode, [FromForm] string Description, [FromForm] int Capacity, [FromForm] decimal Cost, [FromForm] int Deposit, [FromForm] int? FinalCost,
             [FromForm] decimal? Period, [FromForm] TimeOnly? ReservationStartTime, [FromForm] TimeOnly? ReservationEndTime)
@@ -163,6 +185,28 @@ namespace centrny1.Controllers
 
             var reservation = await _context.Reservations.FindAsync(ReservationCode);
             if (reservation == null) return NotFound();
+
+            if (ReservationStartTime == null || ReservationEndTime == null)
+            {
+                return Json(new { success = false, message = "Missing start or end time." });
+            }
+
+            var newStart = ReservationStartTime;
+            var newEnd = ReservationEndTime;
+            var date = reservation.RTime;
+            var teacherCode = reservation.TeacherCode;
+
+            var overlappingReservation = await _context.Reservations
+                .Where(r => r.RTime == date && r.TeacherCode == teacherCode && r.ReservationCode != ReservationCode
+                    && r.ReservationStartTime != null && r.ReservationEndTime != null
+                    && r.ReservationStartTime < newEnd && r.ReservationEndTime > newStart)
+                .FirstOrDefaultAsync();
+
+            if (overlappingReservation != null)
+            {
+                return Json(new { success = false, message = "This teacher already has a reservation at the selected time. Please choose a different time." });
+            }
+
             reservation.Description = Description;
             reservation.Capacity = Capacity;
             reservation.Cost = Cost;
@@ -172,10 +216,9 @@ namespace centrny1.Controllers
             reservation.ReservationStartTime = ReservationStartTime;
             reservation.ReservationEndTime = ReservationEndTime;
             await _context.SaveChangesAsync();
-            return Ok();
+            return Json(new { success = true });
         }
 
-        // Delete reservation (same for both flows)
         [HttpPost("DeleteRootReservation")]
         public async Task<IActionResult> DeleteRootReservation([FromForm] int reservationCode)
         {
@@ -189,10 +232,9 @@ namespace centrny1.Controllers
             if (reservation == null) return NotFound();
             _context.Reservations.Remove(reservation);
             await _context.SaveChangesAsync();
-            return Ok();
+            return Json(new { success = true });
         }
 
-        // Branch dropdown filtered by root code
         [HttpGet("GetBranchCodes")]
         public async Task<IActionResult> GetBranchCodes()
         {
@@ -213,14 +255,13 @@ namespace centrny1.Controllers
         {
             if (!UserHasReservationPermission())
             {
-                return Json(new { success = false, message = "Access denied." });
+                return Json(new { periods = new List<string>(), grid = new List<List<object>>() });
             }
             if (!branchCode.HasValue)
                 return Json(new { periods = new List<string>(), grid = new List<List<object>>(), halls = new List<object>() });
 
             int sessionCount = 10; // Change as needed
 
-            // Session headers
             var sessionHeaders = new List<string>();
             for (int i = 1; i <= sessionCount; i++)
             {
@@ -254,7 +295,6 @@ namespace centrny1.Controllers
 
                 var row = new List<object> { hall.HallName };
 
-                // Place reservations in session columns by time order
                 for (int i = 0; i < sessionCount; i++)
                 {
                     if (i < hallReservations.Count)
@@ -272,7 +312,7 @@ namespace centrny1.Controllers
                     }
                     else
                     {
-                        row.Add(null); // Empty session cell
+                        row.Add(null);
                     }
                 }
                 return row;
@@ -295,7 +335,6 @@ namespace centrny1.Controllers
             return Json(result);
         }
 
-        // Only teachers where IsStaff == false
         [HttpGet("GetTeachers")]
         public async Task<IActionResult> GetTeachers()
         {
@@ -376,11 +415,13 @@ namespace centrny1.Controllers
                 }
             }
 
-            // No conflicts found, proceed with adding reservation
             if (string.IsNullOrWhiteSpace(reservation.Description)) reservation.Description = null;
             await _context.Reservations.AddAsync(reservation);
-            await _context.SaveChangesAsync();
-            return Ok();
+            var result = await _context.SaveChangesAsync();
+            if (result > 0)
+                return Json(new { success = true });
+            else
+                return Json(new { success = false, message = "Reservation not saved." });
         }
 
         [HttpPost("EditReservation")]
@@ -393,50 +434,12 @@ namespace centrny1.Controllers
 
             var reservation = await _context.Reservations.FindAsync(ReservationCode);
             if (reservation == null) return NotFound();
-
-            // Get the reservation date and day of week
-            var reservationDate = reservation.RTime;
-            var dayOfWeek = reservationDate.ToDateTime(TimeOnly.MinValue).ToString("dddd"); // Gets "Sunday", "Monday", etc.
-
-            // Check for schedule conflicts (excluding current reservation)
-            var conflictingSchedules = await _context.Schedules
-                .Where(s => s.BranchCode == reservation.BranchCode &&
-                           s.HallCode == reservation.HallCode &&
-                           s.DayOfWeek == dayOfWeek &&
-                           s.StartTime.HasValue &&
-                           s.EndTime.HasValue)
-                .Include(s => s.TeacherCodeNavigation)
-                .Include(s => s.SubjectCodeNavigation)
-                .ToListAsync();
-
-            foreach (var schedule in conflictingSchedules)
-            {
-                var scheduleStart = TimeOnly.FromDateTime(schedule.StartTime.Value);
-                var scheduleEnd = TimeOnly.FromDateTime(schedule.EndTime.Value);
-
-                // Check for time overlap with the NEW times
-                // Check if times overlap: (start1 < end2) && (start2 < end1)
-                if (ReservationStartTime < scheduleEnd && scheduleStart < ReservationEndTime)
-                {
-                    var teacherName = schedule.TeacherCodeNavigation?.TeacherName ?? "Unknown Teacher";
-                    var subjectName = schedule.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject";
-
-                    return Json(new
-                    {
-                        success = false,
-                        alert = true,
-                        message = $"Time conflict detected! There is a scheduled class on {dayOfWeek} from {scheduleStart:HH:mm} to {scheduleEnd:HH:mm} with Teacher: {teacherName}, Subject: {subjectName}"
-                    });
-                }
-            }
-
-            // No conflicts found, proceed with updating reservation
             reservation.Description = Description;
             reservation.TeacherCode = TeacherCode;
             reservation.ReservationStartTime = ReservationStartTime;
             reservation.ReservationEndTime = ReservationEndTime;
             await _context.SaveChangesAsync();
-            return Ok();
+            return Json(new { success = true });
         }
         [HttpPost("DeleteReservation")]
         public async Task<IActionResult> DeleteReservation([FromForm] int reservationCode)
@@ -450,10 +453,9 @@ namespace centrny1.Controllers
             if (reservation == null) return NotFound();
             _context.Reservations.Remove(reservation);
             await _context.SaveChangesAsync();
-            return Ok();
+            return Json(new { success = true });
         }
 
-        // Add new teacher (AJAX from modal)
         [HttpPost("AddTeacher")]
         public async Task<IActionResult> AddTeacher([FromForm] string TeacherName, [FromForm] string TeacherPhone, [FromForm] string? TeacherAddress)
         {
@@ -476,7 +478,7 @@ namespace centrny1.Controllers
             };
             _context.Teachers.Add(newTeacher);
             await _context.SaveChangesAsync();
-            return Ok(new { teacherCode = newTeacher.TeacherCode, teacherName = newTeacher.TeacherName });
+            return Json(new { teacherCode = newTeacher.TeacherCode, teacherName = newTeacher.TeacherName });
         }
     }
 }

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace centrny.Controllers
@@ -214,17 +213,10 @@ namespace centrny.Controllers
                 user.Name = name;
             user.IsActive = isActive;
 
+            // --- REMOVE HASHING: Save password as plain text if provided ---
             if (!string.IsNullOrWhiteSpace(password))
             {
-                using (var md5 = MD5.Create())
-                {
-                    byte[] inputBytes = Encoding.UTF8.GetBytes(password);
-                    byte[] hashBytes = md5.ComputeHash(inputBytes);
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < hashBytes.Length; i++)
-                        sb.Append(hashBytes[i].ToString("x2"));
-                    user.Password = sb.ToString();
-                }
+                user.Password = password; // No hashing
             }
 
             _context.SaveChanges();
@@ -243,16 +235,8 @@ namespace centrny.Controllers
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
 
-            using (MD5 md5 = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.Unicode.GetBytes("123456789");
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                    sb.Append(hashBytes[i].ToString("X2"));
-                user.Password = sb.ToString();
-            }
+            // --- REMOVE HASHING: Set plain text password ---
+            user.Password = "123456789"; // No hashing
             _context.SaveChanges();
 
             return Json(new { success = true, message = "Password reset to 123456789" });
@@ -299,16 +283,8 @@ namespace centrny.Controllers
 
                 string actualUsername = username;
 
-                string hashedPassword;
-                using (MD5 md5 = MD5.Create())
-                {
-                    byte[] inputBytes = Encoding.UTF8.GetBytes("123456789");
-                    byte[] hashBytes = md5.ComputeHash(inputBytes);
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < hashBytes.Length; i++)
-                        sb.Append(hashBytes[i].ToString("x2"));
-                    hashedPassword = sb.ToString();
-                }
+                // --- REMOVE HASHING: Save plain password as-is ---
+                string plainPassword = string.IsNullOrWhiteSpace(password) ? "123456789" : password;
 
                 DateTime insertTime = DateTime.Now;
 
@@ -317,7 +293,7 @@ namespace centrny.Controllers
                     UserCode = newUserCode,
                     Name = name,
                     Username = actualUsername,
-                    Password = hashedPassword,
+                    Password = plainPassword, // No hashing
                     GroupCode = groupCode,
                     IsActive = isActive,
                     InsertUser = insertUserCode,

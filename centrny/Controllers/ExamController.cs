@@ -20,13 +20,6 @@ namespace centrny.Controllers
 
         // ==================== HELPER METHODS ====================
 
-
-
-
-        /// <summary>
-        /// DEBUG: Temporary method to check page access logic
-        /// Add this to ExamController temporarily
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> DebugPageAccess()
         {
@@ -43,7 +36,8 @@ namespace centrny.Controllers
                         "exam".Contains(p.PagePath.ToLower()) ||
                         p.PageName.ToLower().Contains("exam") ||
                         "exam".Contains(p.PageName.ToLower()))
-                    .Select(p => new {
+                    .Select(p => new
+                    {
                         p.PageCode,
                         p.PageName,
                         p.PagePath,
@@ -491,7 +485,7 @@ namespace centrny.Controllers
                     return BadRequest(new { success = false, error = "Subject must be selected." });
                 if (exam.YearCode == null || exam.YearCode <= 0)
                     return BadRequest(new { success = false, error = "Year must be selected." });
-               
+
 
                 // Validate that teacher and eduYear belong to user's root
                 var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == exam.TeacherCode && t.RootCode == rootCode.Value);
@@ -502,7 +496,7 @@ namespace centrny.Controllers
                     return BadRequest(new { success = false, error = "Selected teacher does not belong to your root." });
                 if (!eduYearExists)
                     return BadRequest(new { success = false, error = "Selected education year does not belong to your root." });
-            
+
                 string timerString = exam.ExamTimer.ToString();
                 exam.ExamTimer = ParseTimeOnly(timerString);
 
@@ -548,7 +542,7 @@ namespace centrny.Controllers
                     return BadRequest(new { success = false, error = "Subject is required." });
                 if (exam.YearCode == null || exam.YearCode == 0)
                     return BadRequest(new { success = false, error = "Year is required." });
-               
+
 
                 var dbExam = await (from e in _context.Exams
                                     join teacher in _context.Teachers on e.TeacherCode equals teacher.TeacherCode
@@ -836,7 +830,8 @@ namespace centrny.Controllers
                                 && l.SubjectCode == subjectCode
                                 && l.YearCode == yearCode
                                 && l.RootCode == rootCode.Value)
-                    .Select(l => new {
+                    .Select(l => new
+                    {
                         l.LessonCode,
                         l.LessonName,
                         l.ChapterCode,

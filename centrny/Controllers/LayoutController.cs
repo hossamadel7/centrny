@@ -4,6 +4,7 @@ using System.Linq;
 using centrny.Models;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using System.Globalization; // Added for culture detection
 
 namespace centrny.Controllers
 {
@@ -21,15 +22,23 @@ namespace centrny.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Returns sidebar pages for the user, based on the pages the user's group is authorized to view
+        /// (according to GroupPages table), NOT according to RootModules or modules.
+        /// </summary>
         public static List<SidebarPageViewModel> GetSidebarPagesForUser(CenterContext db, ClaimsPrincipal user, ISession session)
         {
             var sessionKey = "SidebarPages";
-            if (session != null && session.TryGetValue(sessionKey, out var cachedBytes))
+            // Remove cache if culture changes (for proper language switch)
+            var currentCulture = CultureInfo.CurrentUICulture.Name;
+            var cultureInSession = session?.GetString("SidebarPagesCulture");
+            if (session != null && session.TryGetValue(sessionKey, out var cachedBytes) && cultureInSession == currentCulture)
             {
                 var cachedJson = System.Text.Encoding.UTF8.GetString(cachedBytes);
                 var cached = System.Text.Json.JsonSerializer.Deserialize<List<SidebarPageViewModel>>(cachedJson);
                 if (cached != null) return cached;
             }
+
             var username = user.Identity?.Name;
             if (string.IsNullOrEmpty(username)) return new List<SidebarPageViewModel>();
 
@@ -39,35 +48,37 @@ namespace centrny.Controllers
             var group = db.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
             if (group == null) return new List<SidebarPageViewModel>();
 
-            var rootCode = group.RootCode;
-
-            var assignedModuleCodes = db.RootModules
-                .Where(rm => rm.RootCode == rootCode)
-                .Select(rm => rm.ModuleCode)
+            // 1. Get all PageCodes authorized for this group from GroupPages table
+            var groupPageCodes = db.GroupPages
+                .Where(gp => gp.GroupCode == group.GroupCode)
+                .Select(gp => gp.PageCode)
                 .Distinct()
                 .ToList();
 
-            if (!assignedModuleCodes.Any())
+            if (!groupPageCodes.Any())
             {
                 return new List<SidebarPageViewModel>();
             }
 
-            // Fetch allowed pages based on updated Page table (with new URLs and removed deleted ones)
+            var isArabic = currentCulture.StartsWith("ar");
+
+            // 2. Fetch allowed pages for this group, ordered by PageSort (if present)
             var allowedPages = db.Pages
-                .Where(p => assignedModuleCodes.Contains(p.ModuleCode))
+                .Where(p => groupPageCodes.Contains(p.PageCode))
                 .OrderBy(p => p.PageSort)
                 .Select(p => new SidebarPageViewModel
                 {
                     Controller = GetControllerFromPath(p.PagePath),
                     Action = GetActionFromPath(p.PagePath),
                     Icon = GetIconForPage(p.PageName),
-                    Text = p.PageName
+                    Text = isArabic && !string.IsNullOrEmpty(p.PageNameAr) ? p.PageNameAr : p.PageName
                 }).ToList();
 
             if (session != null)
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(allowedPages);
                 session.Set(sessionKey, System.Text.Encoding.UTF8.GetBytes(json));
+                session.SetString("SidebarPagesCulture", currentCulture); // Save current culture in session
             }
 
             return allowedPages;
