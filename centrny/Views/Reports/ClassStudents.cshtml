@@ -132,39 +132,6 @@
     </div>
 
     <!-- Compact Actions Panel -->
-    <div class="actions-panel">
-        <div class="actions-header">
-            <h6><i class="fas fa-tasks"></i> Quick Actions</h6>
-            <span class="selection-info">
-                <span id="selectionCount">0</span> selected
-            </span>
-        </div>
-        <div class="actions-buttons">
-            <button class="action-btn btn-success" onclick="markAllPresent()">
-                <i class="fas fa-check-circle"></i>
-                All Present
-            </button>
-            <button class="action-btn btn-primary" onclick="markSelectedPresent()">
-                <i class="fas fa-check"></i>
-                Mark Present
-            </button>
-            <button class="action-btn btn-warning" onclick="markSelectedAbsent()">
-                <i class="fas fa-times"></i>
-                Mark Absent
-            </button>
-            @if (Model.AbsentCount > 0)
-            {
-                <button class="action-btn btn-info" onclick="contactAbsentParents()">
-                    <i class="fas fa-phone"></i>
-                    Contact Parents
-                </button>
-            }
-            <button class="action-btn btn-secondary" onclick="clearAllSelections()">
-                <i class="fas fa-eraser"></i>
-                Clear
-            </button>
-        </div>
-    </div>
 
     <!-- Compact Students Table -->
     <div class="students-section">
@@ -178,9 +145,7 @@
                 <table class="students-table">
                     <thead>
                         <tr>
-                            <th width="50px">
-                                <input type="checkbox" class="checkbox" id="selectAll" onchange="toggleAllStudents(this.checked)">
-                            </th>
+                            
                             <th>Student</th>
                             <th>Contact</th>
                             <th>Parent</th>
@@ -193,15 +158,12 @@
                         {
                             <tr class="student-row @(student.IsPresent ? "row-present" : "row-absent")"
                                 data-student-code="@student.StudentCode">
-                                <td>
-                                    <input type="checkbox" class="checkbox student-checkbox"
-                                           data-student="@student.StudentCode" onchange="updateSelectionCount()">
-                                </td>
+                              
                                 <td>
                                     <div class="student-info">
                                         <button class="attendance-btn @(student.IsPresent ? "btn-present" : "btn-absent")"
-                                                onclick="toggleStudentAttendance(@Model.ClassCode, @student.StudentCode, @(!student.IsPresent ? "true" : "false"))"
-                                                title="Click to toggle attendance">
+                                                onclick="showAttendanceTypeModal(@Model.ClassCode, @student.StudentCode, '@student.StudentName', @(student.IsPresent ? "true" : "false"))"
+                                                title="Click to mark attendance">
                                             <i class="fas fa-@(student.IsPresent ? "check" : "times")"></i>
                                         </button>
                                         <span class="student-name">@student.StudentName</span>
@@ -294,6 +256,54 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="sendSmsBtn">
                     <i class="fas fa-paper-plane"></i> Send SMS
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Type Modal -->
+<div class="modal fade" id="attendanceTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attendanceModalTitle">Mark Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+             
+
+                <div class="attendance-type-section" id="attendanceTypeSection" style="display: none;">
+                    <label for="attendanceType" class="form-label">Attendance Type</label>
+                    <select class="form-select" id="attendanceType" onchange="handleAttendanceTypeChange()">
+                        <option value="">Select attendance type...</option>
+                        <!-- Options will be loaded dynamically from Lockup table -->
+                    </select>
+             
+
+                    <!-- Session Price Input for Discount Type -->
+                    <div class="session-price-section mt-3" id="sessionPriceSection" style="display: none;">
+                        <label for="sessionPrice" class="form-label">Session Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="sessionPrice"
+                                   placeholder="Enter discount price" min="0" step="0.01">
+                        </div>
+                        <small class="text-muted">Enter the discounted price for this session</small>
+                    </div>
+                </div>
+
+                <div class="confirm-absent-section" id="confirmAbsentSection" style="display: none;">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Are you sure you want to mark this student as absent?
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAttendanceBtn">
+                    <i class="fas fa-check me-2"></i>Confirm
                 </button>
             </div>
         </div>
@@ -486,14 +496,7 @@
         letter-spacing: 0.5px;
     }
 
-    /* Compact Actions Panel */
-    .actions-panel {
-        background: var(--white);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--gray-200);
-        padding: 16px;
-    }
+ 
 
     .actions-header {
         display: flex;
@@ -756,6 +759,78 @@
             color: var(--gray-700);
         }
 
+    /* Attendance Type Modal Styles */
+    .attendance-type-descriptions {
+        background: var(--gray-50);
+        padding: 12px;
+        border-radius: 6px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .form-select {
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgb(99 102 241 / 0.1);
+        }
+
+    .alert {
+        padding: 12px 16px;
+        border-radius: 6px;
+        border: 1px solid;
+    }
+
+    .alert-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .student-info-section {
+        padding: 12px;
+        background: var(--gray-50);
+        border-radius: 6px;
+        border-left: 4px solid var(--info);
+    }
+
+    .session-price-section {
+        padding: 16px;
+        background: #fff3cd;
+        border-radius: 6px;
+        border: 1px solid #ffc107;
+        border-left: 4px solid #ffc107;
+    }
+
+    .input-group {
+        display: flex;
+    }
+
+    .input-group-text {
+        padding: 8px 12px;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-300);
+        border-right: none;
+        border-radius: 6px 0 0 6px;
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    .input-group .form-control {
+        border-left: none;
+        border-radius: 0 6px 6px 0;
+    }
+
+        .input-group .form-control:focus {
+            box-shadow: none;
+            border-color: var(--primary);
+        }
+
     /* Responsive */
     @@media (max-width: 768px) {
         .class-students-container
@@ -809,14 +884,169 @@
 <script>
     // Global variables
     const classCode = @Model.ClassCode;
-    let selectedStudents = new Set();
+    let currentAttendanceData = {};
+    let attendanceTypes = [];
 
     // Initialize page
     $(document).ready(function() {
-        updateSelectionCount();
+        loadAttendanceTypes();
     });
 
-    // Toggle individual student attendance
+    // Load attendance types from server
+    function loadAttendanceTypes() {
+        $.ajax({
+            url: '/Reports/GetAttendanceTypes',
+            type: 'GET',
+            success: function(data) {
+                attendanceTypes = data;
+                populateAttendanceTypeDropdown();
+            },
+            error: function() {
+                console.log('Failed to load attendance types from server, using defaults');
+                // Use the actual types from your Lockup table
+                attendanceTypes = [
+                    { paymentCode: 1, paymentName: 'Regular' },
+                    { paymentCode: 2, paymentName: 'Free' },
+                    { paymentCode: 3, paymentName: 'Discount' },
+                    { paymentCode: 4, paymentName: 'Subscribed' }
+                ];
+                populateAttendanceTypeDropdown();
+            }
+        });
+    }
+
+    // Populate attendance type dropdown with icons and colors
+    function populateAttendanceTypeDropdown() {
+        const dropdown = $('#attendanceType');
+        dropdown.empty();
+        dropdown.append('<option value="">Select attendance type...</option>');
+
+        attendanceTypes.forEach(type => {
+            let icon = '';
+            switch(type.paymentCode) {
+                case 1: icon = '💰'; break; // Regular
+                case 2: icon = '🆓'; break; // Free
+                case 3: icon = '🎯'; break; // Discount
+                case 4: icon = '📋'; break; // Subscribed
+                default: icon = '✅'; break;
+            }
+            dropdown.append(`<option value="${type.paymentCode}">${icon} ${type.paymentName}</option>`);
+        });
+    }
+
+    // Handle attendance type change to show/hide price input
+    function handleAttendanceTypeChange() {
+        const selectedType = $('#attendanceType').val();
+        const sessionPriceSection = $('#sessionPriceSection');
+
+        if (selectedType == '3') { // Discount type
+            sessionPriceSection.show();
+            $('#sessionPrice').attr('required', true);
+        } else {
+            sessionPriceSection.hide();
+            $('#sessionPrice').attr('required', false);
+            $('#sessionPrice').val(''); // Clear the value
+        }
+    }
+
+    // Show attendance type modal
+    function showAttendanceTypeModal(classCode, studentCode, studentName, isCurrentlyPresent) {
+        currentAttendanceData = {
+            classCode: classCode,
+            studentCode: studentCode,
+            studentName: studentName,
+            isCurrentlyPresent: isCurrentlyPresent === 'true'
+        };
+
+        // Set modal title and student name
+        $('#attendanceStudentName').text(studentName);
+
+        if (currentAttendanceData.isCurrentlyPresent) {
+            // Student is currently present, asking to mark absent
+            $('#attendanceModalTitle').text('Mark Student Absent');
+            $('#attendanceAction').text('This student is currently marked as present.');
+            $('#attendanceTypeSection').hide();
+            $('#confirmAbsentSection').show();
+            $('#confirmAttendanceBtn').html('<i class="fas fa-times me-2"></i>Mark Absent');
+            $('#confirmAttendanceBtn').removeClass('btn-primary').addClass('btn-danger');
+        } else {
+            // Student is currently absent, asking to mark present
+            $('#attendanceModalTitle').text('Mark Student Present');
+            $('#attendanceTypeSection').show();
+            $('#confirmAbsentSection').hide();
+            $('#attendanceType').val(''); // Reset dropdown
+            $('#sessionPriceSection').hide(); // Hide price section initially
+            $('#sessionPrice').val(''); // Clear price input
+            $('#confirmAttendanceBtn').html('<i class="fas fa-check me-2"></i>Mark Present');
+            $('#confirmAttendanceBtn').removeClass('btn-danger').addClass('btn-primary');
+        }
+
+        $('#attendanceTypeModal').modal('show');
+    }
+
+    // Confirm attendance change
+    $('#confirmAttendanceBtn').on('click', function() {
+        if (currentAttendanceData.isCurrentlyPresent) {
+            // Mark as absent - no type needed
+            submitAttendanceChange(false, null, null);
+        } else {
+            // Mark as present - require type selection
+             const selectedType = parseInt($('#attendanceType').val());
+            if (!selectedType) {
+                alert('Please select an attendance type.');
+                return;
+            }
+
+            let sessionPrice = null;
+
+            // If discount type is selected, require session price
+            if (selectedType == '3') { // Discount
+                sessionPrice = $('#sessionPrice').val();
+                if (!sessionPrice || sessionPrice <= 0) {
+                    alert('Please enter a valid session price for discount attendance.');
+                    return;
+                }
+                sessionPrice = parseFloat(sessionPrice);
+            }
+
+            submitAttendanceChange(true, selectedType, sessionPrice);
+        }
+    });
+
+    // Submit attendance change
+    function submitAttendanceChange(isPresent, attendanceType, sessionPrice) {
+        const data = {
+            classCode: currentAttendanceData.classCode,
+            studentCode: currentAttendanceData.studentCode,
+            isPresent: isPresent,
+            attendanceType: attendanceType
+        };
+
+        // Add session price for discount type
+        if (sessionPrice !== null) {
+            data.sessionPrice = sessionPrice;
+        }
+
+        $.ajax({
+            url: '/Reports/MarkAttendanceWithType',
+            type: 'POST',
+            data: data,
+            success: function(data) {
+                $('#attendanceTypeModal').modal('hide');
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating attendance: ' + data.error);
+                }
+            },
+            error: function() {
+                $('#attendanceTypeModal').modal('hide');
+                alert('Failed to update attendance. Please try again.');
+            }
+        });
+    }
+
+    // Legacy function for bulk operations (without type selection)
     function toggleStudentAttendance(classCode, studentCode, isPresent) {
         $.ajax({
             url: '/Reports/MarkAttendance',
@@ -839,108 +1069,8 @@
         });
     }
 
-    // Toggle all students selection
-    function toggleAllStudents(checked) {
-        $('.student-checkbox').prop('checked', checked);
-        if (checked) {
-            $('.student-checkbox').each(function() {
-                selectedStudents.add($(this).data('student'));
-            });
-        } else {
-            selectedStudents.clear();
-        }
-        updateSelectionCount();
-    }
 
-    // Update selection count
-    function updateSelectionCount() {
-        selectedStudents.clear();
-        $('.student-checkbox:checked').each(function() {
-            selectedStudents.add($(this).data('student'));
-        });
 
-        $('#selectionCount').text(selectedStudents.size);
-
-        const totalCheckboxes = $('.student-checkbox').length;
-        const checkedCheckboxes = $('.student-checkbox:checked').length;
-
-        if (checkedCheckboxes === 0) {
-            $('#selectAll').prop('indeterminate', false).prop('checked', false);
-        } else if (checkedCheckboxes === totalCheckboxes) {
-            $('#selectAll').prop('indeterminate', false).prop('checked', true);
-        } else {
-            $('#selectAll').prop('indeterminate', true);
-        }
-    }
-
-    // Mark all students present
-    function markAllPresent() {
-        const studentCodes = [];
-        $('.student-checkbox').each(function() {
-            studentCodes.push($(this).data('student'));
-        });
-        bulkMarkAttendance(studentCodes, true);
-    }
-
-    // Mark selected students present
-    function markSelectedPresent() {
-        if (selectedStudents.size === 0) {
-            alert('Please select students first.');
-            return;
-        }
-        const studentCodes = Array.from(selectedStudents);
-        bulkMarkAttendance(studentCodes, true);
-    }
-
-    // Mark selected students absent
-    function markSelectedAbsent() {
-        if (selectedStudents.size === 0) {
-            alert('Please select students first.');
-            return;
-        }
-        const studentCodes = Array.from(selectedStudents);
-        bulkMarkAttendance(studentCodes, false);
-    }
-
-    // Bulk mark attendance
-    function bulkMarkAttendance(studentCodes, isPresent) {
-        $.ajax({
-            url: '/Reports/BulkMarkAttendance',
-            type: 'POST',
-            data: {
-                classCode: classCode,
-                studentCodes: studentCodes,
-                isPresent: isPresent
-            },
-            success: function(data) {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error updating attendance: ' + data.error);
-                }
-            },
-            error: function() {
-                alert('Failed to update attendance. Please try again.');
-            }
-        });
-    }
-
-    // Contact absent parents
-    function contactAbsentParents() {
-        const absentStudents = [];
-        $('.row-absent .student-checkbox').each(function() {
-            absentStudents.push($(this).data('student'));
-        });
-
-        if (absentStudents.length === 0) {
-            alert('No absent students found.');
-            return;
-        }
-
-        $('#smsRecipientCount').text(absentStudents.length);
-        $('#smsModal').modal('show');
-        window.currentAbsentStudents = absentStudents;
-    }
 
     // Send SMS
     $('#sendSmsBtn').on('click', function() {
@@ -973,13 +1103,6 @@
         });
     });
 
-    // Clear all selections
-    function clearAllSelections() {
-        selectedStudents.clear();
-        $('.student-checkbox').prop('checked', false);
-        $('#selectAll').prop('checked', false);
-        updateSelectionCount();
-    }
 
     // Contact functions
     function callParent(studentName, parentPhone) {
@@ -1002,3 +1125,4 @@
     function viewStudentDetails(studentCode) {
         window.open(`/Students/Details/${studentCode}`, '_blank');
     }
+</script>

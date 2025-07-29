@@ -1495,6 +1495,134 @@ namespace centrny.Controllers
             }
         }
 
+        // Get attendance types from Lockup table
+        [HttpGet]
+        public async Task<ActionResult<List<object>>> GetAttendanceTypes()
+        {
+            try
+            {
+                var attendanceTypes = await _context.Lockups
+                    .Where(l => l.PaymentCode != null) // Exclude NULL entries
+                    .OrderBy(l => l.PaymentCode)
+                    .Select(l => new {
+                        paymentCode = l.PaymentCode,
+                        paymentName = l.PaymentName
+                    })
+                    .ToListAsync();
+
+                return Ok(attendanceTypes);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        // Mark attendance with type selection and optional session price
+        [HttpPost]
+        public async Task<ActionResult> MarkAttendanceWithType(int classCode, int studentCode, bool isPresent, int attendanceType = 0, decimal? sessionPrice = null)
+        {
+            try
+            {
+                var context = await GetUserContextAsync();
+                var attendanceRecord = await _context.Attends
+                    .FirstOrDefaultAsync(a => a.ClassId == classCode && a.StudentId == studentCode);
+
+                if (isPresent)
+                {
+                    if (attendanceType <= 0 || attendanceType > 4)
+                        return Json(new { success = false, error = $"Invalid attendance type: {attendanceType}" });
+
+                    if (attendanceType == 3 && (!sessionPrice.HasValue || sessionPrice.Value <= 0))
+                        return Json(new { success = false, error = "Session price is required for discount attendance" });
+
+                    if (attendanceRecord == null)
+                    {
+                        var classDetails = await _context.Classes
+                            .Where(c => c.ClassCode == classCode)
+                            .Select(c => new { c.TeacherCode, c.HallCode, c.ScheduleCode })
+                            .FirstOrDefaultAsync();
+
+                        if (classDetails == null)
+                            return Json(new { success = false, error = "Class not found" });
+
+                        // Determine SessionPrice based on attendance type
+                        decimal sessionPriceValue;
+                        switch (attendanceType)
+                        {
+                            case 1: // Regular - use magic number so trigger will handle it
+                                sessionPriceValue = -1m; // Magic number for "trigger should set this"
+                                break;
+                            case 2: // Free - explicitly 0
+                                sessionPriceValue = 0m;
+                                break;
+                            case 3: // Discount - use provided price
+                                sessionPriceValue = sessionPrice ?? 0m;
+                                break;
+                            case 4: // Subscribed - use magic number so trigger will handle it
+                                sessionPriceValue = -1m; // Magic number for "trigger should set this"
+                                break;
+                            default:
+                                sessionPriceValue = 0m;
+                                break;
+                        }
+
+                        var newAttendance = new Attend
+                        {
+                            ClassId = classCode,
+                            StudentId = studentCode,
+                            AttendDate = DateTime.Now,
+                            TeacherCode = classDetails.TeacherCode,
+                            HallId = classDetails.HallCode,
+                            ScheduleCode = classDetails.ScheduleCode,
+                            SessionPrice = sessionPriceValue, // Now using decimal, not decimal?
+                            Type = attendanceType,
+                            RootCode = context.rootCode
+                        };
+
+                        _context.Attends.Add(newAttendance);
+                    }
+                    else
+                    {
+                        // Update existing record logic stays the same...
+                        attendanceRecord.Type = attendanceType;
+                        attendanceRecord.AttendDate = DateTime.Now;
+
+                        switch (attendanceType)
+                        {
+                            case 1: // Regular - get schedule amount
+                                var scheduleAmount = await _context.Schedules
+                                    .Where(s => s.ScheduleCode == attendanceRecord.ScheduleCode)
+                                    .Select(s => s.ScheduleAmount)
+                                    .FirstOrDefaultAsync();
+                                attendanceRecord.SessionPrice = scheduleAmount ?? 0m;
+                                break;
+                            case 2: // Free
+                                attendanceRecord.SessionPrice = 0m;
+                                break;
+                            case 3: // Discount
+                                attendanceRecord.SessionPrice = sessionPrice ?? 0m;
+                                break;
+                            case 4: // Subscribed
+                                attendanceRecord.SessionPrice = 0m;
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    if (attendanceRecord != null)
+                        _context.Attends.Remove(attendanceRecord);
+                }
+
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, message = "Attendance updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
         // Add these DTOs/ViewModels to your project
 
 
