@@ -1,0 +1,125 @@
+﻿@{
+    ViewData["Title"] = "Students";
+}
+<link href="~/css/Hamody.css" rel="stylesheet" />
+<style>
+    .subject-text {
+        font-weight: bold;
+        color: #222;
+    }
+
+    .d-flex.gap-2 > * {
+        margin-right: 10px;
+    }
+    /* For schedule edit modal table */
+    #editLearnModalBody table th, #editLearnModalBody table td {
+        vertical-align: middle;
+    }
+</style>
+<div class="daily-container" style="max-width:1550px;">
+    <div class="questions-header">
+        <h2><i class="fas fa-user-graduate"></i>Students</h2>
+    </div>
+
+    <div class="row mb-3 w-100 justify-content-center">
+        <div class="col-md-2 mb-2">
+            <select id="yearFilter" class="form-control modern-input styled-select">
+                <option value="">All Years</option>
+            </select>
+        </div>
+        <div class="col-md-2 mb-2">
+            <select id="subjectFilter" class="form-control modern-input styled-select">
+                <option value="">All Subjects</option>
+            </select>
+        </div>
+        <div class="col-md-2 mb-2">
+            <select id="studentFilter" class="form-control modern-input styled-select">
+                <option value="">All Students</option>
+            </select>
+        </div>
+        <div class="col-md-3 mb-2">
+            <input type="text" id="searchInput" class="form-control modern-input" placeholder="Search (Student, Subject, Teacher)" />
+        </div>
+        <div class="col-md-2 mb-2">
+            <button id="searchBtn" class="modern-btn w-100" style="background: var(--primary-gradient);">Search</button>
+        </div>
+    </div>
+
+    <div id="learnTableContainer" class="w-100"></div>
+    <nav>
+        <ul class="pagination" id="learnPagination"></ul>
+    </nav>
+</div>
+
+<!-- Add Subject Modal -->
+<div class="modal fade" id="addSubjectModal" tabindex="-1" role="dialog" aria-labelledby="addSubjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="addLearnForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSubjectModalLabel">Add Subject to Student</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="StudentCode" />
+                    <input type="hidden" name="YearCode" />
+                    <input type="hidden" name="EduYearCode" />
+                    <input type="hidden" name="RootCode" />
+                    <input type="hidden" name="IsActive" value="1" />
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select name="SubjectCode" class="form-control modern-input styled-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Teacher</label>
+                        <select name="TeacherCode" class="form-control modern-input styled-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <select name="BranchCode" class="form-control modern-input styled-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Schedule</label>
+                        <select name="ScheduleCode" class="form-control modern-input styled-select" required></select>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" name="IsOnline" class="form-check-input" id="isOnlineCheck">
+                        <label class="form-check-label" for="isOnlineCheck">Is Online</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="modern-btn" style="background: var(--primary-gradient);">Add Subject</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Learn Modal -->
+<div class="modal fade" id="editLearnModal" tabindex="-1" role="dialog" aria-labelledby="editLearnModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <!-- When editing all subjects for a student, we inject a form dynamically -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="editLearnModalLabel">Edit Schedules for Student</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="editLearnModalBody">
+                <!-- Dynamically loaded form fields -->
+            </div>
+            <div class="modal-footer" id="editLearnModalFooter" style="display:none;">
+                <button type="submit" form="editAllSchedulesForm" class="modern-btn edit-btn">Save</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/Student.js"></script>
+}
