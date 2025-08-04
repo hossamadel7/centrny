@@ -643,7 +643,9 @@ namespace centrny.Controllers
                 var teacherId = await GetTeacherIdForUser(context.user.UserCode);
 
                 if (!teacherId.HasValue)
-                    return Forbid("User is not associated with a teacher record");
+                    return Forbid();
+                // OR if you want to return a message in JSON:
+                return Json(new { error = "User is not associated with a teacher record" });
 
                 var query = _context.Classes
                     .Include(c => c.SubjectCodeNavigation)

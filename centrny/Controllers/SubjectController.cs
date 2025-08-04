@@ -18,7 +18,6 @@ namespace centrny.Controllers
             _context = context;
         }
 
-        // --- Authority Check ---
         private bool UserHasSubjectPermission()
         {
             var username = User.Identity?.Name;
@@ -31,7 +30,6 @@ namespace centrny.Controllers
                 .Select(ug => ug.GroupCode)
                 .ToList();
 
-            // Use your page path as stored in Pages (adjust as needed)
             var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Subject/Index");
             if (page == null)
                 return false;
@@ -118,16 +116,52 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
+            // Return all composite key columns for Teach, and branch, center values
             var teachJoin = await (from t in _context.Teaches
                                    join teacher in _context.Teachers on t.TeacherCode equals teacher.TeacherCode
+                                   join branch in _context.Branches on t.BranchCode equals branch.BranchCode
                                    where t.SubjectCode == subjectCode
                                    select new
                                    {
-                                       teacher.TeacherCode,
-                                       teacher.TeacherName
+                                       t.TeacherCode,
+                                       t.SubjectCode,
+                                       t.BranchCode,
+                                       t.RootCode,
+                                       t.EduYearCode,
+                                       teacher.TeacherName,
+                                       branch.BranchName,
+                                       t.CenterAmount,
+                                       t.CenterPercentage
                                    }).ToListAsync();
 
             return Json(teachJoin);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditTeachCenter([FromBody] EditTeachCenterDto dto)
+        {
+            if (!UserHasSubjectPermission())
+                return Json(new { success = false, message = "Access denied." });
+
+            if (dto == null)
+                return BadRequest("Invalid data");
+
+            // Find by composite key
+            var teach = await _context.Teaches.FirstOrDefaultAsync(t =>
+                t.TeacherCode == dto.TeacherCode &&
+                t.SubjectCode == dto.SubjectCode &&
+                t.BranchCode == dto.BranchCode &&
+                t.RootCode == dto.RootCode &&
+                t.EduYearCode == dto.EduYearCode);
+
+            if (teach == null)
+                return NotFound("Teach record not found.");
+
+            teach.CenterPercentage = dto.CenterPercentage;
+            teach.CenterAmount = dto.CenterAmount;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
         }
 
         [HttpGet]
@@ -381,6 +415,17 @@ namespace centrny.Controllers
             public int BranchCode { get; set; }
             public int RootCode { get; set; }
             public int YearCode { get; set; }
+            public double? CenterPercentage { get; set; }
+            public double? CenterAmount { get; set; }
+        }
+
+        public class EditTeachCenterDto
+        {
+            public int TeacherCode { get; set; }
+            public int SubjectCode { get; set; }
+            public int BranchCode { get; set; }
+            public int RootCode { get; set; }
+            public int EduYearCode { get; set; }
             public double? CenterPercentage { get; set; }
             public double? CenterAmount { get; set; }
         }

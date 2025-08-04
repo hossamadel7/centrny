@@ -1,13 +1,15 @@
-@model centrny.Models.MyClassesReport
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
 @{
-    ViewData["Title"] = "My Classes Report";
+    var Localizer = LocalizerFactory.Create("Reports", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["MyClassesReport"];
 }
 
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-12 text-center mb-4">
-            <h2><i class="fas fa-calendar-alt"></i> My Classes Report</h2>
-            <p class="text-muted">Track your teaching schedule and performance</p>
+            <h2><i class="fas fa-calendar-alt"></i> @Localizer["MyClassesReport"]</h2>
+            <p class="text-muted">@Localizer["MyClassesReportSubtitle"]</p>
         </div>
     </div>
 
@@ -17,21 +19,21 @@
             <form method="get" asp-action="MyClassesReport">
                 <div class="row align-items-end">
                     <div class="col-md-2">
-                        <label for="startDate" class="form-label">Start Date</label>
+                        <label for="startDate" class="form-label">@Localizer["StartDate"]</label>
                         <input type="date" name="startDate" id="startDate" class="form-control"
                                value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
                     </div>
 
                     <div class="col-md-2">
-                        <label for="endDate" class="form-label">End Date</label>
+                        <label for="endDate" class="form-label">@Localizer["EndDate"]</label>
                         <input type="date" name="endDate" id="endDate" class="form-control"
                                value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
                     </div>
 
                     <div class="col-md-3">
-                        <label for="subjectCode" class="form-label">Subject</label>
+                        <label for="subjectCode" class="form-label">@Localizer["Subject"]</label>
                         <select name="subjectCode" id="subjectCode" class="form-select">
-                            <option value="">All Subjects</option>
+                            <option value="">@Localizer["AllSubjects"]</option>
                             @if (ViewBag.Subjects != null)
                             {
                                 @foreach (var subject in ViewBag.Subjects as List<Subject>)
@@ -45,7 +47,7 @@
                     </div>
 
                     <div class="col-md-2">
-                        <label for="pageSize" class="form-label">Per Page</label>
+                        <label for="pageSize" class="form-label">@Localizer["PerPage"]</label>
                         <select name="pageSize" id="pageSize" class="form-select">
                             <option value="20" selected="@(Model.PageSize == 20)">20</option>
                             <option value="50" selected="@(Model.PageSize == 50)">50</option>
@@ -55,10 +57,10 @@
 
                     <div class="col-md-3">
                         <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-search"></i> Filter
+                            <i class="fas fa-search"></i> @Localizer["Filter"]
                         </button>
                         <a href="@Url.Action("MyClassesReport")" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Clear
+                            <i class="fas fa-times"></i> @Localizer["Clear"]
                         </a>
                     </div>
                 </div>
@@ -66,10 +68,10 @@
                 <!-- Quick Date Range Buttons -->
                 <div class="row mt-3">
                     <div class="col-12">
-                        <small class="text-muted">Quick ranges:</small>
-                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="setDateRange('week')">This Week</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary ms-1" onclick="setDateRange('month')">This Month</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary ms-1" onclick="setDateRange('lastMonth')">Last Month</button>
+                        <small class="text-muted">@Localizer["QuickRanges"]</small>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="setDateRange('week')">@Localizer["ThisWeek"]</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-1" onclick="setDateRange('month')">@Localizer["ThisMonth"]</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-1" onclick="setDateRange('lastMonth')">@Localizer["LastMonth"]</button>
                     </div>
                 </div>
             </form>
@@ -86,7 +88,7 @@
                         <div class="text-primary mb-2">
                             <i class="fas fa-calendar-check fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Total Classes</h5>
+                        <h5 class="card-title">@Localizer["TotalClasses"]</h5>
                         <p class="text-primary fs-4">@Model.TotalCount</p>
                     </div>
                 </div>
@@ -97,7 +99,7 @@
                         <div class="text-info mb-2">
                             <i class="fas fa-users fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Avg. Students</h5>
+                        <h5 class="card-title">@Localizer["AvgStudents"]</h5>
                         <p class="text-info fs-4">@(Model.Classes.Any() ? Model.Classes.Average(c => c.ScheduledStudents).ToString("F1") : "0")</p>
                     </div>
                 </div>
@@ -108,7 +110,7 @@
                         <div class="text-warning mb-2">
                             <i class="fas fa-percentage fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Avg. Attendance</h5>
+                        <h5 class="card-title">@Localizer["AvgAttendance"]</h5>
                         <p class="text-warning fs-4">
                             @{
                                 var avgAttendance = Model.Classes.Any() && Model.Classes.Sum(c => c.ScheduledStudents) > 0 ?
@@ -125,15 +127,15 @@
                         <div class="text-success mb-2">
                             <i class="fas fa-dollar-sign fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Total Earnings</h5>
-                        <p class="text-success fs-4">$@Model.Classes.Sum(c => c.TeacherAmount).ToString("N2")</p>
+                        <h5 class="card-title">@Localizer["TotalEarnings"]</h5>
+                        <p class="text-success fs-4">@Localizer["CurrencySymbol"]@Model.Classes.Sum(c => c.TeacherAmount).ToString("N2")</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Classes by Date -->
-        @foreach (var groupedClasses in Model.Classes.GroupBy(c => c.ClassDate?.ToString("yyyy-MM-dd") ?? "No Date"))
+        @foreach (var groupedClasses in Model.Classes.GroupBy(c => c.ClassDate?.ToString("yyyy-MM-dd") ?? Localizer["NoDate"]))
         {
             <div class="card mb-4">
                 <div class="card-header">
@@ -181,41 +183,41 @@
                                     <div class="card-body">
                                         <div class="mb-2">
                                             <i class="fas fa-clock text-primary"></i>
-                                            <strong>Time:</strong>
+                                            <strong>@Localizer["Time"]:</strong>
                                             @cls.ClassStartTime?.ToString("HH:mm") - @cls.ClassEndTime?.ToString("HH:mm")
                                         </div>
                                         <div class="mb-2">
                                             <i class="fas fa-book text-info"></i>
-                                            <strong>Subject:</strong> @cls.SubjectName
+                                            <strong>@Localizer["Subject"]:</strong> @cls.SubjectName
                                         </div>
                                         <div class="mb-2">
                                             <i class="fas fa-building text-secondary"></i>
-                                            <strong>Branch:</strong> @cls.BranchName
+                                            <strong>@Localizer["Branch"]:</strong> @cls.BranchName
                                         </div>
                                         <div class="mb-2">
                                             <i class="fas fa-door-open text-warning"></i>
-                                            <strong>Hall:</strong> @cls.HallName
+                                            <strong>@Localizer["Hall"]:</strong> @cls.HallName
                                         </div>
                                         <div class="mb-2">
                                             <i class="fas fa-users text-info"></i>
-                                            <strong>Students:</strong>
+                                            <strong>@Localizer["Students"]:</strong>
                                             @cls.AttendedStudents/@cls.ScheduledStudents
                                         </div>
                                         <div class="mb-3">
                                             <i class="fas fa-dollar-sign text-success"></i>
-                                            <strong>Earning:</strong>
-                                            <span class="text-success">$@cls.TeacherAmount.ToString("N2")</span>
+                                            <strong>@Localizer["Earning"]:</strong>
+                                            <span class="text-success">@Localizer["CurrencySymbol"]@cls.TeacherAmount.ToString("N2")</span>
                                         </div>
                                     </div>
                                     <div class="card-footer">
                                         <div class="btn-group w-100" role="group">
                                             <button type="button" class="btn btn-outline-primary btn-sm"
                                                     onclick="viewClassDetails(@cls.ClassCode)">
-                                                <i class="fas fa-eye"></i> Details
+                                                <i class="fas fa-eye"></i> @Localizer["Details"]
                                             </button>
                                             <button type="button" class="btn btn-outline-success btn-sm"
                                                     onclick="viewAttendance(@cls.ClassCode)">
-                                                <i class="fas fa-list-check"></i> Attendance
+                                                <i class="fas fa-list-check"></i> @Localizer["Attendance"]
                                             </button>
                                         </div>
                                     </div>
@@ -242,7 +244,7 @@
                                 subjectCode = Model.SubjectCode,
                                 pageSize = Model.PageSize
                             })">
-                                <i class="fas fa-chevron-left"></i> Previous
+                                <i class="fas fa-chevron-left"></i> @Localizer["Previous"]
                             </a>
                         </li>
                     }
@@ -271,7 +273,7 @@
                                 subjectCode = Model.SubjectCode,
                                 pageSize = Model.PageSize
                             })">
-                                Next <i class="fas fa-chevron-right"></i>
+                                @Localizer["Next"] <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
                     }
@@ -282,10 +284,10 @@
         <!-- Export Options -->
         <div class="mt-4 text-center">
             <button type="button" class="btn btn-info me-2" onclick="exportMyClassesPDF()">
-                <i class="fas fa-file-pdf"></i> Export to PDF
+                <i class="fas fa-file-pdf"></i> @Localizer["ExportPDF"]
             </button>
             <button type="button" class="btn btn-success" onclick="exportMyClassesExcel()">
-                <i class="fas fa-file-excel"></i> Export to Excel
+                <i class="fas fa-file-excel"></i> @Localizer["ExportExcel"]
             </button>
         </div>
     }
@@ -296,10 +298,10 @@
                 <div class="text-muted mb-3">
                     <i class="fas fa-calendar-times fa-3x"></i>
                 </div>
-                <h4 class="text-muted">No classes found</h4>
-                <p class="text-muted">Try adjusting your filters to see your class data.</p>
+                <h4 class="text-muted">@Localizer["NoClassesFound"]</h4>
+                <p class="text-muted">@Localizer["NoClassesHint"]</p>
                 <a href="@Url.Action("MyClassesReport")" class="btn btn-primary">
-                    <i class="fas fa-refresh"></i> Reset Filters
+                    <i class="fas fa-refresh"></i> @Localizer["ResetFilters"]
                 </a>
             </div>
         </div>
@@ -311,13 +313,13 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="classDetailsModalLabel">Class Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="classDetailsModalLabel">@Localizer["ClassDetails"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@Localizer["Close"]"></button>
             </div>
             <div class="modal-body" id="classDetailsBody">
                 <div class="text-center">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">@Localizer["Loading"]</span>
                     </div>
                 </div>
             </div>
@@ -334,14 +336,14 @@
         // For now, show basic info - you can implement actual AJAX call later
         $('#classDetailsBody').html(`
             <div class="alert alert-info">
-                <h6>Class Code: ${classCode}</h6>
-                <p>Detailed class information will be implemented here.</p>
-                <p>This could include:</p>
+                <h6>@Localizer["ClassCode"]: ${classCode}</h6>
+                <p>@Localizer["ClassDetailsInfo"]</p>
+                <p>@Localizer["ClassDetailsInclude"]</p>
                 <ul>
-                    <li>Complete student list</li>
-                    <li>Lesson plan details</li>
-                    <li>Assignment information</li>
-                    <li>Performance metrics</li>
+                    <li>@Localizer["ClassDetailsStudentList"]</li>
+                    <li>@Localizer["ClassDetailsLessonPlan"]</li>
+                    <li>@Localizer["ClassDetailsAssignments"]</li>
+                    <li>@Localizer["ClassDetailsMetrics"]</li>
                 </ul>
             </div>
         `);
@@ -356,7 +358,7 @@
                 $('#classDetailsBody').html(data);
             },
             error: function() {
-                $('#classDetailsBody').html('<div class="alert alert-danger">Error loading class details.</div>');
+                $('#classDetailsBody').html('<div class="alert alert-danger">@Localizer["ErrorLoadingClassDetails"]</div>');
             }
         });
         */

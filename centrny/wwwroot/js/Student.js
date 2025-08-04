@@ -1,7 +1,24 @@
-﻿$(document).ready(function () {
+﻿// Localized string helper
+function getJsString(key) {
+    var el = document.getElementById('js-localization');
+    return el ? (el.getAttribute('data-' + key) || '') : '';
+}
+
+function localizeFiltersAndButtons() {
+    $('#yearFilter').empty().append($('<option>', { value: '', text: getJsString('all-years') }));
+    $('#subjectFilter').empty().append($('<option>', { value: '', text: getJsString('all-subjects') }));
+    $('#searchBtn').text(getJsString('search'));
+    $('#searchInput').attr('placeholder', getJsString('search-placeholder'));
+}
+
+$(document).ready(function () {
     let currentPage = 1;
     let pageSize = 10;
     let totalCount = 0;
+    let studentSearchTimeout = null;
+    let lastStudentSearchVal = '';
+
+    localizeFiltersAndButtons();
 
     function formatTime(dateStr) {
         if (!dateStr) return '';
@@ -17,9 +34,8 @@
 
     function loadFilters() {
         $.get('/StudentLearn/GetFilterOptions', function (res) {
-            $('#yearFilter').empty().append($('<option>', { value: '', text: 'All Years' }));
-            $('#subjectFilter').empty().append($('<option>', { value: '', text: 'All Subjects' }));
-            $('#studentFilter').empty().append($('<option>', { value: '', text: 'All Students' }));
+            $('#yearFilter').empty().append($('<option>', { value: '', text: getJsString('all-years') }));
+            $('#subjectFilter').empty().append($('<option>', { value: '', text: getJsString('all-subjects') }));
 
             res.years.forEach(function (y) {
                 $('#yearFilter').append($('<option>', { value: y.yearCode, text: y.yearName }));
@@ -27,16 +43,16 @@
             res.subjects.forEach(function (s) {
                 $('#subjectFilter').append($('<option>', { value: s.subjectCode, text: s.subjectName }));
             });
-            res.students.forEach(function (s) {
-                $('#studentFilter').append($('<option>', { value: s.studentCode, text: s.studentName }));
-            });
+
+            // Set filters and search button/placeholder in case of reload
+            $('#searchBtn').text(getJsString('search'));
+            $('#searchInput').attr('placeholder', getJsString('search-placeholder'));
         });
     }
 
     function loadTable(page = 1) {
         let yearCode = $('#yearFilter').val();
         let subjectCode = $('#subjectFilter').val();
-        let studentCode = $('#studentFilter').val();
         let search = $('#searchInput').val();
 
         $.get('/StudentLearn/GetGroupedLearnData', {
@@ -44,7 +60,6 @@
             pageSize: pageSize,
             yearCode: yearCode || null,
             subjectCode: subjectCode || null,
-            studentCode: studentCode || null,
             search: search || null
         }, function (res) {
             totalCount = res.totalCount;
@@ -58,19 +73,18 @@
         html += '<table class="gradient-table">';
         html += `<thead><tr>
             <th>#</th>
-            <th>Student Code</th>
-            <th>Student</th>
-            <th>Year</th>
-            <th>Subject</th>
-            <th>Teacher</th>
-            <th>Branch</th>
-            <th>Schedule</th>
-            <th>Online</th>
-            <th>Active</th>
-            <th>Actions</th>
+            <th>${getJsString('student')}</th>
+            <th>${getJsString('year')}</th>
+            <th>${getJsString('subject')}</th>
+            <th>${getJsString('teacher')}</th>
+            <th>${getJsString('branch')}</th>
+            <th>${getJsString('schedule')}</th>
+            <th>${getJsString('online')}</th>
+            <th>${getJsString('active')}</th>
+            <th>${getJsString('actions')}</th>
         </tr></thead><tbody>`;
         if (data.length === 0) {
-            html += '<tr><td colspan="11" class="text-center">No records found.</td></tr>';
+            html += `<tr><td colspan="11" class="text-center">${getJsString('no-records')}</td></tr>`;
         } else {
             data.forEach(function (student, idx) {
                 if (student.subjects && student.subjects.length > 0) {
@@ -78,11 +92,9 @@
                         html += '<tr>';
                         if (sIdx === 0) {
                             html += `<td rowspan="${student.subjects.length}">${idx + 1 + ((currentPage - 1) * pageSize)}</td>`;
-                            html += `<td rowspan="${student.subjects.length}">${student.studentCode || ''}</td>`;
                             html += `<td rowspan="${student.subjects.length}" class="bold-rendered">${student.studentName || ''}</td>`;
                             html += `<td rowspan="${student.subjects.length}">${student.yearName || ''}</td>`;
                         }
-                        // Subject as plain black text if subject is philosophy (any case), otherwise badge
                         let subjText = (subj.subjectName && subj.subjectName.toLowerCase().includes("philosophy"))
                             ? `<span class="subject-text">${subj.subjectName}</span>`
                             : `<span class="badge">${subj.subjectName || ''}</span>`;
@@ -92,19 +104,16 @@
                         html += `<td style="color: var(--text-dark);">${subj.scheduleDay || ''} ${formatTime(subj.scheduleStart)}-${formatTime(subj.scheduleEnd)}</td>`;
 
                         if (sIdx === 0) {
-                            html += `<td rowspan="${student.subjects.length}">${student.isOnline ? "Yes" : "No"}</td>`;
-                            html += `<td rowspan="${student.subjects.length}">${student.isActive ? "Yes" : "No"}</td>`;
-                            // Actions cell: only once per student
+                            html += `<td rowspan="${student.subjects.length}">${student.isOnline ? getJsString('yes') : getJsString('no')}</td>`;
+                            html += `<td rowspan="${student.subjects.length}">${student.isActive ? getJsString('yes') : getJsString('no')}</td>`;
                             html += `<td rowspan="${student.subjects.length}">`;
-                            // Add Subject button
                             html += `<button class="modern-btn add addSubjectBtn" style="background: var(--primary-gradient) !important; margin-bottom:6px;" data-studentcode="${student.studentCode}" data-yearcode="${student.yearCode}">
-                                        <i class="fas fa-plus"></i> Add Subject
+                                        <i class="fas fa-plus"></i> ${getJsString('add-subject')}
                                     </button>`;
-                            // Change time for all subjects (one button per student)
                             html += `<br><button class="modern-btn edit-btn editLearnAllBtn" style="background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important; padding: 0.3em 1em; font-size: 0.95em; margin-top:3px;"
                                 data-studentcode="${student.studentCode}" 
                                 data-yearcode="${student.yearCode}">
-                                    <i class="fas fa-clock"></i> Change time
+                                    <i class="fas fa-clock"></i> ${getJsString('change-time')}
                             </button>`;
                             html += `</td>`;
                         }
@@ -113,15 +122,14 @@
                 } else {
                     html += '<tr>';
                     html += `<td>${idx + 1 + ((currentPage - 1) * pageSize)}</td>`;
-                    html += `<td>${student.studentCode || ''}</td>`;
                     html += `<td class="bold-rendered">${student.studentName || ''}</td>`;
                     html += `<td>${student.yearName || ''}</td>`;
-                    html += '<td colspan="4" class="text-center text-muted">No subjects</td>';
-                    html += `<td>${student.isOnline ? "Yes" : "No"}</td>`;
-                    html += `<td>${student.isActive ? "Yes" : "No"}</td>`;
+                    html += `<td colspan="4" class="text-center text-muted">${getJsString('no-subjects')}</td>`;
+                    html += `<td>${student.isOnline ? getJsString('yes') : getJsString('no')}</td>`;
+                    html += `<td>${student.isActive ? getJsString('yes') : getJsString('no')}</td>`;
                     html += `<td>
                         <button class="modern-btn add addSubjectBtn" style="background: var(--primary-gradient) !important;" data-studentcode="${student.studentCode}" data-yearcode="${student.yearCode}">
-                            <i class="fas fa-plus"></i> Add Subject
+                            <i class="fas fa-plus"></i> ${getJsString('add-subject')}
                         </button>
                     </td>`;
                     html += '</tr>';
@@ -158,13 +166,70 @@
         loadTable(currentPage);
     });
 
-    $('#yearFilter, #subjectFilter, #studentFilter').change(function () {
+    $('#yearFilter, #subjectFilter').change(function () {
         currentPage = 1;
         loadTable(currentPage);
     });
 
+    // --- Student search dynamic filtering ---
+    // Remove any dropdown for students if present in HTML
+    $('#studentFilter').parent().remove();
+
+    // Dynamic search-as-you-type for students (auto-complete dropdown)
+    $('#searchInput').on('input', function () {
+        let val = $(this).val();
+        if (val === lastStudentSearchVal) return;
+        lastStudentSearchVal = val;
+        clearTimeout(studentSearchTimeout);
+        if (val.length === 0) {
+            $('#studentSearchDropdown').remove();
+            return;
+        }
+        studentSearchTimeout = setTimeout(function () {
+            $.get('/StudentLearn/SearchStudents', { term: val }, function (students) {
+                $('#studentSearchDropdown').remove();
+                if (students && students.length > 0) {
+                    let dropdown = $('<div id="studentSearchDropdown" class="autocomplete-dropdown"></div>');
+                    students.forEach(function (stu) {
+                        dropdown.append('<div class="autocomplete-item" data-code="' + stu.studentCode + '">' + stu.studentName + '</div>');
+                    });
+                    let inputOffset = $('#searchInput').offset();
+                    dropdown.css({
+                        position: 'absolute',
+                        left: inputOffset.left,
+                        top: inputOffset.top + $('#searchInput').outerHeight(),
+                        width: $('#searchInput').outerWidth(),
+                        'z-index': 10000,
+                        background: '#fff',
+                        border: '1px solid #ccc',
+                        'max-height': '220px',
+                        overflow: 'auto'
+                    });
+                    $('body').append(dropdown);
+                }
+            });
+        }, 200);
+    });
+
+    // Select student from dropdown
+    $(document).on('click', '.autocomplete-item', function () {
+        let name = $(this).text();
+        $('#searchInput').val(name);
+        $('#studentSearchDropdown').remove();
+        currentPage = 1;
+        loadTable(currentPage);
+    });
+
+    // Hide dropdown if clicking elsewhere
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#searchInput, #studentSearchDropdown').length) {
+            $('#studentSearchDropdown').remove();
+        }
+    });
+
     $('#searchInput').keypress(function (e) {
         if (e.which === 13) {
+            $('#studentSearchDropdown').remove();
             currentPage = 1;
             loadTable(currentPage);
         }
@@ -185,14 +250,14 @@
             $('#addSubjectModal input[name=RootCode]').val(res.rootCode);
 
             let $subject = $('#addSubjectModal select[name=SubjectCode]');
-            $subject.empty().append($('<option>', { value: '', text: 'Choose Subject' }));
+            $subject.empty().append($('<option>', { value: '', text: getJsString('choose-subject') }));
             res.subjects.forEach(function (s) {
                 $subject.append($('<option>', { value: s.subjectCode, text: s.subjectName }));
             });
 
-            $('#addSubjectModal select[name=TeacherCode]').empty().append($('<option>', { value: '', text: 'Choose Teacher' }));
-            $('#addSubjectModal select[name=BranchCode]').empty().append($('<option>', { value: '', text: 'Choose Branch' }));
-            $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: 'Choose Schedule' }));
+            $('#addSubjectModal select[name=TeacherCode]').empty().append($('<option>', { value: '', text: getJsString('choose-teacher') }));
+            $('#addSubjectModal select[name=BranchCode]').empty().append($('<option>', { value: '', text: getJsString('choose-branch') }));
+            $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: getJsString('choose-schedule') }));
 
             $('#addSubjectModal input[name=IsOnline]').prop('checked', false);
 
@@ -207,12 +272,12 @@
 
         $.get('/StudentLearn/GetTeachersForSubject', { subjectCode: subjectCode, yearCode: yearCode }, function (res) {
             let $teacher = $('#addSubjectModal select[name=TeacherCode]');
-            $teacher.empty().append($('<option>', { value: '', text: 'Choose Teacher' }));
+            $teacher.empty().append($('<option>', { value: '', text: getJsString('choose-teacher') }));
             res.teachers.forEach(function (t) {
                 $teacher.append($('<option>', { value: t.teacherCode, text: t.teacherName }));
             });
-            $('#addSubjectModal select[name=BranchCode]').empty().append($('<option>', { value: '', text: 'Choose Branch' }));
-            $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: 'Choose Schedule' }));
+            $('#addSubjectModal select[name=BranchCode]').empty().append($('<option>', { value: '', text: getJsString('choose-branch') }));
+            $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: getJsString('choose-schedule') }));
         });
     });
 
@@ -223,11 +288,11 @@
 
         $.get('/StudentLearn/GetBranchesForSubjectTeacher', { subjectCode: subjectCode, teacherCode: teacherCode, yearCode: yearCode }, function (res) {
             let $branch = $('#addSubjectModal select[name=BranchCode]');
-            $branch.empty().append($('<option>', { value: '', text: 'Choose Branch' }));
+            $branch.empty().append($('<option>', { value: '', text: getJsString('choose-branch') }));
             res.branches.forEach(function (b) {
                 $branch.append($('<option>', { value: b.branchCode, text: b.branchName }));
             });
-            $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: 'Choose Schedule' }));
+            $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: getJsString('choose-schedule') }));
         });
     });
 
@@ -238,7 +303,7 @@
 
         $.get('/StudentLearn/GetSchedulesForSubjectTeacherBranch', { subjectCode: subjectCode, teacherCode: teacherCode, branchCode: branchCode }, function (res) {
             let $schedule = $('#addSubjectModal select[name=ScheduleCode]');
-            $schedule.empty().append($('<option>', { value: '', text: 'Choose Schedule' }));
+            $schedule.empty().append($('<option>', { value: '', text: getJsString('choose-schedule') }));
             res.schedules.forEach(function (s) {
                 $schedule.append($('<option>', {
                     value: s.scheduleCode,
@@ -256,7 +321,7 @@
                 $('#addSubjectModal').modal('hide');
                 loadTable(currentPage);
             } else {
-                alert(res.message || "Failed to add subject.");
+                alert(res.message || getJsString('failed-to-add'));
             }
         });
     });
@@ -265,12 +330,11 @@
     $(document).on('click', '.editLearnAllBtn', function () {
         let studentCode = $(this).data('studentcode');
         let yearCode = $(this).data('yearcode');
-        // Fetch all subjects and their schedules for this student in this year
         $.get('/StudentLearn/GetStudentSubjectsForYear', { studentCode, yearCode }, function (res) {
             let html = '<form id="editAllSchedulesForm">';
             html += '<input type="hidden" name="StudentCode" value="' + studentCode + '"/>';
             html += '<input type="hidden" name="YearCode" value="' + yearCode + '"/>';
-            html += '<table class="table table-bordered"><thead><tr><th>Subject</th><th>Current Schedule</th><th>New Schedule</th></tr></thead><tbody>';
+            html += `<table class="table table-bordered"><thead><tr><th>${getJsString('subject')}</th><th>${getJsString('current-schedule') || 'Current Schedule'}</th><th>${getJsString('new-schedule') || 'New Schedule'}</th></tr></thead><tbody>`;
             (res.subjects || []).forEach(function (subj) {
                 html += '<tr>';
                 html += '<td>' + subj.subjectName + '<input type="hidden" name="SubjectCodes[]" value="' + subj.subjectCode + '"/></td>';
@@ -285,7 +349,7 @@
                 html += '</tr>';
             });
             html += '</tbody></table>';
-            html += '<button type="submit" class="modern-btn edit-btn">Save</button>';
+            html += `<button type="submit" class="modern-btn edit-btn">${getJsString('save')}</button>`;
             html += '</form>';
             $('#editLearnModalBody').html(html);
             $('#editLearnModal').modal('show');
@@ -299,7 +363,7 @@
                 $('#editLearnModal').modal('hide');
                 loadTable(currentPage);
             } else {
-                alert(res.message || "Failed to update schedules.");
+                alert(res.message || getJsString('failed-to-update'));
             }
         });
     });
@@ -317,13 +381,13 @@
 
             if (res.isCenter) {
                 html += `<div class="form-group">
-                    <label>Teacher</label>
+                    <label>${getJsString('teacher')}</label>
                     <select name="TeacherCode" class="form-control modern-input styled-select" required>
                         ${res.teachers.map(t => `<option value="${t.teacherCode}" ${t.teacherCode == res.selectedTeacher ? 'selected' : ''}>${t.teacherName}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Schedule</label>
+                    <label>${getJsString('schedule')}</label>
                     <select name="ScheduleCode" class="form-control modern-input styled-select" required>
                         ${res.schedules.map(s => `<option value="${s.scheduleCode}" ${s.scheduleCode == res.selectedSchedule ? 'selected' : ''}>${(s.dayOfWeek || '')} ${formatTime(s.startTime)}-${formatTime(s.endTime)}</option>`).join('')}
                     </select>
@@ -331,7 +395,7 @@
             } else {
                 html += `<input type="hidden" name="TeacherCode" value="${res.selectedTeacher}"/>
                 <div class="form-group">
-                    <label>Schedule</label>
+                    <label>${getJsString('schedule')}</label>
                     <select name="ScheduleCode" class="form-control modern-input styled-select" required>
                         ${res.schedules.map(s => `<option value="${s.scheduleCode}" ${s.scheduleCode == res.selectedSchedule ? 'selected' : ''}>${(s.dayOfWeek || '')} ${formatTime(s.startTime)}-${formatTime(s.endTime)}</option>`).join('')}
                     </select>
@@ -367,7 +431,7 @@
                 $('#editLearnModal').modal('hide');
                 loadTable(currentPage);
             } else {
-                alert(res.message || "Failed to update.");
+                alert(res.message || getJsString('failed-to-update'));
             }
         });
     });
@@ -375,6 +439,5 @@
     loadFilters();
     loadTable(currentPage);
 
-    // Expose loadTable globally for debugging or external calls
     window.loadTable = loadTable;
 });

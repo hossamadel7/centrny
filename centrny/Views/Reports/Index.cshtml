@@ -1,16 +1,62 @@
-﻿@{
-    ViewData["Title"] = "Reports Dashboard";
+﻿@using Microsoft.Extensions.Localization
+@inject IStringLocalizerFactory LocalizerFactory
+@{
+    var Localizer = LocalizerFactory.Create("Reports", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    ViewData["Title"] = Localizer["ReportsDashboard"];
     var isTeacher = ViewBag.IsTeacher as bool? ?? false;
     var branchCode = ViewBag.BranchCode as int?;
     var rootCode = ViewBag.RootCode as int?;
 }
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12 text-center mb-4">
-            <h2><i class="fas fa-chart-bar"></i> Reports Dashboard</h2>
-            <p class="text-muted">Comprehensive reporting system for educational management</p>
-        </div>
+<link href="~/css/styles-variables.css" rel="stylesheet" />
+<link href="~/css/Hamody.css" rel="stylesheet" />
+<style>
+    /* Button color classes matching icon colors */
+    .btn-report-primary {
+        background: var(--primary-gradient-horizontal) !important;
+        color: #fff !important;
+    }
+
+    .btn-report-info {
+        background: var(--info-gradient) !important;
+        color: #fff !important;
+    }
+
+    .btn-report-success {
+        background: var(--success-gradient) ;
+        color: #fff !important;
+    }
+
+    .btn-report-warning {
+        background: var(--warning-gradient);
+        color: #fff !important;
+    }
+
+    .btn-report-secondary {
+        background: #636e72 !important;
+        color: #fff !important;
+    }
+
+    .btn-report-muted {
+        background: #b2bec3;
+        color: #fff !important;
+    }
+    /* Optionally, for green earnings card */
+    .btn-report-green {
+        background: linear-gradient(90deg, #00b894 0%, #55efc4 100%) !important;
+        color: #fff !important;
+    }
+</style>
+
+<div class="container mt-4" style="max-width:1550px;">
+    <!-- Unified Gradient Header -->
+    <div class="questions-header">
+        <h2>
+            <i class="fas fa-chart-bar"></i> @Localizer["ReportsDashboard"]
+        </h2>
+        <p class="text-muted mt-2" style="font-size:1.2em;">
+            @Localizer["ReportsDashboardSubtitle"]
+        </p>
     </div>
 
     <div class="row">
@@ -19,97 +65,101 @@
             <!-- Center Admin Reports -->
             <div class="col-12 mb-4">
                 <h3 class="text-primary mb-3">
-                    <i class="fas fa-building"></i> Center Management Reports
+                    <i class="fas fa-building"></i> @Localizer["CenterManagementReports"]
                 </h3>
             </div>
 
-            <!-- Financial Reports -->
+            <!-- Financial Reports (Primary) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-dollar-sign text-primary fa-2x"></i>
                             </div>
-                            <span class="badge bg-primary">Revenue</span>
+                            <span class="badge bg-primary">@Localizer["Revenue"]</span>
                         </div>
-                        <h5 class="card-title">Financial Summary</h5>
+                        <h5 class="card-title">@Localizer["FinancialSummary"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Revenue, expenses, and profitability analysis<br>
-                            <small class="text-muted">Filter by:</small> Date range, branch, subject<br>
-                            <small class="text-muted">Export:</small> PDF, Excel formats available
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["FinancialSummaryDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["FinancialSummaryFilters"]<br>
+                            <small class="text-muted">@Localizer["Export"]:</small> @Localizer["ExportOptions"]
                         </p>
-                        <a href="@Url.Action("FinancialSummary", "Reports")" class="btn btn-primary">
-                            <i class="fas fa-chart-line"></i> View Report
+                        <a href="@Url.Action("FinancialSummary", "Reports")"
+                           class="modern-btn w-100 btn-report-primary">
+                            <i class="fas fa-chart-line"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Student Enrollment Report -->
+            <!-- Student Enrollment Report (Info) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-users text-info fa-2x"></i>
                             </div>
-                            <span class="badge bg-info">Students</span>
+                            <span class="badge bg-info">@Localizer["Students"]</span>
                         </div>
-                        <h5 class="card-title">Student Enrollment</h5>
+                        <h5 class="card-title">@Localizer["StudentEnrollment"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Student registration and enrollment trends<br>
-                            <small class="text-muted">Filter by:</small> Branch, subject, year, enrollment date<br>
-                            <small class="text-muted">Includes:</small> Contact info, subscription status
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["StudentEnrollmentDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["StudentEnrollmentFilters"]<br>
+                            <small class="text-muted">@Localizer["Includes"]:</small> @Localizer["StudentEnrollmentIncludes"]
                         </p>
-                        <a href="@Url.Action("StudentEnrollmentReport", "Reports")" class="btn btn-info">
-                            <i class="fas fa-user-graduate"></i> View Report
+                        <a href="@Url.Action("StudentEnrollmentReport", "Reports")"
+                           class="modern-btn w-100 btn-report-info">
+                            <i class="fas fa-user-graduate"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Teacher Performance Report -->
+            <!-- Teacher Performance Report (Success) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-chalkboard-teacher text-success fa-2x"></i>
                             </div>
-                            <span class="badge bg-success">Performance</span>
+                            <span class="badge bg-success">@Localizer["Performance"]</span>
                         </div>
-                        <h5 class="card-title">Teacher Performance</h5>
+                        <h5 class="card-title">@Localizer["TeacherPerformance"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Teaching effectiveness and attendance rates<br>
-                            <small class="text-muted">Filter by:</small> Teacher, subject, date range<br>
-                            <small class="text-muted">Metrics:</small> Attendance rates, earnings, class count
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["TeacherPerformanceDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["TeacherPerformanceFilters"]<br>
+                            <small class="text-muted">@Localizer["Metrics"]:</small> @Localizer["TeacherPerformanceMetrics"]
                         </p>
-                        <a href="@Url.Action("TeacherPerformanceReport", "Reports")" class="btn btn-success">
-                            <i class="fas fa-award"></i> View Report
+                        <a href="@Url.Action("TeacherPerformanceReport", "Reports")"
+                           class="modern-btn w-100 btn-report-success">
+                            <i class="fas fa-award"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Exam Performance Report -->
+            <!-- Exam Performance Report (Warning) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-clipboard-list text-warning fa-2x"></i>
                             </div>
-                            <span class="badge bg-warning text-dark">Academic</span>
+                            <span class="badge bg-warning text-dark">@Localizer["Academic"]</span>
                         </div>
-                        <h5 class="card-title">Exam Performance</h5>
+                        <h5 class="card-title">@Localizer["ExamPerformance"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Overall exam results and success rates<br>
-                            <small class="text-muted">Filter by:</small> Branch, subject, teacher, exam type<br>
-                            <small class="text-muted">Analytics:</small> Pass rates, average scores, trends
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["ExamPerformanceDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["ExamPerformanceFilters"]<br>
+                            <small class="text-muted">@Localizer["Analytics"]:</small> @Localizer["ExamPerformanceAnalytics"]
                         </p>
-                        <a href="@Url.Action("ExamPerformanceReport", "Reports")" class="btn btn-warning text-dark">
-                            <i class="fas fa-chart-pie"></i> View Report
+                        <a href="@Url.Action("ExamPerformanceReport", "Reports")"
+                           class="modern-btn w-100 btn-report-warning" style="color: #363636;">
+                            <i class="fas fa-chart-pie"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
@@ -121,74 +171,77 @@
             <!-- Teacher Reports -->
             <div class="col-12 mb-4">
                 <h3 class="text-primary mb-3">
-                    <i class="fas fa-user-tie"></i> My Teaching Reports
+                    <i class="fas fa-user-tie"></i> @Localizer["MyTeachingReports"]
                 </h3>
             </div>
 
-            <!-- My Classes Report -->
+            <!-- My Classes Report (Primary) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-calendar-alt text-primary fa-2x"></i>
                             </div>
-                            <span class="badge bg-primary">Classes</span>
+                            <span class="badge bg-primary">@Localizer["Classes"]</span>
                         </div>
-                        <h5 class="card-title">My Classes</h5>
+                        <h5 class="card-title">@Localizer["MyClasses"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Your scheduled and completed classes<br>
-                            <small class="text-muted">Filter by:</small> Date range, subject<br>
-                            <small class="text-muted">Includes:</small> Attendance rates, earnings
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["MyClassesDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["MyClassesFilters"]<br>
+                            <small class="text-muted">@Localizer["Includes"]:</small> @Localizer["MyClassesIncludes"]
                         </p>
-                        <a href="@Url.Action("MyClassesReport", "Reports")" class="btn btn-primary">
-                            <i class="fas fa-calendar-check"></i> View Report
+                        <a href="@Url.Action("MyClassesReport", "Reports")"
+                           class="modern-btn w-100 btn-report-primary">
+                            <i class="fas fa-calendar-check"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- My Student Performance -->
+            <!-- My Student Performance (Info) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-user-graduate text-info fa-2x"></i>
                             </div>
-                            <span class="badge bg-info">Students</span>
+                            <span class="badge bg-info">@Localizer["Students"]</span>
                         </div>
-                        <h5 class="card-title">My Students</h5>
+                        <h5 class="card-title">@Localizer["MyStudents"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Performance of your enrolled students<br>
-                            <small class="text-muted">Filter by:</small> Subject, year level<br>
-                            <small class="text-muted">Includes:</small> Attendance rates, contact info
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["MyStudentsDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["MyStudentsFilters"]<br>
+                            <small class="text-muted">@Localizer["Includes"]:</small> @Localizer["MyStudentsIncludes"]
                         </p>
-                        <a href="@Url.Action("MyStudentPerformance", "Reports")" class="btn btn-info">
-                            <i class="fas fa-chart-line"></i> View Report
+                        <a href="@Url.Action("MyStudentPerformance", "Reports")"
+                           class="modern-btn w-100 btn-report-info">
+                            <i class="fas fa-chart-line"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- My Earnings Report -->
+            <!-- My Earnings Report (Green) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <i class="fas fa-money-bill-wave text-success fa-2x"></i>
+                                <i class="fas fa-money-bill-wave" style="color:#00b894; font-size:2em"></i>
                             </div>
-                            <span class="badge bg-success">Earnings</span>
+                            <span class="badge" style="background:linear-gradient(90deg,#00b894,#55efc4);">@Localizer["Earnings"]</span>
                         </div>
-                        <h5 class="card-title">My Earnings</h5>
+                        <h5 class="card-title">@Localizer["MyEarnings"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">View:</small> Your teaching earnings and payments<br>
-                            <small class="text-muted">Filter by:</small> Date range, subject<br>
-                            <small class="text-muted">Breakdown:</small> Per class, monthly, quarterly totals
+                            <small class="text-muted">@Localizer["View"]:</small> @Localizer["MyEarningsDesc"]<br>
+                            <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["MyEarningsFilters"]<br>
+                            <small class="text-muted">@Localizer["Breakdown"]:</small> @Localizer["MyEarningsBreakdown"]
                         </p>
-                        <a href="@Url.Action("MyEarningsReport", "Reports")" class="btn btn-success">
-                            <i class="fas fa-dollar-sign"></i> View Report
+                        <a href="@Url.Action("MyEarningsReport", "Reports")"
+                           class="modern-btn w-100 btn-report-green">
+                            <i class="fas fa-dollar-sign"></i> @Localizer["ViewReport"]
                         </a>
                     </div>
                 </div>
@@ -198,28 +251,29 @@
         <!-- Common Reports Section -->
         <div class="col-12 mb-4 mt-4">
             <h3 class="text-primary mb-3">
-                <i class="fas fa-clipboard-check"></i> Attendance & Class Reports
+                <i class="fas fa-clipboard-check"></i> @Localizer["AttendanceAndClassReports"]
             </h3>
         </div>
 
-        <!-- Class Attendance Report -->
+        <!-- Class Attendance Report (Secondary) -->
         <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <i class="fas fa-clipboard-check text-secondary fa-2x"></i>
                         </div>
-                        <span class="badge bg-secondary">Attendance</span>
+                        <span class="badge bg-secondary">@Localizer["Attendance"]</span>
                     </div>
-                    <h5 class="card-title">Class Attendance</h5>
+                    <h5 class="card-title">@Localizer["ClassAttendance"]</h5>
                     <p class="card-text">
-                        <small class="text-muted">Compare:</small> Enrolled vs attended students per class<br>
-                        <small class="text-muted">Filter by:</small> Teacher, subject, specific date<br>
-                        <small class="text-muted">Shows:</small> Present/absent lists with contact info
+                        <small class="text-muted">@Localizer["Compare"]:</small> @Localizer["ClassAttendanceDesc"]<br>
+                        <small class="text-muted">@Localizer["FilterBy"]:</small> @Localizer["ClassAttendanceFilters"]<br>
+                        <small class="text-muted">@Localizer["Shows"]:</small> @Localizer["ClassAttendanceShows"]
                     </p>
-                    <a href="@Url.Action("ClassAttendanceReport", "Reports")" class="btn btn-secondary">
-                        <i class="fas fa-list-check"></i> View Report
+                    <a href="@Url.Action("ClassAttendanceReport", "Reports")"
+                       class="modern-btn w-100 btn-report-secondary">
+                        <i class="fas fa-list-check"></i> @Localizer["ViewReport"]
                     </a>
                 </div>
             </div>
@@ -227,24 +281,24 @@
 
         @if (!isTeacher)
         {
-            <!-- Coming Soon Reports -->
+            <!-- Coming Soon Reports (Light/Muted) -->
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <i class="fas fa-building text-muted fa-2x"></i>
                             </div>
-                            <span class="badge bg-light text-dark">Coming Soon</span>
+                            <span class="badge bg-light text-dark">@Localizer["ComingSoon"]</span>
                         </div>
-                        <h5 class="card-title text-muted">Branch Performance</h5>
+                        <h5 class="card-title text-muted">@Localizer["BranchPerformance"]</h5>
                         <p class="card-text">
-                            <small class="text-muted">Compare:</small> Performance across all branches<br>
-                            <small class="text-muted">Metrics:</small> Revenue, enrollment, attendance<br>
-                            <small class="text-muted">Period:</small> Monthly, quarterly, yearly
+                            <small class="text-muted">@Localizer["Compare"]:</small> @Localizer["BranchPerformanceDesc"]<br>
+                            <small class="text-muted">@Localizer["Metrics"]:</small> @Localizer["BranchPerformanceMetrics"]<br>
+                            <small class="text-muted">@Localizer["Period"]:</small> @Localizer["BranchPerformancePeriod"]
                         </p>
-                        <button class="btn btn-outline-secondary" disabled>
-                            <i class="fas fa-chart-bar"></i> Coming Soon
+                        <button class="modern-btn w-100 btn-report-muted" disabled>
+                            <i class="fas fa-chart-bar"></i> @Localizer["ComingSoon"]
                         </button>
                     </div>
                 </div>
@@ -256,27 +310,27 @@
     <div class="row mt-5">
         <div class="col-12">
             <h3 class="text-primary mb-3">
-                <i class="fas fa-tachometer-alt"></i> Quick Statistics
+                <i class="fas fa-tachometer-alt"></i> @Localizer["QuickStatistics"]
             </h3>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
+            <div class="card text-center" style="border-radius: 18px;">
                 <div class="card-body">
                     <div class="text-primary mb-2">
                         <i class="fas fa-users fa-2x"></i>
                     </div>
-                    <h5 class="card-title">Active Students</h5>
+                    <h5 class="card-title">@Localizer["ActiveStudents"]</h5>
                     <p class="text-primary fs-4" id="totalStudents">Loading...</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
+            <div class="card text-center" style="border-radius: 18px;">
                 <div class="card-body">
                     <div class="text-success mb-2">
                         <i class="fas fa-calendar-check fa-2x"></i>
                     </div>
-                    <h5 class="card-title">Classes This Month</h5>
+                    <h5 class="card-title">@Localizer["ClassesThisMonth"]</h5>
                     <p class="text-success fs-4" id="monthlyClasses">Loading...</p>
                 </div>
             </div>
@@ -284,24 +338,24 @@
         @if (!isTeacher)
         {
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card text-center">
+                <div class="card text-center" style="border-radius: 18px;">
                     <div class="card-body">
                         <div class="text-info mb-2">
                             <i class="fas fa-dollar-sign fa-2x"></i>
                         </div>
-                        <h5 class="card-title">Monthly Revenue</h5>
+                        <h5 class="card-title">@Localizer["MonthlyRevenue"]</h5>
                         <p class="text-info fs-4" id="monthlyRevenue">Loading...</p>
                     </div>
                 </div>
             </div>
         }
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
+            <div class="card text-center" style="border-radius: 18px;">
                 <div class="card-body">
                     <div class="text-warning mb-2">
                         <i class="fas fa-percentage fa-2x"></i>
                     </div>
-                    <h5 class="card-title">Attendance Rate</h5>
+                    <h5 class="card-title">@Localizer["AttendanceRate"]</h5>
                     <p class="text-warning fs-4" id="attendanceRate">Loading...</p>
                 </div>
             </div>

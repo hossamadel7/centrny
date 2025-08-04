@@ -1,4 +1,10 @@
-﻿// AjaxClassAttendanceReport.js - Full AJAX Implementation
+﻿// AjaxClassAttendanceReport.js - Full AJAX Implementation with Localization
+
+// Localized string helper
+function getJsString(key) {
+    var el = document.getElementById('js-localization');
+    return el ? (el.getAttribute('data-' + key) || '') : '';
+}
 
 let currentFilters = {
     teacherCode: '',
@@ -13,7 +19,22 @@ let currentData = null;
 
 $(document).ready(function () {
     initializeAjaxAttendanceReport();
+    localizeStaticLabels();
 });
+
+function localizeStaticLabels() {
+    $('#attendance-title').text(getJsString('title'));
+    $('#attendance-subtitle').text(getJsString('subtitle'));
+    $('#teacher-label').text(getJsString('teacher'));
+    $('#subject-label').text(getJsString('subject'));
+    $('#date-label').text(getJsString('date'));
+    $('#apply-label').text(getJsString('apply'));
+    $('#clear-label').text(getJsString('clear'));
+    $('#loading-text').text(getJsString('loading'));
+    $('#no-classes-title').text(getJsString('no-classes'));
+    $('#no-classes-text').text(getJsString('no-classes-text'));
+    $('#reset-label').text(getJsString('reset'));
+}
 
 /**
  * Initialize the AJAX attendance report
@@ -103,11 +124,11 @@ function loadAttendanceData() {
         type: 'POST',
         data: currentFilters,
         success: function (data) {
-           
+
             hideLoading();
 
             if (data.error) {
-                showError('Error loading data: ' + data.error);
+                showError(getJsString('loading-error-text') + ' ' + data.error);
                 return;
             }
 
@@ -124,7 +145,7 @@ function loadAttendanceData() {
         error: function (xhr, status, error) {
             console.error("AJAX Error:", xhr.responseText);
             hideLoading();
-            showError('Failed to load attendance data: ' + error);
+            showError(getJsString('loading-error-text') + ' ' + error);
         }
     });
 }
@@ -133,7 +154,7 @@ function loadAttendanceData() {
  */
 function renderAttendanceData(data) {
     const container = $('#attendanceContainer');
-    
+
     container.empty();
 
     if (!data.attendanceDetails || data.attendanceDetails.length === 0) {
@@ -144,9 +165,9 @@ function renderAttendanceData(data) {
     $('#noDataMessage').hide();
 
     data.attendanceDetails.forEach((classDetail, index) => {
-      
+
         const classCard = createClassCard(classDetail, index);
-     
+
         container.append(classCard);
     });
 
@@ -195,25 +216,25 @@ function createClassCard(classDetail, index) {
                         <div class="class-stats-grid">
                             <div class="stat-item">
                                 <div class="stat-number">${classDetail.enrolledCount}</div>
-                                <div class="stat-label">Enrolled</div>
+                                <div class="stat-label">${getJsString('enrolled')}</div>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-number">${classDetail.presentCount}</div>
-                                <div class="stat-label">Present</div>
+                                <div class="stat-label">${getJsString('present')}</div>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-number">${classDetail.absentCount}</div>
-                                <div class="stat-label">Absent</div>
+                                <div class="stat-label">${getJsString('absent')}</div>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-number">${classDetail.attendanceRate}%</div>
-                                <div class="stat-label">Rate</div>
+                                <div class="stat-label">${getJsString('rate')}</div>
                             </div>
                         </div>
                         
                         <div class="attendance-rate-badge ${attendanceRateClass}">
                             <i class="fas fa-chart-line me-1"></i>
-                            ${classDetail.attendanceRate}% Attendance
+                            ${classDetail.attendanceRate}% ${getJsString('attendance-rate')}
                         </div>
                     </div>
                 </div>
@@ -227,7 +248,7 @@ function createClassCard(classDetail, index) {
                             <i class="fas fa-building"></i>
                         </div>
                         <div class="detail-content">
-                            <div class="detail-label">Branch</div>
+                            <div class="detail-label">${getJsString('branch')}</div>
                             <div class="detail-value">${classDetail.branchName}</div>
                         </div>
                     </div>
@@ -237,7 +258,7 @@ function createClassCard(classDetail, index) {
                             <i class="fas fa-door-open"></i>
                         </div>
                         <div class="detail-content">
-                            <div class="detail-label">Hall</div>
+                            <div class="detail-label">${getJsString('hall')}</div>
                             <div class="detail-value">${classDetail.hallName}</div>
                         </div>
                     </div>
@@ -247,8 +268,8 @@ function createClassCard(classDetail, index) {
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="detail-content">
-                            <div class="detail-label">Students</div>
-                            <div class="detail-value">${classDetail.enrolledCount} enrolled</div>
+                            <div class="detail-label">${getJsString('students')}</div>
+                            <div class="detail-value">${classDetail.enrolledCount} ${getJsString('enrolled')}</div>
                         </div>
                     </div>
                     
@@ -257,7 +278,7 @@ function createClassCard(classDetail, index) {
                             <i class="fas fa-percentage"></i>
                         </div>
                         <div class="detail-content">
-                            <div class="detail-label">Attendance</div>
+                            <div class="detail-label">${getJsString('attendance')}</div>
                             <div class="detail-value">${classDetail.presentCount}/${classDetail.enrolledCount}</div>
                         </div>
                     </div>
@@ -265,7 +286,7 @@ function createClassCard(classDetail, index) {
                 
                 <div class="class-actions">
                     <button class="enhanced-btn enhanced-btn-primary" onclick="event.stopPropagation(); viewClassStudents(${classDetail.classCode})">
-                        <i class="fas fa-users me-2"></i>Manage Attendance
+                        <i class="fas fa-users me-2"></i>${getJsString('manage-attendance')}
                     </button>
                    
                    
@@ -284,13 +305,13 @@ function contactAbsentParents(classCode) {
     const absentStudents = classData.students.filter(s => !s.isPresent && s.studentParentPhone);
 
     if (absentStudents.length === 0) {
-        showNotification('No absent students with parent phone numbers found.', 'info');
+        showNotification(getJsString('no-absent-parent-phones'), 'info');
         return;
     }
 
     // Show SMS modal for absent students
     $('#smsRecipientCount').text(absentStudents.length);
-    $('#smsMessage').val(`Dear Parent, your child was absent from today's ${classData.className} class. Please contact the school for more information.`);
+    $('#smsMessage').val(getJsString('absent-sms-default').replace('{class}', classData.className));
     $('#smsModal').modal('show');
 
     // Store the student codes for SMS sending
@@ -351,12 +372,12 @@ function toggleStudentAttendance(classCode, studentCode, isPresent) {
                 loadAttendanceData();
                 showNotification(data.message, 'success');
             } else {
-                showNotification('Error updating attendance: ' + data.error, 'error');
+                showNotification(getJsString('attendance-update-error') + ' ' + data.error, 'error');
             }
         },
         error: function (xhr, status, error) {
             hideLoading();
-            showNotification('Failed to update attendance: ' + error, 'error');
+            showNotification(getJsString('attendance-update-failed') + ' ' + error, 'error');
         }
     });
 }
@@ -430,12 +451,12 @@ function bulkMarkAttendanceForClass(classCode, studentCodes, isPresent) {
                 loadAttendanceData();
                 showNotification(data.message, 'success');
             } else {
-                showNotification('Error updating attendance: ' + data.error, 'error');
+                showNotification(getJsString('attendance-update-error') + ' ' + data.error, 'error');
             }
         },
         error: function (xhr, status, error) {
             hideLoading();
-            showNotification('Failed to update attendance: ' + error, 'error');
+            showNotification(getJsString('attendance-update-failed') + ' ' + error, 'error');
         }
     });
 }
@@ -446,7 +467,7 @@ function bulkMarkAttendanceForClass(classCode, studentCodes, isPresent) {
 function markSelectedPresent(classCode) {
     const selectedInClass = getSelectedStudentsInClass(classCode);
     if (selectedInClass.length === 0) {
-        showNotification('No students selected in this class.', 'warning');
+        showNotification(getJsString('no-selected-in-class'), 'warning');
         return;
     }
 
@@ -456,7 +477,7 @@ function markSelectedPresent(classCode) {
 function markSelectedAbsent(classCode) {
     const selectedInClass = getSelectedStudentsInClass(classCode);
     if (selectedInClass.length === 0) {
-        showNotification('No students selected in this class.', 'warning');
+        showNotification(getJsString('no-selected-in-class'), 'warning');
         return;
     }
 
@@ -468,7 +489,7 @@ function markSelectedAbsent(classCode) {
  */
 function bulkMarkAttendance(isPresent) {
     if (selectedStudents.size === 0) {
-        showNotification('No students selected.', 'warning');
+        showNotification(getJsString('no-students-selected'), 'warning');
         return;
     }
 
@@ -505,11 +526,11 @@ function bulkMarkAttendance(isPresent) {
             hideLoading();
             clearAllSelections();
             loadAttendanceData();
-            showNotification(`Attendance updated for ${selectedStudents.size} students`, 'success');
+            showNotification(getJsString('attendance-updated-for').replace('{count}', selectedStudents.size), 'success');
         })
         .catch((error) => {
             hideLoading();
-            showNotification('Error updating attendance: ' + error, 'error');
+            showNotification(getJsString('attendance-update-error') + ' ' + error, 'error');
         });
 }
 
@@ -595,12 +616,12 @@ function clearClassSelection(classCode) {
  */
 function showSmsModal() {
     if (selectedStudents.size === 0) {
-        showNotification('No students selected.', 'warning');
+        showNotification(getJsString('no-students-selected'), 'warning');
         return;
     }
 
     $('#smsRecipientCount').text(selectedStudents.size);
-    $('#smsMessage').val('Dear Parent, your child was absent from today\'s class. Please contact the school for more information.');
+    $('#smsMessage').val(getJsString('absent-sms-default-global'));
     $('#smsModal').modal('show');
 }
 
@@ -610,7 +631,7 @@ function showSmsModal() {
 function sendSmsToSelected() {
     const message = $('#smsMessage').val().trim();
     if (!message) {
-        showNotification('Please enter a message.', 'warning');
+        showNotification(getJsString('please-enter-message'), 'warning');
         return;
     }
 
@@ -635,12 +656,12 @@ function sendSmsToSelected() {
                 showNotification(data.message, 'success');
                 clearAllSelections();
             } else {
-                showNotification('Error sending SMS: ' + data.error, 'error');
+                showNotification(getJsString('sms-error') + ' ' + data.error, 'error');
             }
         },
         error: function (xhr, status, error) {
             hideLoading();
-            showNotification('Failed to send SMS: ' + error, 'error');
+            showNotification(getJsString('sms-failed') + ' ' + error, 'error');
         }
     });
 }
@@ -650,7 +671,7 @@ function sendSmsToSelected() {
  */
 function callParent(studentName, parentPhone) {
     if (!parentPhone) {
-        showNotification('No parent phone number available for ' + studentName, 'warning');
+        showNotification(getJsString('no-parent-phone-for').replace('{name}', studentName), 'warning');
         return;
     }
 
@@ -659,11 +680,11 @@ function callParent(studentName, parentPhone) {
 
 function sendSmsToParent(studentName, parentPhone) {
     if (!parentPhone) {
-        showNotification('No parent phone number available for ' + studentName, 'warning');
+        showNotification(getJsString('no-parent-phone-for').replace('{name}', studentName), 'warning');
         return;
     }
 
-    const message = encodeURIComponent(`Dear Parent, ${studentName} was absent from today's class. Please contact the school for more information.`);
+    const message = encodeURIComponent(getJsString('absent-sms-individual').replace('{name}', studentName));
     window.location.href = `sms:${parentPhone}?body=${message}`;
 }
 
@@ -681,22 +702,20 @@ function callAllAbsentParents(classCode) {
     const absentStudents = classData.Students.filter(s => !s.IsPresent && s.StudentParentPhone);
 
     if (absentStudents.length === 0) {
-        showNotification('No absent students with parent phone numbers found.', 'info');
+        showNotification(getJsString('no-absent-parent-phones'), 'info');
         return;
     }
 
-    // In a real implementation, you would integrate with a calling system
-    showNotification(`Would call ${absentStudents.length} parents of absent students`, 'info');
+    showNotification(getJsString('would-call-absent-parents').replace('{count}', absentStudents.length), 'info');
 }
 
 /**
  * Update global statistics
  */
 function updateGlobalStats(data) {
-    
     console.log("Individual class statistics are now shown in each card");
-
 }
+
 /**
  * Update pagination
  */
@@ -704,7 +723,10 @@ function updatePagination(data) {
     const startItem = ((data.currentPage - 1) * data.pageSize) + 1;  // lowercase
     const endItem = Math.min(data.currentPage * data.pageSize, data.totalCount);  // lowercase
 
-    $('#paginationInfo').text(`Showing ${startItem} to ${endItem} of ${data.totalCount} classes`);
+    $('#paginationInfo').text(getJsString('pagination-info')
+        .replace('{start}', startItem)
+        .replace('{end}', endItem)
+        .replace('{total}', data.totalCount));
 
     const paginationLinks = $('#paginationLinks');
     paginationLinks.empty();
@@ -714,7 +736,7 @@ function updatePagination(data) {
         if (data.currentPage > 1) {  // lowercase
             paginationLinks.append(`
                 <li class="page-item">
-                    <a class="page-link" href="#" onclick="goToPage(${data.currentPage - 1})">Previous</a>
+                    <a class="page-link" href="#" onclick="goToPage(${data.currentPage - 1})">${getJsString('previous')}</a>
                 </li>
             `);
         }
@@ -735,7 +757,7 @@ function updatePagination(data) {
         if (data.currentPage < data.totalPages) {
             paginationLinks.append(`
                 <li class="page-item">
-                    <a class="page-link" href="#" onclick="goToPage(${data.currentPage + 1})">Next</a>
+                    <a class="page-link" href="#" onclick="goToPage(${data.currentPage + 1})">${getJsString('next')}</a>
                 </li>
             `);
         }
@@ -758,7 +780,7 @@ function exportData(format) {
         ...currentFilters
     });
 
-    showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
+    showNotification(getJsString('preparing-export').replace('{format}', format.toUpperCase()), 'info');
     window.location.href = `/Reports/ExportClassAttendance?${params.toString()}`;
 }
 
@@ -772,7 +794,7 @@ function exportSingleClass(classCode) {
         ...currentFilters
     });
 
-    showNotification('Preparing class export...', 'info');
+    showNotification(getJsString('preparing-class-export'), 'info');
     window.location.href = `/Reports/ExportClassAttendance?${params.toString()}`;
 }
 
@@ -832,7 +854,7 @@ function hideAllSections() {
 
 function showError(message) {
     showNotification(message, 'error');
-    $('#noDataMessage').find('h4').text('Error Loading Data');
+    $('#noDataMessage').find('h4').text(getJsString('loading-error-title'));
     $('#noDataMessage').find('p').text(message);
     $('#noDataMessage').show();
 }

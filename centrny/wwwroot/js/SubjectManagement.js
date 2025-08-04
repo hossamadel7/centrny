@@ -31,14 +31,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const addSubjectSubmitBtn = document.querySelector('#addSubjectForm button[type="submit"]');
     const addTeacherSubmitBtn = document.querySelector('#addTeacherToSubjectForm button[type="submit"]');
 
-    // You can change these to match your button text in resources or HTML
     const saveChangesText = "Save Changes";
     const addSubjectText = "Add Subject";
 
     let editMode = false;
     let selectedSubjectData = {};
 
-    // Helper to reset submit buttons
     function resetSubmitButton(btn, defaultText) {
         if (btn) {
             btn.textContent = defaultText || saveChangesText;
@@ -53,7 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
         editMode = isEdit;
         modalTitle.textContent = isEdit ? editTitle : addTitle;
         subjectCodeInput.value = '';
-        // Show correct text on button depending on mode
         resetSubmitButton(addSubjectSubmitBtn, isEdit ? saveChangesText : addSubjectText);
         if (!isEdit) {
             loadYears();
@@ -62,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
             form.subjectName.value = subject.subjectName;
             form.isPrimary.value = subject.isPrimary ? "true" : "false";
             loadYears(subject.yearCode);
+            // If you want to fill centerPercentage/centerAmount here, set their values from subject if present:
+            // form.centerPercentage.value = subject.centerPercentage ?? '';
+            // form.centerAmount.value = subject.centerAmount ?? '';
         }
     }
     function closeModalFunc() {
@@ -113,17 +113,26 @@ document.addEventListener('DOMContentLoaded', function () {
         const yearCode = parseInt(form.yearCode.value);
         const subjectCode = subjectCodeInput.value;
 
+        // If you add centerPercentage/centerAmount fields to the edit modal, get them here:
+        // const centerPercentage = form.centerPercentage ? form.centerPercentage.value : null;
+        // const centerAmount = form.centerAmount ? form.centerAmount.value : null;
+
         if (!subjectName || !yearCode) {
             resetSubmitButton(addSubjectSubmitBtn, editMode ? saveChangesText : addSubjectText);
             errorDiv.textContent = pleaseFillFieldsText;
             return;
         }
 
+        let requestBody = { subjectName, isPrimary, yearCode };
         if (editMode && subjectCode) {
+            requestBody.subjectCode = subjectCode;
+            // If you add center fields:
+            // requestBody.centerPercentage = centerPercentage ? parseFloat(centerPercentage) : null;
+            // requestBody.centerAmount = centerAmount ? parseFloat(centerAmount) : null;
             fetch('/Subject/EditSubject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subjectCode, subjectName, isPrimary, yearCode })
+                body: JSON.stringify(requestBody)
             })
                 .then(r => {
                     if (!r.ok) return r.text().then(t => { throw new Error(t); });
@@ -142,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
             fetch('/Subject/AddSubject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subjectName, isPrimary, yearCode })
+                body: JSON.stringify(requestBody)
             })
                 .then(r => {
                     if (!r.ok) return r.text().then(t => { throw new Error(t); });
@@ -171,7 +180,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.innerHTML = subjectRowHTML(subject);
         tbody.appendChild(tr);
 
-        // Insert the hidden row for teachers after this row
         const trTeachers = document.createElement('tr');
         trTeachers.classList.add('teachers-row');
         trTeachers.setAttribute('data-subject-code', subject.subjectCode);
@@ -291,7 +299,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             } else {
                                 let html = '<ul style="margin-bottom:0">';
                                 data.forEach(teacher => {
-                                    html += `<li>${teacher.teacherName}</li>`;
+                                    html += `<li>
+                                        ${teacher.teacherName} <span style="color:#888;font-size:0.97em;">(${teacher.branchName || ''})</span>
+                                    </li>`;
                                 });
                                 html += '</ul>';
                                 td.innerHTML = html;

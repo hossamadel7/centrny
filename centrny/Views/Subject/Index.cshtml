@@ -45,6 +45,14 @@
                         <option value="">@SubjectResource.Subject_LoadingYears</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="centerPercentage">@SubjectResource.Subject_CenterPercentageLabel</label>
+                    <input type="number" step="0.01" id="centerPercentage" name="centerPercentage" />
+                </div>
+                <div class="form-group">
+                    <label for="centerAmount">@SubjectResource.Subject_CenterAmountLabel</label>
+                    <input type="number" step="0.01" id="centerAmount" name="centerAmount" />
+                </div>
                 <div id="addSubjectError" style="color:#c00; margin-bottom:10px;"></div>
                 <button type="submit" class="modern-btn primary-btn" style="width:100%;">@SubjectResource.Subject_Submit</button>
             </form>
@@ -153,13 +161,11 @@
             margin-right: 12px;
             color: #4f8cff;
         }
+
     @@media (max-width: 900px) {
-        .questions-header h2
-
-    {
-        font-size: 1.6rem;
-    }
-
+        .questions-header h2 {
+            font-size: 1.6rem;
+        }
     }
 
     .subject-table-container {
@@ -269,18 +275,15 @@
             }
 
     @@media (max-width: 600px) {
-        .wide-centered-modal
+        .wide-centered-modal {
+            min-width: 98vw;
+            max-width: 98vw;
+            padding: 1em 0.2em;
+        }
 
-    {
-        min-width: 98vw;
-        max-width: 98vw;
-        padding: 1em 0.2em;
-    }
-
-    .centered-form .form-group {
-        max-width: 98vw;
-    }
-
+        .centered-form .form-group {
+            max-width: 98vw;
+        }
     }
 </style>
 

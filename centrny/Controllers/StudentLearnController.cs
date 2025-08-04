@@ -46,7 +46,6 @@ namespace centrny.Controllers
 
             int rootCode = group.RootCode;
 
-            // Use explicit join to get all required fields
             var learnsQuery = from l in _context.Learns
                               join s in _context.Students on l.StudentCode equals s.StudentCode
                               join subj in _context.Subjects on l.SubjectCode equals subj.SubjectCode
@@ -88,7 +87,6 @@ namespace centrny.Controllers
                 );
             }
 
-            // Group by student and year
             var grouped = await learnsQuery
                 .GroupBy(l => new { l.StudentCode, l.StudentName, l.YearCode, l.YearName })
                 .Select(g => new
@@ -141,16 +139,52 @@ namespace centrny.Controllers
 
             int rootCode = group.RootCode;
 
-            var years = await _context.Years.OrderBy(y => y.YearName).Select(y => new { y.YearCode, y.YearName }).ToListAsync();
-            var students = await _context.Students.Where(s => s.RootCode == rootCode).OrderBy(s => s.StudentName).Select(s => new { s.StudentCode, s.StudentName }).ToListAsync();
-            var subjects = await _context.Subjects.Where(s => s.RootCode == rootCode).OrderBy(s => s.SubjectName).Select(s => new { s.SubjectCode, s.SubjectName }).ToListAsync();
+            // Get active EduYear for this root
+            var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.RootCode == rootCode && e.IsActive);
+            int? eduYearCode = eduYear?.EduCode;
+
+            // Only years that belong to the active eduYearCode
+            var years = await _context.Years
+                .Where(y => y.EduYearCode == eduYearCode)
+                .OrderBy(y => y.YearName)
+                .Select(y => new { y.YearCode, y.YearName })
+                .ToListAsync();
+
+            var subjects = await _context.Subjects
+                .Where(s => s.RootCode == rootCode)
+                .OrderBy(s => s.SubjectName)
+                .Select(s => new { s.SubjectCode, s.SubjectName })
+                .ToListAsync();
 
             return Json(new
             {
                 years,
-                students,
                 subjects
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchStudents(string term)
+        {
+            int userId = GetCurrentUserId();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
+            if (user == null)
+                return Unauthorized();
+
+            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode);
+            if (group == null)
+                return Unauthorized();
+
+            int rootCode = group.RootCode;
+
+            var students = await _context.Students
+                .Where(s => s.RootCode == rootCode && (s.StudentName.Contains(term) || s.StudentCode.ToString().Contains(term)))
+                .OrderBy(s => s.StudentName)
+                .Select(s => new { s.StudentCode, s.StudentName })
+                .Take(15)
+                .ToListAsync();
+
+            return Json(students);
         }
 
         [HttpGet]
@@ -292,7 +326,6 @@ namespace centrny.Controllers
             if (root == null)
                 return Unauthorized();
 
-            // Find current learn record
             var learn = await _context.Learns.FirstOrDefaultAsync(l =>
                 l.StudentCode == studentCode && l.SubjectCode == subjectCode && l.YearCode == yearCode);
             if (learn == null)
@@ -300,7 +333,6 @@ namespace centrny.Controllers
 
             var isCenter = root.IsCenter;
 
-            // Center users: teacher and schedule dropdowns
             if (isCenter)
             {
                 var teachers = await (from teach in _context.Teaches
@@ -315,7 +347,6 @@ namespace centrny.Controllers
                                      .OrderBy(t => t.TeacherName)
                                      .ToListAsync();
 
-                // For current teacher
                 var schedules = await _context.Schedules
                     .Where(s => s.SubjectCode == subjectCode && s.TeacherCode == learn.TeacherCode)
                     .Select(s => new
@@ -340,7 +371,6 @@ namespace centrny.Controllers
             }
             else
             {
-                // Regular teacher: only schedule dropdown
                 var schedules = await _context.Schedules
                     .Where(s => s.SubjectCode == subjectCode && s.TeacherCode == learn.TeacherCode)
                     .Select(s => new
@@ -374,7 +404,6 @@ namespace centrny.Controllers
             if (learn == null)
                 return Json(new { success = false, message = "Not found" });
 
-            // Only allow teacher change if IsCenter
             var userEntity = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
             var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == userEntity.GroupCode);
             var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == group.RootCode);
@@ -387,7 +416,6 @@ namespace centrny.Controllers
             return Json(new { success = true });
         }
 
-        // --- NEW: For student-wide schedule edit ---
         [HttpGet]
         public async Task<IActionResult> GetStudentSubjectsForYear(int studentCode, int yearCode)
         {
@@ -404,17 +432,14 @@ namespace centrny.Controllers
 
             foreach (var learn in learns)
             {
-                // Get subject name
                 var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == learn.SubjectCode);
                 string subjectName = subject?.SubjectName ?? "";
 
-                // Get current schedule info
                 var schedule = await _context.Schedules.FirstOrDefaultAsync(s => s.ScheduleCode == learn.ScheduleCode);
                 string scheduleDay = schedule?.DayOfWeek ?? "";
                 string startTime = schedule?.StartTime != null ? schedule.StartTime.Value.ToString("HH:mm") : "";
                 string endTime = schedule?.EndTime != null ? schedule.EndTime.Value.ToString("HH:mm") : "";
 
-                // Get all possible schedules for this subject/teacher
                 var scheduleEntities = await _context.Schedules
                     .Where(s => s.SubjectCode == learn.SubjectCode && s.TeacherCode == learn.TeacherCode)
                     .OrderBy(s => s.DayOfWeek)
@@ -449,7 +474,7 @@ namespace centrny.Controllers
                 subjects = subjectList
             });
         }
-        // --- NEW: Batch update schedules for all subjects of a student in a year ---
+
         [HttpPost]
         public async Task<IActionResult> UpdateStudentSchedules([FromForm] StudentSchedulesUpdateDto dto)
         {
@@ -488,7 +513,6 @@ namespace centrny.Controllers
             return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
-        // DTOs
         public class LearnCreateDto
         {
             public int StudentCode { get; set; }
