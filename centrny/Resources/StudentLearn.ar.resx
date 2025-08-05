@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="Students" xml:space="preserve">
+    <value>الطلاب</value>
+  </data>
+	<data name="AllYears" xml:space="preserve">
+    <value>كل السنوات</value>
+  </data>
+	<data name="AllSubjects" xml:space="preserve">
+    <value>كل المواد</value>
+  </data>
+	<data name="SearchPlaceholder" xml:space="preserve">
+    <value>بحث (طالب، مادة، معلم)</value>
+  </data>
+	<data name="NoRecordsFound" xml:space="preserve">
+    <value>لا توجد سجلات.</value>
+  </data>
+	<data name="AddSubject" xml:space="preserve">
+    <value>إضافة مادة</value>
+  </data>
+	<data name="ChangeTime" xml:space="preserve">
+    <value>تغيير الوقت</value>
+  </data>
+	<data name="AddSubjectToStudent" xml:space="preserve">
+    <value>إضافة مادة للطالب</value>
+  </data>
+	<data name="ChooseSubject" xml:space="preserve">
+    <value>اختر المادة</value>
+  </data>
+	<data name="ChooseTeacher" xml:space="preserve">
+    <value>اختر المعلم</value>
+  </data>
+	<data name="ChooseBranch" xml:space="preserve">
+    <value>اختر الفرع</value>
+  </data>
+	<data name="ChooseSchedule" xml:space="preserve">
+    <value>اختر الجدول</value>
+  </data>
+	<data name="NoSubjects" xml:space="preserve">
+    <value>لا توجد مواد</value>
+  </data>
+	<data name="Yes" xml:space="preserve">
+    <value>نعم</value>
+  </data>
+	<data name="No" xml:space="preserve">
+    <value>لا</value>
+  </data>
+	<data name="Search" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+	<data name="Online" xml:space="preserve">
+    <value>أونلاين</value>
+  </data>
+	<data name="Active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+	<data name="Inactive" xml:space="preserve">
+    <value>غير نشط</value>
+  </data>
+	<data name="NoSubjectsAssigned" xml:space="preserve">
+    <value>لا توجد مواد مخصصة</value>
+  </data>
+	<data name="FailedToAdd" xml:space="preserve">
+    <value>فشل في إضافة المادة.</value>
+  </data>
+	<data name="FailedToUpdate" xml:space="preserve">
+    <value>فشل في تحديث الجداول.</value>
+  </data>
+	<data name="FailedToDelete" xml:space="preserve">
+    <value>فشل في حذف المادة.</value>
+  </data>
+	<data name="Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+	<data name="Edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+	<data name="Save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+	<data name="Loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+	<data name="Student" xml:space="preserve">
+    <value>الطالب</value>
+  </data>
+	<data name="Year" xml:space="preserve">
+    <value>السنة</value>
+  </data>
+	<data name="Teacher" xml:space="preserve">
+    <value>المعلم</value>
+  </data>
+	<data name="Subject" xml:space="preserve">
+    <value>المادة</value>
+  </data>
+	<data name="Branch" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+	<data name="Schedule" xml:space="preserve">
+    <value>الجدول</value>
+  </data>
+	<data name="Actions" xml:space="preserve">
+    <value>الإجراءات</value>
+  </data>
+	<data name="CurrentSchedule" xml:space="preserve">
+    <value>الجدول الحالي</value>
+  </data>
+	<data name="NewSchedule" xml:space="preserve">
+    <value>الجدول الجديد</value>
+  </data>
+</root>

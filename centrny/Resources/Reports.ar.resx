@@ -1,0 +1,461 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<!-- موارد تقرير الحضور -->
+	<data name="ClassAttendanceReport" xml:space="preserve">
+    <value>تقرير حضور الحصص</value>
+  </data>
+	<data name="ClassAttendance" xml:space="preserve">
+    <value>حضور الحصة</value>
+  </data>
+	<data name="MonitorSubtitle" xml:space="preserve">
+    <value>راقب وتابع حضور الطلاب</value>
+  </data>
+	<data name="Teacher" xml:space="preserve">
+    <value>المعلم</value>
+  </data>
+	<data name="AllTeachers" xml:space="preserve">
+    <value>كل المعلمين</value>
+  </data>
+	<data name="Subject" xml:space="preserve">
+    <value>المادة</value>
+  </data>
+	<data name="AllSubjects" xml:space="preserve">
+    <value>كل المواد</value>
+  </data>
+	<data name="Date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+	<data name="Apply" xml:space="preserve">
+    <value>تطبيق</value>
+  </data>
+	<data name="Clear" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+	<data name="ResetFilters" xml:space="preserve">
+    <value>إعادة ضبط الفلاتر</value>
+  </data>
+	<data name="LoadingAttendance" xml:space="preserve">
+    <value>جاري تحميل بيانات الحضور...</value>
+  </data>
+	<data name="NoClassesFound" xml:space="preserve">
+    <value>لا توجد حصص</value>
+  </data>
+	<data name="NoClassesMatch" xml:space="preserve">
+    <value>لا توجد حصص مطابقة للمعايير المحددة. جرب تغيير الفلاتر لرؤية نتائج أكثر.</value>
+  </data>
+	<data name="Enrolled" xml:space="preserve">
+    <value>مسجلين</value>
+  </data>
+	<data name="Present" xml:space="preserve">
+    <value>حاضر</value>
+  </data>
+	<data name="Absent" xml:space="preserve">
+    <value>غائب</value>
+  </data>
+	<data name="Rate" xml:space="preserve">
+    <value>النسبة</value>
+  </data>
+	<data name="AttendanceRate" xml:space="preserve">
+    <value>الحضور</value>
+  </data>
+	<data name="Branch" xml:space="preserve">
+    <value>الفرع</value>
+  </data>
+	<data name="Hall" xml:space="preserve">
+    <value>القاعة</value>
+  </data>
+	<data name="Students" xml:space="preserve">
+    <value>الطلاب</value>
+  </data>
+	<data name="Attendance" xml:space="preserve">
+    <value>الحضور</value>
+  </data>
+	<data name="ManageAttendance" xml:space="preserve">
+    <value>إدارة الحضور</value>
+  </data>
+	<data name="PaginationInfo" xml:space="preserve">
+    <value>عرض من {start} إلى {end} من أصل {total} حصص</value>
+  </data>
+	<data name="LoadingErrorTitle" xml:space="preserve">
+    <value>خطأ في تحميل البيانات</value>
+  </data>
+	<data name="LoadingErrorText" xml:space="preserve">
+    <value>فشل تحميل بيانات الحضور:</value>
+  </data>
+	<data name="Previous" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+	<data name="Next" xml:space="preserve">
+    <value>التالي</value>
+  </data>
+	<data name="PreparingExport" xml:space="preserve">
+    <value>جاري تجهيز تصدير {format}...</value>
+  </data>
+	<data name="PreparingClassExport" xml:space="preserve">
+    <value>جاري تجهيز تصدير الحصة...</value>
+  </data>
+	<data name="NoAbsentParentPhones" xml:space="preserve">
+    <value>لا يوجد طلاب غائبين لديهم رقم ولي أمر</value>
+  </data>
+	<data name="AbsentSmsDefault" xml:space="preserve">
+    <value>ولي الأمر العزيز، ابنكم غائب عن حصة اليوم {class}. يرجى التواصل مع المدرسة لمزيد من المعلومات.</value>
+  </data>
+	<data name="AbsentSmsDefaultGlobal" xml:space="preserve">
+    <value>ولي الأمر العزيز، ابنكم غائب عن حصة اليوم. يرجى التواصل مع المدرسة لمزيد من المعلومات.</value>
+  </data>
+	<data name="AbsentSmsIndividual" xml:space="preserve">
+    <value>ولي الأمر العزيز، {name} غائب عن حصة اليوم. يرجى التواصل مع المدرسة لمزيد من المعلومات.</value>
+  </data>
+	<data name="PleaseEnterMessage" xml:space="preserve">
+    <value>يرجى إدخال الرسالة.</value>
+  </data>
+	<data name="SmsError" xml:space="preserve">
+    <value>خطأ في إرسال الرسالة:</value>
+  </data>
+	<data name="SmsFailed" xml:space="preserve">
+    <value>فشل إرسال الرسالة:</value>
+  </data>
+	<data name="NoParentPhoneFor" xml:space="preserve">
+    <value>لا يوجد رقم ولي أمر لـ {name}</value>
+  </data>
+	<data name="WouldCallAbsentParents" xml:space="preserve">
+    <value>سيتم الاتصال بـ {count} أولياء أمور الطلاب الغائبين</value>
+  </data>
+	<data name="AttendanceUpdateError" xml:space="preserve">
+    <value>خطأ في تحديث الحضور:</value>
+  </data>
+	<data name="AttendanceUpdateFailed" xml:space="preserve">
+    <value>فشل تحديث الحضور:</value>
+  </data>
+	<data name="NoSelectedInClass" xml:space="preserve">
+    <value>لم يتم تحديد أي طالب في هذه الحصة.</value>
+  </data>
+	<data name="NoStudentsSelected" xml:space="preserve">
+    <value>لم يتم تحديد أي طالب.</value>
+  </data>
+	<data name="AttendanceUpdatedFor" xml:space="preserve">
+    <value>تم تحديث الحضور لـ {count} طالب</value>
+  </data>
+
+	<!-- جديد: موارد تقرير حصصي -->
+	<data name="MyClassesReport" xml:space="preserve">
+    <value>تقرير حصصي</value>
+  </data>
+	<data name="MyClassesReportSubtitle" xml:space="preserve">
+    <value>تتبع جدول التدريس والأداء الخاص بك</value>
+  </data>
+	<data name="StartDate" xml:space="preserve">
+    <value>تاريخ البدء</value>
+  </data>
+	<data name="EndDate" xml:space="preserve">
+    <value>تاريخ الانتهاء</value>
+  </data>
+	<data name="PerPage" xml:space="preserve">
+    <value>لكل صفحة</value>
+  </data>
+	<data name="Filter" xml:space="preserve">
+    <value>تصفية</value>
+  </data>
+	<data name="QuickRanges" xml:space="preserve">
+    <value>نطاقات سريعة:</value>
+  </data>
+	<data name="ThisWeek" xml:space="preserve">
+    <value>هذا الأسبوع</value>
+  </data>
+	<data name="ThisMonth" xml:space="preserve">
+    <value>هذا الشهر</value>
+  </data>
+	<data name="LastMonth" xml:space="preserve">
+    <value>الشهر الماضي</value>
+  </data>
+	<data name="TotalClasses" xml:space="preserve">
+    <value>إجمالي الحصص</value>
+  </data>
+	<data name="AvgStudents" xml:space="preserve">
+    <value>متوسط الطلاب</value>
+  </data>
+	<data name="AvgAttendance" xml:space="preserve">
+    <value>متوسط الحضور</value>
+  </data>
+	<data name="TotalEarnings" xml:space="preserve">
+    <value>إجمالي الأرباح</value>
+  </data>
+	<data name="CurrencySymbol" xml:space="preserve">
+    <value>د.إ</value>
+  </data>
+	<data name="Time" xml:space="preserve">
+    <value>الوقت</value>
+  </data>
+	<data name="Earning" xml:space="preserve">
+    <value>الربح</value>
+  </data>
+	<data name="Details" xml:space="preserve">
+    <value>تفاصيل</value>
+  </data>
+	<data name="ExportPDF" xml:space="preserve">
+    <value>تصدير PDF</value>
+  </data>
+	<data name="ExportExcel" xml:space="preserve">
+    <value>تصدير Excel</value>
+  </data>
+	<data name="NoClassesHint" xml:space="preserve">
+    <value>جرّب ضبط الفلاتر لرؤية بيانات حصصك.</value>
+  </data>
+	<data name="ClassDetails" xml:space="preserve">
+    <value>تفاصيل الحصة</value>
+  </data>
+	<data name="ClassCode" xml:space="preserve">
+    <value>رمز الحصة</value>
+  </data>
+	<data name="ClassDetailsInfo" xml:space="preserve">
+    <value>سيتم تنفيذ معلومات الحصة التفصيلية هنا.</value>
+  </data>
+	<data name="ClassDetailsInclude" xml:space="preserve">
+    <value>قد يشمل:</value>
+  </data>
+	<data name="ClassDetailsStudentList" xml:space="preserve">
+    <value>قائمة الطلاب الكاملة</value>
+  </data>
+	<data name="ClassDetailsLessonPlan" xml:space="preserve">
+    <value>تفاصيل خطة الدرس</value>
+  </data>
+	<data name="ClassDetailsAssignments" xml:space="preserve">
+    <value>معلومات الواجبات</value>
+  </data>
+	<data name="ClassDetailsMetrics" xml:space="preserve">
+    <value>مقاييس الأداء</value>
+  </data>
+	<data name="Close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+	<data name="Loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+	<data name="ErrorLoadingClassDetails" xml:space="preserve">
+    <value>خطأ في تحميل تفاصيل الحصة.</value>
+  </data>
+	<data name="NoDate" xml:space="preserve">
+    <value>بدون تاريخ</value>
+  </data>
+
+	<!-- جديد: موارد لوحة التحكم وبطاقات التقارير -->
+	<data name="ReportsDashboard" xml:space="preserve">
+    <value>لوحة تقارير النظام</value>
+  </data>
+	<data name="ReportsDashboardSubtitle" xml:space="preserve">
+    <value>نظام تقارير شامل لإدارة التعليم</value>
+  </data>
+	<data name="CenterManagementReports" xml:space="preserve">
+    <value>تقارير إدارة المركز</value>
+  </data>
+	<data name="FinancialSummaryDesc" xml:space="preserve">
+    <value>تحليل الإيرادات والمصروفات والربحية</value>
+  </data>
+	<data name="FinancialSummaryFilters" xml:space="preserve">
+    <value>نطاق التاريخ، الفرع، المادة</value>
+  </data>
+	<data name="ExportOptions" xml:space="preserve">
+    <value>متوفر بصيغ PDF و Excel</value>
+  </data>
+	<data name="ViewReport" xml:space="preserve">
+    <value>عرض التقرير</value>
+  </data>
+	<data name="StudentEnrollmentDesc" xml:space="preserve">
+    <value>اتجاهات تسجيل الطلاب والاشتراك</value>
+  </data>
+	<data name="StudentEnrollmentFilters" xml:space="preserve">
+    <value>الفرع، المادة، السنة، تاريخ التسجيل</value>
+  </data>
+	<data name="StudentEnrollmentIncludes" xml:space="preserve">
+    <value>معلومات الاتصال، حالة الاشتراك</value>
+  </data>
+	<data name="Performance" xml:space="preserve">
+    <value>الأداء</value>
+  </data>
+	<data name="TeacherPerformanceDesc" xml:space="preserve">
+    <value>فاعلية التدريس ونسب الحضور</value>
+  </data>
+	<data name="TeacherPerformanceFilters" xml:space="preserve">
+    <value>المعلم، المادة، نطاق التاريخ</value>
+  </data>
+	<data name="TeacherPerformanceMetrics" xml:space="preserve">
+    <value>نسب الحضور، الأرباح، عدد الحصص</value>
+  </data>
+	<data name="Academic" xml:space="preserve">
+    <value>الأكاديمية</value>
+  </data>
+	<data name="ExamPerformanceDesc" xml:space="preserve">
+    <value>نتائج الامتحانات ونسب النجاح العامة</value>
+  </data>
+	<data name="ExamPerformanceFilters" xml:space="preserve">
+    <value>الفرع، المادة، المعلم، نوع الامتحان</value>
+  </data>
+	<data name="ExamPerformanceAnalytics" xml:space="preserve">
+    <value>نسب النجاح، المعدلات، الاتجاهات</value>
+  </data>
+	<data name="AttendanceAndClassReports" xml:space="preserve">
+    <value>تقارير الحضور والحصص</value>
+  </data>
+	<data name="Attendance" xml:space="preserve">
+    <value>الحضور</value>
+  </data>
+	<data name="ClassAttendanceDesc" xml:space="preserve">
+    <value>الطلاب المسجلين مقابل الحاضرين لكل حصة</value>
+  </data>
+	<data name="ClassAttendanceFilters" xml:space="preserve">
+    <value>المعلم، المادة، تاريخ محدد</value>
+  </data>
+	<data name="ClassAttendanceShows" xml:space="preserve">
+    <value>قوائم الحضور/الغياب مع معلومات الاتصال</value>
+  </data>
+	<data name="Compare" xml:space="preserve">
+    <value>مقارنة</value>
+  </data>
+	<data name="Shows" xml:space="preserve">
+    <value>يظهر</value>
+  </data>
+	<data name="FilterBy" xml:space="preserve">
+    <value>تصفية حسب</value>
+  </data>
+	<data name="Metrics" xml:space="preserve">
+    <value>المقاييس</value>
+  </data>
+	<data name="Analytics" xml:space="preserve">
+    <value>التحليلات</value>
+  </data>
+	<data name="Period" xml:space="preserve">
+    <value>الفترة</value>
+  </data>
+	<data name="Includes" xml:space="preserve">
+    <value>يتضمن</value>
+  </data>
+	<data name="ComingSoon" xml:space="preserve">
+    <value>قريباً</value>
+  </data>
+	<data name="BranchPerformance" xml:space="preserve">
+    <value>أداء الفروع</value>
+  </data>
+	<data name="BranchPerformanceDesc" xml:space="preserve">
+    <value>مقارنة الأداء عبر جميع الفروع</value>
+  </data>
+	<data name="BranchPerformanceMetrics" xml:space="preserve">
+    <value>الإيرادات، التسجيل، الحضور</value>
+  </data>
+	<data name="BranchPerformancePeriod" xml:space="preserve">
+    <value>شهري، ربع سنوي، سنوي</value>
+  </data>
+	<data name="QuickStatistics" xml:space="preserve">
+    <value>إحصائيات سريعة</value>
+  </data>
+	<data name="ActiveStudents" xml:space="preserve">
+    <value>الطلاب النشطون</value>
+  </data>
+	<data name="ClassesThisMonth" xml:space="preserve">
+    <value>حصص هذا الشهر</value>
+  </data>
+	<data name="MonthlyRevenue" xml:space="preserve">
+    <value>إيرادات هذا الشهر</value>
+  </data>
+	<data name="AttendanceRate" xml:space="preserve">
+    <value>نسبة الحضور</value>
+  </data>
+	<data name="MyTeachingReports" xml:space="preserve">
+    <value>تقاريري التدريسية</value>
+  </data>
+	<data name="Classes" xml:space="preserve">
+    <value>الحصص</value>
+  </data>
+	<data name="MyClasses" xml:space="preserve">
+    <value>حصصي</value>
+  </data>
+	<data name="MyClassesDesc" xml:space="preserve">
+    <value>الحصص المجدولة والمكتملة الخاصة بك</value>
+  </data>
+	<data name="MyClassesFilters" xml:space="preserve">
+    <value>نطاق التاريخ، المادة</value>
+  </data>
+	<data name="MyClassesIncludes" xml:space="preserve">
+    <value>نسب الحضور، الأرباح</value>
+  </data>
+	<data name="MyStudents" xml:space="preserve">
+    <value>طلابي</value>
+  </data>
+	<data name="MyStudentsDesc" xml:space="preserve">
+    <value>أداء الطلاب المسجلين لديك</value>
+  </data>
+	<data name="MyStudentsFilters" xml:space="preserve">
+    <value>المادة، المستوى</value>
+  </data>
+	<data name="MyStudentsIncludes" xml:space="preserve">
+    <value>نسب الحضور، معلومات الاتصال</value>
+  </data>
+	<data name="Earnings" xml:space="preserve">
+    <value>الأرباح</value>
+  </data>
+	<data name="MyEarnings" xml:space="preserve">
+    <value>أرباحي</value>
+  </data>
+	<data name="MyEarningsDesc" xml:space="preserve">
+    <value>أرباح التدريس والمدفوعات الخاصة بك</value>
+  </data>
+	<data name="MyEarningsFilters" xml:space="preserve">
+    <value>نطاق التاريخ، المادة</value>
+  </data>
+	<data name="Breakdown" xml:space="preserve">
+    <value>تفصيل</value>
+  </data>
+	<data name="MyEarningsBreakdown" xml:space="preserve">
+    <value>لكل حصة، شهري، ربع سنوي</value>
+  </data>
+	<data name="FinancialSummaryReport" xml:space="preserve">
+    <value>تقرير الملخص المالي</value>
+  </data>
+	<data name="FinancialSummarySubtitle" xml:space="preserve">
+    <value>تحليل الإيرادات وتتبع الأداء المالي</value>
+  </data>
+	<data name="AllBranches" xml:space="preserve">
+    <value>كل الفروع</value>
+  </data>
+	<data name="QuickRanges" xml:space="preserve">
+    <value>نطاقات سريعة:</value>
+  </data>
+	<data name="ThisQuarter" xml:space="preserve">
+    <value>هذا الربع</value>
+  </data>
+	<data name="TeacherPayments" xml:space="preserve">
+    <value>دفعات المعلمين</value>
+  </data>
+	<data name="ProfitAnalysis" xml:space="preserve">
+    <value>تحليل الربحية</value>
+  </data>
+	<data name="Margin" xml:space="preserve">
+    <value>هامش</value>
+  </data>
+	<data name="AvgPerClass" xml:space="preserve">
+    <value>متوسط لكل حصة</value>
+  </data>
+	<data name="AvgPerStudent" xml:space="preserve">
+    <value>متوسط لكل طالب</value>
+  </data>
+	<data name="TeacherCostRatio" xml:space="preserve">
+    <value>نسبة تكلفة المعلم</value>
+  </data>
+	<data name="FinancialDetails" xml:space="preserve">
+    <value>تفاصيل مالية</value>
+  </data>
+	<data name="Class" xml:space="preserve">
+    <value>الحصة</value>
+  </data>
+	<data name="MarginPercent" xml:space="preserve">
+    <value>هامش %</value>
+  </data>
+	<data name="PageTotals" xml:space="preserve">
+    <value>إجمالي الصفحة</value>
+  </data>
+	<data name="NoFinancialDataFound" xml:space="preserve">
+    <value>لا توجد بيانات مالية</value>
+  </data>
+	<data name="FinancialNoDataHint" xml:space="preserve">
+    <value>جرّب تعديل نطاق التاريخ أو الفرع لرؤية البيانات المالية.</value>
+  </data>
+</root>

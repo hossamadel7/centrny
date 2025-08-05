@@ -1,0 +1,464 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<!-- Existing Attendance Report Resources -->
+	<data name="ClassAttendanceReport" xml:space="preserve">
+    <value>Class Attendance Report</value>
+  </data>
+	<data name="ClassAttendance" xml:space="preserve">
+    <value>Class Attendance</value>
+  </data>
+	<data name="MonitorSubtitle" xml:space="preserve">
+    <value>Monitor and manage student attendance</value>
+  </data>
+	<data name="Teacher" xml:space="preserve">
+    <value>Teacher</value>
+  </data>
+	<data name="AllTeachers" xml:space="preserve">
+    <value>All Teachers</value>
+  </data>
+	<data name="Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+	<data name="AllSubjects" xml:space="preserve">
+    <value>All Subjects</value>
+  </data>
+	<data name="Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+	<data name="Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+	<data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+	<data name="ResetFilters" xml:space="preserve">
+    <value>Reset Filters</value>
+  </data>
+	<data name="LoadingAttendance" xml:space="preserve">
+    <value>Loading attendance data...</value>
+  </data>
+	<data name="NoClassesFound" xml:space="preserve">
+    <value>No Classes Found</value>
+  </data>
+	<data name="NoClassesMatch" xml:space="preserve">
+    <value>No classes match the selected criteria. Try adjusting your filters to see more results.</value>
+  </data>
+	<data name="Enrolled" xml:space="preserve">
+    <value>Enrolled</value>
+  </data>
+	<data name="Present" xml:space="preserve">
+    <value>Present</value>
+  </data>
+	<data name="Absent" xml:space="preserve">
+    <value>Absent</value>
+  </data>
+	<data name="Rate" xml:space="preserve">
+    <value>Rate</value>
+  </data>
+	<data name="AttendanceRate" xml:space="preserve">
+    <value>Attendance</value>
+  </data>
+	<data name="Branch" xml:space="preserve">
+    <value>Branch</value>
+  </data>
+	<data name="Hall" xml:space="preserve">
+    <value>Hall</value>
+  </data>
+	<data name="Students" xml:space="preserve">
+    <value>Students</value>
+  </data>
+	<data name="Attendance" xml:space="preserve">
+    <value>Attendance</value>
+  </data>
+	<data name="ManageAttendance" xml:space="preserve">
+    <value>Manage Attendance</value>
+  </data>
+	<data name="PaginationInfo" xml:space="preserve">
+    <value>Showing {start} to {end} of {total} classes</value>
+  </data>
+	<data name="LoadingErrorTitle" xml:space="preserve">
+    <value>Error Loading Data</value>
+  </data>
+	<data name="LoadingErrorText" xml:space="preserve">
+    <value>Failed to load attendance data:</value>
+  </data>
+	<data name="Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+	<data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+	<data name="PreparingExport" xml:space="preserve">
+    <value>Preparing {format} export...</value>
+  </data>
+	<data name="PreparingClassExport" xml:space="preserve">
+    <value>Preparing class export...</value>
+  </data>
+	<data name="NoAbsentParentPhones" xml:space="preserve">
+    <value>No absent students with parent phone numbers found.</value>
+  </data>
+	<data name="AbsentSmsDefault" xml:space="preserve">
+    <value>Dear Parent, your child was absent from today's {class} class. Please contact the school for more information.</value>
+  </data>
+	<data name="AbsentSmsDefaultGlobal" xml:space="preserve">
+    <value>Dear Parent, your child was absent from today's class. Please contact the school for more information.</value>
+  </data>
+	<data name="AbsentSmsIndividual" xml:space="preserve">
+    <value>Dear Parent, {name} was absent from today's class. Please contact the school for more information.</value>
+  </data>
+	<data name="PleaseEnterMessage" xml:space="preserve">
+    <value>Please enter a message.</value>
+  </data>
+	<data name="SmsError" xml:space="preserve">
+    <value>Error sending SMS:</value>
+  </data>
+	<data name="SmsFailed" xml:space="preserve">
+    <value>Failed to send SMS:</value>
+  </data>
+	<data name="NoParentPhoneFor" xml:space="preserve">
+    <value>No parent phone number available for {name}</value>
+  </data>
+	<data name="WouldCallAbsentParents" xml:space="preserve">
+    <value>Would call {count} parents of absent students</value>
+  </data>
+	<data name="AttendanceUpdateError" xml:space="preserve">
+    <value>Error updating attendance:</value>
+  </data>
+	<data name="AttendanceUpdateFailed" xml:space="preserve">
+    <value>Failed to update attendance:</value>
+  </data>
+	<data name="NoSelectedInClass" xml:space="preserve">
+    <value>No students selected in this class.</value>
+  </data>
+	<data name="NoStudentsSelected" xml:space="preserve">
+    <value>No students selected.</value>
+  </data>
+	<data name="AttendanceUpdatedFor" xml:space="preserve">
+    <value>Attendance updated for {count} students</value>
+  </data>
+
+	<!-- NEW: MyClassesReport Resources -->
+	<data name="MyClassesReport" xml:space="preserve">
+    <value>My Classes Report</value>
+  </data>
+	<data name="MyClassesReportSubtitle" xml:space="preserve">
+    <value>Track your teaching schedule and performance</value>
+  </data>
+	<data name="StartDate" xml:space="preserve">
+    <value>Start Date</value>
+  </data>
+	<data name="EndDate" xml:space="preserve">
+    <value>End Date</value>
+  </data>
+	<data name="PerPage" xml:space="preserve">
+    <value>Per Page</value>
+  </data>
+	<data name="Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+	<data name="QuickRanges" xml:space="preserve">
+    <value>Quick ranges:</value>
+  </data>
+	<data name="ThisWeek" xml:space="preserve">
+    <value>This Week</value>
+  </data>
+	<data name="ThisMonth" xml:space="preserve">
+    <value>This Month</value>
+  </data>
+	<data name="LastMonth" xml:space="preserve">
+    <value>Last Month</value>
+  </data>
+	<data name="TotalClasses" xml:space="preserve">
+    <value>Total Classes</value>
+  </data>
+	<data name="AvgStudents" xml:space="preserve">
+    <value>Avg. Students</value>
+  </data>
+	<data name="AvgAttendance" xml:space="preserve">
+    <value>Avg. Attendance</value>
+  </data>
+	<data name="TotalEarnings" xml:space="preserve">
+    <value>Total Earnings</value>
+  </data>
+	<data name="CurrencySymbol" xml:space="preserve">
+    <value>$</value>
+  </data>
+	<data name="Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+	<data name="Earning" xml:space="preserve">
+    <value>Earning</value>
+  </data>
+	<data name="Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+	<data name="ExportPDF" xml:space="preserve">
+    <value>Export to PDF</value>
+  </data>
+	<data name="ExportExcel" xml:space="preserve">
+    <value>Export to Excel</value>
+  </data>
+	<data name="NoClassesHint" xml:space="preserve">
+    <value>Try adjusting your filters to see your class data.</value>
+  </data>
+	<data name="ClassDetails" xml:space="preserve">
+    <value>Class Details</value>
+  </data>
+	<data name="ClassCode" xml:space="preserve">
+    <value>Class Code</value>
+  </data>
+	<data name="ClassDetailsInfo" xml:space="preserve">
+    <value>Detailed class information will be implemented here.</value>
+  </data>
+	<data name="ClassDetailsInclude" xml:space="preserve">
+    <value>This could include:</value>
+  </data>
+	<data name="ClassDetailsStudentList" xml:space="preserve">
+    <value>Complete student list</value>
+  </data>
+	<data name="ClassDetailsLessonPlan" xml:space="preserve">
+    <value>Lesson plan details</value>
+  </data>
+	<data name="ClassDetailsAssignments" xml:space="preserve">
+    <value>Assignment information</value>
+  </data>
+	<data name="ClassDetailsMetrics" xml:space="preserve">
+    <value>Performance metrics</value>
+  </data>
+	<data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+	<data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+	<data name="ErrorLoadingClassDetails" xml:space="preserve">
+    <value>Error loading class details.</value>
+  </data>
+	<data name="NoDate" xml:space="preserve">
+    <value>No Date</value>
+  </data>
+
+	<!-- NEW DASHBOARD & CARDS RESOURCES -->
+	<data name="ReportsDashboard" xml:space="preserve">
+    <value>Reports Dashboard</value>
+  </data>
+	<data name="ReportsDashboardSubtitle" xml:space="preserve">
+    <value>Comprehensive reporting system for educational management</value>
+  </data>
+	<data name="CenterManagementReports" xml:space="preserve">
+    <value>Center Management Reports</value>
+  </data>
+	<data name="Revenue" xml:space="preserve">
+    <value>Revenue</value>
+  </data>
+	<data name="FinancialSummaryDesc" xml:space="preserve">
+    <value>Revenue, expenses, and profitability analysis</value>
+  </data>
+	<data name="FinancialSummaryFilters" xml:space="preserve">
+    <value>Date range, branch, subject</value>
+  </data>
+	<data name="ExportOptions" xml:space="preserve">
+    <value>PDF, Excel formats available</value>
+  </data>
+	<data name="ViewReport" xml:space="preserve">
+    <value>View Report</value>
+  </data>
+	<data name="StudentEnrollmentDesc" xml:space="preserve">
+    <value>Student registration and enrollment trends</value>
+  </data>
+	<data name="StudentEnrollmentFilters" xml:space="preserve">
+    <value>Branch, subject, year, enrollment date</value>
+  </data>
+	<data name="StudentEnrollmentIncludes" xml:space="preserve">
+    <value>Contact info, subscription status</value>
+  </data>
+	<data name="Performance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+	<data name="TeacherPerformanceDesc" xml:space="preserve">
+    <value>Teaching effectiveness and attendance rates</value>
+  </data>
+	<data name="TeacherPerformanceFilters" xml:space="preserve">
+    <value>Teacher, subject, date range</value>
+  </data>
+	<data name="TeacherPerformanceMetrics" xml:space="preserve">
+    <value>Attendance rates, earnings, class count</value>
+  </data>
+	<data name="Academic" xml:space="preserve">
+    <value>Academic</value>
+  </data>
+	<data name="ExamPerformanceDesc" xml:space="preserve">
+    <value>Overall exam results and success rates</value>
+  </data>
+	<data name="ExamPerformanceFilters" xml:space="preserve">
+    <value>Branch, subject, teacher, exam type</value>
+  </data>
+	<data name="ExamPerformanceAnalytics" xml:space="preserve">
+    <value>Pass rates, average scores, trends</value>
+  </data>
+	<data name="AttendanceAndClassReports" xml:space="preserve">
+    <value>Attendance &amp; Class Reports</value>
+  </data>
+	<data name="Attendance" xml:space="preserve">
+    <value>Attendance</value>
+  </data>
+	<data name="ClassAttendanceDesc" xml:space="preserve">
+    <value>Enrolled vs attended students per class</value>
+  </data>
+	<data name="ClassAttendanceFilters" xml:space="preserve">
+    <value>Teacher, subject, specific date</value>
+  </data>
+	<data name="ClassAttendanceShows" xml:space="preserve">
+    <value>Present/absent lists with contact info</value>
+  </data>
+	<data name="Compare" xml:space="preserve">
+    <value>Compare</value>
+  </data>
+	<data name="Shows" xml:space="preserve">
+    <value>Shows</value>
+  </data>
+	<data name="FilterBy" xml:space="preserve">
+    <value>Filter by</value>
+  </data>
+	<data name="Metrics" xml:space="preserve">
+    <value>Metrics</value>
+  </data>
+	<data name="Analytics" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+	<data name="Period" xml:space="preserve">
+    <value>Period</value>
+  </data>
+	<data name="Includes" xml:space="preserve">
+    <value>Includes</value>
+  </data>
+	<data name="ComingSoon" xml:space="preserve">
+    <value>Coming Soon</value>
+  </data>
+	<data name="BranchPerformance" xml:space="preserve">
+    <value>Branch Performance</value>
+  </data>
+	<data name="BranchPerformanceDesc" xml:space="preserve">
+    <value>Performance across all branches</value>
+  </data>
+	<data name="BranchPerformanceMetrics" xml:space="preserve">
+    <value>Revenue, enrollment, attendance</value>
+  </data>
+	<data name="BranchPerformancePeriod" xml:space="preserve">
+    <value>Monthly, quarterly, yearly</value>
+  </data>
+	<data name="QuickStatistics" xml:space="preserve">
+    <value>Quick Statistics</value>
+  </data>
+	<data name="ActiveStudents" xml:space="preserve">
+    <value>Active Students</value>
+  </data>
+	<data name="ClassesThisMonth" xml:space="preserve">
+    <value>Classes This Month</value>
+  </data>
+	<data name="MonthlyRevenue" xml:space="preserve">
+    <value>Monthly Revenue</value>
+  </data>
+	<data name="AttendanceRate" xml:space="preserve">
+    <value>Attendance Rate</value>
+  </data>
+	<data name="MyTeachingReports" xml:space="preserve">
+    <value>My Teaching Reports</value>
+  </data>
+	<data name="Classes" xml:space="preserve">
+    <value>Classes</value>
+  </data>
+	<data name="MyClasses" xml:space="preserve">
+    <value>My Classes</value>
+  </data>
+	<data name="MyClassesDesc" xml:space="preserve">
+    <value>Your scheduled and completed classes</value>
+  </data>
+	<data name="MyClassesFilters" xml:space="preserve">
+    <value>Date range, subject</value>
+  </data>
+	<data name="MyClassesIncludes" xml:space="preserve">
+    <value>Attendance rates, earnings</value>
+  </data>
+	<data name="MyStudents" xml:space="preserve">
+    <value>My Students</value>
+  </data>
+	<data name="MyStudentsDesc" xml:space="preserve">
+    <value>Performance of your enrolled students</value>
+  </data>
+	<data name="MyStudentsFilters" xml:space="preserve">
+    <value>Subject, year level</value>
+  </data>
+	<data name="MyStudentsIncludes" xml:space="preserve">
+    <value>Attendance rates, contact info</value>
+  </data>
+	<data name="Earnings" xml:space="preserve">
+    <value>Earnings</value>
+  </data>
+	<data name="MyEarnings" xml:space="preserve">
+    <value>My Earnings</value>
+  </data>
+	<data name="MyEarningsDesc" xml:space="preserve">
+    <value>Your teaching earnings and payments</value>
+  </data>
+	<data name="MyEarningsFilters" xml:space="preserve">
+    <value>Date range, subject</value>
+  </data>
+	<data name="Breakdown" xml:space="preserve">
+    <value>Breakdown</value>
+  </data>
+	<data name="MyEarningsBreakdown" xml:space="preserve">
+    <value>Per class, monthly, quarterly totals</value>
+  </data>
+	<data name="FinancialSummaryReport" xml:space="preserve">
+    <value>Financial Summary Report</value>
+  </data>
+	<data name="FinancialSummarySubtitle" xml:space="preserve">
+    <value>Revenue analysis and financial performance tracking</value>
+  </data>
+	<data name="AllBranches" xml:space="preserve">
+    <value>All Branches</value>
+  </data>
+	<data name="QuickRanges" xml:space="preserve">
+    <value>Quick ranges:</value>
+  </data>
+	<data name="ThisQuarter" xml:space="preserve">
+    <value>This Quarter</value>
+  </data>
+	<data name="TeacherPayments" xml:space="preserve">
+    <value>Teacher Payments</value>
+  </data>
+	<data name="ProfitAnalysis" xml:space="preserve">
+    <value>Profit Analysis</value>
+  </data>
+	<data name="Margin" xml:space="preserve">
+    <value>Margin</value>
+  </data>
+	<data name="AvgPerClass" xml:space="preserve">
+    <value>Average per Class</value>
+  </data>
+	<data name="AvgPerStudent" xml:space="preserve">
+    <value>Average per Student</value>
+  </data>
+	<data name="TeacherCostRatio" xml:space="preserve">
+    <value>Teacher Cost Ratio</value>
+  </data>
+	<data name="FinancialDetails" xml:space="preserve">
+    <value>Financial Details</value>
+  </data>
+	<data name="Class" xml:space="preserve">
+    <value>Class</value>
+  </data>
+	<data name="MarginPercent" xml:space="preserve">
+    <value>Margin %</value>
+  </data>
+	<data name="PageTotals" xml:space="preserve">
+    <value>Page Totals</value>
+  </data>
+	<data name="NoFinancialDataFound" xml:space="preserve">
+    <value>No financial data found</value>
+  </data>
+	<data name="FinancialNoDataHint" xml:space="preserve">
+    <value>Try adjusting your date range or branch filter to see financial information.</value>
+  </data>
+</root>
