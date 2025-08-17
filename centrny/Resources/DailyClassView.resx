@@ -85,4 +85,6 @@
 	<data name="CostLabel" xml:space="preserve"><value>Cost</value></data>
 	<data name="ForUser" xml:space="preserve"><value>for</value></data>
 	<data name="Locale" xml:space="preserve"><value>en-US</value></data>
+  <data name="FormClassPrice" xml:space="preserve"><value>Class Price</value>
+  </data>
 </root>

@@ -213,7 +213,7 @@ namespace centrny.Controllers
                 user.Name = name;
             user.IsActive = isActive;
 
-            // --- REMOVE HASHING: Save password as plain text if provided ---
+            // Save password as plain text if provided
             if (!string.IsNullOrWhiteSpace(password))
             {
                 user.Password = password; // No hashing
@@ -235,7 +235,7 @@ namespace centrny.Controllers
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
 
-            // --- REMOVE HASHING: Set plain text password ---
+            // Set plain text password
             user.Password = "123456789"; // No hashing
             _context.SaveChanges();
 
@@ -283,7 +283,7 @@ namespace centrny.Controllers
 
                 string actualUsername = username;
 
-                // --- REMOVE HASHING: Save plain password as-is ---
+                // Save plain password as-is
                 string plainPassword = string.IsNullOrWhiteSpace(password) ? "123456789" : password;
 
                 DateTime insertTime = DateTime.Now;

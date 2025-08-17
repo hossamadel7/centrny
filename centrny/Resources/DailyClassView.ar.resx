@@ -85,4 +85,7 @@
 	<data name="CostLabel" xml:space="preserve"><value>التكلفة</value></data>
 	<data name="ForUser" xml:space="preserve"><value>لـ</value></data>
 	<data name="Locale" xml:space="preserve"><value>ar-EG</value></data>
+	<data name="FormClassPrice" xml:space="preserve">
+    <value>سعر الحصة</value>
+  </data>
 </root>

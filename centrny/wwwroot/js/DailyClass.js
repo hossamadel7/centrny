@@ -88,7 +88,7 @@ function setupEventListeners() {
         populateSelectAsync('hallCode', []);
         disable('subjectCode');
         populateSelectAsync('subjectCode', []);
-        disable('yearCode');
+       
         populateSelectAsync('yearCode', []);
 
         const teacherId = this.value;
@@ -105,8 +105,9 @@ function setupEventListeners() {
     });
 
     document.getElementById('subjectCode')?.addEventListener('change', function () {
+        // For center user flow
         if (!userContext.isCenter) return;
-        disable('yearCode');
+        // Only clear year dropdown, do not disable it here
         populateSelectAsync('yearCode', []);
 
         const subjectId = this.value;
@@ -114,30 +115,33 @@ function setupEventListeners() {
         const eduYearCode = document.getElementById('eduYearCode').value;
         const branchCode = userContext.groupBranchCode;
         if (subjectId && teacherId && branchCode && eduYearCode) {
-            enable('yearCode');
-            loadYearsForTeach(branchCode, teacherId, subjectId, eduYearCode, true); // true = center user
+            // This function enables/disables yearCode after loading
+            loadYearsForTeach(branchCode, teacherId, subjectId, eduYearCode, true);
+        } else {
+            populateSelectAsync('yearCode', []);
         }
     });
-
     // --- TEACHER FLOW (legacy, not changed) ---
     document.getElementById('centerCode')?.addEventListener('change', function () {
         let centerId = this.value;
         if (centerId) {
             enable('branchCode');
             loadBranchesByCenter(centerId);
+            // Do not disable yearCode here! Only clear it
+            populateSelectAsync('yearCode', []);
         } else {
             populateSelectAsync('branchCode', []);
             disable('branchCode');
+           
+            populateSelectAsync('yearCode', []);
         }
         disable('subjectCode');
-        disable('yearCode');
         populateSelectAsync('subjectCode', []);
-        populateSelectAsync('yearCode', []);
     });
 
     document.getElementById('branchCode')?.addEventListener('change', function () {
         disable('subjectCode');
-        disable('yearCode');
+  
         populateSelectAsync('subjectCode', []);
         populateSelectAsync('yearCode', []);
 
@@ -158,7 +162,7 @@ function setupEventListeners() {
         populateSelectAsync('hallCode', []);
         disable('subjectCode');
         populateSelectAsync('subjectCode', []);
-        disable('yearCode');
+    
         populateSelectAsync('yearCode', []);
 
         if (userContext.isCenter) {
@@ -206,8 +210,11 @@ function setupEventListeners() {
 
 // --- Dropdown Enable/Disable ---
 function enable(id) { document.getElementById(id).disabled = false; }
-function disable(id) { document.getElementById(id).disabled = true; }
-
+function disable(id) {
+    if (id !== 'yearCode') {
+        document.getElementById(id).disabled = true;
+    }
+}
 // --- Center User: Only staff teachers for this branch (groupBranchCode) ---
 async function loadStaffTeachersForBranch(branchCode) {
     try {
@@ -252,7 +259,7 @@ async function fetchSubjectsForTeacherEduYearBranch(teacherCode, eduYearCode, br
 async function loadYearsForTeach(branchCode, teacherCode, subjectCode, eduYearCode = null, isCenter = false) {
     if (!branchCode || !teacherCode || !subjectCode) {
         populateSelectAsync('yearCode', []);
-        disable('yearCode');
+     
         return;
     }
     let url = `/DailyClass/GetYearsForTeach?branchCode=${branchCode}&teacherCode=${teacherCode}&subjectCode=${subjectCode}`;
@@ -265,7 +272,7 @@ async function loadYearsForTeach(branchCode, teacherCode, subjectCode, eduYearCo
         enable('yearCode');
     } catch {
         populateSelectAsync('yearCode', []);
-        disable('yearCode');
+        
     }
 }
 
@@ -298,7 +305,7 @@ async function loadEduYearsForRoot() {
 function loadYearsByEduYear(eduYearCode) {
     if (!eduYearCode) {
         populateSelectAsync('yearCode', []);
-        disable('yearCode');
+     
         return;
     }
     fetch(`/DailyClass/GetYearsForEduYear?eduYearCode=${eduYearCode}`)
@@ -309,7 +316,7 @@ function loadYearsByEduYear(eduYearCode) {
         })
         .catch(() => {
             populateSelectAsync('yearCode', []);
-            disable('yearCode');
+      
         });
 }
 
@@ -446,7 +453,7 @@ function renderClassCard(cls) {
                 ${cls.hallName ? `<div class="class-detail-item"><i class="fas fa-map-marker-alt class-detail-icon"></i> <span class="class-detail-label">${L("HallLabel")}:</span> <span class="class-detail-value">${cls.hallName}</span></div>` : ''}
                 ${cls.subjectName ? `<div class="class-detail-item"><i class="fas fa-book class-detail-icon"></i> <span class="class-detail-label">${L("SubjectLabel")}:</span> <span class="class-detail-value">${cls.subjectName}</span></div>` : ''}
                 <div class="class-detail-item"><i class="fas fa-users class-detail-icon"></i> <span class="class-detail-label">${L("StudentsLabel")}:</span> <span class="class-detail-value">${cls.noOfStudents || '0'}</span></div>
-                ${cls.totalAmount ? `<div class="class-detail-item"><i class="fas fa-dollar-sign class-detail-icon"></i> <span class="class-detail-label">${L("AmountLabel")}:</span> <span class="class-detail-value">${cls.totalAmount}</span></div>` : ''}
+              ${cls.classPrice ? `<div class="class-detail-item"><i class="fas fa-dollar-sign class-detail-icon"></i> <span class="class-detail-label">${L("ClassPriceLabel") || "Class Price"}:</span> <span class="class-detail-value">${cls.classPrice}</span></div>` : ''}
             </div>
         </div>
     `;
@@ -514,7 +521,7 @@ function resetModalForCreate() {
 }
 
 function resetFormFields() {
-    const fieldIds = ['className', 'startTime', 'endTime', 'subjectCode', 'branchCode', 'hallCode', 'eduYearCode', 'yearCode', 'totalAmount', 'teacherAmount', 'centerAmount'];
+    const fieldIds = ['className', 'startTime', 'endTime', 'subjectCode', 'branchCode', 'hallCode', 'eduYearCode', 'yearCode', 'classPrice'];
     if (userContext.isCenter) {
         fieldIds.push('teacherCode');
         document.getElementById('noOfStudents').value = '0';
@@ -698,9 +705,7 @@ async function saveClass() {
         subjectCode: parseInt(document.getElementById('subjectCode').value),
         eduYearCode: parseInt(document.getElementById('eduYearCode').value),
         yearCode: parseInt(document.getElementById('yearCode').value) || null,
-        totalAmount: parseFloat(document.getElementById('totalAmount').value) || null,
-        teacherAmount: parseFloat(document.getElementById('teacherAmount').value) || null,
-        centerAmount: parseFloat(document.getElementById('centerAmount').value) || null,
+        classPrice: parseFloat(document.getElementById('classPrice').value) || null,
         rootCode: userContext.currentUserRootCode,
         classDate: selectedDateStr // FIXED: always send the selected date string!
     };
@@ -764,7 +769,7 @@ async function saveClass() {
         }
 
         // 4. Free class confirmation
-        if (!formData.totalAmount || formData.totalAmount === 0) {
+        if (!formData.classPrice || formData.classPrice === 0) {
             if (!confirm("Are you sure you want to make this class for free?")) {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -839,9 +844,7 @@ function showEditClassModal(classId) {
     document.getElementById('subjectCode').value = cls.subjectCode || '';
     document.getElementById('eduYearCode').value = cls.eduYearCode || '';
     document.getElementById('yearCode').value = cls.yearCode || '';
-    document.getElementById('totalAmount').value = cls.totalAmount || '';
-    document.getElementById('teacherAmount').value = cls.teacherAmount || '';
-    document.getElementById('centerAmount').value = cls.centerAmount || '';
+    document.getElementById('classPrice').value = cls.classPrice || '';
     document.getElementById('noOfStudents').value = cls.noOfStudents || '0';
     if (userContext.isCenter) {
         document.getElementById('teacherCode').value = cls.teacherCode || '';
@@ -898,9 +901,7 @@ function showClassDetailsModal(classId) {
     html += `<div><strong>${L("FormCenter")}</strong>: ${cls.centerName || ''}</div>`;
     html += `<div><strong>${L("FormBranch")}</strong>: ${cls.branchName || ''}</div>`;
     html += `<div><strong>${L("FormNoOfStudents")}</strong>: ${cls.noOfStudents}</div>`;
-    html += `<div><strong>${L("FormTotalAmount")}</strong>: ${cls.totalAmount}</div>`;
-    html += `<div><strong>${L("FormTeacherAmount")}</strong>: ${cls.teacherAmount}</div>`;
-    html += `<div><strong>${L("FormCenterAmount")}</strong>: ${cls.centerAmount}</div>`;
+    html += `<div><strong>${L("FormClassPrice")}</strong>: ${cls.classPrice}</div>`;
     html += `</div>`;
 
     document.getElementById('classDetailsContent').innerHTML = html;

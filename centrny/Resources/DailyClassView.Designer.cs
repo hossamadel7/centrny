@@ -250,6 +250,15 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Class Price.
+        /// </summary>
+        public static string FormClassPrice {
+            get {
+                return ResourceManager.GetString("FormClassPrice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Education Year.
         /// </summary>
         public static string FormEduYear {

@@ -391,7 +391,7 @@
                                         <!-- Year Dropdown -->
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">@DailyClassView.FormYear</label>
-                                            <select class="form-select" id="yearCode" disabled>
+                                            <select class="form-select" id="yearCode" >
                                                 <option value="">@DailyClassView.SelectOption</option>
                                             </select>
                                         </div>
@@ -404,18 +404,10 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <!-- Amounts -->
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">@DailyClassView.FormTotalAmount</label>
-                                            <input type="number" class="form-control" id="totalAmount" step="0.01" min="0" placeholder="0.00">
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">@DailyClassView.FormTeacherAmount</label>
-                                            <input type="number" class="form-control" id="teacherAmount" step="0.01" min="0" placeholder="0.00">
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">@DailyClassView.FormCenterAmount</label>
-                                            <input type="number" class="form-control" id="centerAmount" step="0.01" min="0" placeholder="0.00">
+                                        <!-- Class Price -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">@DailyClassView.FormClassPrice</label>
+                                            <input type="number" class="form-control" id="classPrice" step="0.01" min="0" placeholder="0.00">
                                         </div>
                                     </div>
                                 </div>

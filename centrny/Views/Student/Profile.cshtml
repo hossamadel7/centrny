@@ -32,7 +32,14 @@
             direction: rtl;
             text-align: right;
         }
-        </style>
+
+        .class-warning {
+            color: #d32f2f;
+            font-weight: bold;
+            margin-bottom: 0.3em;
+            font-size: 1em;
+        }
+    </style>
 </head>
 <body>
     <!-- JS Localization keys -->
@@ -92,7 +99,6 @@
                                 <i class="fas @(Model.IsActive ? "fa-check-circle" : "fa-times-circle")"></i>
                                 <span id="status-label"></span>
                             </div>
-
                             <!-- 4 Info Cards in a Single Row -->
                             <div class="row justify-content-center mt-4">
                                 <div class="col-12 col-md-3 mb-3">
@@ -147,7 +153,6 @@
             <a href="@Url.Action("StudentData", "Student", new { item_key = Model.ItemKey })" class="modern-link-btn">
                 <i class="fas fa-tasks"></i> @Localizer["ViewAssignmentsAndExams"]
             </a>
-            <!-- Profile Content -->
             <div class="profile-content">
                 <!-- Upcoming Classes -->
                 <div class="section-card">
@@ -375,7 +380,7 @@
                         </div>
                     ` : ''}
                     <div style="margin-top: 1rem;">
-                        <button class="view-weekly-btn" onclick="viewWeeklyClasses(${subject.subjectCode}, ${subject.teacherCode}, ${subject.rootCode}, ${subject.branchCode}, '${subject.subjectName}', '${subject.teacherName}')">
+                        <button class="view-weekly-btn" onclick="viewWeeklyClasses(${subject.subjectCode}, ${subject.teacherCode}, ${subject.yearCode}, '${subject.subjectName}', '${subject.teacherName}')">
                             <i class="fas fa-calendar-week"></i>
                             ${getJsString('weekly-classes')}
                         </button>
@@ -410,7 +415,7 @@
         }
 
         function renderAttendanceControls(classItem) {
-            if (!classItem.canAttend) {
+            if (classItem.isAttended) {
                 return `
                     <div class="attended-badge">
                         <i class="fas fa-check"></i>
@@ -429,7 +434,7 @@
                         ${attendanceTypes.map(type => `<option value="${type.value}">${type.text}</option>`).join('')}
                     </select>
                     <input type="number" min="0" step="1" placeholder="Session price" class="discount-price-input" id="discountPrice_${classItem.classCode}" style="display:none;" />
-                    <button class="attend-btn" onclick="markAttendance(${classItem.classCode})" id="attendBtn_${classItem.classCode}">
+                    <button class="attend-btn" onclick="markAttendance(${classItem.classCode}, '${encodeURIComponent(JSON.stringify(classItem))}')" id="attendBtn_${classItem.classCode}">
                         <i class="fas fa-check"></i>
                         <span>${getJsString('mark-attendance')}</span>
                     </button>
@@ -437,20 +442,21 @@
             `;
         }
 
-               function onAttendanceTypeChange(classCode) {
+        function onAttendanceTypeChange(classCode) {
             const select = document.getElementById(`attendanceType_${classCode}`);
             const input = document.getElementById(`discountPrice_${classCode}`);
             const discountType = getDiscountAttendanceType();
             const discountValue = discountType ? discountType.value.toString() : null;
             if (select.value === discountValue) {
-                input.style.display = 'inline-block'; // <-- FIXED
+                input.style.display = 'inline-block';
             } else {
                 input.style.display = 'none';
                 input.value = '';
             }
         }
 
-               async function markAttendance(classCode) {
+        async function markAttendance(classCode, classItemStr) {
+            const classItem = JSON.parse(decodeURIComponent(classItemStr));
             const button = document.getElementById(`attendBtn_${classCode}`);
             const select = document.getElementById(`attendanceType_${classCode}`);
             const discountInput = document.getElementById(`discountPrice_${classCode}`);
@@ -499,7 +505,11 @@
                 container.innerHTML = renderEmptyState('fa-clock', 'no-classes-available', 'no-classes-available-msg');
                 return;
             }
-            container.innerHTML = classes.map(classItem => `
+            container.innerHTML = classes.map(classItem => {
+                const showScheduleWarning =
+                    (classItem.assignedScheduleCode != null) &&
+                    (classItem.scheduleCode == null || classItem.scheduleCode !== classItem.assignedScheduleCode);
+                return `
                 <div class="class-card ${!classItem.canAttend ? 'attended' : ''}"
                     style="cursor:pointer;"
                     data-class='${JSON.stringify(classItem).replace(/'/g, "&apos;")}'
@@ -509,6 +519,7 @@
                             <i class="fas fa-chalkboard-teacher"></i>
                         </div>
                         <div class="class-info">
+                             ${showScheduleWarning ? `<div class="class-warning">This class is not in your regular schedule.</div>` : ""}
                             <h3>${classItem.className}</h3>
                             <div class="class-subject">${classItem.subjectName}</div>
                         </div>
@@ -528,7 +539,7 @@
                         </div>
                         <div class="class-detail">
                             <i class="fas fa-dollar-sign"></i>
-                            <span>${classItem.totalAmount ? classItem.totalAmount + ' EGP' : getJsString('free')}</span>
+                            <span>${classItem.classPrice ? classItem.classPrice + ' EGP' : getJsString('free')}</span>
                         </div>
                     </div>
                     <div class="class-time">
@@ -543,7 +554,8 @@
                     </div>
                     ${renderAttendanceControls(classItem)}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function onClassCardClick(classItemJson) {
@@ -596,7 +608,7 @@
             }
         });
 
-        async function viewWeeklyClasses(subjectCode, teacherCode, yearCode, branchCode, subjectName, teacherName) {
+        async function viewWeeklyClasses(subjectCode, teacherCode, yearCode, subjectName, teacherName) {
             const modal = document.getElementById('weeklyModal');
             const modalTitle = document.getElementById('modalTitle');
             const modalBody = document.getElementById('modalBody');
@@ -609,7 +621,7 @@
             `;
             modal.classList.add('show');
             try {
-                const response = await fetch(`/Student/GetWeeklyClasses/${ITEM_KEY}?subjectCode=${subjectCode}&teacherCode=${teacherCode}&yearCode=${yearCode}&branchCode=${branchCode}`);
+                const response = await fetch(`/Student/GetWeeklyClasses/${ITEM_KEY}?subjectCode=${subjectCode}&teacherCode=${teacherCode}&yearCode=${yearCode}`);
                 const classes = await response.json();
                 if (classes.error) {
                     modalBody.innerHTML = `
@@ -640,51 +652,57 @@
             }
             modalBody.innerHTML = `
                 <div class="upcoming-classes-grid">
-                    ${classes.map(classItem => `
-                        <div class="class-card ${classItem.isAttended ? 'attended' : ''}"
-                            style="cursor:pointer;"
-                            data-class='${JSON.stringify(classItem).replace(/'/g, "&apos;")}'
-                            onclick='onWeeklyClassCardClick(this.getAttribute("data-class"))'>
-                            <div class="class-header">
-                                <div class="class-icon">
-                                    <i class="fas fa-chalkboard-teacher"></i>
+                    ${classes.map(classItem => {
+                        const showScheduleWarning =
+                            (classItem.assignedScheduleCode != null) &&
+                            (classItem.scheduleCode == null || classItem.scheduleCode !== classItem.assignedScheduleCode);
+                        return `
+                            <div class="class-card ${classItem.isAttended ? 'attended' : ''}"
+                                style="cursor:pointer;"
+                                data-class='${JSON.stringify(classItem).replace(/'/g, "&apos;")}'
+                                onclick='onWeeklyClassCardClick(this.getAttribute("data-class"))'>
+                                <div class="class-header">
+                                    <div class="class-icon">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
+                                    <div class="class-info">
+                                        <h3>${classItem.className}</h3>
+                                        <div class="class-subject">${classItem.subjectName}</div>
+                                    </div>
                                 </div>
-                                <div class="class-info">
-                                    <h3>${classItem.className}</h3>
-                                    <div class="class-subject">${classItem.subjectName}</div>
+                                <div class="class-details">
+                                    <div class="class-detail">
+                                        <i class="fas fa-calendar-day"></i>
+                                        <span>${classItem.dayOfWeek} - ${classItem.classDate}</span>
+                                    </div>
+                                    <div class="class-detail">
+                                        <i class="fas fa-user-tie"></i>
+                                        <span>${classItem.teacherName}</span>
+                                    </div>
+                                    <div class="class-detail">
+                                        <i class="fas fa-building"></i>
+                                        <span>${classItem.branchName}</span>
+                                    </div>
+                                    <div class="class-detail">
+                                        <i class="fas fa-door-open"></i>
+                                        <span>${classItem.hallName}</span>
+                                    </div>
                                 </div>
+                                <div class="class-time">
+                                    <div class="time-info">
+                                        <div class="time-label">${getJsString('start-time')}</div>
+                                        <div class="time-value">${classItem.startTime}</div>
+                                    </div>
+                                    <div class="time-info">
+                                        <div class="time-label">${getJsString('end-time')}</div>
+                                        <div class="time-value">${classItem.endTime}</div>
+                                    </div>
+                                </div>
+                                ${showScheduleWarning ? `<div class="class-warning">This is not your class</div>` : ""}
+                                ${renderAttendanceControls(classItem)}
                             </div>
-                            <div class="class-details">
-                                <div class="class-detail">
-                                    <i class="fas fa-calendar-day"></i>
-                                    <span>${classItem.dayOfWeek} - ${classItem.classDate}</span>
-                                </div>
-                                <div class="class-detail">
-                                    <i class="fas fa-user-tie"></i>
-                                    <span>${classItem.teacherName}</span>
-                                </div>
-                                <div class="class-detail">
-                                    <i class="fas fa-building"></i>
-                                    <span>${classItem.branchName}</span>
-                                </div>
-                                <div class="class-detail">
-                                    <i class="fas fa-door-open"></i>
-                                    <span>${classItem.hallName}</span>
-                                </div>
-                            </div>
-                            <div class="class-time">
-                                <div class="time-info">
-                                    <div class="time-label">${getJsString('start-time')}</div>
-                                    <div class="time-value">${classItem.startTime}</div>
-                                </div>
-                                <div class="time-info">
-                                    <div class="time-label">${getJsString('end-time')}</div>
-                                    <div class="time-value">${classItem.endTime}</div>
-                                </div>
-                            </div>
-                            ${renderAttendanceControls(classItem)}
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
         }

@@ -11,6 +11,8 @@ public partial class Class
 
     public int NoOfStudents { get; set; }
 
+    public decimal? ClassPrice { get; set; }
+
     public decimal? TotalAmount { get; set; }
 
     public decimal? TeacherAmount { get; set; }

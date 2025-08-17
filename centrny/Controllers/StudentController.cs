@@ -1480,7 +1480,6 @@ namespace centrny.Controllers
                 }
 
                 var currentTime = DateTime.Now;
-                var oneHourBefore = currentTime.AddHours(-1); // 1 hour before current time
                 var today = DateOnly.FromDateTime(currentTime);
 
                 // Get all classes for today first, then filter by time
@@ -1514,15 +1513,28 @@ namespace centrny.Controllers
                     .OrderBy(c => c.ClassStartTime)
                     .ToList();
 
-                // FIX: Use root/branch from student for admin check
+                // Use root/branch from student for admin check
                 var isAdmin = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
 
                 var classResults = new List<object>();
+
+                // Preload all active learns for this student (for efficiency)
+                var learns = await _context.Learns
+                    .Where(l => l.StudentCode == student.StudentCode && l.IsActive)
+                    .ToListAsync();
 
                 foreach (var c in availableClasses)
                 {
                     var hasAttended = await _context.Attends
                         .AnyAsync(a => a.StudentId == student.StudentCode && a.ClassId == c.ClassCode);
+
+                    // Find the assigned schedule for this (subject, teacher, year)
+                    int? assignedScheduleCode = learns
+                        .FirstOrDefault(l =>
+                            l.SubjectCode == c.SubjectCode &&
+                            l.TeacherCode == c.TeacherCode &&
+                            l.YearCode == student.YearCode
+                        )?.ScheduleCode;
 
                     classResults.Add(new
                     {
@@ -1540,8 +1552,9 @@ namespace centrny.Controllers
                         startTime = c.ClassStartTime?.ToString("HH:mm") ?? "N/A",
                         endTime = c.ClassEndTime?.ToString("HH:mm") ?? "N/A",
                         scheduleCode = c.ScheduleCode,
+                        assignedScheduleCode = assignedScheduleCode, // <-- This line added!
                         hallCode = c.HallCode,
-                        totalAmount = c.TotalAmount,
+                        classPrice = c.ClassPrice,
                         canAttend = !hasAttended,
                         canMarkAttendance = isAdmin // Only admins can mark attendance
                     });
@@ -1564,7 +1577,7 @@ namespace centrny.Controllers
         /// </summary>
         [HttpGet]
         [Route("Student/GetWeeklyClasses/{item_key}")]
-        public async Task<IActionResult> GetWeeklyClasses(string item_key, int subjectCode, int teacherCode, int yearCode, int branchCode)
+        public async Task<IActionResult> GetWeeklyClasses(string item_key, int subjectCode, int teacherCode, int yearCode)
         {
             try
             {
@@ -1574,12 +1587,17 @@ namespace centrny.Controllers
                     return Json(new { error = "Student not found." });
                 }
 
-                // Verify student has access to this subject/teacher combination
-                var hasAccess = await _context.Learns
-                    .AnyAsync(l => l.StudentCode == student.StudentCode &&
-                                  l.SubjectCode == subjectCode &&
-                                  l.TeacherCode == teacherCode &&
-                                  l.IsActive);
+                // Get the student's assigned schedule code for this subject/teacher/year
+                var assignedLearn = await _context.Learns
+                    .FirstOrDefaultAsync(l => l.StudentCode == student.StudentCode
+                        && l.SubjectCode == subjectCode
+                        && l.TeacherCode == teacherCode
+                        && l.YearCode == yearCode
+                        && l.IsActive);
+
+                int? assignedScheduleCode = assignedLearn?.ScheduleCode;
+
+                var hasAccess = assignedLearn != null;
 
                 if (!hasAccess)
                 {
@@ -1594,14 +1612,13 @@ namespace centrny.Controllers
                 var startDate = DateOnly.FromDateTime(startOfWeek);
                 var endDate = DateOnly.FromDateTime(endOfWeek);
 
-                // Get all classes for this week matching the criteria
                 var weeklyClasses = await _context.Classes
                     .Where(c => c.ClassDate.HasValue &&
                                c.ClassDate >= startDate &&
                                c.ClassDate <= endDate &&
                                c.SubjectCode == subjectCode &&
                                c.TeacherCode == teacherCode &&
-                               c.BranchCode == branchCode &&
+                               c.YearCode == yearCode &&
                                c.ClassStartTime.HasValue &&
                                c.ClassEndTime.HasValue)
                     .Include(c => c.SubjectCodeNavigation)
@@ -1613,8 +1630,7 @@ namespace centrny.Controllers
                     .ThenBy(c => c.ClassStartTime)
                     .ToListAsync();
 
-                // FIX: Use root/branch from student for admin check (could also use branchCode from method args)
-                var isAdmin = await IsCurrentUserAdmin(student.RootCode, branchCode);
+                var isAdmin = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
 
                 var classResults = new List<object>();
 
@@ -1631,7 +1647,6 @@ namespace centrny.Controllers
                         var classStartTime = c.ClassStartTime.Value.ToTimeSpan();
                         var classEndTime = c.ClassEndTime.Value.ToTimeSpan();
                         var availableFromTime = classStartTime.Subtract(TimeSpan.FromHours(1));
-
                         isCurrentlyAvailable = currentTime >= availableFromTime && currentTime <= classEndTime;
                     }
 
@@ -1653,6 +1668,7 @@ namespace centrny.Controllers
                         startTime = c.ClassStartTime?.ToString("HH:mm") ?? "N/A",
                         endTime = c.ClassEndTime?.ToString("HH:mm") ?? "N/A",
                         scheduleCode = c.ScheduleCode,
+                        assignedScheduleCode = assignedScheduleCode, // <--- send this to frontend
                         hallCode = c.HallCode,
                         totalAmount = c.TotalAmount,
                         isAttended = hasAttended,
@@ -1732,12 +1748,12 @@ namespace centrny.Controllers
                 if (discountType != null)
                     discountTypeCode = discountType.PaymentCode;
 
-                // Log incoming values for debugging
+                // Log incoming values for debugging 
                 _logger.LogInformation("MarkAttendance: Received AttendanceType={AttendanceType}, SessionPrice={SessionPrice}, DiscountTypeCode={DiscountTypeCode}",
                     request.AttendanceType, request.SessionPrice, discountTypeCode);
 
                 // Use discount price if Discount type selected and SessionPrice is present and positive
-                decimal sessionPriceToSave = classEntity.TotalAmount ?? 0;
+                decimal sessionPriceToSave = classEntity.ClassPrice ?? 0;
                 if (request.AttendanceType == discountTypeCode && request.SessionPrice.HasValue && request.SessionPrice.Value > 0)
                 {
                     sessionPriceToSave = request.SessionPrice.Value;
@@ -1851,6 +1867,7 @@ namespace centrny.Controllers
                         eduYearName = l.EduYearCodeNavigation.EduName,
                         studentFee = l.StudentFee,
                         isOnline = l.IsOnline,
+                        yearCode = l.YearCode,
                         insertTime = l.InsertTime.ToString("yyyy-MM-dd"),
                         rootCode = student.RootCode,
                         // Schedule information directly from ScheduleCodeNavigation

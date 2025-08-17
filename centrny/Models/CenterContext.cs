@@ -153,6 +153,7 @@ public partial class CenterContext : DbContext
                     tb.HasTrigger("Trigger_UpdateTotalAmount");
                     tb.HasTrigger("UpdateAttendDetails");
                     tb.HasTrigger("trg_Set_SessionPrice_Zero_On_Type2");
+                    tb.HasTrigger("trg_UpdateClassFinancials");
                     tb.HasTrigger("trg_Update_Attend_SessionPrice");
                 });
 
@@ -311,7 +312,11 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => e.ClassCode);
 
-            entity.ToTable("Class", tb => tb.HasTrigger("Trigger_After_Insert_Update_Center_Amount"));
+            entity.ToTable("Class", tb =>
+                {
+                    tb.HasTrigger("Trigger_After_Insert_Update_Center_Amount");
+                    tb.HasTrigger("trg_SetClassPriceAfterInsert");
+                });
 
             entity.Property(e => e.ClassCode).HasColumnName("Class_Code");
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
@@ -323,6 +328,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.ClassName)
                 .HasMaxLength(50)
                 .HasColumnName("Class_Name");
+            entity.Property(e => e.ClassPrice)
+                .HasColumnType("money")
+                .HasColumnName("Class_Price");
             entity.Property(e => e.ClassStartTime).HasColumnName("Class_Start_Time");
             entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
             entity.Property(e => e.HallCode).HasColumnName("Hall_Code");

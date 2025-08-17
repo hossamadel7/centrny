@@ -408,9 +408,7 @@ namespace centrny.Controllers
                         c.YearCode,
                         c.RootCode,
                         c.NoOfStudents,
-                        c.TotalAmount,
-                        c.TeacherAmount,
-                        c.CenterAmount,
+                        c.ClassPrice, // <-- Only this price field!
                         c.ScheduleCode,
                         TeacherName = c.TeacherCodeNavigation.TeacherName,
                         SubjectName = c.SubjectCodeNavigation.SubjectName,
@@ -470,9 +468,7 @@ namespace centrny.Controllers
                         rootName = cls.RootName,
                         rootCode = cls.RootCode,
                         noOfStudents = cls.NoOfStudents,
-                        totalAmount = cls.TotalAmount?.ToString("F2"),
-                        teacherAmount = cls.TeacherAmount?.ToString("F2"),
-                        centerAmount = cls.CenterAmount?.ToString("F2"),
+                        classPrice = cls.ClassPrice?.ToString("F2"),
                         date = dateOnly.ToString("yyyy-MM-dd"),
                         classDate = cls.ClassDate?.ToString("yyyy-MM-dd"),
                         isCenter = isCenter
@@ -664,9 +660,7 @@ namespace centrny.Controllers
                     EduYearCode = model.EduYearCode.Value,
                     YearCode = model.YearCode,
                     NoOfStudents = 0, // Always start with 0, will be updated by attendance system
-                    TotalAmount = model.TotalAmount,
-                    TeacherAmount = model.TeacherAmount,
-                    CenterAmount = model.CenterAmount,
+                    ClassPrice = model.ClassPrice,
                     InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1"),
                     InsertTime = DateTime.Now,
                     // Keep ScheduleCode and ReservationCode as null
@@ -888,22 +882,10 @@ namespace centrny.Controllers
 
                 // NoOfStudents is not updated here - it's managed by the attendance system
 
-                var totalAmount = GetDecimalValue("totalAmount");
-                if (totalAmount.HasValue)
+                var classPrice = GetDecimalValue("classPrice");
+                if (classPrice.HasValue)
                 {
-                    existingClass.TotalAmount = totalAmount;
-                }
-
-                var teacherAmount = GetDecimalValue("teacherAmount");
-                if (teacherAmount.HasValue)
-                {
-                    existingClass.TeacherAmount = teacherAmount;
-                }
-
-                var centerAmount = GetDecimalValue("centerAmount");
-                if (centerAmount.HasValue)
-                {
-                    existingClass.CenterAmount = centerAmount;
+                    existingClass.ClassPrice = classPrice;
                 }
 
                 // Update audit fields
@@ -1200,9 +1182,7 @@ namespace centrny.Controllers
 
                             // Start with minimal values - triggers will populate as needed
                             NoOfStudents = 0,
-                            TotalAmount = schedule.ScheduleAmount,
-                            TeacherAmount = null,
-                            CenterAmount = null,
+                            ClassPrice = schedule.ScheduleAmount,
 
                             // Audit fields
                             InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1"),
@@ -1385,9 +1365,7 @@ namespace centrny.Controllers
                 rootName = cls.RootName,
                 rootCode = cls.RootCode,
                 noOfStudents = cls.NoOfStudents,
-                totalAmount = cls.TotalAmount?.ToString("F2"),
-                teacherAmount = cls.TeacherAmount?.ToString("F2"),
-                centerAmount = cls.CenterAmount?.ToString("F2"),
+                classPrice = cls.ClassPrice?.ToString("F2"),
                 date = date.ToString("yyyy-MM-dd"),
                 classDate = cls.ClassDate?.ToString("yyyy-MM-dd"),
                 isCenter = isCenter
@@ -1820,9 +1798,7 @@ namespace centrny.Controllers
         public int? EduYearCode { get; set; }
         public int? YearCode { get; set; }
         // NoOfStudents removed - managed by attendance system
-        public decimal? TotalAmount { get; set; }
-        public decimal? TeacherAmount { get; set; }
-        public decimal? CenterAmount { get; set; }
+        public decimal? ClassPrice { get; set; }
         public int RootCode { get; set; } // Auto-set to user's root
         public DateTime? ClassDate { get; set; } // The specific date for this class
     }

@@ -315,8 +315,15 @@ class ScheduleManager {
     }
 
     async preloadDropdownsForModal(schedule = null) {
-        // This method does not have user-facing strings, keep all logic unchanged.
-        // ... (unchanged logic)
+        // If user has an auto-assigned branch, load halls immediately for that branch.
+        if (window.userContext?.groupBranchCode) {
+            await this.loadDropdown(
+                `/Schedule/GetHallsForBranch?branchCode=${window.userContext.groupBranchCode}`,
+                'hallCode',
+                getJsString('selectHallOption')
+            );
+        }
+        // ...add other dropdown preloading logic here if you need (e.g., teacher, year, etc.)
     }
 
     setupDropdownListeners() {
