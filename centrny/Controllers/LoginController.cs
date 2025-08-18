@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace centrny.Controllers
 {
@@ -17,6 +19,21 @@ namespace centrny.Controllers
         {
             _context = context;
             _logger = logger;
+        }
+
+        // Unicode MD5 hasher to match SQL trigger
+        public static string MD5hasher(string input)
+        {
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.Unicode.GetBytes(input ?? "");
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                var sb = new StringBuilder();
+                foreach (var b in hashBytes)
+                    sb.Append(b.ToString("X2")); // Uppercase hex to match SQL output
+                return sb.ToString();
+            }
         }
 
         [AllowAnonymous]
@@ -72,8 +89,9 @@ namespace centrny.Controllers
                     return View("Index");
                 }
 
-                // Simple password check (plain text)
-                if (password != user.Password)
+                // Compare using Unicode MD5 hash to match database
+                string hashedInputPassword = MD5hasher(password);
+                if (hashedInputPassword != user.Password)
                 {
                     _logger.LogWarning("Login attempt with invalid password for user: {Username}", username);
                     ViewBag.Error = "Invalid username or password.";
@@ -126,8 +144,8 @@ namespace centrny.Controllers
                     }
                 }
 
-                // Add custom claim if user still has default password
-                if (user.Password == "123456789")
+                // Add custom claim if user still has default password (hashed)
+                if (user.Password == MD5hasher("123456789"))
                 {
                     claims.Add(new Claim("ForcePasswordChange", "true"));
                 }
@@ -145,7 +163,7 @@ namespace centrny.Controllers
                 _logger.LogInformation("Successful login for user: {Username}", username);
 
                 // After login, check for forced password change
-                if (user.Password == "123456789")
+                if (user.Password == MD5hasher("123456789"))
                 {
                     return RedirectToAction("ForceChangePassword");
                 }
@@ -184,7 +202,7 @@ namespace centrny.Controllers
             return RedirectToAction("Index");
         }
 
-        // Helper method to check if the logged-in user has default password
+        // Helper method to check if the logged-in user has default password (hashed)
         private bool IsDefaultPassword(ClaimsPrincipal user)
         {
             // You may want to cache this in claims, but for now, check DB for the current user
@@ -194,7 +212,7 @@ namespace centrny.Controllers
                 if (!string.IsNullOrEmpty(userId))
                 {
                     var dbUser = _context.Users.Find(int.Parse(userId));
-                    if (dbUser != null && dbUser.Password == "123456789")
+                    if (dbUser != null && dbUser.Password == MD5hasher("123456789"))
                     {
                         return true;
                     }
@@ -238,7 +256,7 @@ namespace centrny.Controllers
                 return View("ChangePassword");
             }
 
-            if (newPassword == "123456789")
+            if (MD5hasher(newPassword) == MD5hasher("123456789"))
             {
                 ViewBag.Error = "You cannot use the default password as your new password.";
                 return View("ChangePassword");
@@ -254,7 +272,7 @@ namespace centrny.Controllers
             var dbUser = await _context.Users.FindAsync(int.Parse(userId));
             if (dbUser != null)
             {
-                dbUser.Password = newPassword; // No hashing since you use plain text
+                dbUser.Password = MD5hasher(newPassword); // Store hashed password
                 await _context.SaveChangesAsync();
 
                 // Log out & force re-login with new password
@@ -264,13 +282,6 @@ namespace centrny.Controllers
 
             ViewBag.Error = "Unable to update password.";
             return View("ChangePassword");
-        }
-
-        // MD5 password verification to match your database trigger
-        private bool VerifyPlainTextPassword(string plainPassword, string storedPassword)
-        {
-            // Simple plain text comparison since database doesn't hash passwords
-            return plainPassword == storedPassword;
         }
 
         // Helper method to check if current user has access to a specific page

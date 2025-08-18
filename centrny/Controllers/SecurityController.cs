@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace centrny.Controllers
@@ -16,6 +17,20 @@ namespace centrny.Controllers
         public SecurityController(CenterContext context)
         {
             _context = context;
+        }
+        // Use Unicode encoding to match SQL Server NVARCHAR hashing
+        public static string MD5hasher(string input)
+        {
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.Unicode.GetBytes(input ?? "");
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                var sb = new StringBuilder();
+                foreach (var b in hashBytes)
+                    sb.Append(b.ToString("X2")); // Uppercase hex to match SQL output
+                return sb.ToString();
+            }
         }
 
         // --- Authority Check ---
@@ -73,7 +88,6 @@ namespace centrny.Controllers
             {
                 return Json(new { success = false, message = "Access denied." });
             }
-            // Replace Branches with your actual branch entity name
             var branches = _context.Branches
                 .Where(b => b.RootCode == rootCode)
                 .Select(b => new { b.BranchCode, b.BranchName })
@@ -172,7 +186,6 @@ namespace centrny.Controllers
             if (group == null)
                 return Json(new { success = false, message = "Group not found" });
 
-            // Delete all users (not just deactivate)
             var users = _context.Users.Where(u => u.GroupCode == groupCode).ToList();
             if (users.Any())
             {
@@ -213,10 +226,10 @@ namespace centrny.Controllers
                 user.Name = name;
             user.IsActive = isActive;
 
-            // Save password as plain text if provided
+            // Save password as Unicode MD5 hash if provided
             if (!string.IsNullOrWhiteSpace(password))
             {
-                user.Password = password; // No hashing
+                user.Password = MD5hasher(password);
             }
 
             _context.SaveChanges();
@@ -235,8 +248,8 @@ namespace centrny.Controllers
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
 
-            // Set plain text password
-            user.Password = "123456789"; // No hashing
+            // Set password as Unicode MD5 hash of default
+            user.Password = MD5hasher("123456789");
             _context.SaveChanges();
 
             return Json(new { success = true, message = "Password reset to 123456789" });
@@ -283,9 +296,9 @@ namespace centrny.Controllers
 
                 string actualUsername = username;
 
-                // Save plain password as-is
+                // Save password as Unicode MD5 hash
                 string plainPassword = string.IsNullOrWhiteSpace(password) ? "123456789" : password;
-
+                string hashedPassword = MD5hasher(plainPassword);
                 DateTime insertTime = DateTime.Now;
 
                 var user = new User
@@ -293,7 +306,7 @@ namespace centrny.Controllers
                     UserCode = newUserCode,
                     Name = name,
                     Username = actualUsername,
-                    Password = plainPassword, // No hashing
+                    Password = hashedPassword,
                     GroupCode = groupCode,
                     IsActive = isActive,
                     InsertUser = insertUserCode,
