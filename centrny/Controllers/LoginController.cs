@@ -89,13 +89,17 @@ namespace centrny.Controllers
                     return View("Index");
                 }
 
-                // Compare using Unicode MD5 hash to match database
+                // Calculate the hashed password before comparison
                 string hashedInputPassword = MD5hasher(password);
+
                 if (hashedInputPassword != user.Password)
                 {
-                    _logger.LogWarning("Login attempt with invalid password for user: {Username}", username);
+                    _logger.LogWarning("Login attempt with invalid password for user: {Username}, Sent Password: {Password}, Hashed: {HashedPassword}, DB: {DbPassword}", username, password, hashedInputPassword, user.Password);
                     ViewBag.Error = "Invalid username or password.";
                     ViewBag.Username = username;
+                    ViewBag.SentPassword = password;
+                    ViewBag.SentHashedPassword = hashedInputPassword;
+                    ViewBag.DbPassword = user.Password;
                     return View("Index");
                 }
 
