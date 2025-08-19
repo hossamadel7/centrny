@@ -16,6 +16,7 @@
 <html lang="@htmlLang" dir="@htmlDir">
 <head>
     <link rel="stylesheet" href="~/css/Hamody.css" />
+    
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
     @if (isArabic)
@@ -35,6 +36,7 @@
             direction: rtl;
             text-align: right;
         }
+
         html[dir="ltr"] .exam-index-card,
         html[dir="ltr"] .gradient-table,
         html[dir="ltr"] .exam-index-table,
@@ -42,51 +44,65 @@
             direction: ltr;
             text-align: left;
         }
-        html[dir="ltr"] .gradient-table th:first-child,
-        html[dir="ltr"] .gradient-table td:first-child {
-            text-align: left;
-        }
-        html[dir="ltr"] .gradient-table th:last-child,
-        html[dir="ltr"] .gradient-table td:last-child {
-            text-align: right;
-        }
+
+            html[dir="ltr"] .gradient-table th:first-child,
+            html[dir="ltr"] .gradient-table td:first-child {
+                text-align: left;
+            }
+
+            html[dir="ltr"] .gradient-table th:last-child,
+            html[dir="ltr"] .gradient-table td:last-child {
+                text-align: right;
+            }
+
         html[dir="rtl"] .gradient-table th:first-child,
         html[dir="rtl"] .gradient-table td:first-child {
             text-align: right;
         }
+
         html[dir="rtl"] .gradient-table th:last-child,
         html[dir="rtl"] .gradient-table td:last-child {
             text-align: left;
         }
+
         .btn-table.stats {
             background: var(--info-gradient) !important;
             color: #fff !important;
         }
+
         .badge.exam-type-exam {
             background: var(--primary-gradient) !important;
         }
+
         .badge.exam-type-assignment {
             background: var(--info-gradient) !important;
         }
+
         .badge.exam-status-done {
             background: var(--success-gradient) !important;
         }
+
         .badge.exam-status-pending {
             background: var(--warning-gradient) !important;
         }
+
         .badge.exam-mode-online {
             background: var(--info-gradient) !important;
         }
+
         .badge.exam-mode-offline {
             background: var(--danger-gradient) !important;
             color: #fff !important;
         }
+
         .badge.exam-duration {
             background: var(--info-gradient) !important;
         }
+
         .badge.exam-degree {
             background: var(--primary-gradient) !important;
         }
+
         .table-card {
             background: var(--bg-white);
             border-radius: var(--border-radius);
@@ -100,6 +116,7 @@
             flex-direction: column;
             align-items: center;
         }
+
         .exam-header-block {
             width: 100%;
             text-align: center;
@@ -111,31 +128,72 @@
             border: 1px solid rgba(108,92,231,0.11);
             position: relative;
         }
-        .exam-header-block h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.3rem;
-            letter-spacing: -.01em;
-            background: var(--primary-gradient-horizontal);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            color: transparent;
-            display: inline-block;
-            text-align: center;
-        }
-        .exam-header-block p {
-            color: var(--text-muted);
-            font-size: 1.13rem;
-            margin: 0;
-            font-weight: 500;
-        }
+
+            .exam-header-block h2 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.3rem;
+                letter-spacing: -.01em;
+                background: var(--primary-gradient-horizontal);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                color: transparent;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .exam-header-block p {
+                color: var(--text-muted);
+                font-size: 1.13rem;
+                margin: 0;
+                font-weight: 500;
+            }
+
         .exam-header-actions {
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 1rem;
             margin-bottom: 1.3rem;
+        }
+        /* Mobile table fixes */
+        @@media(max-width: 576px) {
+            .table-card
+
+        {
+            padding: .5rem;
+        }
+
+        .exam-index-table th, .exam-index-table td {
+            font-size: 0.95rem !important;
+            padding: 0.25rem !important;
+            white-space: normal !important;
+        }
+
+        .exam-index-table th, .exam-index-table td {
+            min-width: 80px !important;
+            max-width: 120px !important;
+        }
+
+            .exam-index-table td:last-child .d-flex {
+                flex-direction: column !important;
+                gap: .3rem !important;
+                align-items: stretch !important;
+            }
+
+        .exam-index-table th, .exam-index-table td {
+            word-break: break-word;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .exam-index-table {
+            width: 100% !important;
+        }
+
         }
     </style>
 </head>
@@ -506,7 +564,8 @@
                                         <i class="fas fa-search"></i> @Localizer["SearchBtn"]
                                     </button>
                                     <button id="examQuestionSearchClearBtn" class="btn-table delete" type="button" style="display:none;">
-                                        <i class="fas fa-times"></i> @Localizer["ClearBtn"]</button>
+                                        <i class="fas fa-times"></i> @Localizer["ClearBtn"]
+                                    </button>
                                 </div>
                             </div>
                             <div id="exam-question-search-results" class="mb-2" style="display:none;"></div>

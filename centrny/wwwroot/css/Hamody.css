@@ -994,3 +994,41 @@ input.question-degree {
 .financial-view .gradient-table tfoot.table-secondary td {
     background: transparent !important;
 }
+@media (max-width: 600px) {
+    .table-card {
+        padding: 0.4rem;
+        margin: 0.4rem;
+        max-width: 100vw;
+        min-width: 0;
+    }
+
+    .table-responsive {
+        width: 100vw;
+        max-width: 100vw;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .gradient-table {
+        min-width: 680px;
+        font-size: 0.87em;
+    }
+
+        .gradient-table th,
+        .gradient-table td {
+            padding: 0.4em 0.3em;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+            .gradient-table td .d-flex {
+                flex-direction: column !important;
+                gap: 0.3em !important;
+                align-items: stretch !important;
+            }
+
+        .gradient-table .badge {
+            padding: 0.15em 0.6em;
+            font-size: 0.82em;
+        }
+}
