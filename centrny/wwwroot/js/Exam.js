@@ -252,7 +252,19 @@
             $eduYear.append($('<option>').val(code).text(name));
         });
     }
-
+    function populateYearFilter(data) {
+        const $year = $('#filterYear');
+        $year.empty().append($('<option>').val('').text('All'));
+        const uniqueYears = {};
+        data.forEach(exam => {
+            if (exam.yearCode && exam.yearName) {
+                uniqueYears[exam.yearCode] = exam.yearName;
+            }
+        });
+        Object.entries(uniqueYears).forEach(([code, name]) => {
+            $year.append($('<option>').val(code).text(name));
+        });
+    }
     function filterExamsAndRender() {
         let filtered = allExams.slice();
         const subjectVal = $('#filterSubject').val();

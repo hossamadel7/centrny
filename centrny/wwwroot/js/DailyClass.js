@@ -105,20 +105,23 @@ function setupEventListeners() {
     });
 
     document.getElementById('subjectCode')?.addEventListener('change', function () {
-        // For center user flow
-        if (!userContext.isCenter) return;
-        // Only clear year dropdown, do not disable it here
-        populateSelectAsync('yearCode', []);
-
-        const subjectId = this.value;
-        const teacherId = document.getElementById('teacherCode').value;
-        const eduYearCode = document.getElementById('eduYearCode').value;
-        const branchCode = userContext.groupBranchCode;
-        if (subjectId && teacherId && branchCode && eduYearCode) {
-            // This function enables/disables yearCode after loading
-            loadYearsForTeach(branchCode, teacherId, subjectId, eduYearCode, true);
-        } else {
+        // Center user flow - don't change
+        if (userContext.isCenter) {
             populateSelectAsync('yearCode', []);
+
+            const subjectId = this.value;
+            const teacherId = document.getElementById('teacherCode').value;
+            const eduYearCode = document.getElementById('eduYearCode').value;
+            const branchCode = userContext.groupBranchCode;
+            if (subjectId && teacherId && branchCode && eduYearCode) {
+                loadYearsForTeach(branchCode, teacherId, subjectId, eduYearCode, true);
+            } else {
+                populateSelectAsync('yearCode', []);
+            }
+        } else {
+            // Teacher flow: reload year dropdown
+            const eduYearCode = document.getElementById('eduYearCode').value;
+            loadYearsByEduYear(eduYearCode);
         }
     });
     // --- TEACHER FLOW (legacy, not changed) ---
@@ -141,7 +144,6 @@ function setupEventListeners() {
 
     document.getElementById('branchCode')?.addEventListener('change', function () {
         disable('subjectCode');
-  
         populateSelectAsync('subjectCode', []);
         populateSelectAsync('yearCode', []);
 
@@ -151,6 +153,12 @@ function setupEventListeners() {
         if (branchId && centerId && eduYearCode) {
             enable('subjectCode');
             fetchSubjectsForTeacherEduYearBranch(userContext.teacherCode, eduYearCode, branchId);
+        }
+
+        // Teacher flow: reload year dropdown
+        if (!userContext.isCenter) {
+            const eduYearCode = document.getElementById('eduYearCode').value;
+            loadYearsByEduYear(eduYearCode);
         }
     });
 
