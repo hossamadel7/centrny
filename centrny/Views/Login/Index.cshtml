@@ -295,15 +295,7 @@
     </style>
 </head>
 <body>
-    @if (ViewBag.SentPassword != null || ViewBag.SentHashedPassword != null || ViewBag.DbPassword != null)
-    {
-        <div class="alert alert-info">
-            <b>DEBUG:</b><br />
-            Sent password: <b>@ViewBag.SentPassword</b><br />
-            Hashed sent password: <b>@ViewBag.SentHashedPassword</b><br />
-            DB password: <b>@ViewBag.DbPassword</b>
-        </div>
-    }
+   
     <div class="login-container">
         <div class="login-header">
             <div class="login-icon">

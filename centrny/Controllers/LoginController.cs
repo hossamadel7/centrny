@@ -94,12 +94,9 @@ namespace centrny.Controllers
 
                 if (hashedInputPassword != user.Password)
                 {
-                    _logger.LogWarning("Login attempt with invalid password for user: {Username}, Sent Password: {Password}, Hashed: {HashedPassword}, DB: {DbPassword}", username, password, hashedInputPassword, user.Password);
+                    _logger.LogWarning("Login attempt with invalid password for user: {Username}", username);
                     ViewBag.Error = "Invalid username or password.";
                     ViewBag.Username = username;
-                    ViewBag.SentPassword = password;
-                    ViewBag.SentHashedPassword = hashedInputPassword;
-                    ViewBag.DbPassword = user.Password;
                     return View("Index");
                 }
 

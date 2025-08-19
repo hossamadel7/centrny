@@ -172,7 +172,7 @@ $(document).ready(function () {
                     const qrId = `qr-${item.itemCode}`;
                     $(`#${qrId}`).empty();
                     new QRCode(document.getElementById(qrId), {
-                        text: item.itemKey,
+                        text: 'https://Clasrio.com/Student/' + item.itemKey,
                         width: 80,
                         height: 80
                     });
@@ -421,7 +421,7 @@ $(document).ready(function () {
             $hiddenDiv.append($qrDiv);
 
             let qr = new QRCode(document.getElementById(qrDivId), {
-                text: item.itemKey,
+                text: 'https://Clasrio.com/Student/' + item.itemKey,
                 width: 256,
                 height: 256
             });
