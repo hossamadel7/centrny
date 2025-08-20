@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <None Include="Views\Reports\MyClassesReport.cshtml" />
+    <None Include="wwwroot\Image\clasrio-high-resolution-logo-transparent %282%29.png" />
   </ItemGroup>
 
   <ItemGroup>
