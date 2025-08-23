@@ -81,9 +81,6 @@ namespace centrny.Controllers
             {
                 var context = await GetUserContextAsync();
 
-                if (context.isTeacher)
-                    return Forbid("Teachers cannot access financial summary reports");
-
                 // Build the query for classes with financial data
                 var query = _context.Classes
                     .Include(c => c.TeacherCodeNavigation)
@@ -91,11 +88,23 @@ namespace centrny.Controllers
                     .Include(c => c.BranchCodeNavigation)
                     .Where(c => c.RootCode == context.rootCode);
 
-                // Apply branch filter
-                if (context.branchCode.HasValue)
-                    query = query.Where(c => c.BranchCode == context.branchCode.Value);
-                else if (branchCode.HasValue)
-                    query = query.Where(c => c.BranchCode == branchCode.Value);
+                // For teacher users, filter by their teacher code
+                if (context.isTeacher)
+                {
+                    var teacherId = await GetTeacherIdForUser(context.user.UserCode);
+                    if (!teacherId.HasValue)
+                        return Forbid("User is not associated with a teacher record");
+
+                    query = query.Where(c => c.TeacherCode == teacherId.Value);
+                }
+                else
+                {
+                    // Apply branch filter for non-teacher users
+                    if (context.branchCode.HasValue)
+                        query = query.Where(c => c.BranchCode == context.branchCode.Value);
+                    else if (branchCode.HasValue)
+                        query = query.Where(c => c.BranchCode == branchCode.Value);
+                }
 
                 // Apply date filters
                 if (startDate.HasValue)
@@ -121,18 +130,28 @@ namespace centrny.Controllers
                         TeacherName = c.TeacherCodeNavigation.TeacherName ?? "Unknown Teacher",
                         NoOfStudents = c.NoOfStudents,
                         TotalAmount = c.TotalAmount ?? 0,
-                        TeacherAmount = c.TeacherAmount ?? 0,
-                        CenterAmount = (c.TotalAmount ?? 0) - (c.TeacherAmount ?? 0)
+                        // For teachers, hide sensitive financial data
+                        TeacherAmount = context.isTeacher ? 0 : (c.TeacherAmount ?? 0),
+                        CenterAmount = context.isTeacher ? 0 : ((c.TotalAmount ?? 0) - (c.TeacherAmount ?? 0))
                     })
                     .ToListAsync();
 
                 // Calculate totals from all matching records (not just current page)
                 var totalsQuery = _context.Classes.Where(c => c.RootCode == context.rootCode);
 
-                if (context.branchCode.HasValue)
-                    totalsQuery = totalsQuery.Where(c => c.BranchCode == context.branchCode.Value);
-                else if (branchCode.HasValue)
-                    totalsQuery = totalsQuery.Where(c => c.BranchCode == branchCode.Value);
+                if (context.isTeacher)
+                {
+                    var teacherId = await GetTeacherIdForUser(context.user.UserCode);
+                    if (teacherId.HasValue)
+                        totalsQuery = totalsQuery.Where(c => c.TeacherCode == teacherId.Value);
+                }
+                else
+                {
+                    if (context.branchCode.HasValue)
+                        totalsQuery = totalsQuery.Where(c => c.BranchCode == context.branchCode.Value);
+                    else if (branchCode.HasValue)
+                        totalsQuery = totalsQuery.Where(c => c.BranchCode == branchCode.Value);
+                }
 
                 if (startDate.HasValue)
                     totalsQuery = totalsQuery.Where(c => c.ClassDate >= DateOnly.FromDateTime(startDate.Value));
@@ -140,8 +159,8 @@ namespace centrny.Controllers
                     totalsQuery = totalsQuery.Where(c => c.ClassDate <= DateOnly.FromDateTime(endDate.Value));
 
                 var totalRevenue = await totalsQuery.SumAsync(c => c.TotalAmount ?? 0);
-                var totalTeacherPayments = await totalsQuery.SumAsync(c => c.TeacherAmount ?? 0);
-                var totalCenterRevenue = totalRevenue - totalTeacherPayments;
+                var totalTeacherPayments = context.isTeacher ? 0 : await totalsQuery.SumAsync(c => c.TeacherAmount ?? 0);
+                var totalCenterRevenue = context.isTeacher ? 0 : (totalRevenue - totalTeacherPayments);
                 var totalStudents = await totalsQuery.SumAsync(c => c.NoOfStudents);
 
                 var summary = new FinancialSummaryReport
@@ -177,7 +196,6 @@ namespace centrny.Controllers
                 return Json(new { error = ex.Message, stackTrace = ex.StackTrace, innerException = ex.InnerException?.Message });
             }
         }
-
         [HttpGet]
         public async Task<IActionResult> StudentEnrollmentReport(int? branchCode, int? subjectCode, int? yearCode, int page = 1, int pageSize = 20)
         {
@@ -1387,7 +1405,21 @@ namespace centrny.Controllers
 
         private async Task<int?> GetTeacherIdForUser(int userId)
         {
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.InsertUser == userId);
+            // Get the user's root code through their group
+            var userContext = await _context.Users
+                .Include(u => u.GroupCodeNavigation)
+                .Where(u => u.UserCode == userId)
+                .Select(u => u.GroupCodeNavigation.RootCode)
+                .FirstOrDefaultAsync();
+
+            if (userContext == 0)
+                return null;
+
+            // Find the teacher for this root code (since there's only one teacher per root)
+            var teacher = await _context.Teachers
+                .Where(t => t.RootCode == userContext && t.IsActive)
+                .FirstOrDefaultAsync();
+
             return teacher?.TeacherCode;
         }
 
@@ -1746,7 +1778,7 @@ namespace centrny.Controllers
                 return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{fileName}.xlsx");
             }
         }
-        private IActionResult ExportFinancialSummaryToPdf(List<FinancialSummaryDto> data, decimal totalRevenue, decimal totalTeacherPayments, decimal totalCenterRevenue, string fileName)
+        private IActionResult ExportFinancialSummaryToPdf(List<FinancialSummaryDto> data, decimal totalRevenue, decimal totalTeacherPayments, decimal totalCenterRevenue, string fileName, bool isTeacher = false)
         {
             using (var stream = new MemoryStream())
             {
@@ -1756,20 +1788,26 @@ namespace centrny.Controllers
 
                 // Title
                 var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
-                var title = new Paragraph("Financial Summary Report", titleFont);
+                var title = new Paragraph(isTeacher ? "My Revenue Report" : "Financial Summary Report", titleFont);
                 title.Alignment = Element.ALIGN_CENTER;
                 document.Add(title);
                 document.Add(new Paragraph("\n"));
 
                 // Table
-                var table = new PdfPTable(10);
+                var columnCount = isTeacher ? 8 : 10;
+                var table = new PdfPTable(columnCount);
                 table.WidthPercentage = 100;
 
                 // Headers
-                string[] headers = {
-                    "Class Code", "Class Name", "Date", "Branch", "Subject", "Teacher",
-                    "Students", "Total Amount", "Teacher Amount", "Center Amount"
-                };
+                var headers = new List<string>
+        {
+            "Class Code", "Class Name", "Date", "Branch", "Subject", "Teacher", "Students", "Total Amount"
+        };
+
+                if (!isTeacher)
+                {
+                    headers.AddRange(new[] { "Teacher Amount", "Center Amount" });
+                }
 
                 foreach (var header in headers)
                 {
@@ -1789,8 +1827,12 @@ namespace centrny.Controllers
                     table.AddCell(item.TeacherName);
                     table.AddCell(item.NoOfStudents.ToString());
                     table.AddCell(item.TotalAmount.ToString("C"));
-                    table.AddCell(item.TeacherAmount.ToString("C"));
-                    table.AddCell(item.CenterAmount.ToString("C"));
+
+                    if (!isTeacher)
+                    {
+                        table.AddCell(item.TeacherAmount.ToString("C"));
+                        table.AddCell(item.CenterAmount.ToString("C"));
+                    }
                 }
 
                 document.Add(table);
@@ -1800,8 +1842,12 @@ namespace centrny.Controllers
                 var summaryFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
                 document.Add(new Paragraph("Summary", summaryFont));
                 document.Add(new Paragraph($"Total Revenue: {totalRevenue:C}"));
-                document.Add(new Paragraph($"Total Teacher Payments: {totalTeacherPayments:C}"));
-                document.Add(new Paragraph($"Total Center Revenue: {totalCenterRevenue:C}"));
+
+                if (!isTeacher)
+                {
+                    document.Add(new Paragraph($"Total Teacher Payments: {totalTeacherPayments:C}"));
+                    document.Add(new Paragraph($"Total Center Revenue: {totalCenterRevenue:C}"));
+                }
 
                 document.Close();
 
@@ -1811,7 +1857,6 @@ namespace centrny.Controllers
 
 
 
-    
         private IActionResult ExportAttendanceToPdf(List<AttendanceExportDto> data, string fileName)
         {
             using (var stream = new MemoryStream())
@@ -2016,27 +2061,31 @@ namespace centrny.Controllers
         }
 
 
-        private IActionResult ExportFinancialSummaryToExcel(List<FinancialSummaryDto> data, decimal totalRevenue, decimal totalTeacherPayments, decimal totalCenterRevenue, string fileName)
+        private IActionResult ExportFinancialSummaryToExcel(List<FinancialSummaryDto> data, decimal totalRevenue, decimal totalTeacherPayments, decimal totalCenterRevenue, string fileName, bool isTeacher = false)
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using (var package = new ExcelPackage())
             {
-                var worksheet = package.Workbook.Worksheets.Add("Financial Summary");
+                var worksheet = package.Workbook.Worksheets.Add(isTeacher ? "My Revenue Report" : "Financial Summary");
 
-                // Headers
-                worksheet.Cells[1, 1].Value = "Class Code";
-                worksheet.Cells[1, 2].Value = "Class Name";
-                worksheet.Cells[1, 3].Value = "Date";
-                worksheet.Cells[1, 4].Value = "Branch";
-                worksheet.Cells[1, 5].Value = "Subject";
-                worksheet.Cells[1, 6].Value = "Teacher";
-                worksheet.Cells[1, 7].Value = "Students";
-                worksheet.Cells[1, 8].Value = "Total Amount";
-                worksheet.Cells[1, 9].Value = "Teacher Amount";
-                worksheet.Cells[1, 10].Value = "Center Amount";
+                // Headers based on user type
+                var headers = new List<string>
+        {
+            "Class Code", "Class Name", "Date", "Branch", "Subject", "Teacher", "Students", "Total Amount"
+        };
+
+                if (!isTeacher)
+                {
+                    headers.AddRange(new[] { "Teacher Amount", "Center Amount" });
+                }
+
+                for (int i = 0; i < headers.Count; i++)
+                {
+                    worksheet.Cells[1, i + 1].Value = headers[i];
+                }
 
                 // Style headers
-                using (var range = worksheet.Cells[1, 1, 1, 10])
+                using (var range = worksheet.Cells[1, 1, 1, headers.Count])
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
@@ -2057,8 +2106,12 @@ namespace centrny.Controllers
                     worksheet.Cells[row, 6].Value = item.TeacherName;
                     worksheet.Cells[row, 7].Value = item.NoOfStudents;
                     worksheet.Cells[row, 8].Value = item.TotalAmount;
-                    worksheet.Cells[row, 9].Value = item.TeacherAmount;
-                    worksheet.Cells[row, 10].Value = item.CenterAmount;
+
+                    if (!isTeacher)
+                    {
+                        worksheet.Cells[row, 9].Value = item.TeacherAmount;
+                        worksheet.Cells[row, 10].Value = item.CenterAmount;
+                    }
                 }
 
                 // Summary section
@@ -2068,10 +2121,14 @@ namespace centrny.Controllers
 
                 worksheet.Cells[summaryRow + 1, 1].Value = "Total Revenue:";
                 worksheet.Cells[summaryRow + 1, 2].Value = totalRevenue;
-                worksheet.Cells[summaryRow + 2, 1].Value = "Total Teacher Payments:";
-                worksheet.Cells[summaryRow + 2, 2].Value = totalTeacherPayments;
-                worksheet.Cells[summaryRow + 3, 1].Value = "Total Center Revenue:";
-                worksheet.Cells[summaryRow + 3, 2].Value = totalCenterRevenue;
+
+                if (!isTeacher)
+                {
+                    worksheet.Cells[summaryRow + 2, 1].Value = "Total Teacher Payments:";
+                    worksheet.Cells[summaryRow + 2, 2].Value = totalTeacherPayments;
+                    worksheet.Cells[summaryRow + 3, 1].Value = "Total Center Revenue:";
+                    worksheet.Cells[summaryRow + 3, 2].Value = totalCenterRevenue;
+                }
 
                 // Auto-fit columns
                 worksheet.Cells.AutoFitColumns();
@@ -2082,9 +2139,8 @@ namespace centrny.Controllers
 
                 return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{fileName}.xlsx");
             }
-
-
-        }
+        }     
         #endregion
+
     }
 }

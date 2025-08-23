@@ -9,302 +9,30 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@Login.Title_LoginPage</title>
+
+    <!-- External CSS Libraries -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/clasrio-login.css" asp-append-version="true" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #355aff 0%, #4b91a2 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --border-radius: 15px;
-            --box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        body {
-            background: var(--primary-gradient);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 3rem;
-            width: 100%;
-            max-width: 450px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-            .login-header h1 {
-                background: var(--primary-gradient);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-            }
-
-            .login-header p {
-                color: #6c757d;
-                font-size: 1.1rem;
-            }
-
-        .login-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--success-gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
-        }
-
-            .login-icon i {
-                color: white;
-                font-size: 2rem;
-            }
-
-        .form-control {
-            border-radius: 12px;
-            border: 2px solid #e9ecef;
-            padding: 1rem 1.25rem;
-            font-size: 1rem;
-            transition: var(--transition);
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-            .form-control:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
-                background: white;
-            }
-
-            .form-control.is-invalid {
-                border-color: #dc3545;
-            }
-
-                .form-control.is-invalid:focus {
-                    border-color: #dc3545;
-                    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-                }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-            z-index: 5;
-            transition: var(--transition);
-        }
-
-        .form-control.has-icon {
-            padding-left: 3rem;
-        }
-
-        .form-control:focus + .input-icon {
-            color: #667eea;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-            cursor: pointer;
-            z-index: 5;
-            transition: var(--transition);
-        }
-
-            .password-toggle:hover {
-                color: #667eea;
-            }
-
-        .btn-login {
-            background: var(--primary-gradient);
-            border: none;
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            width: 100%;
-            transition: var(--transition);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-        }
-
-            .btn-login:hover:not(:disabled) {
-                transform: translateY(-2px);
-                box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-                color: white;
-            }
-
-            .btn-login:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none;
-            }
-
-            .btn-login.loading::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 20px;
-                height: 20px;
-                margin: -10px 0 0 -10px;
-                border: 2px solid rgba(255, 255, 255, 0.3);
-                border-top: 2px solid white;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-
-        .alert {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-        }
-
-        .forgot-password {
-            text-align: center;
-            margin-top: 1.5rem;
-        }
-
-            .forgot-password a {
-                color: #667eea;
-                text-decoration: none;
-                font-weight: 500;
-                transition: var(--transition);
-            }
-
-                .forgot-password a:hover {
-                    color: #764ba2;
-                    text-decoration: underline;
-                }
-
-        .form-check {
-            margin: 1.5rem 0;
-        }
-
-        .form-check-input:checked {
-            background-color: #667eea;
-            border-color: #667eea;
-        }
-
-        .form-check-label {
-            color: #495057;
-            font-weight: 500;
-        }
-
-        .invalid-feedback {
-            display: block;
-            font-size: 0.875rem;
-            color: #dc3545;
-            margin-top: 0.25rem;
-        }
-
-        .system-info {
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #495057;
-        }
-
-        @@keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        @@keyframes shake {
-            0%, 100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-5px);
-            }
-
-            75% {
-                transform: translateX(5px);
-            }
-        }
-
-        @@keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .shake {
-            animation: shake 0.5s ease-in-out;
-        }
-
-        .login-container {
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @@media (max-width: 576px) {
-            .login-container {
-                padding: 2rem 1.5rem;
-                margin: 1rem;
-            }
-
-            .login-header h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
 </head>
 <body>
-   
     <div class="login-container">
+        <!-- Login Header with Logo -->
         <div class="login-header">
-            <div class="login-icon">
-                <img src="~/image/clasrio-high-resolution-logoo.png" alt="Clasrio" style="height: 60px; width: auto;" />
+            <div class="logo-container">
+                <img src="~/image/clasrio-high-resolution-logo-transparent (2).png" alt="Clasrio" />
             </div>
             <h1>@Login.Login_WelcomeBack</h1>
             <p>@Login.Login_CenterManagementSystem</p>
         </div>
+
+        <!-- Error Messages -->
         @if (ViewBag.Error != null && !string.IsNullOrEmpty(ViewBag.Error.ToString()))
         {
             <div class="alert alert-danger" role="alert">
@@ -312,6 +40,8 @@
                 @ViewBag.Error
             </div>
         }
+
+        <!-- Success Messages -->
         @if (ViewBag.Success != null && !string.IsNullOrEmpty(ViewBag.Success.ToString()))
         {
             <div class="alert alert-success" role="alert">
@@ -319,18 +49,26 @@
                 @ViewBag.Success
             </div>
         }
+
+        <!-- System Information -->
         <div class="system-info">
             <i class="fas fa-info-circle me-2"></i>
             <strong>@Login.Login_TroubleshootingTitle</strong>
             <br>
             <small class="text-muted">@Login.Login_TroubleshootingHint</small>
         </div>
+
+        <!-- Login Form -->
         <form method="post" asp-action="Login" asp-controller="Login" id="loginForm" novalidate>
             @Html.AntiForgeryToken()
+
+            <!-- Return URL Hidden Field -->
             @if (Context.Request.Query.ContainsKey("returnUrl") && !string.IsNullOrEmpty(Context.Request.Query["returnUrl"]))
             {
                 <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
             }
+
+            <!-- Username Input -->
             <div class="input-group">
                 <input type="text"
                        name="username"
@@ -344,6 +82,8 @@
                 <i class="fas fa-user input-icon"></i>
                 <div class="invalid-feedback" id="username-error"></div>
             </div>
+
+            <!-- Password Input -->
             <div class="input-group">
                 <input type="password"
                        name="password"
@@ -357,6 +97,8 @@
                 <i class="fas fa-eye password-toggle" id="passwordToggle" title="@Login.Login_PasswordToggle"></i>
                 <div class="invalid-feedback" id="password-error"></div>
             </div>
+
+            <!-- Remember Me Checkbox -->
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="rememberMe" id="rememberMe">
                 <label class="form-check-label" for="rememberMe">
@@ -364,12 +106,16 @@
                     @Login.Login_RememberMe
                 </label>
             </div>
+
+            <!-- Login Button -->
             <button type="submit" class="btn btn-login" id="loginBtn">
                 <span class="btn-text">
                     <i class="fas fa-sign-in-alt me-2"></i>
                     @Login.Login_SignIn
                 </span>
             </button>
+
+            <!-- Troubleshooting Link -->
             <div class="forgot-password">
                 <a href="#" onclick="showContactAdmin()">
                     <i class="fas fa-tools me-1"></i>
@@ -378,211 +124,241 @@
             </div>
         </form>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-                // Localized strings from resources
-                const usernameRequiredText = '@Login.Login_UsernameRequired';
-                const usernameMinLengthText = '@Login.Login_UsernameMinLength';
-                const usernamePatternText = '@Login.Login_UsernamePattern';
-                const passwordRequiredText = '@Login.Login_PasswordRequired';
-                const passwordMinLengthText = '@Login.Login_PasswordMinLength';
-                const signingInText = '@Login.Login_SigningIn';
-                const showPasswordText = '@Login.Login_ShowPassword';
-                const hidePasswordText = '@Login.Login_HidePassword';
-                const findUsernameText = '@Login.Login_FindUsername';
-                const runSqlQueryText = '@Login.Login_RunSqlQuery';
-                const commonTestCredentialsText = '@Login.Login_CommonTestCredentials';
-                const closeText = '@Login.Login_Close';
-                const troubleshootingStepsText = '@Login.Login_TroubleshootingSteps';
-                const step1Text = '@Login.Login_Step1';
-                const step2Text = '@Login.Login_Step2';
-                const step3Text = '@Login.Login_Step3';
-                const noteText = '@Login.Login_TroubleshootingNote';
 
-                document.addEventListener('DOMContentLoaded', function() {
-                    const form = document.getElementById('loginForm');
-                    const loginBtn = document.getElementById('loginBtn');
-                    const usernameInput = document.getElementById('username');
-                    const passwordInput = document.getElementById('password');
-                    const passwordToggle = document.getElementById('passwordToggle');
-                    usernameInput.focus();
-                    passwordToggle.addEventListener('click', function() {
-                        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                        passwordInput.setAttribute('type', type);
-                        this.classList.toggle('fa-eye');
-                        this.classList.toggle('fa-eye-slash');
-                        this.title = type === 'password' ? showPasswordText : hidePasswordText;
-                    });
-                    usernameInput.addEventListener('input', function() {
-                        validateUsername();
-                    });
-                    passwordInput.addEventListener('input', function() {
-                        validatePassword();
-                    });
-                    form.addEventListener('submit', function(e) {
-                        if (!validateForm()) {
-                            e.preventDefault();
-                            showValidationErrors();
-                            return;
-                        }
-                        showLoadingState();
-                    });
-                    usernameInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            passwordInput.focus();
-                        }
-                    });
-                    passwordInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter' && validateForm()) {
-                            form.submit();
-                        }
-                    });
-                    function validateUsername() {
-                        const username = usernameInput.value.trim();
-                        const errorElement = document.getElementById('username-error');
-                        if (username.length === 0) {
-                            setFieldError(usernameInput, errorElement, usernameRequiredText);
-                            return false;
-                        } else if (username.length < 3) {
-                            setFieldError(usernameInput, errorElement, usernameMinLengthText);
-                            return false;
-                        } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                            setFieldError(usernameInput, errorElement, usernamePatternText);
-                            return false;
-                        } else {
-                            clearFieldError(usernameInput, errorElement);
-                            return true;
-                        }
-                    }
-                    function validatePassword() {
-                        const password = passwordInput.value;
-                        const errorElement = document.getElementById('password-error');
-                        if (password.length === 0) {
-                            setFieldError(passwordInput, errorElement, passwordRequiredText);
-                            return false;
-                        } else if (password.length < 3) {
-                            setFieldError(passwordInput, errorElement, passwordMinLengthText);
-                            return false;
-                        } else {
-                            clearFieldError(passwordInput, errorElement);
-                            return true;
-                        }
-                    }
-                    function validateForm() {
-                        const isUsernameValid = validateUsername();
-                        const isPasswordValid = validatePassword();
-                        return isUsernameValid && isPasswordValid;
-                    }
-                    function setFieldError(field, errorElement, message) {
-                        field.classList.add('is-invalid');
-                        errorElement.textContent = message;
-                        errorElement.style.display = 'block';
-                    }
-                    function clearFieldError(field, errorElement) {
-                        field.classList.remove('is-invalid');
-                        errorElement.textContent = '';
-                        errorElement.style.display = 'none';
-                    }
-                    function showValidationErrors() {
-                        const container = document.querySelector('.login-container');
-                        container.classList.add('shake');
-                        setTimeout(() => {
-                            container.classList.remove('shake');
-                        }, 500);
-                    }
-                    function showLoadingState() {
-                        loginBtn.classList.add('loading');
-                        loginBtn.disabled = true;
-                        loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + signingInText;
-                    }
-                    function hideLoadingState() {
-                        loginBtn.classList.remove('loading');
-                        loginBtn.disabled = false;
-                        loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>' + '@Login.Login_SignIn';
-                    }
-                    window.addEventListener('load', function() {
-                        hideLoadingState();
-                    });
-                    window.fillDemoCredentials = function() {
-                        showUsernameHelper();
-                    };
-                    function showUsernameHelper() {
-                        const helper = `
-                            <div class="alert alert-warning mt-3" id="usernameHelper">
-                                <h6><i class="fas fa-search me-2"></i>${findUsernameText}</h6>
-                                <p class="mb-2"><strong>${runSqlQueryText}</strong></p>
-                                <code style="display: block; background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Login Form JavaScript -->
+    <script>
+        // Localized strings from resources
+        const usernameRequiredText = '@Login.Login_UsernameRequired';
+        const usernameMinLengthText = '@Login.Login_UsernameMinLength';
+        const usernamePatternText = '@Login.Login_UsernamePattern';
+        const passwordRequiredText = '@Login.Login_PasswordRequired';
+        const passwordMinLengthText = '@Login.Login_PasswordMinLength';
+        const signingInText = '@Login.Login_SigningIn';
+        const showPasswordText = '@Login.Login_ShowPassword';
+        const hidePasswordText = '@Login.Login_HidePassword';
+        const findUsernameText = '@Login.Login_FindUsername';
+        const runSqlQueryText = '@Login.Login_RunSqlQuery';
+        const commonTestCredentialsText = '@Login.Login_CommonTestCredentials';
+        const closeText = '@Login.Login_Close';
+        const troubleshootingStepsText = '@Login.Login_TroubleshootingSteps';
+        const step1Text = '@Login.Login_Step1';
+        const step2Text = '@Login.Login_Step2';
+        const step3Text = '@Login.Login_Step3';
+        const noteText = '@Login.Login_TroubleshootingNote';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const passwordToggle = document.getElementById('passwordToggle');
+
+            // Focus username input on page load
+            usernameInput.focus();
+
+            // Password toggle functionality
+            passwordToggle.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+                this.title = type === 'password' ? showPasswordText : hidePasswordText;
+            });
+
+            // Real-time validation
+            usernameInput.addEventListener('input', validateUsername);
+            passwordInput.addEventListener('input', validatePassword);
+
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    showValidationErrors();
+                    return;
+                }
+                showLoadingState();
+            });
+
+            // Keyboard navigation
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    passwordInput.focus();
+                }
+            });
+
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && validateForm()) {
+                    form.submit();
+                }
+            });
+
+            // Validation functions
+            function validateUsername() {
+                const username = usernameInput.value.trim();
+                const errorElement = document.getElementById('username-error');
+
+                if (username.length === 0) {
+                    setFieldError(usernameInput, errorElement, usernameRequiredText);
+                    return false;
+                } else if (username.length < 3) {
+                    setFieldError(usernameInput, errorElement, usernameMinLengthText);
+                    return false;
+                } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                    setFieldError(usernameInput, errorElement, usernamePatternText);
+                    return false;
+                } else {
+                    clearFieldError(usernameInput, errorElement);
+                    return true;
+                }
+            }
+
+            function validatePassword() {
+                const password = passwordInput.value;
+                const errorElement = document.getElementById('password-error');
+
+                if (password.length === 0) {
+                    setFieldError(passwordInput, errorElement, passwordRequiredText);
+                    return false;
+                } else if (password.length < 3) {
+                    setFieldError(passwordInput, errorElement, passwordMinLengthText);
+                    return false;
+                } else {
+                    clearFieldError(passwordInput, errorElement);
+                    return true;
+                }
+            }
+
+            function validateForm() {
+                const isUsernameValid = validateUsername();
+                const isPasswordValid = validatePassword();
+                return isUsernameValid && isPasswordValid;
+            }
+
+            function setFieldError(field, errorElement, message) {
+                field.classList.add('is-invalid');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+
+            function clearFieldError(field, errorElement) {
+                field.classList.remove('is-invalid');
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+
+            function showValidationErrors() {
+                const container = document.querySelector('.login-container');
+                container.classList.add('shake');
+                setTimeout(() => container.classList.remove('shake'), 500);
+            }
+
+            function showLoadingState() {
+                loginBtn.classList.add('loading');
+                loginBtn.disabled = true;
+                loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + signingInText;
+            }
+
+            function hideLoadingState() {
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+                loginBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>@Login.Login_SignIn';
+            }
+
+            // Reset loading state on page load
+            window.addEventListener('load', hideLoadingState);
+
+            // Helper functions for troubleshooting
+            window.fillDemoCredentials = function() {
+                showUsernameHelper();
+            };
+
+            function showUsernameHelper() {
+                const helper = `
+                    <div class="alert alert-warning mt-3" id="usernameHelper">
+                        <h6><i class="fas fa-search me-2"></i>${findUsernameText}</h6>
+                        <p class="mb-2"><strong>${runSqlQueryText}</strong></p>
+                        <code style="display: block; background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
         SELECT Username, [Name], IsActive FROM [User] WHERE IsActive = 1 ORDER BY User_Code;
-                                </code>
-                                <p class="mb-2"><strong>${commonTestCredentialsText}</strong></p>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="fillCredentials('testuser', '123456789')">
-                                            testuser / 123456789
-                                        </button>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="fillCredentials('admin', '123456789')">
-                                            admin / 123456789
-                                        </button>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('usernameHelper').remove()">
-                                    <i class="fas fa-times"></i> ${closeText}
+                        </code>
+                        <p class="mb-2"><strong>${commonTestCredentialsText}</strong></p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="fillCredentials('testuser', '123456789')">
+                                    testuser / 123456789
                                 </button>
                             </div>
-                        `;
-                        const existing = document.getElementById('usernameHelper');
-                        if (existing) existing.remove();
-                        document.querySelector('.forgot-password').insertAdjacentHTML('afterend', helper);
-                    }
-                    function fillCredentials(username, password) {
-                        usernameInput.value = username;
-                        passwordInput.value = password;
-                        usernameInput.dispatchEvent(new Event('input'));
-                        passwordInput.dispatchEvent(new Event('input'));
-                        document.getElementById('usernameHelper').remove();
-                    }
-                });
-                function showContactAdmin() {
-                    const troubleshootingInfo = `
-                        <div class="alert alert-info mt-3" id="troubleshootingInfo">
-                            <h6><i class="fas fa-tools me-2"></i>${troubleshootingStepsText}</h6>
-                            <p class="mb-2"><strong>${step1Text}</strong></p>
-                            <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="fillCredentials('admin', '123456789')">
+                                    admin / 123456789
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('usernameHelper').remove()">
+                            <i class="fas fa-times"></i> ${closeText}
+                        </button>
+                    </div>
+                `;
+
+                const existing = document.getElementById('usernameHelper');
+                if (existing) existing.remove();
+                document.querySelector('.forgot-password').insertAdjacentHTML('afterend', helper);
+            }
+
+            function fillCredentials(username, password) {
+                usernameInput.value = username;
+                passwordInput.value = password;
+                usernameInput.dispatchEvent(new Event('input'));
+                passwordInput.dispatchEvent(new Event('input'));
+                document.getElementById('usernameHelper').remove();
+            }
+        });
+
+        // Troubleshooting modal function
+        function showContactAdmin() {
+            const troubleshootingInfo = `
+                <div class="alert alert-info mt-3" id="troubleshootingInfo">
+                    <h6><i class="fas fa-tools me-2"></i>${troubleshootingStepsText}</h6>
+                    <p class="mb-2"><strong>${step1Text}</strong></p>
+                    <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
         SELECT Username, [Name], IsActive FROM [User] WHERE IsActive = 1;
-                            </code>
-                            <p class="mb-2 mt-3"><strong>${step2Text}</strong></p>
-                            <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
+                    </code>
+                    <p class="mb-2 mt-3"><strong>${step2Text}</strong></p>
+                    <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
         SELECT Username, Password, LEN(Password) FROM [User] WHERE Username = 'your_username';
-                            </code>
-                            <p class="mb-2 mt-3"><strong>${step3Text}</strong></p>
-                            <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
+                    </code>
+                    <p class="mb-2 mt-3"><strong>${step3Text}</strong></p>
+                    <code style="display: block; background: #f8f9fa; padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 12px;">
         INSERT INTO [User] (User_Code, [Name], Username, [Password], Group_Code, IsActive, Insert_User, Insert_Time)
         VALUES (999, 'Test User', 'testuser', '123456789', 1, 1, 1, GETDATE());
-                            </code>
-                            <div class="alert alert-warning mt-3">
-                                <small><strong>${noteText}</strong></small>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('troubleshootingInfo').remove()">
-                                <i class="fas fa-times"></i> ${closeText}
-                            </button>
-                        </div>
-                    `;
-                    const existing = document.getElementById('troubleshootingInfo');
-                    if (existing) {
-                        existing.remove();
-                    } else {
-                        document.querySelector('.forgot-password').insertAdjacentHTML('afterend', troubleshootingInfo);
-                    }
-                }
-                document.addEventListener('keydown', function(e) {
-                    if (e.ctrlKey && e.key === 'd') {
-                        e.preventDefault();
-                        window.fillDemoCredentials();
-                    }
-                });
+                    </code>
+                    <div class="alert alert-warning mt-3">
+                        <small><strong>${noteText}</strong></small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('troubleshootingInfo').remove()">
+                        <i class="fas fa-times"></i> ${closeText}
+                    </button>
+                </div>
+            `;
+
+            const existing = document.getElementById('troubleshootingInfo');
+            if (existing) {
+                existing.remove();
+            } else {
+                document.querySelector('.forgot-password').insertAdjacentHTML('afterend', troubleshootingInfo);
+            }
+        }
+
+        // Keyboard shortcut for demo credentials
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                window.fillDemoCredentials();
+            }
+        });
     </script>
 </body>
 </html>
