@@ -31,7 +31,170 @@
     var isRtl = System.Threading.Thread.CurrentThread.CurrentUICulture.Name.StartsWith("ar");
     var dir = isRtl ? "rtl" : "ltr";
 }
-<!-- Gradient Header Block (Centered) - REMOVE Years for Active Edu Year from beside header -->
+
+<style>
+    /* Mobile responsive fixes for Education Years */
+    @@media (max-width: 768px) {
+        .table-card
+
+    {
+        padding: 1rem !important;
+        margin: 0.5rem !important;
+        max-width: 100vw !important;
+    }
+
+    .questions-header {
+        padding: 1rem 0 0.8rem 0 !important;
+        margin-bottom: 1rem !important;
+    }
+
+        .questions-header h2 {
+            font-size: 1.5rem !important;
+        }
+
+    .gradient-table {
+        min-width: 100% !important;
+        width: 100% !important;
+        font-size: 0.85rem !important;
+    }
+
+        .gradient-table th,
+        .gradient-table td {
+            padding: 0.5rem 0.3rem !important;
+            font-size: 0.8rem !important;
+            white-space: nowrap !important;
+        }
+
+    .btn-table {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        margin: 0.1rem !important;
+    }
+
+    .levels-years-container {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    .level-box {
+        min-width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 1rem !important;
+        padding: 1rem !important;
+    }
+
+    .level-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+    }
+
+        .level-header h3 {
+            font-size: 1.1rem !important;
+            margin-right: 0 !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+    .years-table {
+        font-size: 0.8rem !important;
+    }
+
+        .years-table th,
+        .years-table td {
+            padding: 0.4rem 0.2rem !important;
+            font-size: 0.75rem !important;
+        }
+
+    .modal-box {
+        max-width: 95vw !important;
+        padding: 1rem !important;
+        margin: 1rem !important;
+    }
+
+    .form-group {
+        margin-bottom: 1rem !important;
+    }
+
+        .form-group input,
+        .form-group select {
+            font-size: 0.9rem !important;
+            padding: 0.5rem !important;
+        }
+
+    /* Stack action buttons vertically on mobile */
+    .gradient-table td:last-child {
+        white-space: normal !important;
+    }
+
+        .gradient-table td:last-child .btn-table {
+            display: block !important;
+            width: 100% !important;
+            margin-bottom: 0.2rem !important;
+            text-align: center !important;
+        }
+
+    .years-table td:last-child .btn-table {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 0.2rem !important;
+        text-align: center !important;
+    }
+
+    }
+
+    @@media (max-width: 480px) {
+        .questions-header h2
+
+    {
+        font-size: 1.2rem !important;
+    }
+
+    .btn-table {
+        padding: 0.25rem 0.4rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    .gradient-table th,
+    .gradient-table td {
+        padding: 0.3rem 0.2rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .level-box {
+        padding: 0.8rem !important;
+    }
+
+    .years-table th,
+    .years-table td {
+        padding: 0.3rem 0.1rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    }
+
+    /* Ensure proper table responsiveness */
+    .eduyear-table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .gradient-table {
+        width: 100%;
+        min-width: 600px;
+    }
+
+    @@media (max-width: 600px) {
+        .gradient-table
+
+    {
+        min-width: 100%;
+    }
+
+    }
+</style>
+
+<!-- Gradient Header Block (Centered) -->
 <div class="questions-header" style="margin-bottom: 0;">
     <h2>
         <i class="fa-solid fa-calendar-days"></i>
@@ -41,7 +204,9 @@
 
 <div class="table-card">
     <div style="margin-bottom: 22px; width: 100%; text-align: right;">
-        <button id="add-eduyear-btn" class="btn-table add"><i class="fas fa-plus"></i> @EduYearView.AddEduYear</button>
+        <button id="add-eduyear-btn" class="btn-table add">
+            <i class="fas fa-plus"></i> @EduYearView.AddEduYear
+        </button>
     </div>
 
     <!-- Modal for Add/Edit EduYear -->
@@ -52,7 +217,6 @@
                 <span id="closeEduModal" style="cursor:pointer;font-size:1.4rem;">&times;</span>
             </div>
             <form id="addEduYearForm">
-               
                 <div class="form-group">
                     <label for="eduName">@EduYearView.EduYearName</label>
                     <input type="text" id="eduName" name="eduName" required maxlength="100" />
@@ -64,8 +228,10 @@
                         <option value="false">@EduYearView.No</option>
                     </select>
                 </div>
-                <div id="addEduYearError"></div>
-                <button type="submit" class="btn-table add" style="width:100%;"><i class="fas fa-save"></i> @EduYearView.Submit</button>
+                <div id="addEduYearError" style="color: red; margin: 10px 0;"></div>
+                <button type="submit" class="btn-table add" style="width:100%;">
+                    <i class="fas fa-save"></i> @EduYearView.Submit
+                </button>
             </form>
         </div>
     </div>
@@ -75,7 +241,6 @@
         <table class="gradient-table">
             <thead>
                 <tr>
-                    
                     <th>@EduYearView.EduYearName</th>
                     <th>@EduYearView.IsActive</th>
                     <th>@EduYearView.Actions</th>
@@ -85,18 +250,18 @@
                 <!-- JS will populate this -->
             </tbody>
         </table>
-        <div id="eduyear-message"></div>
+        <div id="eduyear-message" style="text-align: center; margin-top: 20px; color: #666;"></div>
     </div>
 </div>
 
 <!-- LEVELS AND YEARS SECTION -->
-<!-- Make "Years for Active Edu Year" a gradient centered header similar to the main header -->
 <div class="years-active-header questions-header" style="margin-bottom: 0; margin-top: 38px;">
     <h2>
         <i class="fa-solid fa-calendar-week"></i>
         @EduYearView.YearsForActiveEduYear
     </h2>
 </div>
+
 <div class="table-card">
     <div id="levels-years-container" class="levels-years-container">
         <!-- JS will populate cards/boxes here -->
@@ -121,8 +286,10 @@
                 <label for="yearSort">@EduYearView.YearSort</label>
                 <input type="number" id="yearSort" name="yearSort" required min="1" />
             </div>
-            <div id="addYearError"></div>
-            <button type="submit" class="btn-table add" style="width:100%;"><i class="fas fa-save"></i> @EduYearView.Submit</button>
+            <div id="addYearError" style="color: red; margin: 10px 0;"></div>
+            <button type="submit" class="btn-table add" style="width:100%;">
+                <i class="fas fa-save"></i> @EduYearView.Submit
+            </button>
         </form>
     </div>
 </div>
@@ -139,8 +306,10 @@
                 <label for="levelName">@EduYearView.LevelName</label>
                 <input type="text" id="levelName" name="levelName" required maxlength="100" />
             </div>
-            <div id="addLevelError"></div>
-            <button type="submit" class="btn-table add" style="width:100%;"><i class="fas fa-save"></i> @EduYearView.Submit</button>
+            <div id="addLevelError" style="color: red; margin: 10px 0;"></div>
+            <button type="submit" class="btn-table add" style="width:100%;">
+                <i class="fas fa-save"></i> @EduYearView.Submit
+            </button>
         </form>
     </div>
 </div>

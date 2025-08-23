@@ -1,15 +1,14 @@
-﻿console.log('EduYearManagment.js loaded');
+﻿console.log('EduYear.js loaded');
 
 // Resource strings from Razor
-const resxEdit = document.getElementById("resxEdit").value;
-const resxDelete = document.getElementById("resxDelete").value;
-const resxSubmit = document.getElementById("resxSubmit").value;
-const resxAddEduYear = document.getElementById("resxAddEduYear").value;
-const resxAddYear = document.getElementById("resxAddYear").value;
+const resxEdit = document.getElementById("resxEdit")?.value || "Edit";
+const resxDelete = document.getElementById("resxDelete")?.value || "Delete";
+const resxSubmit = document.getElementById("resxSubmit")?.value || "Submit";
+const resxAddEduYear = document.getElementById("resxAddEduYear")?.value || "Add Education Year";
+const resxAddYear = document.getElementById("resxAddYear")?.value || "Add Year";
 const resxAddLevel = document.getElementById("resxAddLevel")?.value || "Add Level";
-const resxYes = document.getElementById("resxYes").value;
-const resxNo = document.getElementById("resxNo").value;
-// Removed resxEduYearCode since code is not shown/used in UI
+const resxYes = document.getElementById("resxYes")?.value || "Yes";
+const resxNo = document.getElementById("resxNo")?.value || "No";
 const resxEduYearName = document.getElementById("resxEduYearName")?.value || "Edu Year Name";
 const resxIsActive = document.getElementById("resxIsActive")?.value || "Active";
 const resxActions = document.getElementById("resxActions")?.value || "Actions";
@@ -31,7 +30,6 @@ const eduErrorDiv = document.getElementById('addEduYearError');
 const eduTbody = document.getElementById('eduyear-body');
 const eduMsg = document.getElementById('eduyear-message');
 const eduModalTitle = document.getElementById('eduModalTitle');
-// Removed: const eduCodeInput = document.getElementById('eduCode');
 
 const levelsContainer = document.getElementById('levels-years-container');
 
@@ -44,7 +42,7 @@ const yearErrorDiv = document.getElementById('addYearError');
 const yearCodeInput = document.getElementById('yearCode');
 const yearNameInput = document.getElementById('yearName');
 const yearSortInput = document.getElementById('yearSort');
-const yearLevelCodeInput = document.getElementById('yearLevelCode'); // hidden input to hold level for add
+const yearLevelCodeInput = document.getElementById('yearLevelCode');
 
 // Modal for adding level
 const levelModal = document.getElementById('addLevelModal');
@@ -64,96 +62,115 @@ let editingYearObj = null;
 // ----------- EduYear Functions -----------
 
 function openEduModal(isEdit = false, eduYear = null) {
+    if (!eduModal) return;
     eduModal.style.display = "flex";
-    eduErrorDiv.textContent = "";
-    eduForm.reset();
+    if (eduErrorDiv) eduErrorDiv.textContent = "";
+    if (eduForm) eduForm.reset();
     eduEditMode = isEdit;
-    eduModalTitle.textContent = isEdit ? resxEdit + " " + resxAddEduYear : resxAddEduYear;
-    // Removed: eduCodeInput.value = '';
-    const submitBtn = eduForm.querySelector('button[type="submit"]');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
-    if (isEdit && eduYear) {
-        // Removed: eduCodeInput.value = eduYear.eduCode;
-        eduForm.eduName.value = eduYear.eduName;
-        eduForm.isActive.value = eduYear.isActive ? "true" : "false";
-        eduForm.setAttribute("data-edit-code", eduYear.eduCode); // keep code for edit/delete
-    } else {
+    if (eduModalTitle) eduModalTitle.textContent = isEdit ? resxEdit + " " + resxAddEduYear : resxAddEduYear;
+
+    const submitBtn = eduForm?.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
+    }
+
+    if (isEdit && eduYear && eduForm) {
+        if (eduForm.eduName) eduForm.eduName.value = eduYear.eduName;
+        if (eduForm.isActive) eduForm.isActive.value = eduYear.isActive ? "true" : "false";
+        eduForm.setAttribute("data-edit-code", eduYear.eduCode);
+    } else if (eduForm) {
         eduForm.removeAttribute("data-edit-code");
     }
 }
+
 function closeEduModalFunc() {
+    if (!eduModal) return;
     eduModal.style.display = "none";
     eduEditMode = false;
-    eduForm.removeAttribute("data-edit-code");
+    if (eduForm) eduForm.removeAttribute("data-edit-code");
 }
+
+// Event listeners
 if (openEduBtn) openEduBtn.onclick = () => openEduModal(false);
 if (closeEduBtn) closeEduBtn.onclick = closeEduModalFunc;
+
 window.onclick = function (event) {
     if (event.target === eduModal) closeEduModalFunc();
     if (event.target === yearModal) closeYearModalFunc();
     if (event.target === levelModal) closeLevelModalFunc();
 };
 
-eduForm.onsubmit = function (e) {
-    e.preventDefault();
-    eduErrorDiv.textContent = "";
+if (eduForm) {
+    eduForm.onsubmit = function (e) {
+        e.preventDefault();
+        if (eduErrorDiv) eduErrorDiv.textContent = "";
 
-    const submitBtn = eduForm.querySelector('button[type="submit"]');
-    const originalHtml = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
+        const submitBtn = eduForm.querySelector('button[type="submit"]');
+        const originalHtml = submitBtn?.innerHTML || '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
+        }
 
-    const eduName = eduForm.eduName.value.trim();
-    const isActive = eduForm.isActive.value === "true";
-    // Removed: const eduCode = eduCodeInput.value;
-    const editCode = eduForm.getAttribute("data-edit-code");
+        const eduName = eduForm.eduName?.value.trim() || '';
+        const isActive = eduForm.isActive?.value === "true";
+        const editCode = eduForm.getAttribute("data-edit-code");
 
-    if (!eduName) {
-        eduErrorDiv.textContent = resxLoading;
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHtml;
-        return;
-    }
+        if (!eduName) {
+            if (eduErrorDiv) eduErrorDiv.textContent = "Please enter education year name";
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+            }
+            return;
+        }
 
-    let url, body;
-    if (eduEditMode && editCode) {
-        url = '/EduYear/EditEduYear';
-        body = JSON.stringify({ eduCode: editCode, eduName, isActive });
-    } else {
-        url = '/EduYear/AddEduYear';
-        body = JSON.stringify({ eduName, isActive });
-    }
+        let url, body;
+        if (eduEditMode && editCode) {
+            url = '/EduYear/EditEduYear';
+            body = JSON.stringify({ eduCode: editCode, eduName, isActive });
+        } else {
+            url = '/EduYear/AddEduYear';
+            body = JSON.stringify({ eduName, isActive });
+        }
 
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
-    })
-        .then(r => {
-            if (!r.ok) return r.text().then(t => { throw new Error(t); });
-            return r.json();
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body
         })
-        .then(result => {
-            closeEduModalFunc();
-            loadEduYears();
-        })
-        .catch(err => {
-            eduErrorDiv.textContent = resxAddEduYear + ": " + (err.message || resxLoading);
-        })
-        .finally(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHtml;
-        });
-};
+            .then(r => {
+                if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                return r.json();
+            })
+            .then(result => {
+                closeEduModalFunc();
+                loadEduYears();
+            })
+            .catch(err => {
+                if (eduErrorDiv) eduErrorDiv.textContent = resxAddEduYear + ": " + (err.message || resxLoading);
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+    };
+}
 
 function eduYearRowHTML(eduYear) {
     return `
         <td>${eduYear.eduName ?? ''}</td>
         <td>${eduYear.isActive ? resxYes : resxNo}</td>
         <td>
-            <button class="btn-table edit edit-btn" data-code="${eduYear.eduCode}"><i class="fas fa-pencil"></i></button>
-            <button class="btn-table delete delete-btn" data-code="${eduYear.eduCode}"><i class="fas fa-trash"></i></button>
+            <button class="btn-table edit edit-btn" data-code="${eduYear.eduCode}">
+                <i class="fas fa-pencil"></i> ${resxEdit}
+            </button>
+            <button class="btn-table delete delete-btn" data-code="${eduYear.eduCode}">
+                <i class="fas fa-trash"></i> ${resxDelete}
+            </button>
         </td>
     `;
 }
@@ -187,12 +204,8 @@ function addEduYearActionListeners(tr, eduYear) {
 function loadEduYears() {
     fetch('/EduYear/GetEduYears')
         .then(response => {
-            if (response.status === 401) {
-                if (eduMsg) eduMsg.textContent = resxLoading;
-                return [];
-            }
-            if (response.status === 404) {
-                if (eduMsg) eduMsg.textContent = resxLoading;
+            if (response.status === 401 || response.status === 404) {
+                if (eduMsg) eduMsg.textContent = "No education years found";
                 return [];
             }
             return response.json();
@@ -204,8 +217,8 @@ function loadEduYears() {
             activeEduYear = null;
 
             if (!data || data.length === 0) {
-                if (eduMsg) eduMsg.textContent = resxLoading;
-                loadLevelsAndYears(); // clear years panel
+                if (eduMsg) eduMsg.textContent = "No education years found";
+                loadLevelsAndYears();
                 return;
             }
 
@@ -222,148 +235,179 @@ function loadEduYears() {
             loadLevelsAndYears();
         })
         .catch(error => {
-            if (eduMsg) eduMsg.textContent = resxLoading;
+            if (eduMsg) eduMsg.textContent = "Error loading education years";
             console.error('Error fetching edu years:', error);
-            loadLevelsAndYears(); // clear years panel
+            loadLevelsAndYears();
         });
 }
 
 // ----------- Levels & Years Section -----------
 
 function openYearModal(levelCode, isEdit = false, year = null) {
+    if (!yearModal) return;
     yearModal.style.display = "flex";
-    yearErrorDiv.textContent = "";
-    yearForm.reset();
+    if (yearErrorDiv) yearErrorDiv.textContent = "";
+    if (yearForm) yearForm.reset();
     yearEditMode = isEdit;
-    yearLevelCodeInput.value = levelCode;
+    if (yearLevelCodeInput) yearLevelCodeInput.value = levelCode;
     editingYearLevelCode = levelCode;
     editingYearObj = year;
-    yearModalTitle.textContent = isEdit ? resxEdit + " " + resxAddYear : resxAddYear;
-    yearCodeInput.value = '';
-    const submitBtn = yearForm.querySelector('button[type="submit"]');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
+    if (yearModalTitle) yearModalTitle.textContent = isEdit ? resxEdit + " " + resxAddYear : resxAddYear;
+    if (yearCodeInput) yearCodeInput.value = '';
+
+    const submitBtn = yearForm?.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
+    }
+
     if (isEdit && year) {
-        yearCodeInput.value = year.yearCode;
-        yearNameInput.value = year.yearName;
-        yearSortInput.value = year.yearSort;
+        if (yearCodeInput) yearCodeInput.value = year.yearCode;
+        if (yearNameInput) yearNameInput.value = year.yearName;
+        if (yearSortInput) yearSortInput.value = year.yearSort;
     }
 }
+
 function closeYearModalFunc() {
+    if (!yearModal) return;
     yearModal.style.display = "none";
     yearEditMode = false;
     editingYearObj = null;
     editingYearLevelCode = null;
 }
+
 if (closeYearBtn) closeYearBtn.onclick = closeYearModalFunc;
 
 function openLevelModal() {
+    if (!levelModal) return;
     levelModal.style.display = "flex";
-    levelErrorDiv.textContent = "";
-    levelForm.reset();
-    levelModalTitle.textContent = resxAddLevel;
-    const submitBtn = levelForm.querySelector('button[type="submit"]');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
+    if (levelErrorDiv) levelErrorDiv.textContent = "";
+    if (levelForm) levelForm.reset();
+    if (levelModalTitle) levelModalTitle.textContent = resxAddLevel;
+
+    const submitBtn = levelForm?.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${resxSubmit}`;
+    }
 }
+
 function closeLevelModalFunc() {
+    if (!levelModal) return;
     levelModal.style.display = "none";
 }
+
 if (closeLevelBtn) closeLevelBtn.onclick = closeLevelModalFunc;
 
-// Add Year submit
-yearForm.onsubmit = function (e) {
-    e.preventDefault();
-    yearErrorDiv.textContent = "";
+// Year form submit
+if (yearForm) {
+    yearForm.onsubmit = function (e) {
+        e.preventDefault();
+        if (yearErrorDiv) yearErrorDiv.textContent = "";
 
-    const submitBtn = yearForm.querySelector('button[type="submit"]');
-    const originalHtml = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
+        const submitBtn = yearForm.querySelector('button[type="submit"]');
+        const originalHtml = submitBtn?.innerHTML || '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
+        }
 
-    const yearName = yearNameInput.value.trim();
-    const yearSort = parseInt(yearSortInput.value);
-    const yearCode = yearCodeInput.value;
-    const levelCode = parseInt(yearLevelCodeInput.value);
+        const yearName = yearNameInput?.value.trim() || '';
+        const yearSort = parseInt(yearSortInput?.value || '0');
+        const yearCode = yearCodeInput?.value || '';
+        const levelCode = parseInt(yearLevelCodeInput?.value || '0');
 
-    if (!yearName || isNaN(yearSort) || isNaN(levelCode)) {
-        yearErrorDiv.textContent = resxLoading;
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHtml;
-        return;
-    }
+        if (!yearName || isNaN(yearSort) || isNaN(levelCode)) {
+            if (yearErrorDiv) yearErrorDiv.textContent = "Please fill all required fields";
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+            }
+            return;
+        }
 
-    let url, body;
-    if (yearEditMode && yearCode) {
-        url = '/EduYear/EditYear';
-        body = JSON.stringify({ yearCode, yearName, yearSort, levelCode });
-    } else {
-        url = '/EduYear/AddYear';
-        body = JSON.stringify({ yearName, yearSort, levelCode });
-    }
+        let url, body;
+        if (yearEditMode && yearCode) {
+            url = '/EduYear/EditYear';
+            body = JSON.stringify({ yearCode, yearName, yearSort, levelCode });
+        } else {
+            url = '/EduYear/AddYear';
+            body = JSON.stringify({ yearName, yearSort, levelCode });
+        }
 
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
-    })
-        .then(r => {
-            if (!r.ok) return r.text().then(t => { throw new Error(t); });
-            return r.json();
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body
         })
-        .then(result => {
-            closeYearModalFunc();
-            loadLevelsAndYears();
-        })
-        .catch(err => {
-            yearErrorDiv.textContent = resxAddYear + ": " + (err.message || resxLoading);
-        })
-        .finally(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHtml;
-        });
-};
+            .then(r => {
+                if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                return r.json();
+            })
+            .then(result => {
+                closeYearModalFunc();
+                loadLevelsAndYears();
+            })
+            .catch(err => {
+                if (yearErrorDiv) yearErrorDiv.textContent = resxAddYear + ": " + (err.message || resxLoading);
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+    };
+}
 
-// Add Level submit
-levelForm.onsubmit = function (e) {
-    e.preventDefault();
-    levelErrorDiv.textContent = "";
+// Level form submit
+if (levelForm) {
+    levelForm.onsubmit = function (e) {
+        e.preventDefault();
+        if (levelErrorDiv) levelErrorDiv.textContent = "";
 
-    const submitBtn = levelForm.querySelector('button[type="submit"]');
-    const originalHtml = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
+        const submitBtn = levelForm.querySelector('button[type="submit"]');
+        const originalHtml = submitBtn?.innerHTML || '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${resxLoading}`;
+        }
 
-    const levelName = levelNameInput.value.trim();
+        const levelName = levelNameInput?.value.trim() || '';
 
-    if (!levelName) {
-        levelErrorDiv.textContent = resxLoading;
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHtml;
-        return;
-    }
+        if (!levelName) {
+            if (levelErrorDiv) levelErrorDiv.textContent = "Please enter level name";
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+            }
+            return;
+        }
 
-    fetch('/EduYear/AddLevel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ levelName })
-    })
-        .then(r => {
-            if (!r.ok) return r.text().then(t => { throw new Error(t); });
-            return r.json();
+        fetch('/EduYear/AddLevel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ levelName })
         })
-        .then(result => {
-            closeLevelModalFunc();
-            loadLevelsAndYears();
-        })
-        .catch(err => {
-            levelErrorDiv.textContent = resxAddLevel + ": " + (err.message || resxLoading);
-        })
-        .finally(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHtml;
-        });
-};
+            .then(r => {
+                if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                return r.json();
+            })
+            .then(result => {
+                closeLevelModalFunc();
+                loadLevelsAndYears();
+            })
+            .catch(err => {
+                if (levelErrorDiv) levelErrorDiv.textContent = resxAddLevel + ": " + (err.message || resxLoading);
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+    };
+}
 
 function levelBoxHTML(level, years) {
     let yearsHTML = `
@@ -384,23 +428,32 @@ function levelBoxHTML(level, years) {
         <div class="level-box" data-level-code="${level.levelCode}">
             <div class="level-header">
                 <h3 style="display:inline-block;margin-right:16px;">${level.levelName}</h3>
-                <button class="btn-table add add-year-btn" data-level-code="${level.levelCode}" style="margin-right:8px;"><i class="fas fa-plus"></i> ${resxAddYear}</button>
+                <button class="btn-table add add-year-btn" data-level-code="${level.levelCode}" style="margin-right:8px;">
+                    <i class="fas fa-plus"></i> ${resxAddYear}
+                </button>
             </div>
             <div class="years-list">${yearsHTML}</div>
             <div style="text-align:right;margin-top:8px;">
-                <button class="btn-table add add-level-btn"><i class="fas fa-plus"></i> ${resxAddLevel}</button>
+                <button class="btn-table add add-level-btn">
+                    <i class="fas fa-plus"></i> ${resxAddLevel}
+                </button>
             </div>
         </div>
     `;
 }
+
 function yearRowHTML(year) {
     return `
         <tr data-year-code="${year.yearCode}">
             <td>${year.yearName ?? ''}</td>
             <td>${year.yearSort ?? ''}</td>
             <td>
-                <button class="btn-table edit edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-pencil"></i></button>
-                <button class="btn-table delete delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}"><i class="fas fa-trash"></i></button>
+                <button class="btn-table edit edit-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">
+                    <i class="fas fa-pencil"></i> ${resxEdit}
+                </button>
+                <button class="btn-table delete delete-year-btn" data-year-code="${year.yearCode}" data-level-code="${year.levelCode}">
+                    <i class="fas fa-trash"></i> ${resxDelete}
+                </button>
             </td>
         </tr>
     `;
@@ -417,8 +470,14 @@ function loadLevelsAndYears() {
                 return;
             }
             if (!data.levels || data.levels.length === 0) {
-                levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">${resxNoLevels}</div>
-                <div style="margin-top:16px;"><button class="btn-table add add-level-btn"><i class="fas fa-plus"></i> ${resxAddLevel}</button></div>`;
+                levelsContainer.innerHTML = `
+                    <div style="color:#b33c3c;font-weight:600;">${resxNoLevels}</div>
+                    <div style="margin-top:16px;">
+                        <button class="btn-table add add-level-btn">
+                            <i class="fas fa-plus"></i> ${resxAddLevel}
+                        </button>
+                    </div>`;
+                addLevelsAndYearsListeners();
                 return;
             }
             data.levels.forEach(level => {
@@ -429,11 +488,10 @@ function loadLevelsAndYears() {
             addLevelsAndYearsListeners();
         })
         .catch(err => {
-            levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">${resxLoading}</div>`;
+            levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">Error loading data</div>`;
         });
 }
 
-// Attach listeners for add year/level, edit/delete year
 function addLevelsAndYearsListeners() {
     // Add Year
     document.querySelectorAll('.add-year-btn').forEach(btn => {
@@ -442,18 +500,19 @@ function addLevelsAndYearsListeners() {
             openYearModal(levelCode, false);
         };
     });
+
     // Add Level
     document.querySelectorAll('.add-level-btn').forEach(btn => {
         btn.onclick = function () {
             openLevelModal();
         };
     });
+
     // Edit Year
     document.querySelectorAll('.edit-year-btn').forEach(btn => {
         btn.onclick = function () {
             const yearCode = parseInt(this.getAttribute('data-year-code'));
             const levelCode = parseInt(this.getAttribute('data-level-code'));
-            // Find year object
             fetch('/EduYear/GetLevelsAndYearsForActiveEduYear')
                 .then(r => r.json())
                 .then(data => {
@@ -472,6 +531,7 @@ function addLevelsAndYearsListeners() {
                 });
         };
     });
+
     // Delete Year
     document.querySelectorAll('.delete-year-btn').forEach(btn => {
         btn.onclick = function () {
@@ -493,4 +553,13 @@ function addLevelsAndYearsListeners() {
 }
 
 // Initial load
-loadEduYears();
+document.addEventListener('DOMContentLoaded', function () {
+    loadEduYears();
+});
+
+// Fallback if DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadEduYears);
+} else {
+    loadEduYears();
+}

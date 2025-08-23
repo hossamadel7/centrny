@@ -35,6 +35,14 @@
     var lessonExpanded = {};
 
     // =============================
+    // Utility Functions
+    // =============================
+
+    function isMobile() {
+        return window.innerWidth <= 576;
+    }
+
+    // =============================
     // Localization Helper
     // =============================
 
@@ -99,13 +107,10 @@
 
         if (isCenter) {
             const teacherCode = $('#TeacherCode').val();
-          
-
             if (!teacherCode) {
                 showError('examError', getJsString('TeacherRequired'));
                 return false;
             }
-            
         } else {
             const teacherCode = $('#AddExamTeacherCode').val();
             const centerCode = $('#AddExamCenterCode').val();
@@ -119,7 +124,6 @@
                 showError('examError', getJsString('CenterRequired'));
                 return false;
             }
-          
         }
 
         return true;
@@ -220,10 +224,7 @@
     // =============================
     // Exam Management Functions
     // =============================
-    // =============================
-    // Filter Functions for Exam Table
-    // =============================
-    let allExams = []; // Add this if not present
+    let allExams = [];
 
     function populateSubjectFilter(data) {
         const $subject = $('#filterSubject');
@@ -252,6 +253,7 @@
             $eduYear.append($('<option>').val(code).text(name));
         });
     }
+
     function populateYearFilter(data) {
         const $year = $('#filterYear');
         $year.empty().append($('<option>').val('').text('All'));
@@ -265,6 +267,7 @@
             $year.append($('<option>').val(code).text(name));
         });
     }
+
     function filterExamsAndRender() {
         let filtered = allExams.slice();
         const subjectVal = $('#filterSubject').val();
@@ -281,7 +284,6 @@
         }
 
         examTotalPages = Math.max(1, Math.ceil(filtered.length / examItemsPerPage));
-        // Clamp current page if out of bounds
         if (examCurrentPage > examTotalPages) examCurrentPage = examTotalPages;
         if (examCurrentPage < 1) examCurrentPage = 1;
 
@@ -290,6 +292,7 @@
         renderExamsTable(paginated, filtered.length);
         renderExamPagination(filtered.length, examTotalPages, examCurrentPage);
     }
+
     function renderExamPagination(totalItems, totalPages, currentPage) {
         const container = $('#exam-pagination');
         container.empty();
@@ -301,7 +304,6 @@
         <a class="page-link" href="#" data-page="${currentPage - 1}">&laquo;</a>
     </li>`;
 
-        // Show up to 5 page numbers
         let start = Math.max(1, currentPage - 2);
         let end = Math.min(totalPages, currentPage + 2);
         for (let i = start; i <= end; i++) {
@@ -317,7 +319,6 @@
         html += '</ul></nav>';
         container.html(html);
 
-        // Click event for pagination
         container.find('a.page-link').on('click', function (e) {
             e.preventDefault();
             const page = parseInt($(this).data('page'));
@@ -327,6 +328,7 @@
             }
         });
     }
+
     function loadExams() {
         $('#exam-details').html(`
         <div class="text-center py-4">
@@ -342,7 +344,7 @@
                 allExams = data || [];
                 populateSubjectFilter(data);
                 populateYearFilter(data);
-                filterExamsAndRender(); // render filtered view
+                filterExamsAndRender();
             })
             .fail(function (xhr) {
                 $('#exam-details').html(`
@@ -355,7 +357,6 @@
     }
 
     function renderExamsTable(data, filteredLength) {
-        // Show teacher info if not center and there are exams
         if (!isCenterUser && data.length > 0) {
             var teacherName = data[0].teacherName || '';
             $('#exam-for-teacher').show().html(
@@ -365,7 +366,6 @@
             $('#exam-for-teacher').hide();
         }
 
-        // Show empty state if no exams
         if (data.length === 0) {
             $('#exam-details').html(`
             <div class="text-center py-5">
@@ -379,86 +379,188 @@
             return;
         }
 
-        // Table info (showing X of Y exams)
         $('#exam-table-info').html(
             `<div class="text-muted" style="margin-bottom:8px;">
         Showing ${data.length} of ${filteredLength ?? data.length} exams.
         </div>`
         );
 
-        // Table header
-        var html = '<table class="gradient-table exam-index-table align-middle mb-0">';
+        var html = '<div class="table-responsive"><table class="gradient-table exam-index-table align-middle mb-0">';
         html += '<thead><tr>';
 
-        html += `<th>${getJsString('NameHeader')}</th>`;
-        html += `<th>${getJsString('ModeHeader')}</th>`;
-        html += `<th>${getJsString('TypeHeader')}</th>`;
-        html += `<th>${getJsString('StatusHeader')}</th>`;
-        html += `<th>${getJsString('BranchHeader')}</th>`;
-        html += `<th>${getJsString('SubjectHeader')}</th>`;
-        html += `<th>${getJsString('YearHeader')}</th>`;
-        html += `<th>${getJsString('EduYearHeader')}</th>`;
-        html += `<th>${getJsString('DurationHeader')}</th>`;
-       
-        html += `<th>${getJsString('DegreeHeader')}</th>`;
-        html += `<th>${getJsString('ActionsHeader')}</th>`;
-        html += '</tr></thead><tbody>';
+        if (isMobile()) {
+            // Mobile view - show only first 3 columns + expand button
+            html += `<th>${getJsString('NameHeader')}</th>`;
+            html += `<th>${getJsString('ModeHeader')}</th>`;
+            html += `<th>${getJsString('TypeHeader')}</th>`;
+            html += `<th></th>`; // + button column
+            html += '</tr></thead><tbody>';
 
-        data.forEach(function (exam) {
-            html += `<tr>
-     
-            <td>${exam.examName ?? ''}</td>
-            <td>
-                <span class="badge exam-mode-${exam.isOnline ? 'online' : 'offline'}">
-                    ${exam.isOnline ? getJsString('Online') : getJsString('Offline')}
-                </span>
-            </td>
-            <td>
-                <span class="badge exam-type-${exam.isExam ? 'exam' : 'assignment'}">
-                    ${exam.isExam ? getJsString('Exam') : getJsString('Assignment')}
-                </span>
-            </td>
-            <td>
-                <span class="badge exam-status-${exam.isDone ? 'done' : 'pending'}">
-                    ${exam.isDone ? getJsString('Done') : getJsString('Pending')}
-                </span>
-            </td>
-            <td>${exam.branchName ?? ''}</td>
-            <td>${exam.subjectName ?? ''}</td>
-            <td>${exam.yearName ?? ''}</td>
-            <td>${exam.eduYearName ?? ''}</td>
-            <td>
-                <span class="badge exam-duration">${exam.examTimer ?? '00:00'}</span>
-            </td>
-          
-            <td>
-                <span class="badge exam-degree">${exam.examDegree ?? '0'}</span>
-            </td>
-            <td>
-                <div class="d-flex flex-column gap-1">
-                    <button class="btn-table modules exam-index-btn-questions btn-sm shadow-sm add-questions"
-                            data-id="${exam.examCode}" title="${getJsString('QuestionsBtn')}">
-                        <i class="fas fa-list-check"></i> ${getJsString('QuestionsBtn')}
+            data.forEach(function (exam, index) {
+                html += `<tr>
+                <td>${exam.examName ?? ''}</td>
+                <td>
+                    <span class="badge exam-mode-${exam.isOnline ? 'online' : 'offline'}">
+                        ${exam.isOnline ? getJsString('Online') : getJsString('Offline')}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge exam-type-${exam.isExam ? 'exam' : 'assignment'}">
+                        ${exam.isExam ? getJsString('Exam') : getJsString('Assignment')}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary show-details-btn" data-row="${index}" title="Show Details">
+                        <i class="fas fa-plus"></i>
                     </button>
-                    <button class="btn-table edit exam-index-btn-edit btn-sm shadow-sm edit-exam"
-                            data-id="${exam.examCode}" title="${getJsString('EditBtn')}">
-                        <i class="fas fa-pencil"></i> ${getJsString('EditBtn')}
-                    </button>
-                    <button class="btn-table delete exam-index-btn-delete btn-sm shadow-sm delete-exam"
-                            data-id="${exam.examCode}" title="${getJsString('DeleteBtn')}">
-                        <i class="fas fa-trash"></i> ${getJsString('DeleteBtn')}
-                    </button>
-                    <button class="btn-table stats btn-sm view-exam-stats"
-                            data-id="${exam.examCode}" title="${getJsString('StatsBtn')}">
-                        <i class="fas fa-chart-bar"></i> ${getJsString('StatsBtn')}
-                    </button>
-                </div>
-            </td>
-        </tr>`;
-        });
+                </td>
+            </tr>
+            <tr class="details-row" style="display:none" data-details="${index}">
+                <td colspan="4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <strong>${getJsString('StatusHeader')}:</strong><br>
+                                <span class="badge exam-status-${exam.isDone ? 'done' : 'pending'}">
+                                    ${exam.isDone ? getJsString('Done') : getJsString('Pending')}
+                                </span>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <strong>${getJsString('BranchHeader')}:</strong><br>
+                                ${exam.branchName ?? 'N/A'}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <strong>${getJsString('SubjectHeader')}:</strong><br>
+                                ${exam.subjectName ?? 'N/A'}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <strong>${getJsString('YearHeader')}:</strong><br>
+                                ${exam.yearName ?? 'N/A'}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <strong>${getJsString('EduYearHeader')}:</strong><br>
+                                ${exam.eduYearName ?? 'N/A'}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <strong>${getJsString('DurationHeader')}:</strong><br>
+                                <span class="badge exam-duration">${exam.examTimer ?? '00:00'}</span>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <strong>${getJsString('DegreeHeader')}:</strong>
+                                <span class="badge exam-degree">${exam.examDegree ?? '0'}</span>
+                            </div>
+                            <div class="col-12">
+                                <strong>${getJsString('ActionsHeader')}:</strong><br>
+                                <div class="d-flex flex-column gap-2 mt-2">
+                                    <button class="btn-table modules exam-index-btn-questions btn-sm shadow-sm add-questions"
+                                            data-id="${exam.examCode}" title="${getJsString('QuestionsBtn')}">
+                                        <i class="fas fa-list-check"></i> ${getJsString('QuestionsBtn')}
+                                    </button>
+                                    <button class="btn-table edit exam-index-btn-edit btn-sm shadow-sm edit-exam"
+                                            data-id="${exam.examCode}" title="${getJsString('EditBtn')}">
+                                        <i class="fas fa-pencil"></i> ${getJsString('EditBtn')}
+                                    </button>
+                                    <button class="btn-table delete exam-index-btn-delete btn-sm shadow-sm delete-exam"
+                                            data-id="${exam.examCode}" title="${getJsString('DeleteBtn')}">
+                                        <i class="fas fa-trash"></i> ${getJsString('DeleteBtn')}
+                                    </button>
+                                    <button class="btn-table stats btn-sm view-exam-stats"
+                                            data-id="${exam.examCode}" title="${getJsString('StatsBtn')}">
+                                        <i class="fas fa-chart-bar"></i> ${getJsString('StatsBtn')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+            });
 
-        html += '</tbody></table>';
+        } else {
+            // Desktop view - show all columns
+            html += `<th>${getJsString('NameHeader')}</th>`;
+            html += `<th>${getJsString('ModeHeader')}</th>`;
+            html += `<th>${getJsString('TypeHeader')}</th>`;
+            html += `<th>${getJsString('StatusHeader')}</th>`;
+            html += `<th>${getJsString('BranchHeader')}</th>`;
+            html += `<th>${getJsString('SubjectHeader')}</th>`;
+            html += `<th>${getJsString('YearHeader')}</th>`;
+            html += `<th>${getJsString('EduYearHeader')}</th>`;
+            html += `<th>${getJsString('DurationHeader')}</th>`;
+            html += `<th>${getJsString('DegreeHeader')}</th>`;
+            html += `<th>${getJsString('ActionsHeader')}</th>`;
+            html += '</tr></thead><tbody>';
+
+            data.forEach(function (exam) {
+                html += `<tr>
+                <td>${exam.examName ?? ''}</td>
+                <td>
+                    <span class="badge exam-mode-${exam.isOnline ? 'online' : 'offline'}">
+                        ${exam.isOnline ? getJsString('Online') : getJsString('Offline')}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge exam-type-${exam.isExam ? 'exam' : 'assignment'}">
+                        ${exam.isExam ? getJsString('Exam') : getJsString('Assignment')}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge exam-status-${exam.isDone ? 'done' : 'pending'}">
+                        ${exam.isDone ? getJsString('Done') : getJsString('Pending')}
+                    </span>
+                </td>
+                <td>${exam.branchName ?? ''}</td>
+                <td>${exam.subjectName ?? ''}</td>
+                <td>${exam.yearName ?? ''}</td>
+                <td>${exam.eduYearName ?? ''}</td>
+                <td>
+                    <span class="badge exam-duration">${exam.examTimer ?? '00:00'}</span>
+                </td>
+                <td>
+                    <span class="badge exam-degree">${exam.examDegree ?? '0'}</span>
+                </td>
+                <td>
+                    <div class="d-flex flex-column gap-1">
+                        <button class="btn-table modules exam-index-btn-questions btn-sm shadow-sm add-questions"
+                                data-id="${exam.examCode}" title="${getJsString('QuestionsBtn')}">
+                            <i class="fas fa-list-check"></i> ${getJsString('QuestionsBtn')}
+                        </button>
+                        <button class="btn-table edit exam-index-btn-edit btn-sm shadow-sm edit-exam"
+                                data-id="${exam.examCode}" title="${getJsString('EditBtn')}">
+                            <i class="fas fa-pencil"></i> ${getJsString('EditBtn')}
+                        </button>
+                        <button class="btn-table delete exam-index-btn-delete btn-sm shadow-sm delete-exam"
+                                data-id="${exam.examCode}" title="${getJsString('DeleteBtn')}">
+                            <i class="fas fa-trash"></i> ${getJsString('DeleteBtn')}
+                        </button>
+                        <button class="btn-table stats btn-sm view-exam-stats"
+                                data-id="${exam.examCode}" title="${getJsString('StatsBtn')}">
+                            <i class="fas fa-chart-bar"></i> ${getJsString('StatsBtn')}
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+            });
+        }
+
+        html += '</tbody></table></div>';
         $('#exam-details').html(html);
+
+        // Add handler for mobile expand/collapse buttons
+        $('.show-details-btn').on('click', function () {
+            var row = $(this).data('row');
+            var detailsRow = $(`tr.details-row[data-details="${row}"]`);
+            var icon = $(this).find('i');
+
+            detailsRow.toggle();
+            icon.toggleClass('fa-plus fa-minus');
+
+            if (detailsRow.is(':visible')) {
+                $(this).attr('title', 'Hide Details');
+            } else {
+                $(this).attr('title', 'Show Details');
+            }
+        });
     }
 
     function loadExamStats(examCode) {
@@ -504,7 +606,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Success percent and average marks (moved here from table) -->
                         <div class="col-md-12 text-center mt-3">
                             <div class="row justify-content-center">
                                 <div class="col-auto">
@@ -555,7 +656,6 @@
         $('#examError').hide();
         $form[0].reset();
         $form.find('select').val('').empty().append($('<option>').val('').text(getJsString('SelectOption')));
-        // Reset submit button state for Add
         $form.find('button[type="submit"]').html('<i class="fas fa-save me-2"></i>' + getJsString('SaveExamBtn')).prop('disabled', false);
 
         ['#teacherDropdownGroup', '#teacherDisplayGroup', '#centerDropdownGroup', '#branchDropdownGroup', '#rootBranchDropdownGroup'].forEach(function (sel) {
@@ -657,7 +757,6 @@
         editingExamId = $(this).data('id');
         $editForm[0].reset();
         $('#editExamError').hide();
-        // Reset submit button state for Edit
         $editForm.find('button[type="submit"]').html('<i class="fas fa-save me-2"></i>' + getJsString('UpdateExamBtn')).prop('disabled', false);
 
         $.get(`/Exam/GetExam?id=${editingExamId}`)
@@ -878,7 +977,6 @@
         chapterExpanded = {};
         lessonExpanded = {};
 
-        // Find the exam object in allExams
         var exam = allExams.find(e => String(e.examCode) === String(examCode));
         if (!exam) {
             alert(getJsString('ErrorLoadingExamDetails'));
@@ -887,10 +985,8 @@
 
         const questionsModal = new bootstrap.Modal(document.getElementById('questionsModal'));
 
-        // Pass teacherCode, subjectCode, yearCode to controller
         $.get(`/Exam/GetExamQuestions?examCode=${examCode}&teacherCode=${exam.teacherCode}&subjectCode=${exam.subjectCode}&yearCode=${exam.yearCode}`)
             .done(function (data) {
-                // ... rest of your existing logic ...
                 if (data.chosenFlat && Array.isArray(data.chosenFlat)) {
                     data.chosenFlat.forEach(function (q) {
                         chosenQuestions.push({
@@ -1263,26 +1359,26 @@
             } else if (item.type === 'lesson') {
                 var expanded = lessonExpanded['chosen-' + item.lessonCode] !== false;
                 $chosen.append(`
-                    <li class="list-group-item bg-light fw-semibold ps-4 lesson-header"
-                        data-lesson="${item.lessonCode}" data-chapter="${item.chapterCode}"
-                        data-list="chosen" style="cursor: pointer;">
-                        <i class="fas fa-chevron-${expanded ? "down" : "right"} lesson-arrow me-2"></i>
-                        <i class="fas fa-journal-whills me-2"></i>${item.lessonName}
-                    </li>
-                `);
+        <li class="list-group-item bg-light fw-semibold ps-4 lesson-header"
+            data-lesson="${item.lessonCode}" data-chapter="${item.chapterCode}"
+            data-list="chosen" style="cursor: pointer;">
+            <i class="fas fa-chevron-${expanded ? "down" : "right"} lesson-arrow me-2"></i>
+            <i class="fas fa-journal-whills me-2"></i>${item.lessonName}
+        </li>
+    `);
             } else if (item.type === 'question') {
                 var show = (chapterExpanded['chosen-' + item.chapterCode] !== false) &&
                     (lessonExpanded['chosen-' + item.lessonCode] !== false);
                 $chosen.append(`
-                    <li class="list-group-item ps-5 d-flex align-items-center question-item"
-                        data-id="${item.questionCode}" data-chapter="${item.chapterCode}"
-                        data-lesson="${item.lessonCode}" style="${show ? "" : "display:none;"}">
-                        <span class="flex-grow-1">${item.questionContent}</span>
-                        <input type="number" class="form-control form-control-sm ms-2 question-degree"
-                               style="width:90px" placeholder="${getJsString('DegreeLabel')}" value="${item.questionDegree || 1}"
-                               min="1" max="100" required>
-                    </li>
-                `);
+                <li class="list-group-item ps-5 d-flex align-items-center question-item"
+                    data-id="${item.questionCode}" data-chapter="${item.chapterCode}"
+                    data-lesson="${item.lessonCode}" style="${show ? "" : "display:none;"}">
+                    <span class="flex-grow-1">${item.questionContent}</span>
+                    <input type="number" class="form-control form-control-sm ms-2 question-degree"
+                           style="width:90px" placeholder="${getJsString('DegreeLabel')}" value="${item.questionDegree || 1}"
+                           min="1" max="100" required>
+                </li>
+            `);
             }
         });
 
@@ -1387,18 +1483,32 @@
             chosenQuestions[questionIndex].questionDegree = degree;
         }
     });
+
     $('#filterSubject').on('change', function () {
         examCurrentPage = 1;
         filterExamsAndRender();
     });
+
     $('#filterYear').on('change', function () {
         examCurrentPage = 1;
         filterExamsAndRender();
     });
+
     $('#filterExamType').on('change', function () {
         examCurrentPage = 1;
         filterExamsAndRender();
     });
+    // =============================
+    // Window Resize Handler
+    // =============================
+
+    $(window).on('resize', function () {
+        // Re-render table if screen size changes
+        if (allExams && allExams.length > 0) {
+            filterExamsAndRender();
+        }
+    });
+
     // =============================
     // Initialize Page
     // =============================
@@ -1411,4 +1521,5 @@
         rootName: rootName,
         userName: userName
     });
+
 });

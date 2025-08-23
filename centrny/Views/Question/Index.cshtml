@@ -216,6 +216,176 @@
             .question-actions .modern-btn.warning-btn span {
                 display: none !important;
             }
+        /* Mobile-specific button styling for question management */
+        @@media (max-width: 768px) {
+            /* Make all buttons smaller on mobile */
+            .modern-btn, .btn-table
+
+        {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.85rem !important;
+            margin-right: 0.25rem !important;
+            margin-bottom: 0.25rem !important;
+            min-height: auto !important;
+            line-height: 1.2 !important;
+        }
+
+        /* Specific button adjustments */
+        .add-lesson-btn,
+        .add-question-btn,
+        .show-answers-btn,
+        .add-answers-btn {
+            padding: 0.35rem 0.6rem !important;
+            font-size: 0.8rem !important;
+        }
+
+        /* Chapter header buttons */
+        .chapter-header .btn-table {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.75rem !important;
+        }
+
+        /* Question action buttons - make them even smaller */
+        .question-actions .btn-table {
+            padding: 0.25rem 0.4rem !important;
+            font-size: 0.7rem !important;
+            min-width: 30px !important;
+            margin-right: 0.15rem !important;
+        }
+
+        /* Answer action buttons */
+        .answer-actions .btn-table {
+            padding: 0.2rem 0.3rem !important;
+            font-size: 0.65rem !important;
+            min-width: 28px !important;
+        }
+
+        /* Main action buttons (Add Chapter, etc.) */
+        #add-chapter-btn {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* Search and pagination buttons */
+        #questionSearchBtn,
+        #questionSearchClearBtn,
+        .modern-btn {
+            padding: 0.35rem 0.7rem !important;
+            font-size: 0.8rem !important;
+        }
+
+        /* Button text adjustments - hide some text, keep icons */
+        .question-actions .btn-table span,
+        .answer-actions .btn-table span {
+            display: none !important;
+        }
+
+        /* Show only icons for action buttons on mobile */
+        .question-actions .btn-table i,
+        .answer-actions .btn-table i {
+            margin: 0 !important;
+        }
+
+        /* Compact button rows */
+        .question-actions,
+        .answer-actions {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.15rem !important;
+            margin-top: 0.3rem !important;
+        }
+
+        /* Modal buttons */
+        .modal-actions .modern-btn {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.85rem !important;
+            margin: 0.1rem !important;
+        }
+
+        /* Pagination buttons */
+        .lesson-pagination .modern-btn,
+        .question-pagination .modern-btn,
+        #pagination-container .modern-btn {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.75rem !important;
+        }
+
+        }
+
+        /* Extra small mobile devices */
+        @@media (max-width: 480px) {
+            .modern-btn, .btn-table
+
+        {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.75rem !important;
+        }
+
+        .question-actions .btn-table {
+            padding: 0.2rem 0.3rem !important;
+            font-size: 0.65rem !important;
+            min-width: 26px !important;
+        }
+
+        #add-chapter-btn {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* Stack buttons in action rows */
+        .question-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+            .question-actions .btn-table {
+                width: 100% !important;
+                margin-bottom: 0.1rem !important;
+                text-align: center !important;
+                justify-content: center !important;
+            }
+
+                /* Show text again on very small screens when stacked */
+                .question-actions .btn-table span {
+                    display: inline !important;
+                    margin-left: 0.3rem !important;
+                }
+
+        }
+
+        /* Chapter and lesson blocks mobile optimization */
+        @@media (max-width: 768px) {
+            .chapter-block
+
+        {
+            margin-bottom: 1rem !important;
+        }
+
+        .lesson-block {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .question-row {
+            padding: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .chapter-header {
+            padding: 0.5rem !important;
+            flex-wrap: wrap !important;
+        }
+
+        .lesson-header {
+            padding: 0.4rem !important;
+        }
+
+        /* Make content text smaller on mobile */
+        .question-content {
+            font-size: 0.9rem !important;
+            line-height: 1.3 !important;
+        }
+
+        }
     </style>
 </head>
 <body>

@@ -14,9 +14,23 @@ $(document).ready(function () {
 
     // ================= NON-CENTER FLOW =================
     if (!isCenter) {
-        // Set labels
-        $('#rootDateLabel').text(getJsString('date-label'));
-        $('#rootAddBtnText').text(getJsString('add-reservation-btn'));
+        // ✅ ADD FUNCTION TO SET LABELS FOR ROOT/TEACHER FLOW
+        function setRootLabels() {
+            $('#rootDateLabel').text(getJsString('date-label'));
+            $('#rootAddBtnText').text(getJsString('add-reservation-btn'));
+            $('#rootTeacherLabel').text(getJsString('teacher-label'));
+            $('#rootDescriptionLabel').text(getJsString('description-label'));
+            $('#rootCapacityLabel').text(getJsString('capacity-label'));
+            $('#rootCostLabel').text(getJsString('cost-label'));
+            $('#rootStartTimeLabel').text(getJsString('start-time-label'));
+            $('#rootEndTimeLabel').text(getJsString('end-time-label'));
+            $('#rootPeriodLabel').text(getJsString('period-label'));
+            $('#rootDepositLabel').text(getJsString('deposit-label'));
+            $('#rootFinalCostLabel').text(getJsString('final-cost-label'));
+        }
+
+        // ✅ CALL THE FUNCTION TO SET LABELS IMMEDIATELY
+        setRootLabels();
 
         let singleTeacher = null;
         let selectedDate = new Date().toISOString().slice(0, 10);
@@ -142,6 +156,8 @@ $(document).ready(function () {
         // Event Handlers
         $('#rootAddReservationBtn').on('click', function () {
             fetchSingleTeacher(function (t) {
+                // ✅ ENSURE LABELS ARE SET WHEN OPENING MODAL
+                setRootLabels();
                 $('#rootReservationModalLabel').text(getJsString('add-reservation-title'));
                 $('#rootReservationSaveBtn').text(getJsString('add-reservation-btn'));
                 $('#rootReservationForm')[0].reset();
@@ -158,6 +174,8 @@ $(document).ready(function () {
         $(document).on('click', '.edit-root-btn', function () {
             let r = $(this).data('res');
             fetchSingleTeacher(function (t) {
+                // ✅ ENSURE LABELS ARE SET WHEN OPENING MODAL FOR EDIT
+                setRootLabels();
                 $('#rootReservationModalLabel').text(getJsString('edit-reservation-title'));
                 $('#rootReservationSaveBtn').text(getJsString('save-changes-btn'));
                 $('#rootReservationForm')[0].reset();
@@ -216,6 +234,10 @@ $(document).ready(function () {
                 },
                 error: function (xhr) {
                     alert((isEdit ? getJsString('failed-edit-reservation') : getJsString('failed-add-reservation')) + (xhr.responseText || ''));
+                },
+                complete: function () {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
         });
@@ -339,14 +361,22 @@ $(document).ready(function () {
 
         $('#addTeacherForm').on('submit', function (e) {
             e.preventDefault();
+            var $submitBtn = $('#addTeacherBtn');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Adding...');
+            $submitBtn.prop('disabled', true);
+
             $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
-                $('#teacherAddMsg').removeClass('d-none').addClass('text-success').removeClass('text-danger').text(getJsString('success-add-teacher'));
+                $('#teacherAddMsg').removeClass('d-none').addClass('reservation-alert-success').removeClass('reservation-alert-danger').text(getJsString('success-add-teacher'));
                 loadTeachers('#addTeacherSelect', data.teacherCode);
                 setTimeout(() => {
                     $('#addTeacherModal').modal('hide');
-                }, 1000);
+                }, 1500);
             }).fail(function () {
-                $('#teacherAddMsg').removeClass('d-none').removeClass('text-success').addClass('text-danger').text(getJsString('failed-add-teacher'));
+                $('#teacherAddMsg').removeClass('d-none').removeClass('reservation-alert-success').addClass('reservation-alert-danger').text(getJsString('failed-add-teacher'));
+            }).always(function () {
+                $submitBtn.html(originalText);
+                $submitBtn.prop('disabled', false);
             });
         });
 
@@ -516,38 +546,6 @@ $(document).ready(function () {
             });
         }
 
-        // Event Handlers
-        $(document).on('click', '#firstTimeTeacherBtn', function () {
-            $('#addTeacherForm')[0].reset();
-            $('#teacherAddMsg').addClass('d-none').text('');
-            $('#addTeacherModal').modal('show');
-        });
-
-        $('#addTeacherForm').on('submit', function (e) {
-            e.preventDefault();
-            var $submitBtn = $('#addTeacherBtn');
-            var originalText = $submitBtn.html();
-            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Adding...');
-            $submitBtn.prop('disabled', true);
-
-            $.post('/Reservation/AddTeacher', $(this).serialize(), function (data) {
-                $('#teacherAddMsg').removeClass('d-none').addClass('reservation-alert-success').removeClass('reservation-alert-danger').text(getJsString('success-add-teacher'));
-                loadTeachers('#addTeacherSelect', data.teacherCode);
-                setTimeout(() => {
-                    $('#addTeacherModal').modal('hide');
-                }, 1500);
-            }).fail(function () {
-                $('#teacherAddMsg').removeClass('d-none').removeClass('reservation-alert-success').addClass('reservation-alert-danger').text(getJsString('failed-add-teacher'));
-            }).always(function () {
-                $submitBtn.html(originalText);
-                $submitBtn.prop('disabled', false);
-            });
-        });
-
-        $('#addReservationModal').on('show.bs.modal', function () {
-            loadTeachers('#addTeacherSelect');
-        });
-
         $(document).on('click', '.add-res-btn', function () {
             let hallCode = $(this).data('hall-code');
             let periodIdx = $(this).data('period-idx') || 1;
@@ -587,16 +585,18 @@ $(document).ready(function () {
         $(document).on('submit', '#addReservationForm', function (e) {
             e.preventDefault();
             var $btn = $('#addReservationBtn');
+            var defaultText = getJsString('add-reservation-btn');
             $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
 
             // Defensive: check required fields before ajax
             if (!$('#addStartTime').val() || !$('#addEndTime').val()) {
                 alert(getJsString('start-time-label') + " and " + getJsString('end-time-label') + " are required.");
-                resetSubmitButton($btn, getJsString('add-reservation-btn'));
+                resetSubmitButton($btn, defaultText);
                 return;
             }
             if (!$('#addHallCode').val()) {
                 alert('Hall code not set. Please try again.');
+                resetSubmitButton($btn, defaultText);
                 return;
             }
 
@@ -611,12 +611,15 @@ $(document).ready(function () {
                 data: $(this).serialize(),
                 success: function () {
                     $('#addReservationModal').modal('hide');
-                    resetSubmitButton($btn, getJsString('add-reservation-btn'));
                     loadReservationGrid();
                     showReservationAlert('Reservation added successfully!', 'success');
                 },
                 error: function (xhr) {
                     alert(getJsString('failed-add-reservation') + (xhr.responseText || 'Unknown error'));
+                },
+                complete: function () {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
         });
@@ -634,18 +637,30 @@ $(document).ready(function () {
 
         $(document).on('submit', '#editReservationForm', function (e) {
             e.preventDefault();
+            var $btn = $('#saveChangesBtn');
+            var defaultText = getJsString('save-changes-btn');
+            $btn.text(getJsString('processing') || 'Processing...').prop('disabled', true);
+
+            var $submitBtn = $('#saveChangesBtn');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="reservation-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></i> Saving...');
+            $submitBtn.prop('disabled', true);
+
             $.ajax({
                 url: '/Reservation/EditReservation',
                 type: 'POST',
                 data: $(this).serialize(),
                 success: function () {
                     $('#editReservationModal').modal('hide');
-                    resetSubmitButton($btn, getJsString('save-changes-btn'));
                     loadReservationGrid();
                     showReservationAlert('Reservation updated successfully!', 'success');
                 },
                 error: function (xhr) {
                     alert(getJsString('failed-edit-reservation') + (xhr.responseText || 'Unknown error'));
+                },
+                complete: function () {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
         });
