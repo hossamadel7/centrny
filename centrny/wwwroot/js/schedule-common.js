@@ -5,8 +5,15 @@
 function getJsString(key) {
     const el = document.getElementById('js-localization');
     if (!el) return key;
-    key = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-    return el.dataset[key] || key;
+
+    // Try camelCase (default for data-* attributes)
+    if (el.dataset[key] !== undefined) return el.dataset[key];
+
+    // Convert kebab-case or snake_case to camelCase
+    const camel = key.replace(/[-_](\w)/g, (_, c) => c.toUpperCase());
+    if (el.dataset[camel] !== undefined) return el.dataset[camel];
+
+    return key; // fallback
 }
 
 class ScheduleManager {

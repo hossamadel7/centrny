@@ -8,6 +8,12 @@
 
 <!-- Localization helper for JS -->
 <div id="js-localization"
+     data-center="@Localizer["Lbl_Center"]"
+     data-branch="@Localizer["Label_Branch"]"
+     data-teacher="@Localizer["Label_Teacher"]"
+     data-subject="@Localizer["Label_Subject"]"
+     data-year="@Localizer["Label_Year"]"
+     data-edit-schedule="@Localizer["Btn_Edit"]"
      data-create-new-schedule-btn="@Localizer["Title_AddNewSchedule"]"
      data-save-schedule-btn="@Localizer["Btn_SaveSchedule"]"
      data-cancel-btn="@Localizer["Btn_Cancel"]"
@@ -127,10 +133,7 @@
                     </div>
                 </div>
 
-                <!-- Schedule Count Display -->
-                <div class="schedule-count mt-3" id="scheduleCount" style="display: none;">
-                    @Localizer["Loading_Schedules"]
-                </div>
+              
 
                 <!-- Active Filters Display -->
                 <div class="active-filters mt-3" id="activeFiltersDisplay" style="display: none;">
