@@ -116,7 +116,21 @@
     box-shadow: 0 0px 4px 0 #f8d7da;
 }
 
-@media (max-width:600px) {
+/* --- Sticky submit bar at the bottom --- */
+.exam-submit-bar {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding: 1rem 2.5rem 0.5rem 2.5rem;
+    z-index: 10;
+    text-align: right;
+    border-top: 1px solid #eee;
+    /* Add safe area for iOS/modern devices */
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* For smaller screens, add extra bottom padding and responsive layout */
+@media (max-width:700px) {
     .exam-container {
         margin: 0;
         border-radius: 0;
@@ -135,5 +149,23 @@
 
     .exam-question-card {
         padding: 14px 9px;
+    }
+
+    /* Responsive sticky submit bar for mobile */
+    .exam-submit-bar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (max-width: 400px) {
+    .exam-submit-bar {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .exam-question-card {
+        padding: 10px 4px;
     }
 }
