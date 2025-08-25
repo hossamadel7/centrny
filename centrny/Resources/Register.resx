@@ -29,7 +29,6 @@
 	<data name="Label_Name" xml:space="preserve"><value>Name</value></data>
 	<data name="Label_StudentPhone" xml:space="preserve"><value>Student Phone</value></data>
 	<data name="Label_ParentPhone" xml:space="preserve"><value>Parent Phone</value></data>
-	<data name="Label_BirthDate" xml:space="preserve"><value>Date of Birth</value></data>
 	<data name="Label_Age" xml:space="preserve"><value>Age</value></data>
 	<data name="Label_Gender" xml:space="preserve"><value>Gender</value></data>
 	<data name="Label_Branch" xml:space="preserve"><value>Branch</value></data>
