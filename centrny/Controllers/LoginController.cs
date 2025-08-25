@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 
 namespace centrny.Controllers
 {
@@ -37,8 +38,32 @@ namespace centrny.Controllers
         }
 
         [AllowAnonymous]
-        public IActionResult Index()
+        public IActionResult Index(string lang = null)
         {
+            // Language switch logic
+            if (!string.IsNullOrEmpty(lang))
+            {
+                var culture = lang == "ar" ? "ar-SA" : "en-US";
+                CultureInfo ci = new CultureInfo(culture);
+
+                System.Threading.Thread.CurrentThread.CurrentUICulture = ci;
+                System.Threading.Thread.CurrentThread.CurrentCulture = ci;
+
+                // Optional: persist language in session/cookie for future requests
+                HttpContext.Session.SetString("CurrentCulture", culture);
+            }
+            else
+            {
+                // If persisted, use the session value
+                var sessionCulture = HttpContext.Session.GetString("CurrentCulture");
+                if (!string.IsNullOrWhiteSpace(sessionCulture))
+                {
+                    CultureInfo ci = new CultureInfo(sessionCulture);
+                    System.Threading.Thread.CurrentThread.CurrentUICulture = ci;
+                    System.Threading.Thread.CurrentThread.CurrentCulture = ci;
+                }
+            }
+
             // If already logged in, redirect to Root
             if (User.Identity.IsAuthenticated)
             {

@@ -2,9 +2,13 @@
 @{
     ViewData["Title"] = Login.Title_Login;
     Layout = null;
+    var currentLang = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+    var isArabic = currentLang == "ar";
+    var baseUrl = Context.Request.Path;
+    var returnUrl = Context.Request.Query.ContainsKey("returnUrl") ? $"&returnUrl={Context.Request.Query["returnUrl"]}" : "";
 }
 <!DOCTYPE html>
-<html lang="@System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName" dir="@(System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
+<html lang="@currentLang" dir="@(System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,9 +24,38 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png">
+    <style>
+        .language-toggle {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+            .language-toggle .btn {
+                font-weight: 500;
+                min-width: 80px;
+            }
+    </style>
 </head>
 <body>
     <div class="login-container">
+        <!-- Language Toggle -->
+        <div class="language-toggle">
+            @if (!isArabic)
+            {
+                <!-- Only show Arabic button if not Arabic -->
+                <a href="@($"{baseUrl}?lang=ar{returnUrl}")" class="btn btn-sm btn-outline-secondary">
+                    العربية
+                </a>
+            }
+            @if (isArabic)
+            {
+                <!-- Only show English button if not English -->
+                <a href="@($"{baseUrl}?lang=en{returnUrl}")" class="btn btn-sm btn-outline-secondary">
+                    English
+                </a>
+            }
+        </div>
+
         <!-- Login Header with Logo -->
         <div class="login-header">
             <div class="logo-container">
@@ -49,9 +82,6 @@
                 @ViewBag.Success
             </div>
         }
-
-        <!-- System Information -->
-      
 
         <!-- Login Form -->
         <form method="post" asp-action="Login" asp-controller="Login" id="loginForm" novalidate>
@@ -109,9 +139,6 @@
                     @Login.Login_SignIn
                 </span>
             </button>
-
-            <!-- Troubleshooting Link -->
-          
         </form>
     </div>
 
