@@ -34,6 +34,17 @@
         .autocomplete-item:hover {
             background: #eee;
         }
+
+    /* === Added ONLY for responsiveness (new classes, no existing style edits) === */
+    .learn-responsive-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+        .learn-responsive-wrapper table {
+            min-width: 1100px; /* adjust if columns change */
+        }
 </style>
 
 <!-- JS Localization keys -->
@@ -86,7 +97,6 @@
         <div class="col-md-2 mb-2">
             <select id="subjectFilter" class="form-control modern-input styled-select"></select>
         </div>
-        <!-- Student filter dropdown removed -->
         <div class="col-md-3 mb-2">
             <input type="text" id="searchInput" class="form-control modern-input" autocomplete="off" />
         </div>
@@ -152,16 +162,13 @@
 <div class="modal fade" id="editLearnModal" tabindex="-1" role="dialog" aria-labelledby="editLearnModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <!-- When editing all subjects for a student, we inject a form dynamically -->
             <div class="modal-header">
                 <h5 class="modal-title" id="editLearnModalLabel">@Localizer["EditSchedulesForStudent"]</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="@Localizer["Cancel"]">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" id="editLearnModalBody">
-                <!-- Dynamically loaded form fields -->
-            </div>
+            <div class="modal-body" id="editLearnModalBody"></div>
             <div class="modal-footer" id="editLearnModalFooter" style="display:none;">
                 <button type="submit" form="editAllSchedulesForm" class="modern-btn edit-btn">@Localizer["Save"]</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@Localizer["Cancel"]</button>

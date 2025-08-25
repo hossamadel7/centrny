@@ -3,68 +3,259 @@
     var employees = ViewBag.Employees as IEnumerable<dynamic>;
     Layout = "_Layout";
 }
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
-<link rel="stylesheet" href="~/css/Hamody.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
 
-<div class="container mt-4 table-card expenses-view">
-    <div class="questions-header">
-        <h2><i class="bi bi-cash-coin"></i>Expenses</h2>
-    </div>
-    <button id="addExpenseBtn" class="btn-table add mb-3"><i class="bi bi-plus-circle"></i> Add Expense</button>
-    <div class="subject-table-container">
-        <table id="expensesTable" class="display gradient-table table table-bordered" style="width:100%">
-            <thead>
-                <tr>
-                    <th>Expense Reason</th>
-                    <th>Amount</th>
-                    <th>Employee</th>
-                    <th>Expense Time</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-        </table>
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/Hamody.css" />
+
+    <style>
+        /* Shell centers content, card bounds width */
+        .expenses-shell {
+            width: 100%;
+            max-width: 1220px;
+            margin: 0 auto;
+        }
+
+        .expenses-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.4rem 1.4rem 1.8rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            position: relative;
+            overflow: hidden; /* Keep internals clipped */
+        }
+
+        .expenses-header h2 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            margin: 0 0 1.1rem;
+        }
+
+        /* Add button */
+        #addExpenseBtn.btn-add-exp {
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: .65rem 1.3rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            box-shadow: 0 2px 6px rgba(99,102,241,0.35);
+            transition: background .25s, transform .18s;
+        }
+
+            #addExpenseBtn.btn-add-exp:hover {
+                background: #4f46e5;
+                transform: translateY(-2px);
+            }
+
+        /* Scroll wrapper: horizontal only; stays inside card */
+        .expenses-table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 10px;
+        }
+
+        /* DataTable width rules */
+        #expensesTable {
+            width: 100% !important;
+            min-width: 900px; /* Force horizontal scroll on narrow screens */
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        table.dataTable thead th {
+            white-space: nowrap;
+            background: #1d4ed8;
+            color: #fff;
+            font-weight: 600;
+            border-color: #1d4ed8;
+            font-size: .85rem;
+        }
+
+        table.dataTable tbody td {
+            vertical-align: middle;
+            white-space: nowrap; /* keep each cell on one line => ensures scroll */
+            font-size: .82rem;
+        }
+
+        /* Action buttons inside table */
+        #expensesTable .action-btn {
+            border: none;
+            padding: .45rem .6rem;
+            border-radius: 10px;
+            font-size: .75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            margin: 0 2px;
+        }
+            #expensesTable .action-edit:hover {
+                background: #047857;
+            }
+
+      
+
+            #expensesTable .action-del:hover {
+                background: #b91c1c;
+            }
+
+        /* DataTables control layout inside card */
+        .dataTables_wrapper .dataTables_length select {
+            padding: .25rem .5rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            padding: .3rem .55rem;
+        }
+
+        /* Prevent global horizontal scroll */
+        body, .main-content {
+            overflow-x: hidden;
+        }
+
+        @@media (max-width: 991.98px) {
+            .expenses-card
+
+        {
+            padding: 1.1rem 1rem 1.5rem;
+        }
+
+        }
+
+        @@media (max-width: 575.98px) {
+            .expenses-header h2
+
+        {
+            font-size: 1.25rem;
+        }
+
+        #addExpenseBtn.btn-add-exp {
+            width: 100%;
+            justify-content: center;
+            font-size: .85rem;
+        }
+
+        table.dataTable thead th {
+            font-size: .70rem;
+            padding: .55rem .5rem;
+        }
+
+        table.dataTable tbody td {
+            font-size: .70rem;
+            padding: .45rem .5rem;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            float: none;
+            text-align: left;
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+            margin-top: .4rem;
+        }
+
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: .5rem;
+            font-size: .75rem;
+        }
+
+        #expensesTable .action-btn {
+            padding: .35rem .5rem;
+            font-size: .65rem;
+        }
+
+        }
+    </style>
+}
+
+<div class="expenses-shell mt-4">
+    <div class="expenses-card">
+        <div class="expenses-header text-center">
+            <h2><i class="bi bi-cash-coin"></i> Expenses</h2>
+        </div>
+
+        <div class="text-center mb-3">
+            <button id="addExpenseBtn" class="btn-add-exp">
+                <i class="bi bi-plus-circle"></i> Add Expense
+            </button>
+        </div>
+
+        <!-- Horizontal scroll container (stays inside card) -->
+        <div class="expenses-table-scroll">
+            <table id="expensesTable" class="display table table-bordered nowrap">
+                <thead>
+                    <tr>
+                        <th>Expense Reason</th>
+                        <th>Amount</th>
+                        <th>Employee</th>
+                        <th>Expense Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Add/Edit Modal -->
 <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="expenseForm">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="expenseForm" autocomplete="off">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header py-2">
                     <h5 class="modal-title" id="expenseModalLabel">Expense</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body pb-1">
                     <input type="hidden" id="ExpensesCode" name="ExpensesCode" />
-                    <div class="form-group mb-3">
-                        <label for="ExpensesReason" class="form-label">Reason</label>
-                        <input type="text" class="form-control" id="ExpensesReason" name="ExpensesReason" required />
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="ExpensesAmount" class="form-label">Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="ExpensesAmount" name="ExpensesAmount" required />
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="EmployeeCode" class="form-label">Employee</label>
-                        <select class="form-select" id="EmployeeCode" name="EmployeeCode" required>
-                            <option value="">Select Employee</option>
-                            @foreach (var e in employees)
-                            {
-                                <option value="@e.EmployeeCode">@e.EmployeeName (@e.EmployeeCode)</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="ExpenseTime" class="form-label">Expense Date</label>
-                        <input type="date" class="form-control" id="ExpenseTime" name="ExpenseTime" required />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="ExpensesReason" class="form-label mb-1">Reason</label>
+                            <input type="text" class="form-control" id="ExpensesReason" name="ExpensesReason" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ExpensesAmount" class="form-label mb-1">Amount</label>
+                            <input type="number" step="0.01" class="form-control" id="ExpensesAmount" name="ExpensesAmount" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ExpenseTime" class="form-label mb-1">Expense Date</label>
+                            <input type="date" class="form-control" id="ExpenseTime" name="ExpenseTime" required />
+                        </div>
+                        <div class="col-12">
+                            <label for="EmployeeCode" class="form-label mb-1">Employee</label>
+                            <select class="form-select" id="EmployeeCode" name="EmployeeCode" required>
+                                <option value="">Select Employee</option>
+                                @if (employees != null)
+                                {
+                                    foreach (var e in employees)
+                                    {
+                                        <option value="@e.EmployeeCode">@e.EmployeeName (@e.EmployeeCode)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="modern-btn add" id="saveExpenseBtn">Save</button>
-                    <button type="button" class="modern-btn delete-btn" data-bs-dismiss="modal">Cancel</button>
+                <div class="modal-footer py-2">
+                    <button type="submit" class="btn btn-success px-3" id="saveExpenseBtn">
+                        <i class="bi bi-save me-1"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
                 </div>
             </div>
         </form>
@@ -75,5 +266,5 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/Expenses.js"></script>
+    <script src="~/js/Expenses.js" asp-append-version="true"></script>
 }
