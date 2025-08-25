@@ -12,6 +12,7 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value>
 	</resheader>
+	
 	<!-- General -->
 	<data name="Title_StudentRegistration" xml:space="preserve"><value>تسجيل الطالب</value></data>
 	<data name="Header_Join" xml:space="preserve"><value>انضم إلى</value></data>

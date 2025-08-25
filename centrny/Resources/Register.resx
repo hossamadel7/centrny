@@ -12,6 +12,34 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value>
 	</resheader>
+	<data name="Title_FindProfile" xml:space="preserve"><value>Find Profile</value></data>
+	<data name="Header_LinkProfile" xml:space="preserve"><value>Link Your Profile</value></data>
+	<data name="Label_EnterPhone" xml:space="preserve"><value>Enter Phone Number</value></data>
+	<data name="Label_PhoneNumber" xml:space="preserve"><value>Phone Number</value></data>
+	<data name="Btn_Search" xml:space="preserve"><value>Search</value></data>
+	<data name="Alt_DontHaveProfile" xml:space="preserve"><value>Don't have a profile?</value></data>
+	<data name="Alt_CreateOneHere" xml:space="preserve"><value>Create one here</value></data>
+	<data name="NoProfile_Title" xml:space="preserve"><value>No Profile Found</value></data>
+	<data name="NoProfile_Description" xml:space="preserve"><value>We couldn't find any profile matching your phone number.</value></data>
+	<data name="Btn_CreateProfile" xml:space="preserve"><value>Create Profile</value></data>
+	<data name="Loading_Searching" xml:space="preserve"><value>Searching...</value></data>
+	<data name="Error_SearchFailed" xml:space="preserve"><value>Search failed. Please try again.</value></data>
+	<data name="Error_Network" xml:space="preserve"><value>Network error. Please check your connection.</value></data>
+	<data name="Dialog_ConfirmLink" xml:space="preserve"><value>Are you sure you want to link to {0}?</value></data>
+	<data name="Label_Name" xml:space="preserve"><value>Name</value></data>
+	<data name="Label_StudentPhone" xml:space="preserve"><value>Student Phone</value></data>
+	<data name="Label_ParentPhone" xml:space="preserve"><value>Parent Phone</value></data>
+	<data name="Label_BirthDate" xml:space="preserve"><value>Date of Birth</value></data>
+	<data name="Label_Age" xml:space="preserve"><value>Age</value></data>
+	<data name="Label_Gender" xml:space="preserve"><value>Gender</value></data>
+	<data name="Label_Branch" xml:space="preserve"><value>Branch</value></data>
+	<data name="Label_YearName" xml:space="preserve"><value>Academic Year</value></data>
+	<data name="Label_RegistrationDate" xml:space="preserve"><value>Registration Date</value></data>
+	<data name="Btn_LinkProfile" xml:space="preserve"><value>Link Profile</value></data>
+	<data name="Title_FoundProfiles" xml:space="preserve"><value>Found Profiles</value></data>
+	<data name="Error_LinkFailed" xml:space="preserve"><value>Failed to link profile. Please try again.</value></data>
+	<data name="Validation_Required" xml:space="preserve"><value>This field is required.</value></data>
+	<data name="Validation_ValidPhone" xml:space="preserve"><value>Please enter a valid phone number.</value></data>
 	<!-- General -->
 	<data name="Title_StudentRegistration" xml:space="preserve"><value>Student Registration</value></data>
 	<data name="Header_Join" xml:space="preserve"><value>Join</value></data>

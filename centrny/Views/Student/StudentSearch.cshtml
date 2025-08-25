@@ -6,10 +6,12 @@
     var Localizer = LocalizerFactory.Create("Register", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
     ViewData["Title"] = Localizer["Title_FindProfile"];
     Layout = null;
+    var currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.Name;
+    var isRtl = currentCulture.StartsWith("ar");
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@currentCulture" dir="@(isRtl ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -224,10 +226,92 @@
         #loadingSpinner {
             display: none;
         }
+
+        /* Language toggle switch styles */
+        .lang-toggle-switch {
+            margin-top: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 28px;
+        }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 22px;
+                width: 22px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+            input:checked + .slider:before {
+                transform: translateX(32px);
+            }
+
+        .lang-label {
+            position: absolute;
+            top: 3px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .lang-en {
+            left: 8px;
+            color: #2196F3;
+        }
+
+        .lang-ar {
+            right: 8px;
+            color: #2196F3;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Language Toggle Switch -->
+    <div class="lang-toggle-switch">
+        <form id="langForm" method="post" action="/Home/SetLanguage" style="display:inline;">
+            <input type="hidden" name="culture" id="langHiddenInput" value="@(currentCulture.StartsWith("ar") ? "ar" : "en")" />
+            <label class="switch">
+                <input type="checkbox" id="langSwitch" @(currentCulture.StartsWith("ar") ? "checked" : "")>
+                <span class="slider"></span>
+                <span class="lang-label lang-en">EN</span>
+                <span class="lang-label lang-ar">AR</span>
+            </label>
+        </form>
+    </div>
+
     <div class="search-container">
         <div class="search-card">
             <!-- Header -->
@@ -518,6 +602,19 @@
             document.getElementById('searchResults').style.display = 'none';
             document.getElementById('noResults').style.display = 'none';
         }
+
+        // Language switcher script
+        document.addEventListener('DOMContentLoaded', function() {
+            var langSwitch = document.getElementById('langSwitch');
+            var langForm = document.getElementById('langForm');
+            var langHiddenInput = document.getElementById('langHiddenInput');
+            if(langSwitch) {
+                langSwitch.addEventListener('change', function() {
+                    langHiddenInput.value = langSwitch.checked ? 'ar' : 'en';
+                    langForm.submit();
+                });
+            }
+        });
     </script>
 </body>
 </html>
