@@ -1,5 +1,4 @@
-﻿
-:root {
+﻿:root {
     --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #00b894 100%);
     --success-gradient: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
     --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -191,6 +190,21 @@ body {
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }
+
+/* --- FIX FOR TRANSPARENT SELECT OPTIONS --- */
+.form-select option,
+select option {
+    background-color: #fff !important;
+    color: #212529 !important;
+    opacity: 1 !important;
+}
+
+select:focus, .form-select:focus {
+    background-color: #fff !important;
+    color: #212529 !important;
+    opacity: 1 !important;
+}
+/* --- END FIX --- */
 
 .btn-navigation {
     padding: 0.75rem 2rem;

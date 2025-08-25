@@ -322,8 +322,8 @@
                     }
                     years.forEach(function(year) {
                         const opt = document.createElement('option');
-                        opt.value = year.Value;
-                        opt.textContent = year.Text;
+                        opt.value = year.value;
+                        opt.textContent = year.text;
                         yearSelect.appendChild(opt);
                     });
                 } catch (error) {
