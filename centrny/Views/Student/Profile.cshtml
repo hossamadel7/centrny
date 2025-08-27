@@ -99,49 +99,41 @@
                                 <i class="fas @(Model.IsActive ? "fa-check-circle" : "fa-times-circle")"></i>
                                 <span id="status-label"></span>
                             </div>
-                            <!-- 4 Info Cards in a Single Row -->
+                            <!-- 4 Info Cards stacked for mobile and row for desktop -->
                             <div class="row justify-content-center mt-4">
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
                                         <div class="card-content">
-                                            <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
-                                            <div class="card-text">
-                                                <span id="academic-year-label"></span>
-                                                <div class="card-value">@(!string.IsNullOrEmpty(Model.YearName) ? Model.YearName : "")</div>
-                                            </div>
+                                            <span class="card-icon"><i class="fas fa-graduation-cap"></i></span>
+                                            <span class="card-label">@Localizer["AcademicYear"]:</span>
+                                            <span class="card-value">@(!string.IsNullOrEmpty(Model.YearName) ? Model.YearName : "")</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
                                         <div class="card-content">
-                                            <div class="card-icon"><i class="fas fa-building"></i></div>
-                                            <div class="card-text">
-                                                <span id="branch-label"></span>
-                                                <div class="card-value">@(!string.IsNullOrEmpty(Model.BranchName) ? Model.BranchName : "")</div>
-                                            </div>
+                                            <span class="card-icon"><i class="fas fa-building"></i></span>
+                                            <span class="card-label">@Localizer["Branch"]:</span>
+                                            <span class="card-value">@(!string.IsNullOrEmpty(Model.BranchName) ? Model.BranchName : "")</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
                                         <div class="card-content">
-                                            <div class="card-icon"><i class="fas fa-phone-alt"></i></div>
-                                            <div class="card-text">
-                                                <span id="parent-phone-label"></span>
-                                                <div class="card-value">@Model.StudentParentPhone</div>
-                                            </div>
+                                            <span class="card-icon"><i class="fas fa-phone-alt"></i></span>
+                                            <span class="card-label">@Localizer["ParentPhone"]:</span>
+                                            <span class="card-value">@Model.StudentParentPhone</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
                                         <div class="card-content">
-                                            <div class="card-icon"><i class="fas fa-phone"></i></div>
-                                            <div class="card-text">
-                                                <span id="student-phone-label"></span>
-                                                <div class="card-value">@Model.StudentPhone</div>
-                                            </div>
+                                            <span class="card-icon"><i class="fas fa-phone"></i></span>
+                                            <span class="card-label">@Localizer["StudentPhone"]:</span>
+                                            <span class="card-value">@Model.StudentPhone</span>
                                         </div>
                                     </div>
                                 </div>
@@ -150,6 +142,7 @@
                     </div>
                 </div>
             </div>
+            <!-- ... rest of your code unchanged ... -->
             <a href="@Url.Action("StudentData", "Student", new { item_key = Model.ItemKey })" class="modern-link-btn">
                 <i class="fas fa-tasks"></i> @Localizer["ViewAssignmentsAndExams"]
             </a>

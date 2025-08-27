@@ -507,6 +507,141 @@ namespace centrny.Controllers
             return Json(new { success = true });
         }
 
+        // ------------------- NEW ENDPOINT -------------------
+        // The full backend function for GetStudentStatistics with fixes and new exam/assignment filter.
+
+        [HttpGet]
+        public async Task<IActionResult> GetStudentStatistics(
+            int studentCode,
+            int yearCode,
+            int? subjectCode = null,
+            bool? isExamFilter = null // NEW filter for exam/assignment
+        )
+        {
+            // Get all subjects the student is enrolled in for the year
+            var learnsQuery = _context.Learns
+                .Where(l => l.StudentCode == studentCode && l.YearCode == yearCode);
+
+            if (subjectCode.HasValue)
+            {
+                learnsQuery = learnsQuery.Where(l => l.SubjectCode == subjectCode.Value);
+            }
+
+            var learns = await learnsQuery.ToListAsync();
+            var subjects = learns.Select(l => l.SubjectCode).Distinct().ToList();
+
+            var subjectStats = new List<object>();
+
+            foreach (var subjCode in subjects)
+            {
+                var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == subjCode);
+
+                // Exams/Assignments
+                var examsQuery = _context.Exams
+     .Where(e => e.SubjectCode == subjCode && e.YearCode == yearCode && e.IsActive == true);
+
+                if (isExamFilter.HasValue)
+                    examsQuery = examsQuery.Where(e => e.IsExam == isExamFilter.Value);
+
+                var exams = await examsQuery.OrderBy(e => e.InserTime).ToListAsync();
+
+                // Get StudentExams for the student, then get the Exam records to filter by subject and year
+                var studentExams = await _context.StudentExams
+                    .Where(se => se.StudentCode == studentCode)
+                    .ToListAsync();
+
+                // Only keep the ones for this subject and year by looking up the Exam table
+                var studentExamList = new List<StudentExam>();
+                foreach (var se in studentExams)
+                {
+                    var exam = exams.FirstOrDefault(e => e.ExamCode == se.ExamCode);
+                    if (exam != null)
+                        studentExamList.Add(se);
+                }
+
+                int totalExams = exams.Count;
+                int attendedExams = studentExamList.Count;
+                int missedExams = totalExams - attendedExams;
+
+                double avgMark = attendedExams > 0 ? studentExamList.Average(se => (double?)se.StudentResult ?? 0) : 0;
+
+                var examList = exams.Select(e =>
+                {
+                    var se = studentExamList.FirstOrDefault(s => s.ExamCode == e.ExamCode);
+                    return new
+                    {
+                        examName = e.ExamName,
+                        examDate = e.InserTime.ToString("yyyy-MM-dd"),
+                        examDegree = e.ExamDegree, // Show exam's max degree
+                        studentDegree = se?.StudentResult, // Show student's degree
+                        attended = se != null,
+                        status = se != null ? "Attended" : "Missed"
+                    };
+                }).ToList();
+
+                // Attendance
+                var schedules = learns.Where(l => l.SubjectCode == subjCode).Select(l => l.ScheduleCode).Distinct().ToList();
+
+                // Get all classes for those schedules
+                var classes = await _context.Classes
+                    .Where(c => schedules.Contains((int)c.ScheduleCode) && c.YearCode == yearCode)
+                    .OrderBy(c => c.ClassDate)
+                    .ToListAsync();
+
+                var classIds = classes.Select(c => c.ClassCode).ToList();
+
+                // Attend table: get all records for this student and these class codes
+                var attends = await _context.Attends
+                    .Where(a => a.StudentId == studentCode && classIds.Contains(a.ClassId))
+                    .ToListAsync();
+
+                var attendedClassIds = attends.Select(a => a.ClassId).ToHashSet();
+
+                int totalClasses = classes.Count;
+                int attendedClasses = attendedClassIds.Count;
+                int missedClasses = totalClasses - attendedClasses;
+                double attendanceRate = totalClasses > 0 ? (attendedClasses * 100.0 / totalClasses) : 0;
+
+                var classList = classes.Select(c => new
+                {
+                    className = c.ClassName,
+                    classDate = c.ClassDate.HasValue ? c.ClassDate.Value.ToString("yyyy-MM-dd") : "",
+                    classTime = (c.ClassStartTime != null && c.ClassEndTime != null) ?
+                        $"{c.ClassStartTime:HH:mm}-{c.ClassEndTime:HH:mm}" : "",
+                    attended = attendedClassIds.Contains(c.ClassCode),
+                    status = attendedClassIds.Contains(c.ClassCode) ? "Attended" : "Missed"
+                }).ToList();
+
+                subjectStats.Add(new
+                {
+                    subjectCode = subjCode,
+                    subjectName = subject?.SubjectName ?? "",
+                    exams = new
+                    {
+                        total = totalExams,
+                        attended = attendedExams,
+                        missed = missedExams,
+                        avgMark = avgMark,
+                        list = examList
+                    },
+                    attendance = new
+                    {
+                        total = totalClasses,
+                        attended = attendedClasses,
+                        missed = missedClasses,
+                        rate = attendanceRate,
+                        list = classList
+                    }
+                });
+            }
+
+            return Json(new
+            {
+                subjects = subjectStats
+            });
+        }
+        // ----------------------------------------------------
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
