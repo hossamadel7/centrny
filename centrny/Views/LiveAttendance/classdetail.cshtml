@@ -1,0 +1,686 @@
+﻿@model centrny.Controllers.ClassDetailViewModel
+@{
+    ViewData["Title"] = "Live Attendance - " + Model.ClassName;
+
+    // Calculate statistics without lambda expressions
+    var totalStudents = Model.Students.Count;
+    var attendedStudents = 0;
+    var absentStudents = 0;
+    foreach (var student in Model.Students)
+    {
+        if (student.IsAttended)
+            attendedStudents++;
+        else
+            absentStudents++;
+    }
+    var attendancePercentage = totalStudents > 0 ? (double)attendedStudents / totalStudents * 100 : 0;
+
+    // Sort students manually
+    var sortedStudents = new List<centrny.Controllers.ClassStudentViewModel>();
+    foreach (var student in Model.Students)
+    {
+        sortedStudents.Add(student);
+    }
+    sortedStudents.Sort((x, y) => string.Compare(x.StudentName, y.StudentName, StringComparison.OrdinalIgnoreCase));
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Live Attendance - @Model.ClassName</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index")">Live Attendance</a></li>
+                        <li class="breadcrumb-item active">@Model.ClassName</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Information Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="mdi mdi-book-open text-primary me-2" style="font-size: 1.2rem;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Subject</small>
+                                            <strong>@Model.SubjectName</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="mdi mdi-account-tie text-primary me-2" style="font-size: 1.2rem;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Teacher</small>
+                                            <strong>@Model.TeacherName</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="mdi mdi-door text-primary me-2" style="font-size: 1.2rem;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Hall</small>
+                                            <strong>@Model.HallName</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="mdi mdi-office-building text-primary me-2" style="font-size: 1.2rem;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Branch</small>
+                                            <strong>@Model.BranchName</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="text-center">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h3 class="text-info mb-0">@Model.StartTime</h3>
+                                        <small class="text-muted">Start Time</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h3 class="text-warning mb-0">@Model.EndTime</h3>
+                                        <small class="text-muted">End Time</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">
+                                        <i class="mdi mdi-calendar me-1"></i>@Model.ClassDate
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Attend Button and Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <button class="btn btn-light btn-lg" id="liveAttendBtn">
+                        <i class="mdi mdi-qrcode-scan me-2"></i>
+                        Live Attend - Scan QR Code
+                    </button>
+                    <p class="mt-2 mb-0">
+                        <small>Click to open camera and scan student QR codes</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h3 class="text-primary mb-0" id="totalStudents">@totalStudents</h3>
+                            <small class="text-muted">Total Enrolled</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="text-success mb-0" id="attendedStudents">@attendedStudents</h3>
+                            <small class="text-muted">Attended</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="text-danger mb-0" id="absentStudents">@absentStudents</h3>
+                            <small class="text-muted">Absent</small>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             style="width: @attendancePercentage%"
+                             id="attendanceProgress"
+                             aria-valuenow="@attendancePercentage"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <span class="badge bg-info" id="attendancePercentage">@Math.Round(attendancePercentage, 1)% Attendance</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">
+                            <i class="mdi mdi-account-multiple me-2"></i>
+                            Enrolled Students
+                        </h4>
+                        <button class="btn btn-outline-primary btn-sm" id="refreshStudents">
+                            <i class="mdi mdi-refresh me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap mb-0" id="studentsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Phone</th>
+                                    <th>Parent Phone</th>
+                                    <th>Branch</th>
+                                    <th>Year</th>
+                                    <th>Status</th>
+                                    <th>Attendance Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                                @foreach (var student in sortedStudents)
+                                {
+                                    <tr id="student-@student.StudentCode" class="@(student.IsAttended ? "table-success" : "")">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (student.IsAttended)
+                                                {
+                                                    <i class="mdi mdi-check-circle text-success me-2"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="mdi mdi-clock-outline text-muted me-2"></i>
+                                                }
+                                                <strong>@student.StudentName</strong>
+                                            </div>
+                                        </td>
+                                        <td>@student.StudentPhone</td>
+                                        <td>@student.StudentParentPhone</td>
+                                        <td>@student.BranchName</td>
+                                        <td>@student.YearName</td>
+                                        <td>
+                                            @if (student.IsAttended)
+                                            {
+                                                <span class="badge bg-success">Present</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Absent</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="attendance-time">@(student.AttendanceTime ?? "-")</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div class="modal fade" id="qrScannerModal" tabindex="-1" aria-labelledby="qrScannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrScannerModalLabel">
+                    <i class="mdi mdi-qrcode-scan me-2"></i>Scan Student QR Code
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="qrScannerContainer">
+                    <div id="reader" style="width: 100%;"></div>
+                    <div class="text-center mt-3">
+                        <p class="text-muted">
+                            <i class="mdi mdi-information-outline me-1"></i>
+                            Position the student's QR code within the camera view to mark attendance
+                        </p>
+                        <div id="scanStatus" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close me-1"></i>Close
+                </button>
+                <button type="button" class="btn btn-primary" id="switchCamera">
+                    <i class="mdi mdi-camera-switch me-1"></i>Switch Camera
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1200;">
+    <div id="attendanceSuccessToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="mdi mdi-check-circle me-2"></i>
+            <strong class="me-auto">Attendance Marked</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+        </div>
+    </div>
+</div>
+
+<!-- Include jsQR Scanner Library -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<style>
+    .table-success {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+    }
+
+    #reader {
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        overflow: hidden;
+        min-height: 350px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000;
+    }
+
+    #videoElement {
+        width: 100%;
+        height: auto;
+        max-width: 400px;
+        max-height: 300px;
+        border-radius: 8px;
+    }
+
+    #canvasElement {
+        display: none;
+    }
+
+    .attendance-time {
+        font-weight: 500;
+        color: #28a745;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<script>
+    let videoElement = null;
+    let canvasElement = null;
+    let canvasContext = null;
+    let animationId = null;
+    let isScanning = false;
+    let currentStream = null;
+    const classCode = @Model.ClassCode;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded, class code:', classCode);
+
+        // Initialize QR Scanner when modal is shown
+        const qrModal = document.getElementById('qrScannerModal');
+        qrModal.addEventListener('shown.bs.modal', function () {
+            console.log('Modal shown, starting QR scanner...');
+            initializeScanner();
+        });
+
+        // Stop QR Scanner when modal is hidden
+        qrModal.addEventListener('hidden.bs.modal', function () {
+            console.log('Modal hidden, stopping QR scanner...');
+            stopQRScanner();
+        });
+
+        // Live Attend Button Click
+        document.getElementById('liveAttendBtn').addEventListener('click', function() {
+            console.log('Live attend button clicked');
+            const modal = new bootstrap.Modal(document.getElementById('qrScannerModal'));
+            modal.show();
+        });
+
+        // Refresh Students List
+        document.getElementById('refreshStudents').addEventListener('click', function() {
+            refreshStudentsList();
+        });
+
+        // Switch Camera Button
+        document.getElementById('switchCamera').addEventListener('click', function() {
+            console.log('Switch camera clicked');
+            if (isScanning) {
+                switchCamera();
+            }
+        });
+
+        // Auto-refresh every 10 seconds
+        setInterval(function() {
+            refreshStudentsList();
+        }, 10000);
+    });
+
+    function initializeScanner() {
+        const readerDiv = document.getElementById('reader');
+        readerDiv.innerHTML = `
+            <video id="videoElement" autoplay playsinline></video>
+            <canvas id="canvasElement"></canvas>
+        `;
+
+        videoElement = document.getElementById('videoElement');
+        canvasElement = document.getElementById('canvasElement');
+        canvasContext = canvasElement.getContext('2d');
+
+        startQRScanner();
+    }
+
+    async function startQRScanner(facingMode = 'environment') {
+        if (isScanning) return;
+
+        console.log('Starting QR scanner with facing mode:', facingMode);
+        updateScanStatus('Requesting camera permission...', 'text-info');
+
+        try {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            currentStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 400 },
+                    height: { ideal: 300 }
+                }
+            });
+
+            videoElement.srcObject = currentStream;
+
+            videoElement.onloadedmetadata = () => {
+                console.log('Video metadata loaded, starting scan loop');
+                updateScanStatus('Camera ready - Position QR code in view', 'text-success');
+                isScanning = true;
+                scanQRCode();
+            };
+
+            videoElement.onerror = (error) => {
+                console.error('Video error:', error);
+                updateScanStatus('Camera error occurred', 'text-danger');
+            };
+
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            let errorMessage = 'Camera access failed. ';
+
+            if (err.name === 'NotAllowedError') {
+                errorMessage += 'Please allow camera permission and refresh the page.';
+            } else if (err.name === 'NotFoundError') {
+                errorMessage += 'No camera found on this device.';
+            } else if (err.name === 'NotSupportedError') {
+                errorMessage += 'Camera not supported in this browser.';
+            } else {
+                errorMessage += 'Please check your camera and try again.';
+            }
+
+            updateScanStatus(errorMessage, 'text-danger');
+        }
+    }
+
+    function scanQRCode() {
+        if (!isScanning || !videoElement || videoElement.videoWidth === 0) {
+            if (isScanning) {
+                animationId = requestAnimationFrame(scanQRCode);
+            }
+            return;
+        }
+
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+        const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+        });
+
+        if (code) {
+            console.log('QR Code found:', code.data);
+            handleQRScan(code.data);
+            return;
+        }
+
+        animationId = requestAnimationFrame(scanQRCode);
+    }
+
+    function stopQRScanner() {
+        console.log('Stopping QR scanner...');
+        isScanning = false;
+
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+
+        if (videoElement) {
+            videoElement.srcObject = null;
+        }
+
+        updateScanStatus('Scanner stopped', 'text-muted');
+    }
+
+    async function switchCamera() {
+        const currentFacingMode = currentStream?.getVideoTracks()[0]?.getSettings()?.facingMode || 'environment';
+        const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+
+        console.log('Switching from', currentFacingMode, 'to', newFacingMode);
+        stopQRScanner();
+
+        setTimeout(() => {
+            startQRScanner(newFacingMode);
+        }, 500);
+    }
+
+    function handleQRScan(scannedText) {
+        console.log('Processing scanned text:', scannedText);
+
+        let itemKey = '';
+        if (scannedText.includes('/student/')) {
+            const parts = scannedText.split('/student/');
+            if (parts.length > 1) {
+                itemKey = parts[1].split('?')[0].split('#')[0];
+            }
+        } else {
+            itemKey = scannedText.trim();
+        }
+
+        if (!itemKey) {
+            updateScanStatus('Invalid QR code format. Please scan a student profile QR code.', 'text-danger');
+            setTimeout(() => {
+                if (isScanning) scanQRCode();
+            }, 3000);
+            return;
+        }
+
+        console.log('Processing item key:', itemKey);
+        updateScanStatus('Processing attendance...', 'text-warning');
+        isScanning = false;
+
+        fetch('@Url.Action("ScanQRAttendance")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                itemKey: itemKey,
+                classCode: classCode,
+                attendanceType: 1
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Attendance response:', data);
+            if (data.success) {
+                updateScanStatus(`✅ Success: ${data.studentName} marked as present!`, 'text-success');
+                showSuccessToast(data.message, data.studentName, data.attendanceTime);
+
+                setTimeout(() => {
+                    refreshStudentsList();
+                    setTimeout(() => {
+                        if (videoElement && videoElement.srcObject) {
+                            isScanning = true;
+                            updateScanStatus('Camera ready - Position QR code in view', 'text-success');
+                            scanQRCode();
+                        }
+                    }, 3000);
+                }, 1000);
+            } else {
+                updateScanStatus(`❌ Error: ${data.error}`, 'text-danger');
+                setTimeout(() => {
+                    if (videoElement && videoElement.srcObject) {
+                        isScanning = true;
+                        updateScanStatus('Camera ready - Position QR code in view', 'text-success');
+                        scanQRCode();
+                    }
+                }, 3000);
+            }
+        })
+        .catch(error => {
+            console.error('Network error:', error);
+            updateScanStatus(`❌ Network Error: Please try again`, 'text-danger');
+            setTimeout(() => {
+                if (videoElement && videoElement.srcObject) {
+                    isScanning = true;
+                    updateScanStatus('Camera ready - Position QR code in view', 'text-success');
+                    scanQRCode();
+                }
+            }, 3000);
+        });
+    }
+
+    function updateScanStatus(message, className) {
+        document.getElementById('scanStatus').innerHTML = `<div class="${className}">${message}</div>`;
+    }
+
+    function refreshStudentsList() {
+        fetch('@Url.Action("GetClassStudents")?classCode=' + classCode)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateStudentsTable(data.students);
+                    updateStats(data.students);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to refresh students list:', error);
+            });
+    }
+
+    function updateStudentsTable(students) {
+        const tbody = document.getElementById('studentsTableBody');
+        tbody.innerHTML = '';
+
+        students.sort((a, b) => a.studentName.localeCompare(b.studentName));
+
+        students.forEach(student => {
+            const rowClass = student.isAttended ? 'table-success' : '';
+            const icon = student.isAttended ? 'mdi-check-circle text-success' : 'mdi-clock-outline text-muted';
+            const statusBadge = student.isAttended ?
+                '<span class="badge bg-success">Present</span>' :
+                '<span class="badge bg-secondary">Absent</span>';
+            const attendanceTime = student.attendanceTime || '-';
+
+            const row = `
+                <tr id="student-${student.studentCode}" class="${rowClass}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="mdi ${icon} me-2"></i>
+                            <strong>${student.studentName}</strong>
+                        </div>
+                    </td>
+                    <td>${student.studentPhone}</td>
+                    <td>${student.studentParentPhone || '-'}</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>${statusBadge}</td>
+                    <td><span class="attendance-time">${attendanceTime}</span></td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', row);
+        });
+    }
+
+    function updateStats(students) {
+        const totalStudents = students.length;
+        const attendedStudents = students.filter(s => s.isAttended).length;
+        const absentStudents = totalStudents - attendedStudents;
+        const attendancePercentage = totalStudents > 0 ? (attendedStudents / totalStudents * 100) : 0;
+
+        document.getElementById('totalStudents').textContent = totalStudents;
+        document.getElementById('attendedStudents').textContent = attendedStudents;
+        document.getElementById('absentStudents').textContent = absentStudents;
+
+        const progressBar = document.getElementById('attendanceProgress');
+        progressBar.style.width = attendancePercentage + '%';
+        progressBar.setAttribute('aria-valuenow', attendancePercentage);
+
+        document.getElementById('attendancePercentage').textContent = Math.round(attendancePercentage * 10) / 10 + '% Attendance';
+    }
+
+    function showSuccessToast(message, studentName, attendanceTime) {
+        document.getElementById('toastMessage').innerHTML = `
+            <strong>${studentName}</strong> has been marked as present.<br>
+            <small class="text-muted">Time: ${attendanceTime}</small>
+        `;
+
+        const toastElement = document.getElementById('attendanceSuccessToast');
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 4000
+        });
+        toast.show();
+    }
+</script>
