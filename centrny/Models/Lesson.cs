@@ -21,6 +21,10 @@ public partial class Lesson
 
     public int? YearCode { get; set; }
 
+    public int? LessonWatchedTimes { get; set; }
+
+    public int? LessonExpireDays { get; set; }
+
     public bool IsActive { get; set; }
 
     public int InsertUser { get; set; }
@@ -33,6 +37,8 @@ public partial class Lesson
 
     public virtual Lesson? ChapterCodeNavigation { get; set; }
 
+    public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
+
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
@@ -42,6 +48,8 @@ public partial class Lesson
     public virtual ICollection<Lesson> InverseChapterCodeNavigation { get; set; } = new List<Lesson>();
 
     public virtual User? LastUpdateUserNavigation { get; set; }
+
+    public virtual ICollection<OnlineAttend> OnlineAttends { get; set; } = new List<OnlineAttend>();
 
     public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
 

@@ -11,6 +11,8 @@ public partial class Root
 
     public string RootName { get; set; } = null!;
 
+    public string? RootDomain { get; set; }
+
     public string RootPhone { get; set; } = null!;
 
     public string RootEmail { get; set; } = null!;
@@ -27,7 +29,11 @@ public partial class Root
 
     public DateTime StartTime { get; set; }
 
+    public int? RootParentCode { get; set; }
+
     public bool IsCenter { get; set; }
+
+    public bool? IsParent { get; set; }
 
     public int InsertUser { get; set; }
 
@@ -45,6 +51,8 @@ public partial class Root
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
+    public virtual ICollection<Content> Contents { get; set; } = new List<Content>();
+
     public virtual ICollection<EduYear> EduYears { get; set; } = new List<EduYear>();
 
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
@@ -55,6 +63,8 @@ public partial class Root
 
     public virtual ICollection<Hall> Halls { get; set; } = new List<Hall>();
 
+    public virtual ICollection<Root> InverseRootParentCodeNavigation { get; set; } = new List<Root>();
+
     public virtual ICollection<Item> Items { get; set; } = new List<Item>();
 
     public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
@@ -63,9 +73,15 @@ public partial class Root
 
     public virtual ICollection<Level> Levels { get; set; } = new List<Level>();
 
+    public virtual ICollection<OnlineAttend> OnlineAttends { get; set; } = new List<OnlineAttend>();
+
+    public virtual ICollection<Pin> Pins { get; set; } = new List<Pin>();
+
     public virtual ICollection<PositionType> PositionTypes { get; set; } = new List<PositionType>();
 
     public virtual ICollection<RootModule> RootModules { get; set; } = new List<RootModule>();
+
+    public virtual Root? RootParentCodeNavigation { get; set; }
 
     public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 
@@ -77,5 +93,5 @@ public partial class Root
 
     public virtual ICollection<Teach> Teaches { get; set; } = new List<Teach>();
 
-    public virtual ICollection<WalletExam> WalletExams { get; set; } = new List<WalletExam>();
+    public virtual ICollection<WalletCode> WalletCodes { get; set; } = new List<WalletCode>();
 }

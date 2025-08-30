@@ -25,6 +25,8 @@ public partial class CenterContext : DbContext
 
     public virtual DbSet<Class> Classes { get; set; }
 
+    public virtual DbSet<Content> Contents { get; set; }
+
     public virtual DbSet<EduYear> EduYears { get; set; }
 
     public virtual DbSet<Employee> Employees { get; set; }
@@ -34,6 +36,8 @@ public partial class CenterContext : DbContext
     public virtual DbSet<ExamQuestion> ExamQuestions { get; set; }
 
     public virtual DbSet<Expense> Expenses { get; set; }
+
+    public virtual DbSet<File> Files { get; set; }
 
     public virtual DbSet<Group> Groups { get; set; }
 
@@ -55,7 +59,11 @@ public partial class CenterContext : DbContext
 
     public virtual DbSet<Module> Modules { get; set; }
 
+    public virtual DbSet<OnlineAttend> OnlineAttends { get; set; }
+
     public virtual DbSet<Page> Pages { get; set; }
+
+    public virtual DbSet<Pin> Pins { get; set; }
 
     public virtual DbSet<PlanSubject> PlanSubjects { get; set; }
 
@@ -91,13 +99,13 @@ public partial class CenterContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    public virtual DbSet<WalletExam> WalletExams { get; set; }
+    public virtual DbSet<WalletCode> WalletCodes { get; set; }
 
     public virtual DbSet<Year> Years { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=center.cfqynilckjf8.us-east-2.rds.amazonaws.com,1433;Database=Center;User Id=Clasrio@Hamody;Password=smsm123;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=center.cfqynilckjf8.us-east-2.rds.amazonaws.com,1433;Database=Center;User Id=admin;Password=hamody123;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -325,6 +333,7 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Center_Amount");
             entity.Property(e => e.ClassDate).HasColumnName("Class_Date");
             entity.Property(e => e.ClassEndTime).HasColumnName("Class_End_Time");
+            entity.Property(e => e.ClassLessonCode).HasColumnName("Class_Lesson_Code");
             entity.Property(e => e.ClassName)
                 .HasMaxLength(50)
                 .HasColumnName("Class_Name");
@@ -365,6 +374,10 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.BranchCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Class_Branch");
+
+            entity.HasOne(d => d.ClassLessonCodeNavigation).WithMany(p => p.Classes)
+                .HasForeignKey(d => d.ClassLessonCode)
+                .HasConstraintName("FK_Class_Lesson");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.EduYearCode)
@@ -411,6 +424,21 @@ public partial class CenterContext : DbContext
             entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.YearCode)
                 .HasConstraintName("FK_Class_Year");
+        });
+
+        modelBuilder.Entity<Content>(entity =>
+        {
+            entity.HasKey(e => e.ContentCode).HasName("PK_Content_1");
+
+            entity.ToTable("Content");
+
+            entity.Property(e => e.ContentCode).HasColumnName("Content_Code");
+            entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Contents)
+                .HasForeignKey(d => d.RootCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Content_Root");
         });
 
         modelBuilder.Entity<EduYear>(entity =>
@@ -662,6 +690,36 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Expenses_Root");
+        });
+
+        modelBuilder.Entity<File>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("File");
+
+            entity.Property(e => e.FileCode).HasColumnName("File_code");
+            entity.Property(e => e.FileLocation)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("File_location");
+            entity.Property(e => e.InsertTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("insert_time");
+            entity.Property(e => e.InsertUser).HasColumnName("insert_user");
+            entity.Property(e => e.LessonCode).HasColumnName("Lesson_code");
+            entity.Property(e => e.RootCode).HasColumnName("Root_code");
+
+            entity.HasOne(d => d.LessonCodeNavigation).WithMany()
+                .HasForeignKey(d => d.LessonCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_File_Lesson");
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany()
+                .HasForeignKey(d => d.RootCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_File_Root");
         });
 
         modelBuilder.Entity<Group>(entity =>
@@ -931,9 +989,11 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Updat_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
+            entity.Property(e => e.LessonExpireDays).HasColumnName("Lesson_Expire_Days");
             entity.Property(e => e.LessonName)
                 .HasMaxLength(100)
                 .HasColumnName("Lesson_Name");
+            entity.Property(e => e.LessonWatchedTimes).HasColumnName("Lesson_Watched_Times");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.SubjectCode).HasColumnName("Subject_Code");
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
@@ -1034,6 +1094,47 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Module_name");
         });
 
+        modelBuilder.Entity<OnlineAttend>(entity =>
+        {
+            entity.HasKey(e => new { e.StudentCode, e.LessonCode, e.PinCode, e.RootCode });
+
+            entity.ToTable("Online_Attend", tb =>
+                {
+                    tb.HasTrigger("trg_Online_Attend_PinUpdate");
+                    tb.HasTrigger("trg_Online_Attend_StatusUpdate");
+                });
+
+            entity.Property(e => e.StudentCode).HasColumnName("Student_code");
+            entity.Property(e => e.LessonCode).HasColumnName("Lesson_code");
+            entity.Property(e => e.PinCode).HasColumnName("Pin_code");
+            entity.Property(e => e.RootCode).HasColumnName("Root_code");
+            entity.Property(e => e.InsertTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("insert_time");
+            entity.Property(e => e.InsertUser).HasColumnName("insert_user");
+
+            entity.HasOne(d => d.LessonCodeNavigation).WithMany(p => p.OnlineAttends)
+                .HasForeignKey(d => d.LessonCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Online_Attend_Lesson");
+
+            entity.HasOne(d => d.PinCodeNavigation).WithMany(p => p.OnlineAttends)
+                .HasForeignKey(d => d.PinCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Online_Attend_Pin");
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.OnlineAttends)
+                .HasForeignKey(d => d.RootCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Online_Attend_Root");
+
+            entity.HasOne(d => d.StudentCodeNavigation).WithMany(p => p.OnlineAttends)
+                .HasForeignKey(d => d.StudentCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Online_Attend_Student");
+        });
+
         modelBuilder.Entity<Page>(entity =>
         {
             entity.HasKey(e => e.PageCode);
@@ -1080,6 +1181,31 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.ModuleCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Page_Module");
+        });
+
+        modelBuilder.Entity<Pin>(entity =>
+        {
+            entity.HasKey(e => e.PinCode);
+
+            entity.ToTable("Pin");
+
+            entity.Property(e => e.PinCode).HasColumnName("Pin_Code");
+            entity.Property(e => e.InsertTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("Insert_time");
+            entity.Property(e => e.InsertUser).HasColumnName("Insert_user");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(1)
+                .HasColumnName("isActive");
+            entity.Property(e => e.RootCode).HasColumnName("Root_code");
+            entity.Property(e => e.Times).HasDefaultValue(1);
+            entity.Property(e => e.Watermark).HasMaxLength(20);
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Pins)
+                .HasForeignKey(d => d.RootCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Pin_Root");
         });
 
         modelBuilder.Entity<PlanSubject>(entity =>
@@ -1273,6 +1399,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.RootAddress)
                 .HasMaxLength(100)
                 .HasColumnName("Root_Address");
+            entity.Property(e => e.RootDomain).HasColumnName("Root_Domain");
             entity.Property(e => e.RootEmail)
                 .HasMaxLength(50)
                 .HasColumnName("Root_Email");
@@ -1285,6 +1412,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.RootOwner)
                 .HasMaxLength(100)
                 .HasColumnName("Root_Owner");
+            entity.Property(e => e.RootParentCode).HasColumnName("Root_Parent_Code");
             entity.Property(e => e.RootPhone)
                 .HasMaxLength(50)
                 .HasColumnName("Root_Phone");
@@ -1292,6 +1420,10 @@ public partial class CenterContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("Start_Time");
+
+            entity.HasOne(d => d.RootParentCodeNavigation).WithMany(p => p.InverseRootParentCodeNavigation)
+                .HasForeignKey(d => d.RootParentCode)
+                .HasConstraintName("FK_Root_Root1");
         });
 
         modelBuilder.Entity<RootModule>(entity =>
@@ -1410,13 +1542,22 @@ public partial class CenterContext : DbContext
                 .HasDefaultValue(1)
                 .HasColumnName("Root_Code");
             entity.Property(e => e.StudentBirthdate).HasColumnName("Student_Birthdate");
+            entity.Property(e => e.StudentFatherJob)
+                .HasMaxLength(50)
+                .HasColumnName("Student_Father_Job");
+            entity.Property(e => e.StudentFatherPhone)
+                .HasMaxLength(50)
+                .HasColumnName("Student_Father_Phone");
             entity.Property(e => e.StudentGender).HasColumnName("Student_Gender");
+            entity.Property(e => e.StudentMotherJob)
+                .HasMaxLength(50)
+                .HasColumnName("Student_Mother_Job");
+            entity.Property(e => e.StudentMotherPhone)
+                .HasMaxLength(50)
+                .HasColumnName("Student_Mother_Phone");
             entity.Property(e => e.StudentName)
                 .HasMaxLength(100)
                 .HasColumnName("Student_Name");
-            entity.Property(e => e.StudentParentPhone)
-                .HasMaxLength(50)
-                .HasColumnName("Student_Parent_Phone");
             entity.Property(e => e.StudentPhone)
                 .HasMaxLength(50)
                 .HasColumnName("Student_Phone");
@@ -1504,6 +1645,7 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
+            entity.Property(e => e.PinCode).HasColumnName("Pin_Code");
             entity.Property(e => e.StudentPercentage).HasColumnName("Student_Percentage");
             entity.Property(e => e.StudentResult).HasColumnName("Student_Result");
 
@@ -1867,13 +2009,17 @@ public partial class CenterContext : DbContext
                 .HasConstraintName("FK_User_User1");
         });
 
-        modelBuilder.Entity<WalletExam>(entity =>
+        modelBuilder.Entity<WalletCode>(entity =>
         {
-            entity.HasKey(e => e.WalletExamCode);
+            entity.HasKey(e => e.WalletCode1).HasName("PK_Wallet_Exam");
 
-            entity.ToTable("Wallet_Exam");
+            entity.ToTable("Wallet_Codes", tb =>
+                {
+                    tb.HasTrigger("trg_SetStatusWhenCountZero");
+                    tb.HasTrigger("trg_UpdateWalletCodeStatus");
+                });
 
-            entity.Property(e => e.WalletExamCode).HasColumnName("Wallet_Exam_Code");
+            entity.Property(e => e.WalletCode1).HasColumnName("Wallet_Code");
             entity.Property(e => e.DateStart).HasColumnName("Date_Start");
             entity.Property(e => e.ExpireDate).HasColumnName("Expire_date");
             entity.Property(e => e.IsActive)
@@ -1882,7 +2028,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.OriginalCount).HasColumnName("Original_Count");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
 
-            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.WalletExams)
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.WalletCodes)
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Wallet_Exam_Root");
