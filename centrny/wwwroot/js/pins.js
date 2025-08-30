@@ -1,180 +1,499 @@
-﻿/* pins.js (modal version)
-   - Opens a custom modal for generating pins
-   - Submits form via AJAX
-   - Refreshes table
-*/
+﻿/* pins.js - Premium Pins Management System */
 
 (function () {
-    const modalOverlay = document.getElementById('generateModal');
-    const openBtn = document.getElementById('openGenerateModal');
-    const closeBtn = document.getElementById('closeGenerateModal');
-    const cancelBtn = document.getElementById('cancelGenerateBtn');
-    const form = document.getElementById('generatePinsForm');
-    const spinner = document.getElementById('generateSpinner');
-    const submitBtn = document.getElementById('submitGenerateBtn');
-    const alertsArea = document.getElementById('alertsArea');
-    const refreshBtn = document.getElementById('refreshPinsBtn');
+    // DOM Elements
+    const generateModal = document.getElementById('generateModal');
+    const editModal = document.getElementById('editModal');
+    const generateForm = document.getElementById('generatePinsForm');
+    const editForm = document.getElementById('editPinForm');
     const tableBody = document.querySelector('#pinsTable tbody');
-    const walletCountEl = document.getElementById('walletCodesCount');
-    const pinTotalEl = document.getElementById('pinTotal');
+    const searchInput = document.getElementById('searchInput');
+    const alertsArea = document.getElementById('alertsArea');
 
-    // ---------- Modal Control ----------
-    function openModal() {
-        if (!modalOverlay) return;
-        modalOverlay.classList.add('is-open');
-        modalOverlay.setAttribute('aria-hidden', 'false');
-        // Trap focus
+    // State
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let allPins = [];
+    let filteredPins = [];
+    let isLoading = false;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeEventListeners();
+        loadPinsData();
+    });
+
+    function initializeEventListeners() {
+        // Modal controls
+        document.getElementById('openGenerateModal')?.addEventListener('click', () => openModal('generate'));
+        document.getElementById('closeGenerateModal')?.addEventListener('click', () => closeModal('generate'));
+        document.getElementById('cancelGenerateBtn')?.addEventListener('click', () => closeModal('generate'));
+        document.getElementById('closeEditModal')?.addEventListener('click', () => closeModal('edit'));
+        document.getElementById('cancelEditBtn')?.addEventListener('click', () => closeModal('edit'));
+
+        // Forms
+        generateForm?.addEventListener('submit', handleGenerateSubmit);
+        editForm?.addEventListener('submit', handleEditSubmit);
+
+        // Search
+        searchInput?.addEventListener('input', debounce(handleSearch, 300));
+
+        // Refresh
+        document.getElementById('refreshPinsBtn')?.addEventListener('click', refreshPins);
+
+        // Modal overlay clicks
+        generateModal?.addEventListener('click', e => {
+            if (e.target === generateModal) closeModal('generate');
+        });
+        editModal?.addEventListener('click', e => {
+            if (e.target === editModal) closeModal('edit');
+        });
+
+        // Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal('generate');
+                closeModal('edit');
+            }
+        });
+    }
+
+    // Modal Management
+    function openModal(type) {
+        const modal = type === 'generate' ? generateModal : editModal;
+        if (!modal) return;
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        // Focus first input
         setTimeout(() => {
-            const firstField = form?.querySelector('select, input');
-            firstField && firstField.focus();
-        }, 20);
-        document.addEventListener('keydown', escListener);
-        document.addEventListener('mousedown', outsideListener);
+            const firstInput = modal.querySelector('input, select');
+            firstInput?.focus();
+        }, 100);
     }
 
-    function closeModal() {
-        if (!modalOverlay) return;
-        modalOverlay.classList.remove('is-open');
-        modalOverlay.setAttribute('aria-hidden', 'true');
-        document.removeEventListener('keydown', escListener);
-        document.removeEventListener('mousedown', outsideListener);
-    }
+    function closeModal(type) {
+        const modal = type === 'generate' ? generateModal : editModal;
+        if (!modal) return;
 
-    function escListener(e) {
-        if (e.key === 'Escape') {
-            closeModal();
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+
+        // Reset forms
+        if (type === 'generate') {
+            generateForm?.reset();
+            setLoading('generate', false);
+        } else {
+            editForm?.reset();
+            setLoading('edit', false);
         }
     }
 
-    function outsideListener(e) {
-        if (!modalOverlay) return;
-        const dialog = modalOverlay.querySelector('.pins-modal');
-        if (dialog && !dialog.contains(e.target)) {
-            closeModal();
-        }
+    // Loading States
+    function setLoading(type, loading) {
+        const spinner = document.getElementById(type === 'generate' ? 'generateSpinner' : 'editSpinner');
+        const btn = spinner?.closest('button');
+        const btnText = btn?.querySelector('.btn-text');
+
+        if (!spinner || !btn) return;
+
+        spinner.classList.toggle('d-none', !loading);
+        btn.disabled = loading;
+        if (btnText) btnText.style.opacity = loading ? '0' : '1';
+
+        isLoading = loading;
     }
 
-    openBtn && openBtn.addEventListener('click', openModal);
-    closeBtn && closeBtn.addEventListener('click', closeModal);
-    cancelBtn && cancelBtn.addEventListener('click', closeModal);
-
-    // ---------- UI Helpers ----------
-    function showSpinner(show) {
-        if (!spinner || !submitBtn) return;
-        spinner.classList.toggle('d-none', !show);
-        const textSpan = submitBtn.querySelector('.btn-text');
-        textSpan && textSpan.classList.toggle('invisible', show);
-        submitBtn.disabled = show;
-    }
-
+    // Alert System
     function showAlert(message, type = 'success') {
         if (!alertsArea) return;
-        alertsArea.innerHTML =
-            `<div class="alert alert-${type} py-2 mb-2">${escapeHtml(message)}</div>`;
+
+        const iconClass = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+        alertsArea.innerHTML = `
+            <div class="alert alert-${type}">
+                <i class="${iconClass} me-2"></i>${escapeHtml(message)}
+            </div>
+        `;
+
+        // Auto hide
         setTimeout(() => {
-            alertsArea.innerHTML = "";
-        }, 6000);
-        // Scroll to top if not visible
-        alertsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            alertsArea.innerHTML = '';
+        }, 5000);
+
+        // Scroll to alert
+        alertsArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    function escapeHtml(str) {
-        return (str || "").replace(/[&<>"']/g, c => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        }[c]));
-    }
+    // API Calls
+    async function fetchJson(url, options = {}) {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                ...options.headers
+            }
+        });
 
-    function formatDate(raw) {
-        if (!raw) return '';
-        const d = new Date(raw);
-        if (isNaN(d.getTime())) return raw;
-        const pad = n => n < 10 ? '0' + n : n;
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    function renderPins(pins) {
-        if (!tableBody) return;
-        if (!pins || pins.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No pins found.</td></tr>`;
-            pinTotalEl && (pinTotalEl.textContent = '0');
-            return;
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        tableBody.innerHTML = pins.map(p => `
-            <tr data-pin="${p.pinCode}">
-                <td>${p.pinCode}</td>
-                <td class="text-truncate" style="max-width:220px;" title="${escapeHtml(p.watermark)}">${escapeHtml(p.watermark)}</td>
-                <td>${p.type ? "Exam" : "Session"}</td>
-                <td>${p.times}</td>
-                <td>${p.status}</td>
-                <td>${p.isActive === 1 ? "Yes" : "No"}</td>
-                <td>${formatDate(p.insertTime)}</td>
-            </tr>
-        `).join('');
-        pinTotalEl && (pinTotalEl.textContent = pins.length.toString());
+
+        return response.json();
     }
 
-    async function fetchJson(url, options) {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-    }
-
-    // ---------- AJAX ----------
-    async function generatePins() {
-        const formData = new FormData(form);
+    async function generatePins(formData) {
         const body = new URLSearchParams();
-        formData.forEach((v, k) => body.append(k, v.toString()));
+        formData.forEach((value, key) => body.append(key, value));
 
-        return await fetchJson('/Pin/Generate', {
+        return fetchJson('/Pin/Generate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
             body: body.toString()
         });
     }
 
-    async function refreshPins() {
+    async function updatePin(formData) {
+        const body = new URLSearchParams();
+        formData.forEach((value, key) => body.append(key, value));
+
+        return fetchJson('/Pin/Update', {
+            method: 'POST',
+            body: body.toString()
+        });
+    }
+
+    async function deletePin(pinCode) {
+        return fetchJson('/Pin/Delete', {
+            method: 'POST',
+            body: new URLSearchParams({ pinCode: pinCode.toString() }).toString()
+        });
+    }
+
+    async function loadPins() {
+        return fetchJson('/Pin/List');
+    }
+
+    // Event Handlers
+    async function handleGenerateSubmit(e) {
+        e.preventDefault();
+        if (isLoading) return;
+
+        setLoading('generate', true);
+
         try {
-            const data = await fetchJson('/Pin/List');
-            if (!data.success) {
-                showAlert(data.error || 'Failed to refresh pins.', 'danger');
-                return;
+            const formData = new FormData(generateForm);
+            const result = await generatePins(formData);
+
+            if (result.success) {
+                showAlert(result.message || 'Pins generated successfully!');
+                await loadPinsData();
+                updateStats(result.pins);
+                closeModal('generate');
+            } else {
+                showAlert(result.error || 'Failed to generate pins', 'danger');
             }
-            renderPins(data.pins);
-            walletCountEl && (walletCountEl.textContent = data.walletCodesCount);
-        } catch (err) {
-            console.error(err);
-            showAlert('Error refreshing pins.', 'danger');
+        } catch (error) {
+            console.error('Generate error:', error);
+            showAlert('An unexpected error occurred', 'danger');
+        } finally {
+            setLoading('generate', false);
         }
     }
 
-    // ---------- Events ----------
-    form && form.addEventListener('submit', async e => {
+    async function handleEditSubmit(e) {
         e.preventDefault();
-        showSpinner(true);
+        if (isLoading) return;
+
+        setLoading('edit', true);
+
         try {
-            const result = await generatePins();
+            const formData = new FormData(editForm);
+            const result = await updatePin(formData);
+
             if (result.success) {
-                showAlert(result.message || 'Pins generated.');
-                renderPins(result.pins);
-                walletCountEl && (walletCountEl.textContent = result.walletCodesCount);
-                form.reset();
-                closeModal();
+                showAlert('Pin updated successfully!');
+                await loadPinsData();
+                closeModal('edit');
             } else {
-                showAlert(result.error || 'Generation failed.', 'danger');
+                showAlert(result.error || 'Failed to update pin', 'danger');
             }
-        } catch (err) {
-            console.error(err);
-            showAlert('Unexpected error while generating pins.', 'danger');
+        } catch (error) {
+            console.error('Edit error:', error);
+            showAlert('An unexpected error occurred', 'danger');
         } finally {
-            showSpinner(false);
+            setLoading('edit', false);
         }
-    });
+    }
 
-    refreshBtn && refreshBtn.addEventListener('click', refreshPins);
+    function handleSearch(e) {
+        const query = e.target.value.toLowerCase().trim();
 
-    // Optional auto-refresh every X minutes (comment out if not needed)
-    // setInterval(refreshPins, 60000);
+        if (!query) {
+            filteredPins = [...allPins];
+        } else {
+            filteredPins = allPins.filter(pin =>
+                pin.watermark.toLowerCase().includes(query) ||
+                pin.pinCode.toString().includes(query)
+            );
+        }
 
-    // Expose for console/manual use
-    window.refreshPins = refreshPins;
+        currentPage = 1;
+        renderTable();
+        renderPagination();
+    }
+
+    // Data Management
+    async function loadPinsData() {
+        try {
+            const result = await loadPins();
+            if (result.success) {
+                allPins = result.pins || [];
+                filteredPins = [...allPins];
+                renderTable();
+                renderPagination();
+                updateStats();
+                updateWalletCount(result.walletCodesCount);
+            } else {
+                showAlert(result.error || 'Failed to load pins', 'danger');
+            }
+        } catch (error) {
+            console.error('Load error:', error);
+            showAlert('Failed to load pins data', 'danger');
+        }
+    }
+
+    async function refreshPins() {
+        showAlert('Refreshing pins...', 'info');
+        await loadPinsData();
+        showAlert('Pins refreshed successfully!');
+    }
+
+    // Rendering
+    function renderTable() {
+        if (!tableBody) return;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filteredPins.slice(startIndex, endIndex);
+
+        if (pageData.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No pins found</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = pageData.map(pin => `
+            <tr data-pin="${pin.pinCode}">
+                <td><strong>${pin.pinCode}</strong></td>
+                <td>
+                    <span class="text-truncate" style="max-width: 150px; display: block;" title="${escapeHtml(pin.watermark)}">
+                        ${escapeHtml(pin.watermark)}
+                    </span>
+                </td>
+                <td>
+                    <span class="type-badge ${pin.type ? 'type-exam' : 'type-session'}">
+                        ${pin.type ? 'Exam' : 'Session'}
+                    </span>
+                </td>
+                <td><strong>${pin.times}</strong></td>
+                <td>${renderStatusBadge(pin.status)}</td>
+                <td>
+                    ${pin.isActive === 1
+                ? '<i class="bi bi-check-circle text-success"></i>'
+                : '<i class="bi bi-x-circle text-danger"></i>'
+            }
+                </td>
+                <td>${formatDate(pin.insertTime)}</td>
+                <td>
+                    <div class="pins-actions-cell">
+                        <button class="btn-icon btn-edit" onclick="editPin(${pin.pinCode})" title="Edit Pin">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn-icon btn-delete" onclick="confirmDeletePin(${pin.pinCode})" title="Delete Pin">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        updatePaginationInfo();
+    }
+
+    function renderStatusBadge(status) {
+        const statusConfig = {
+            0: { class: 'status-used', text: 'Used' },
+            1: { class: 'status-sold', text: 'Sold' },
+            2: { class: 'status-active', text: 'Active' }
+        };
+
+        const config = statusConfig[status] || statusConfig[0];
+        return `
+            <span class="status-badge ${config.class}">
+                <span class="status-dot"></span>
+                ${config.text}
+            </span>
+        `;
+    }
+
+    function renderPagination() {
+        const container = document.getElementById('paginationContainer');
+        if (!container) return;
+
+        const totalPages = Math.ceil(filteredPins.length / itemsPerPage);
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let pages = [];
+
+        // Previous button
+        pages.push(`
+            <button class="pins-page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        `);
+
+        // Page numbers
+        const showPages = getPageNumbers(currentPage, totalPages);
+        showPages.forEach(page => {
+            if (page === '...') {
+                pages.push(`<span class="pins-page-btn">...</span>`);
+            } else {
+                pages.push(`
+                    <button class="pins-page-btn ${page === currentPage ? 'active' : ''}" onclick="goToPage(${page})">
+                        ${page}
+                    </button>
+                `);
+            }
+        });
+
+        // Next button
+        pages.push(`
+            <button class="pins-page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        `);
+
+        container.innerHTML = pages.join('');
+    }
+
+    function getPageNumbers(current, total) {
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+        if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+        if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    }
+
+    function updatePaginationInfo() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, filteredPins.length);
+
+        document.getElementById('showingStart').textContent = filteredPins.length ? startIndex + 1 : 0;
+        document.getElementById('showingEnd').textContent = endIndex;
+        document.getElementById('totalPins').textContent = filteredPins.length;
+        document.getElementById('currentPageDisplay').textContent = currentPage;
+    }
+
+    function updateStats(pins = allPins) {
+        document.getElementById('activePinsCount').textContent = pins.filter(p => p.status === 2).length;
+        document.getElementById('soldPinsCount').textContent = pins.filter(p => p.status === 1).length;
+        document.getElementById('usedPinsCount').textContent = pins.filter(p => p.status === 0).length;
+        document.getElementById('pinTotal').textContent = pins.length;
+    }
+
+    function updateWalletCount(count) {
+        const el = document.getElementById('walletCodesCount');
+        if (el) el.textContent = count;
+    }
+
+    // Global Functions (called from HTML)
+    window.editPin = function (pinCode) {
+        const pin = allPins.find(p => p.pinCode === pinCode);
+        if (!pin) return;
+
+        document.getElementById('editPinCode').value = pin.pinCode;
+        document.getElementById('editWatermark').value = pin.watermark;
+        document.getElementById('editType').value = pin.type.toString();
+        document.getElementById('editTimes').value = pin.times;
+        document.getElementById('editStatus').value = pin.status;
+        document.getElementById('editIsActive').value = pin.isActive;
+
+        openModal('edit');
+    };
+
+    window.confirmDeletePin = function (pinCode) {
+        if (confirm('Are you sure you want to delete this pin? This action cannot be undone.')) {
+            deletePinById(pinCode);
+        }
+    };
+
+    window.goToPage = function (page) {
+        const totalPages = Math.ceil(filteredPins.length / itemsPerPage);
+        if (page < 1 || page > totalPages) return;
+
+        currentPage = page;
+        renderTable();
+        renderPagination();
+    };
+
+    async function deletePinById(pinCode) {
+        try {
+            const result = await deletePin(pinCode);
+            if (result.success) {
+                showAlert('Pin deleted successfully!');
+                await loadPinsData();
+            } else {
+                showAlert(result.error || 'Failed to delete pin', 'danger');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            showAlert('An unexpected error occurred', 'danger');
+        }
+    }
+
+    // Utility Functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Export for external use
+    window.pinsManager = {
+        refresh: refreshPins,
+        loadData: loadPinsData
+    };
 })();

@@ -1,134 +1,318 @@
 ﻿@model centrny.Controllers.PinController.PinsViewModel
 @{
-    ViewData["Title"] = "Pins Generator";
-}
-@section Styles {
-    <link rel="stylesheet" href="~/css/Pin.css" asp-append-version="true" />
+    ViewData["Title"] = "Pins Management";
 }
 
-<div class="container-fluid py-3" id="pin-page">
-    <div class="row mb-3 align-items-center">
-        <div class="col-md-6">
-            <h4 class="mb-1 fw-semibold">Pins (Root: @Model.RootCode)</h4>
-            <div class="text-muted small d-flex align-items-center gap-2 flex-wrap">
-                <span>Wallet Codes Count:</span>
-                <span id="walletCodesCount">@Model.WalletCodesCount</span>
+@section Styles {
+    <link rel="stylesheet" href="~/css/Pin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+}
+
+<div class="container-fluid" id="pin-page">
+    <!-- Page Header -->
+    <div class="pins-page-header">
+        <h1 class="pins-page-title">
+            <i class="bi bi-shield-lock"></i>
+            Pins Management System
+        </h1>
+        <p class="text-muted mb-0">Root: @Model.RootCode | User: @Model.UserCode</p>
+
+        <div class="pins-stats-grid">
+            <div class="pins-stat-card" style="--accent: var(--pins-primary)">
+                <div class="pins-stat-header">
+                    <i class="bi bi-wallet2 pins-stat-icon"></i>
+                </div>
+                <h3 class="pins-stat-value" id="walletCodesCount">@Model.WalletCodesCount</h3>
+                <p class="pins-stat-label">Wallet Codes</p>
+            </div>
+
+            <div class="pins-stat-card" style="--accent: var(--pins-success)">
+                <div class="pins-stat-header">
+                    <i class="bi bi-check-circle pins-stat-icon"></i>
+                </div>
+                <h3 class="pins-stat-value" id="activePinsCount">@Model.Pins.Count(p => p.Status == 1)</h3>
+                <p class="pins-stat-label">Active Pins</p>
+            </div>
+
+            <div class="pins-stat-card" style="--accent: var(--pins-warning)">
+                <div class="pins-stat-header">
+                    <i class="bi bi-currency-dollar pins-stat-icon"></i>
+                </div>
+                <h3 class="pins-stat-value" id="soldPinsCount">@Model.Pins.Count(p => p.Status == 2)</h3>
+                <p class="pins-stat-label">Sold Pins</p>
+            </div>
+
+            <div class="pins-stat-card" style="--accent: var(--pins-danger)">
+                <div class="pins-stat-header">
+                    <i class="bi bi-x-circle pins-stat-icon"></i>
+                </div>
+                <h3 class="pins-stat-value" id="usedPinsCount">@Model.Pins.Count(p => p.Status == 0)</h3>
+                <p class="pins-stat-label">Used Pins</p>
             </div>
         </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
-            <button id="openGenerateModal" class="btn btn-primary btn-sm" type="button">
-                <i class="bi bi-plus-circle me-1"></i> Generate Codes
+    </div>
+
+    <!-- Action Bar -->
+    <div class="pins-action-bar">
+        <div class="pins-search-box">
+            <i class="bi bi-search pins-search-icon"></i>
+            <input type="text" class="pins-search-input" id="searchInput" placeholder="Search pins by watermark, pin code...">
+        </div>
+
+        <div class="pins-actions">
+            <button id="openGenerateModal" class="btn-modern btn-primary" type="button">
+                <i class="bi bi-plus-circle"></i>
+                Generate Pins
             </button>
-            <button id="refreshPinsBtn" class="btn btn-outline-secondary btn-sm" type="button">
-                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            <button id="refreshPinsBtn" class="btn-modern btn-secondary" type="button">
+                <i class="bi bi-arrow-clockwise"></i>
+                Refresh
             </button>
         </div>
     </div>
 
+    <!-- Alerts Area -->
     <div id="alertsArea">
         @if (!string.IsNullOrWhiteSpace(Model.Message))
         {
-            <div class="alert alert-success py-2">@Model.Message</div>
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>@Model.Message
+            </div>
         }
         @if (!string.IsNullOrWhiteSpace(Model.Error))
         {
-            <div class="alert alert-danger py-2">@Model.Error</div>
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>@Model.Error
+            </div>
         }
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header py-2 d-flex justify-content-between align-items-center">
-            <span class="fw-semibold">Pins List</span>
-            <div class="small text-muted">
-                Total: <span id="pinTotal">@Model.Pins.Count</span>
+    <!-- Table Container -->
+    <div class="pins-table-container">
+        <div class="pins-table-header">
+            <h2 class="pins-table-title">Pins List</h2>
+            <div class="pins-table-meta">
+                <span>Total: <strong id="pinTotal">@Model.Pins.Count</strong></span>
+                <span>|</span>
+                <span>Page: <strong id="currentPageDisplay">1</strong></span>
             </div>
         </div>
-        <div class="table-responsive" style="max-height:65vh; overflow:auto;">
-            <table class="table table-sm table-hover table-striped mb-0 align-middle" id="pinsTable">
-                <thead class="table-light position-sticky top-0">
+
+        <div class="table-responsive-modern">
+            <table class="table-modern" id="pinsTable">
+                <thead>
                     <tr>
-                        <th style="width:90px;">PinCode</th>
-                        <th style="min-width:140px;">Watermark</th>
-                        <th style="width:90px;">Type</th>
-                        <th style="width:70px;">Times</th>
-                        <th style="width:80px;">Status</th>
-                        <th style="width:80px;">Active</th>
-                        <th style="width:170px;">Insert Time</th>
+                        <th>Pin Code</th>
+                        <th>Watermark</th>
+                        <th>Type</th>
+                        <th>Times</th>
+                        <th>Status</th>
+                        <th>Active</th>
+                        <th>Created</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Pins.Count == 0)
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">No pins found.</td></tr>
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-3 mb-0">No pins found</p>
+                            </td>
+                        </tr>
                     }
                     else
                     {
-                        foreach (var p in Model.Pins)
+                        @foreach (var pin in Model.Pins.Take(10))
                         {
-                            <tr data-pin="@p.PinCode">
-                                <td>@p.PinCode</td>
-                                <td class="text-truncate" style="max-width:220px;" title="@p.Watermark">@p.Watermark</td>
-                                <td>@(p.Type ? "Exam" : "Session")</td>
-                                <td>@p.Times</td>
-                                <td>@p.Status</td>
-                                <td>@(p.IsActive == 1 ? "Yes" : "No")</td>
-                                <td>@p.InsertTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <tr data-pin="@pin.PinCode">
+                                <td><strong>@pin.PinCode</strong></td>
+                                <td>
+                                    <span class="text-truncate" style="max-width: 150px; display: block;" title="@pin.Watermark">
+                                        @pin.Watermark
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="type-badge @(pin.Type ? "type-exam" : "type-session")">
+                                        @(pin.Type ? "Exam" : "Session")
+                                    </span>
+                                </td>
+                                <td><strong>@pin.Times</strong></td>
+                                <td>
+                                    @{
+                                        var statusClass = pin.Status switch
+                                        {
+                                            0 => "status-used",     // Used
+                                            1 => "status-active",   // Active
+                                            2 => "status-sold",     // Sold
+                                            _ => "status-used"
+                                        };
+                                        var statusText = pin.Status switch
+                                        {
+                                            0 => "Used",
+                                            1 => "Active",
+                                            2 => "Sold",
+                                            _ => "Unknown"
+                                        };
+                                    }
+                                    <span class="status-badge @statusClass">
+                                        <span class="status-dot"></span>
+                                        @statusText
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (pin.IsActive == 1)
+                                    {
+                                        <i class="bi bi-check-circle text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-x-circle text-danger"></i>
+                                    }
+                                </td>
+                                <td>@pin.InsertTime.ToString("MMM dd, yyyy HH:mm")</td>
+                                <td>
+                                    <div class="pins-actions-cell">
+                                        <button class="btn-icon btn-edit" onclick="editPin(@pin.PinCode)" title="Edit Pin">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn-icon btn-delete" onclick="deletePin(@pin.PinCode)" title="Delete Pin">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         }
                     }
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        <div class="pins-pagination-container">
+            <div class="pins-pagination-info">
+                Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalPins">@Model.Pins.Count</span> results
+            </div>
+            <div class="pins-pagination" id="paginationContainer">
+                <button class="pins-page-btn" id="prevPageBtn" disabled>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="pins-page-btn active">1</button>
+                <button class="pins-page-btn">2</button>
+                <button class="pins-page-btn">3</button>
+                <button class="pins-page-btn" id="nextPageBtn">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal (custom) -->
-<div class="pins-modal-overlay" id="generateModal" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="pins-modal" role="document">
+<!-- Generate Modal -->
+<div class="pins-modal-overlay" id="generateModal">
+    <div class="pins-modal">
         <div class="pins-modal-header">
-            <h5 class="pins-modal-title">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24">
-                    <path d="M12 5v14M5 12h14" />
-                </svg>
-                Generate Pins
-            </h5>
-            <button type="button" class="pins-modal-close" id="closeGenerateModal" aria-label="Close">&times;</button>
+            <h3 class="pins-modal-title">
+                <i class="bi bi-plus-circle"></i>
+                Generate New Pins
+            </h3>
+            <button type="button" class="pins-modal-close" id="closeGenerateModal">&times;</button>
         </div>
         <div class="pins-modal-body">
             <form id="generatePinsForm">
                 @Html.AntiForgeryToken()
                 <div class="pins-form-grid">
-                    <div>
-                        <label class="form-label">Type</label>
-                        <select name="Type" class="form-select" required>
-                            <option value="0">Session (0)</option>
-                            <option value="1">Exam (1)</option>
+                    <div class="form-group">
+                        <label class="form-label-modern">Type</label>
+                        <select name="Type" class="form-select-modern" required>
+                            <option value="0">Session</option>
+                            <option value="1">Exam</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="form-label">Times</label>
-                        <select name="Times" class="form-select" required>
+                    <div class="form-group">
+                        <label class="form-label-modern">Sessions</label>
+                        <select name="Times" class="form-select-modern" required>
                             <option value="1">1 session</option>
                             <option value="4">4 sessions</option>
                             <option value="16">16 sessions</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="form-label">Number</label>
-                        <input type="number" name="Number" min="1" max="10000" value="1" class="form-control" required />
+                    <div class="form-group">
+                        <label class="form-label-modern">Quantity</label>
+                        <input type="number" name="Number" min="1" max="10000" value="1" class="form-control-modern" required>
                     </div>
                 </div>
                 <div class="pins-modal-footer">
-                    <button type="button" class="btn btn-ghost btn-sm" id="cancelGenerateBtn">Cancel</button>
-                    <button type="submit" class="btn btn-gradient btn-sm" id="submitGenerateBtn">
+                    <button type="button" class="btn-modern btn-secondary" id="cancelGenerateBtn">Cancel</button>
+                    <button type="submit" class="btn-modern btn-primary" id="submitGenerateBtn">
                         <span class="btn-text">Generate</span>
-                        <span class="spinner-border spinner-border-sm d-none" id="generateSpinner" role="status" aria-hidden="true"></span>
+                        <div class="spinner-border spinner-border-sm d-none" id="generateSpinner"></div>
                     </button>
                 </div>
             </form>
-            <small class="text-muted d-block mt-1">
-                Note: Times values allowed: 1, 4, 16. Number up to 10,000.
-            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="pins-modal-overlay" id="editModal">
+    <div class="pins-modal">
+        <div class="pins-modal-header">
+            <h3 class="pins-modal-title">
+                <i class="bi bi-pencil"></i>
+                Edit Pin
+            </h3>
+            <button type="button" class="pins-modal-close" id="closeEditModal">&times;</button>
+        </div>
+        <div class="pins-modal-body">
+            <form id="editPinForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editPinCode" name="PinCode">
+                <div class="pins-form-grid">
+                    <div class="form-group">
+                        <label class="form-label-modern">Watermark</label>
+                        <input type="text" id="editWatermark" name="Watermark" class="form-control-modern" required maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-modern">Type</label>
+                        <select id="editType" name="Type" class="form-select-modern" required>
+                            <option value="false">Session</option>
+                            <option value="true">Exam</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-modern">Sessions</label>
+                        <select id="editTimes" name="Times" class="form-select-modern" required>
+                            <option value="1">1 session</option>
+                            <option value="4">4 sessions</option>
+                            <option value="16">16 sessions</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-modern">Status</label>
+                        <select id="editStatus" name="Status" class="form-select-modern" required>
+                            <option value="0">Used</option>
+                            <option value="1">Active</option>
+                            <option value="2">Sold</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-modern">Active</label>
+                        <select id="editIsActive" name="IsActive" class="form-select-modern" required>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pins-modal-footer">
+                    <button type="button" class="btn-modern btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn-modern btn-success">
+                        <span class="btn-text">Update Pin</span>
+                        <div class="spinner-border spinner-border-sm d-none" id="editSpinner"></div>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

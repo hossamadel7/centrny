@@ -35,11 +35,10 @@ namespace centrny.Controllers
             public List<PinRow> Pins { get; set; } = new();
             public string? Message { get; set; }
             public string? Error { get; set; }
-
-            // Form default values (optional)
-            public int GenerateType { get; set; } = 0;
-            public int GenerateTimes { get; set; } = 1;
-            public int GenerateNumber { get; set; } = 1;
+            public int TotalCount { get; set; }
+            public int CurrentPage { get; set; } = 1;
+            public int PageSize { get; set; } = 10;
+            public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
         }
 
         public class PinRow
@@ -48,47 +47,107 @@ namespace centrny.Controllers
             public string Watermark { get; set; } = "";
             public bool Type { get; set; }
             public int Times { get; set; }
-            public int Status { get; set; }
+            public int Status { get; set; }  // 0=Used, 1=Active, 2=Sold
             public int IsActive { get; set; }
             public DateTime InsertTime { get; set; }
+            public int InsertUser { get; set; }
         }
 
         public class GenerateRequest
         {
-            [Range(0, 1)]
-            public int Type { get; set; }              // 0=session 1=exam
-            [RegularExpression("^(1|4|16)$")]
+            [Range(0, 1, ErrorMessage = "Type must be 0 (Session) or 1 (Exam)")]
+            public int Type { get; set; }
+
+            [RegularExpression("^(1|4|16)$", ErrorMessage = "Times must be 1, 4, or 16")]
             public int Times { get; set; }
-            [Range(1, 10000)]
+
+            [Range(1, 10000, ErrorMessage = "Number must be between 1 and 10,000")]
             public int Number { get; set; }
+        }
+
+        public class UpdateRequest
+        {
+            [Required]
+            public int PinCode { get; set; }
+
+            [Required]
+            [StringLength(20, ErrorMessage = "Watermark cannot exceed 20 characters")]
+            public string Watermark { get; set; } = "";
+
+            [Required]
+            public bool Type { get; set; }
+
+            [RegularExpression("^(1|4|16)$", ErrorMessage = "Times must be 1, 4, or 16")]
+            public int Times { get; set; }
+
+            [Range(0, 2, ErrorMessage = "Status must be 0 (Used), 1 (Active), or 2 (Sold)")]
+            public int Status { get; set; }
+
+            [Range(0, 1, ErrorMessage = "IsActive must be 0 or 1")]
+            public int IsActive { get; set; }
+        }
+
+        public class PaginatedResponse<T>
+        {
+            public bool Success { get; set; }
+            public string? Error { get; set; }
+            public string? Message { get; set; }
+            public List<T> Data { get; set; } = new();
+            public int TotalCount { get; set; }
+            public int Page { get; set; }
+            public int PageSize { get; set; }
+            public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+            public bool HasNextPage => Page < TotalPages;
+            public bool HasPreviousPage => Page > 1;
         }
 
         // -------- Actions ----------
 
         // GET: /Pin
-        public async Task<IActionResult> Index(string? message = null, string? error = null)
+        public async Task<IActionResult> Index(string? message = null, string? error = null, int page = 1, int pageSize = 10)
         {
             var rootCode = HttpContext.Session.GetInt32("RootCode");
             var userCode = HttpContext.Session.GetInt32("UserCode");
+
             if (rootCode is null || userCode is null)
             {
                 return RedirectToAction("Index", "Login");
             }
 
-            var vm = new PinsViewModel
+            try
             {
-                RootCode = rootCode.Value,
-                UserCode = userCode.Value,
-                WalletCodesCount = await GetWalletCodesCountAsync(rootCode.Value),
-                Pins = await GetPinsAsync(rootCode.Value),
-                Message = message,
-                Error = error
-            };
+                var totalCount = await GetPinsTotalCountAsync(rootCode.Value);
+                var pins = await GetPinsAsync(rootCode.Value, page, pageSize);
+                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
 
-            return View("Index", vm);
+                var vm = new PinsViewModel
+                {
+                    RootCode = rootCode.Value,
+                    UserCode = userCode.Value,
+                    WalletCodesCount = walletCount,
+                    Pins = pins,
+                    TotalCount = totalCount,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    Message = message,
+                    Error = error
+                };
+
+                return View("Index", vm);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading pins page for RootCode={RootCode}", rootCode);
+                return View("Index", new PinsViewModel
+                {
+                    RootCode = rootCode.Value,
+                    UserCode = userCode.Value,
+                    Error = "Failed to load pins data."
+                });
+            }
         }
 
-        // POST: /Pin/Generate  (AJAX)
+        // POST: /Pin/Generate (AJAX)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Generate([FromForm] GenerateRequest req)
@@ -103,40 +162,160 @@ namespace centrny.Controllers
 
             if (!ModelState.IsValid)
             {
-                var firstError = ModelState.Values
+                var errors = ModelState.Values
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
-                    .FirstOrDefault() ?? "Invalid input.";
-                return Json(new { success = false, error = firstError });
+                    .ToList();
+                return Json(new { success = false, error = string.Join("; ", errors) });
             }
 
             try
             {
+                _logger.LogInformation("Generating {Number} pins for RootCode={RootCode}, Type={Type}, Times={Times}",
+                    req.Number, rootCode, req.Type, req.Times);
+
                 await GeneratePinsAsync(rootCode.Value, req.Type == 1, req.Times, req.Number, userCode.Value);
 
-                var pins = await GetPinsAsync(rootCode.Value);
+                // Get updated data
+                var pins = await GetPinsAsync(rootCode.Value, 1, 10); // First page
+                var totalCount = await GetPinsTotalCountAsync(rootCode.Value);
                 var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
 
                 return Json(new
                 {
                     success = true,
-                    message = "Pins generated successfully.",
-                    pins,
+                    message = $"Successfully generated {req.Number} pins.",
+                    pins = pins,
+                    totalCount = totalCount,
                     walletCodesCount = walletCount
                 });
+            }
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, "SQL error generating pins for RootCode={RootCode}", rootCode);
+                return Json(new { success = false, error = "Database error occurred while generating pins." });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating pins for RootCode={RootCode}", rootCode);
-                return Json(new { success = false, error = "Error generating pins. Please try again." });
+                return Json(new { success = false, error = "An unexpected error occurred while generating pins." });
             }
         }
 
-        // GET: /Pin/List  (AJAX refresh)
-        [HttpGet]
-        public async Task<IActionResult> List()
+        // POST: /Pin/Update (AJAX)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update([FromForm] UpdateRequest req)
         {
             var rootCode = HttpContext.Session.GetInt32("RootCode");
+            var userCode = HttpContext.Session.GetInt32("UserCode");
+
+            if (rootCode is null || userCode is null)
+            {
+                return Json(new { success = false, error = "Session expired. Please log in again." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return Json(new { success = false, error = string.Join("; ", errors) });
+            }
+
+            try
+            {
+                var pin = await _context.Pins
+                    .FirstOrDefaultAsync(p => p.PinCode == req.PinCode && p.RootCode == rootCode.Value);
+
+                if (pin == null)
+                {
+                    return Json(new { success = false, error = "Pin not found or access denied." });
+                }
+
+                // Update pin properties
+                pin.Watermark = req.Watermark;
+                pin.Type = req.Type;
+                pin.Times = req.Times;
+                pin.Status = req.Status;
+                pin.IsActive = req.IsActive;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Pin {PinCode} updated by user {UserCode}", req.PinCode, userCode);
+
+                return Json(new { success = true, message = "Pin updated successfully." });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error updating pin {PinCode}", req.PinCode);
+                return Json(new { success = false, error = "Database error occurred while updating pin." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating pin {PinCode}", req.PinCode);
+                return Json(new { success = false, error = "An unexpected error occurred while updating pin." });
+            }
+        }
+
+        // POST: /Pin/Delete (AJAX)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete([FromForm] int pinCode)
+        {
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+            var userCode = HttpContext.Session.GetInt32("UserCode");
+
+            if (rootCode is null || userCode is null)
+            {
+                return Json(new { success = false, error = "Session expired. Please log in again." });
+            }
+
+            try
+            {
+                var pin = await _context.Pins
+                    .FirstOrDefaultAsync(p => p.PinCode == pinCode && p.RootCode == rootCode.Value);
+
+                if (pin == null)
+                {
+                    return Json(new { success = false, error = "Pin not found or access denied." });
+                }
+
+                // Check if pin is being used in OnlineAttends
+                var isUsed = await _context.OnlineAttends
+                    .AnyAsync(oa => oa.PinCode == pinCode);
+
+                if (isUsed)
+                {
+                    return Json(new { success = false, error = "Cannot delete pin that is currently in use." });
+                }
+
+                _context.Pins.Remove(pin);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Pin {PinCode} deleted by user {UserCode}", pinCode, userCode);
+
+                return Json(new { success = true, message = "Pin deleted successfully." });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error deleting pin {PinCode}", pinCode);
+                return Json(new { success = false, error = "Database error occurred while deleting pin." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting pin {PinCode}", pinCode);
+                return Json(new { success = false, error = "An unexpected error occurred while deleting pin." });
+            }
+        }
+
+        // GET: /Pin/List (AJAX)
+        [HttpGet]
+        public async Task<IActionResult> List(int page = 1, int pageSize = 10, string? search = null)
+        {
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+
             if (rootCode is null)
             {
                 return Json(new { success = false, error = "Session expired." });
@@ -144,25 +323,132 @@ namespace centrny.Controllers
 
             try
             {
-                var pins = await GetPinsAsync(rootCode.Value);
+                var totalCount = await GetPinsTotalCountAsync(rootCode.Value, search);
+                var pins = await GetPinsAsync(rootCode.Value, page, pageSize, search);
                 var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
-                return Json(new { success = true, pins, walletCodesCount = walletCount });
+
+                return Json(new PaginatedResponse<PinRow>
+                {
+                    Success = true,
+                    Data = pins,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading pins list for RootCode {RootCode}", rootCode);
+                _logger.LogError(ex, "Error loading pins list for RootCode={RootCode}", rootCode);
                 return Json(new { success = false, error = "Failed to load pins." });
             }
         }
 
-        // -------- Data Helpers ----------
-
-        private async Task<List<PinRow>> GetPinsAsync(int rootCode)
+        // GET: /Pin/Details/{id} (AJAX)
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
         {
-            return await _context.Pins
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+
+            if (rootCode is null)
+            {
+                return Json(new { success = false, error = "Session expired." });
+            }
+
+            try
+            {
+                var pin = await _context.Pins
+                    .AsNoTracking()
+                    .Where(p => p.PinCode == id && p.RootCode == rootCode.Value)
+                    .Select(p => new PinRow
+                    {
+                        PinCode = p.PinCode,
+                        Watermark = p.Watermark,
+                        Type = p.Type,
+                        Times = p.Times,
+                        Status = p.Status,
+                        IsActive = p.IsActive,
+                        InsertTime = p.InsertTime,
+                        InsertUser = p.InsertUser
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (pin == null)
+                {
+                    return Json(new { success = false, error = "Pin not found." });
+                }
+
+                return Json(new { success = true, pin = pin });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading pin details for PinCode={PinCode}", id);
+                return Json(new { success = false, error = "Failed to load pin details." });
+            }
+        }
+
+        // GET: /Pin/Stats (AJAX)
+        [HttpGet]
+        public async Task<IActionResult> Stats()
+        {
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+
+            if (rootCode is null)
+            {
+                return Json(new { success = false, error = "Session expired." });
+            }
+
+            try
+            {
+                var stats = await _context.Pins
+                    .Where(p => p.RootCode == rootCode.Value)
+                    .GroupBy(p => p.Status)
+                    .Select(g => new { Status = g.Key, Count = g.Count() })
+                    .ToListAsync();
+
+                var totalPins = await _context.Pins.CountAsync(p => p.RootCode == rootCode.Value);
+                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
+
+                var statsDict = stats.ToDictionary(s => s.Status, s => s.Count);
+
+                return Json(new
+                {
+                    success = true,
+                    stats = new
+                    {
+                        total = totalPins,
+                        used = statsDict.GetValueOrDefault(0, 0),      // Status 0 = Used
+                        active = statsDict.GetValueOrDefault(1, 0),    // Status 1 = Active
+                        sold = statsDict.GetValueOrDefault(2, 0),      // Status 2 = Sold
+                        walletCodes = walletCount
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading stats for RootCode={RootCode}", rootCode);
+                return Json(new { success = false, error = "Failed to load statistics." });
+            }
+        }
+
+        // -------- Private Helper Methods ----------
+
+        private async Task<List<PinRow>> GetPinsAsync(int rootCode, int page = 1, int pageSize = 10, string? search = null)
+        {
+            var query = _context.Pins
                 .AsNoTracking()
-                .Where(p => p.RootCode == rootCode)
+                .Where(p => p.RootCode == rootCode);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Watermark.Contains(search) ||
+                    p.PinCode.ToString().Contains(search));
+            }
+
+            return await query
                 .OrderByDescending(p => p.PinCode)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new PinRow
                 {
                     PinCode = p.PinCode,
@@ -171,37 +457,187 @@ namespace centrny.Controllers
                     Times = p.Times,
                     Status = p.Status,
                     IsActive = p.IsActive,
-                    InsertTime = p.InsertTime
+                    InsertTime = p.InsertTime,
+                    InsertUser = p.InsertUser
                 })
                 .ToListAsync();
         }
 
-        private Task<int> GetWalletCodesCountAsync(int rootCode)
+        private async Task<int> GetPinsTotalCountAsync(int rootCode, string? search = null)
         {
-            // Counting all wallet codes for this root. Adjust filter if you only need "active" etc.
-            return _context.WalletCodes.CountAsync(w => w.RootCode == rootCode);
+            var query = _context.Pins.Where(p => p.RootCode == rootCode);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Watermark.Contains(search) ||
+                    p.PinCode.ToString().Contains(search));
+            }
+
+            return await query.CountAsync();
+        }
+
+        private async Task<int> GetWalletCodesCountAsync(int rootCode)
+        {
+            try
+            {
+                return await _context.WalletCodes
+                    .Where(w => w.RootCode == rootCode && w.IsActive)
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error counting wallet codes for RootCode={RootCode}", rootCode);
+                return 0;
+            }
         }
 
         private async Task GeneratePinsAsync(int rootCode, bool type, int times, int number, int insertUser)
         {
-            var cs = _context.Database.GetConnectionString();
-            if (string.IsNullOrWhiteSpace(cs))
-                throw new InvalidOperationException("Connection string not configured.");
-
-            await using var conn = new SqlConnection(cs);
-            await conn.OpenAsync();
-
-            await using var cmd = new SqlCommand("Generate_Pins", conn)
+            var connectionString = _context.Database.GetConnectionString();
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
-                CommandType = CommandType.StoredProcedure
-            };
-            cmd.Parameters.AddWithValue("@rootcode", rootCode);
-            cmd.Parameters.AddWithValue("@type", type ? 1 : 0);
-            cmd.Parameters.AddWithValue("@times", times);
-            cmd.Parameters.AddWithValue("@number", number);
-            cmd.Parameters.AddWithValue("@Insert_User", insertUser);
+                throw new InvalidOperationException("Database connection string not configured.");
+            }
 
-            await cmd.ExecuteNonQueryAsync();
+            await using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            await using var command = new SqlCommand("Generate_Pins", connection)
+            {
+                CommandType = CommandType.StoredProcedure,
+                CommandTimeout = 120 // 2 minutes timeout for large batches
+            };
+
+            command.Parameters.Add(new SqlParameter("@rootcode", SqlDbType.Int) { Value = rootCode });
+            command.Parameters.Add(new SqlParameter("@type", SqlDbType.Bit) { Value = type });
+            command.Parameters.Add(new SqlParameter("@times", SqlDbType.Int) { Value = times });
+            command.Parameters.Add(new SqlParameter("@number", SqlDbType.Int) { Value = number });
+            command.Parameters.Add(new SqlParameter("@Insert_User", SqlDbType.Int) { Value = insertUser });
+
+            await command.ExecuteNonQueryAsync();
+
+            _logger.LogInformation(
+                "Generated {Number} pins: RootCode={RootCode}, Type={Type}, Times={Times}, User={User}",
+                number, rootCode, type ? "Exam" : "Session", times, insertUser);
+        }
+
+        // -------- Bulk Operations ----------
+
+        // POST: /Pin/BulkDelete (AJAX)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkDelete([FromForm] int[] pinCodes)
+        {
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+            var userCode = HttpContext.Session.GetInt32("UserCode");
+
+            if (rootCode is null || userCode is null)
+            {
+                return Json(new { success = false, error = "Session expired." });
+            }
+
+            if (pinCodes == null || pinCodes.Length == 0)
+            {
+                return Json(new { success = false, error = "No pins selected for deletion." });
+            }
+
+            try
+            {
+                var pins = await _context.Pins
+                    .Where(p => pinCodes.Contains(p.PinCode) && p.RootCode == rootCode.Value)
+                    .ToListAsync();
+
+                if (pins.Count == 0)
+                {
+                    return Json(new { success = false, error = "No valid pins found for deletion." });
+                }
+
+                // Check if any pins are in use
+                var usedPins = await _context.OnlineAttends
+                    .Where(oa => pinCodes.Contains(oa.PinCode))
+                    .Select(oa => oa.PinCode)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (usedPins.Any())
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        error = $"Cannot delete pins that are in use: {string.Join(", ", usedPins)}"
+                    });
+                }
+
+                _context.Pins.RemoveRange(pins);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Bulk deleted {Count} pins by user {UserCode}", pins.Count, userCode);
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Successfully deleted {pins.Count} pins."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error bulk deleting pins");
+                return Json(new { success = false, error = "An error occurred while deleting pins." });
+            }
+        }
+
+        // POST: /Pin/BulkUpdateStatus (AJAX)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkUpdateStatus([FromForm] int[] pinCodes, [FromForm] int status)
+        {
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+            var userCode = HttpContext.Session.GetInt32("UserCode");
+
+            if (rootCode is null || userCode is null)
+            {
+                return Json(new { success = false, error = "Session expired." });
+            }
+
+            if (pinCodes == null || pinCodes.Length == 0)
+            {
+                return Json(new { success = false, error = "No pins selected." });
+            }
+
+            if (status < 0 || status > 2)
+            {
+                return Json(new { success = false, error = "Invalid status value. Must be 0 (Used), 1 (Active), or 2 (Sold)." });
+            }
+
+            try
+            {
+                var updatedCount = await _context.Pins
+                    .Where(p => pinCodes.Contains(p.PinCode) && p.RootCode == rootCode.Value)
+                    .ExecuteUpdateAsync(p => p.SetProperty(pin => pin.Status, status));
+
+                var statusText = status switch
+                {
+                    0 => "Used",
+                    1 => "Active",
+                    2 => "Sold",
+                    _ => "Unknown"
+                };
+
+                _logger.LogInformation("Bulk updated status of {Count} pins to {Status} by user {UserCode}",
+                    updatedCount, statusText, userCode);
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Successfully updated {updatedCount} pins to {statusText}."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error bulk updating pin status");
+                return Json(new { success = false, error = "An error occurred while updating pins." });
+            }
         }
     }
 }
