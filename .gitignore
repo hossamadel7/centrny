@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /centrny/Resources
 /.gitignore
+/centrny/Models
