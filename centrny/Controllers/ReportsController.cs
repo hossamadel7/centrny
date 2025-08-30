@@ -232,7 +232,7 @@ namespace centrny.Controllers
                         StudentCode = s.StudentCode,
                         StudentName = s.StudentName ?? "Unknown",
                         StudentPhone = s.StudentPhone ?? "",
-                        StudentParentPhone = s.StudentParentPhone ?? "",
+                        StudentParentPhone = s.StudentFatherPhone ?? "",
                         BranchName = s.BranchCodeNavigation.BranchName ?? "Unknown Branch",
                         YearName = s.YearCodeNavigation != null ? s.YearCodeNavigation.YearName : "Not Assigned",
                         // Fixed: Convert DateOnly to DateTime using ToDateTime()
@@ -609,7 +609,7 @@ namespace centrny.Controllers
                         StudentCode = l.StudentCode,
                         StudentName = l.StudentCodeNavigation.StudentName ?? "Unknown Student",
                         StudentPhone = l.StudentCodeNavigation.StudentPhone ?? "",
-                        StudentParentPhone = l.StudentCodeNavigation.StudentParentPhone ?? "",
+                        StudentParentPhone = l.StudentCodeNavigation.StudentFatherPhone ?? "",
                         SubjectName = l.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
                         YearName = l.StudentCodeNavigation.YearCodeNavigation != null ?
                             l.StudentCodeNavigation.YearCodeNavigation.YearName : "Not Assigned",
@@ -811,7 +811,7 @@ namespace centrny.Controllers
                             StudentCode = l.StudentCode,
                             StudentName = l.StudentCodeNavigation.StudentName ?? "Unknown",
                             StudentPhone = l.StudentCodeNavigation.StudentPhone ?? "",
-                            StudentParentPhone = l.StudentCodeNavigation.StudentParentPhone ?? "",
+                            StudentParentPhone = l.StudentCodeNavigation.StudentFatherPhone ?? "",
                             IsEnrolled = true,
                             IsPresent = false // Will be updated below
                         })
@@ -1105,13 +1105,13 @@ namespace centrny.Controllers
 
                 var students = await _context.Students
                     .Where(s => studentCodes.Contains(s.StudentCode))
-                    .Select(s => new { s.StudentName, s.StudentParentPhone })
+                    .Select(s => new { s.StudentName, s.StudentFatherPhone })
                     .ToListAsync();
 
                 var sentCount = 0;
                 foreach (var student in students)
                 {
-                    if (!string.IsNullOrEmpty(student.StudentParentPhone))
+                    if (!string.IsNullOrEmpty(student.StudentFatherPhone))
                     {
                         // Here you would integrate with your SMS service
                         // await _smsService.SendSms(student.StudentParentPhone, message);
@@ -1242,7 +1242,7 @@ namespace centrny.Controllers
                             HallName = cls.HallCodeNavigation?.HallName ?? "Unknown Hall",
                             StudentName = enrollment.StudentCodeNavigation?.StudentName ?? "Unknown Student",
                             StudentPhone = enrollment.StudentCodeNavigation?.StudentPhone ?? "",
-                            StudentParentPhone = enrollment.StudentCodeNavigation?.StudentParentPhone ?? "",
+                            StudentParentPhone = enrollment.StudentCodeNavigation?.StudentFatherPhone ?? "",
                             AttendanceStatus = isPresent ? "Present" : "Absent",
                             IsPresent = isPresent
                         });
@@ -1461,7 +1461,7 @@ namespace centrny.Controllers
                         StudentCode = l.StudentCode,
                         StudentName = l.StudentCodeNavigation.StudentName ?? "Unknown",
                         StudentPhone = l.StudentCodeNavigation.StudentPhone ?? "",
-                        StudentParentPhone = l.StudentCodeNavigation.StudentParentPhone ?? "",
+                        StudentParentPhone = l.StudentCodeNavigation.StudentFatherPhone ?? "",
                         IsEnrolled = true,
                         IsPresent = false // Will be updated below
                     })

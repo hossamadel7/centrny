@@ -6,11 +6,15 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddDbContext<CenterContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Log the connection string once (temporary debug)
+var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+Console.WriteLine("DEBUG ConnectionString: " + (cs ?? "<null>"));
 
-// Add session
+// EF Core
+builder.Services.AddDbContext<CenterContext>(options =>
+    options.UseSqlServer(cs));
+
+// Session
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -18,7 +22,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Add authentication
+// Auth
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -29,23 +33,21 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
-// Add localization
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+// Localization
+builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 var supportedCultures = new[] { new CultureInfo("en"), new CultureInfo("ar") };
-builder.Services.Configure<RequestLocalizationOptions>(options =>
+builder.Services.Configure<RequestLocalizationOptions>(opts =>
 {
-    options.DefaultRequestCulture = new RequestCulture("en");
-    options.SupportedCultures = supportedCultures;
-    options.SupportedUICultures = supportedCultures;
-    // Default ordering for providers; don't customize unless you know why.
+    opts.DefaultRequestCulture = new RequestCulture("en");
+    opts.SupportedCultures = supportedCultures;
+    opts.SupportedUICultures = supportedCultures;
 });
 
-// Add view localization
-builder.Services.AddControllersWithViews()
+// MVC
+builder.Services
+    .AddControllersWithViews()
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
-
-builder.Services.AddLogging();
 
 var app = builder.Build();
 
@@ -57,15 +59,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// Localization (only call ONCE)
-var locOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
+var locOptions = app.Services.GetRequiredService<
+    Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(locOptions);
 
 app.UseSession();
-
 app.UseAuthentication();
 app.UseAuthorization();
 

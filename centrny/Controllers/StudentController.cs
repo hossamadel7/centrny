@@ -94,7 +94,7 @@ namespace centrny.Controllers
                     var student = item.StudentCodeNavigation;
                     viewModel.ExistingStudentName = student.StudentName;
                     viewModel.ExistingStudentPhone = student.StudentPhone;
-                    viewModel.ExistingStudentParentPhone = student.StudentParentPhone;
+                    viewModel.ExistingStudentParentPhone = student.StudentFatherPhone;
                     viewModel.ExistingBirthDate = student.StudentBirthdate;
                     viewModel.ExistingGender = student.StudentGender;
                     viewModel.ExistingBranchCode = student.BranchCode;
@@ -400,7 +400,7 @@ namespace centrny.Controllers
                     // Update basic information
                     student.StudentName = request.StudentName?.Trim();
                     student.StudentPhone = request.StudentPhone?.Trim();
-                    student.StudentParentPhone = request.StudentParentPhone?.Trim();
+                    student.StudentFatherPhone = request.StudentParentPhone?.Trim();
                     student.StudentBirthdate = request.BirthDate;
                     student.StudentGender = request.Gender;
                     student.BranchCode = request.BranchCode;
@@ -415,7 +415,7 @@ namespace centrny.Controllers
                     {
                         StudentName = request.StudentName?.Trim(),
                         StudentPhone = request.StudentPhone?.Trim(),
-                        StudentParentPhone = request.StudentParentPhone?.Trim(),
+                        StudentFatherPhone = request.StudentParentPhone?.Trim(),
                         StudentBirthdate = request.BirthDate,
                         StudentGender = request.Gender,
                         BranchCode = request.BranchCode,
@@ -860,7 +860,7 @@ namespace centrny.Controllers
                 {
                     StudentName = request.StudentName?.Trim(),
                     StudentPhone = request.StudentPhone?.Trim(),
-                    StudentParentPhone = request.StudentParentPhone?.Trim(),
+                    StudentFatherPhone = request.StudentParentPhone?.Trim(),
                     StudentBirthdate = request.BirthDate,
                     StudentGender = request.Gender,
                     BranchCode = 27,
@@ -1048,7 +1048,7 @@ namespace centrny.Controllers
                         StudentCode = s.StudentCode,
                         StudentName = s.StudentName,
                         StudentPhone = s.StudentPhone,
-                        StudentParentPhone = s.StudentParentPhone,
+                        StudentParentPhone = s.StudentFatherPhone,
                         BirthDate = s.StudentBirthdate.ToString("yyyy-MM-dd"),
                         Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
                         BranchName = s.BranchCodeNavigation != null ? s.BranchCodeNavigation.BranchName : "N/A",
@@ -1207,7 +1207,7 @@ namespace centrny.Controllers
                         s.StudentCode,
                         s.StudentName,
                         s.StudentPhone,
-                        s.StudentParentPhone,
+                        s.StudentFatherPhone,
                         BirthDate = s.StudentBirthdate.ToString("yyyy-MM-dd"),
                         Gender = s.StudentGender.HasValue ? (s.StudentGender.Value ? "Male" : "Female") : "Not specified",
                         BranchName = s.BranchCodeNavigation?.BranchName ?? "N/A",
@@ -1389,7 +1389,7 @@ namespace centrny.Controllers
                     StudentCode = student.StudentCode,
                     StudentName = student.StudentName,
                     StudentPhone = student.StudentPhone,
-                    StudentParentPhone = student.StudentParentPhone,
+                    StudentParentPhone = student.StudentFatherPhone,
                     StudentBirthdate = student.StudentBirthdate,
                     StudentGender = student.StudentGender,
                     SubscriptionTime = student.SubscribtionTime,
@@ -1445,7 +1445,7 @@ namespace centrny.Controllers
                 StudentCode = student.StudentCode,
                 StudentName = student.StudentName,
                 StudentPhone = student.StudentPhone,
-                StudentParentPhone = student.StudentParentPhone,
+                StudentParentPhone = student.StudentFatherPhone,
                 StudentBirthdate = student.StudentBirthdate,
                 StudentGender = student.StudentGender,
                 SubscriptionTime = student.SubscribtionTime,

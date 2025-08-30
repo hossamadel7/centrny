@@ -19,11 +19,11 @@ namespace centrny.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Load WalletExams with Root navigation for table rendering
-            var walletExams = await _context.WalletExams
+            // Load WalletCodes with Root navigation for table rendering
+            var walletCodes = await _context.WalletCodes
                 .Include(w => w.RootCodeNavigation)
                 .ToListAsync();
-            return View(walletExams);
+            return View(walletCodes);
         }
 
         [RequirePageAccess("WalletExam", "insert")]
@@ -35,35 +35,36 @@ namespace centrny.Controllers
         [RequirePageAccess("WalletExam", "insert")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(WalletExam walletExam)
+        public async Task<IActionResult> Create(WalletCode walletCode)
         {
             if (ModelState.IsValid)
             {
-                _context.WalletExams.Add(walletExam);
+                _context.WalletCodes.Add(walletCode);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(walletExam);
+            return View(walletCode);
         }
 
         [RequirePageAccess("WalletExam", "update")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var walletExam = await _context.WalletExams.FindAsync(id);
-            if (walletExam == null)
+            var walletCode = await _context.WalletCodes.FindAsync(id);
+            if (walletCode == null)
             {
                 return NotFound();
             }
-            return View(walletExam);
+            return View(walletCode);
         }
 
         [RequirePageAccess("WalletExam", "update")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, WalletExam walletExam)
+        public async Task<IActionResult> Edit(int id, WalletCode walletCode)
         {
-            if (id != walletExam.WalletExamCode)
+            // Use the correct PK property here, e.g. WalletCodeId
+            if (id != walletCode.WalletCode1)
             {
                 return NotFound();
             }
@@ -72,12 +73,12 @@ namespace centrny.Controllers
             {
                 try
                 {
-                    _context.Update(walletExam);
+                    _context.Update(walletCode);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_context.WalletExams.Any(e => e.WalletExamCode == id))
+                    if (!_context.WalletCodes.Any(e => e.WalletCode1 == id))
                     {
                         return NotFound();
                     }
@@ -88,30 +89,30 @@ namespace centrny.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(walletExam);
+            return View(walletCode);
         }
 
         [RequirePageAccess("WalletExam", "update")]
         [HttpPost]
         [Route("WalletExam/UpdateWalletExam")]
-        public async Task<IActionResult> UpdateWalletExam([FromBody] WalletExam walletExam)
+        public async Task<IActionResult> UpdateWalletExam([FromBody] WalletCode walletCode)
         {
-            ModelState.Remove(nameof(WalletExam.RootCodeNavigation));
+            ModelState.Remove(nameof(WalletCode.RootCodeNavigation));
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var existing = await _context.WalletExams.FindAsync(walletExam.WalletExamCode);
+            var existing = await _context.WalletCodes.FindAsync(walletCode.WalletCode1);
             if (existing == null)
                 return NotFound();
 
-            existing.Amount = walletExam.Amount;
-            existing.Count = walletExam.Count;
-            existing.OriginalCount = walletExam.OriginalCount;
-            existing.ExpireDate = walletExam.ExpireDate;
-            existing.DateStart = walletExam.DateStart;
-            existing.IsActive = walletExam.IsActive;
-            existing.RootCode = walletExam.RootCode;
+            existing.Amount = walletCode.Amount;
+            existing.Count = walletCode.Count;
+            existing.OriginalCount = walletCode.OriginalCount;
+            existing.ExpireDate = walletCode.ExpireDate;
+            existing.DateStart = walletCode.DateStart;
+            existing.IsActive = walletCode.IsActive;
+            existing.RootCode = walletCode.RootCode;
 
             await _context.SaveChangesAsync();
             return Ok();
@@ -120,14 +121,14 @@ namespace centrny.Controllers
         [RequirePageAccess("WalletExam", "insert")]
         [HttpPost]
         [Route("WalletExam/AddWalletExam")]
-        public async Task<IActionResult> AddWalletExam([FromBody] WalletExam walletExam)
+        public async Task<IActionResult> AddWalletExam([FromBody] WalletCode walletCode)
         {
-            ModelState.Remove(nameof(WalletExam.RootCodeNavigation));
+            ModelState.Remove(nameof(WalletCode.RootCodeNavigation));
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            _context.WalletExams.Add(walletExam);
+            _context.WalletCodes.Add(walletCode);
             await _context.SaveChangesAsync();
 
             return Ok();
@@ -136,12 +137,12 @@ namespace centrny.Controllers
         [RequirePageAccess("WalletExam", "delete")]
         public async Task<IActionResult> Delete(int id)
         {
-            var walletExam = await _context.WalletExams.FindAsync(id);
-            if (walletExam == null)
+            var walletCode = await _context.WalletCodes.FindAsync(id);
+            if (walletCode == null)
             {
                 return NotFound();
             }
-            return View(walletExam);
+            return View(walletCode);
         }
 
         [RequirePageAccess("WalletExam", "delete")]
@@ -149,10 +150,10 @@ namespace centrny.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var walletExam = await _context.WalletExams.FindAsync(id);
-            if (walletExam != null)
+            var walletCode = await _context.WalletCodes.FindAsync(id);
+            if (walletCode != null)
             {
-                _context.WalletExams.Remove(walletExam);
+                _context.WalletCodes.Remove(walletCode);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

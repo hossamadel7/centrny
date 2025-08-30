@@ -1,0 +1,124 @@
+﻿@model centrny.Controllers.PinController.PinsViewModel
+@{
+    ViewData["Title"] = "Pins Generator";
+}
+<div class="container-fluid py-3" id="pin-page">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h4 class="mb-1">Pins (Root: @Model.RootCode)</h4>
+            <div class="text-muted small">
+                Wallet Codes Count:
+                <span id="walletCodesCount" class="fw-semibold">@Model.WalletCodesCount</span>
+            </div>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <form id="generatePinsForm" class="row row-cols-lg-auto g-2 align-items-end justify-content-end">
+                @Html.AntiForgeryToken()
+                <div class="col">
+                    <label class="form-label mb-0 small fw-semibold">Type</label>
+                    <select name="Type" class="form-select form-select-sm" required>
+                        <option value="0" selected="@(Model.GenerateType == 0)">Session (0)</option>
+                        <option value="1" selected="@(Model.GenerateType == 1)">Exam (1)</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label class="form-label mb-0 small fw-semibold">Times</label>
+                    <select name="Times" class="form-select form-select-sm" required>
+                        <option value="1" selected="@(Model.GenerateTimes == 1)">1 session</option>
+                        <option value="4" selected="@(Model.GenerateTimes == 4)">4 sessions</option>
+                        <option value="16" selected="@(Model.GenerateTimes == 16)">16 sessions</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label class="form-label mb-0 small fw-semibold">Number</label>
+                    <input type="number" name="Number" value="@Model.GenerateNumber" min="1" max="10000" class="form-control form-control-sm" required />
+                </div>
+                <div class="col">
+                    <button type="submit" class="btn btn-sm btn-primary position-relative">
+                        <span class="btn-text">Generate Codes</span>
+                        <span class="spinner-border spinner-border-sm d-none" id="generateSpinner" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshPinsBtn">
+                        Refresh
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="alertsArea">
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <div class="alert alert-success py-2">@Model.Message</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Error))
+        {
+            <div class="alert alert-danger py-2">@Model.Error</div>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Pins List</span>
+            <div class="small text-muted">
+                Total: <span id="pinTotal">@Model.Pins.Count</span>
+            </div>
+        </div>
+        <div class="table-responsive" style="max-height:65vh; overflow:auto;">
+            <table class="table table-sm table-hover table-striped mb-0 align-middle" id="pinsTable">
+                <thead class="table-light position-sticky top-0">
+                    <tr>
+                        <th style="width:90px;">PinCode</th>
+                        <th style="min-width:140px;">Watermark</th>
+                        <th style="width:90px;">Type</th>
+                        <th style="width:70px;">Times</th>
+                        <th style="width:80px;">Status</th>
+                        <th style="width:80px;">Active</th>
+                        <th style="width:170px;">Insert Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Pins.Count == 0)
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-3">No pins found.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model.Pins)
+                        {
+                            <tr data-pin="@p.PinCode">
+                                <td>@p.PinCode</td>
+                                <td class="text-truncate" style="max-width:220px;" title="@p.Watermark">@p.Watermark</td>
+                                <td>@(p.Type ? "Exam" : "Session")</td>
+                                <td>@p.Times</td>
+                                <td>@p.Status</td>
+                                <td>@(p.IsActive == 1 ? "Yes" : "No")</td>
+                                <td>@p.InsertTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Optional minimal styling -->
+<style>
+    #pin-page .spinner-border {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    #pinsTable td {
+        white-space: nowrap;
+    }
+</style>
+
+@section Scripts {
+    <script src="~/js/pins.js?v=@DateTime.UtcNow.Ticks"></script>
+}

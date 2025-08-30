@@ -11,7 +11,13 @@ public partial class Student
 
     public string StudentPhone { get; set; } = null!;
 
-    public string StudentParentPhone { get; set; } = null!;
+    public string StudentFatherPhone { get; set; } = null!;
+
+    public string? StudentMotherPhone { get; set; }
+
+    public string? StudentFatherJob { get; set; }
+
+    public string? StudentMotherJob { get; set; }
 
     public int RootCode { get; set; }
 
@@ -35,6 +41,10 @@ public partial class Student
 
     public DateTime? LastInsertTime { get; set; }
 
+    public string? StudentUsername { get; set; }
+
+    public string? StudemtPassword { get; set; }
+
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
     public virtual Branch BranchCodeNavigation { get; set; } = null!;
@@ -46,6 +56,8 @@ public partial class Student
     public virtual User? LastInsertUserNavigation { get; set; }
 
     public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
+
+    public virtual ICollection<OnlineAttend> OnlineAttends { get; set; } = new List<OnlineAttend>();
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
 
