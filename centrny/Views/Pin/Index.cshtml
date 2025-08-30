@@ -2,49 +2,26 @@
 @{
     ViewData["Title"] = "Pins Generator";
 }
+@section Styles {
+    <link rel="stylesheet" href="~/css/Pin.css" asp-append-version="true" />
+}
+
 <div class="container-fluid py-3" id="pin-page">
-    <div class="row mb-3">
+    <div class="row mb-3 align-items-center">
         <div class="col-md-6">
-            <h4 class="mb-1">Pins (Root: @Model.RootCode)</h4>
-            <div class="text-muted small">
-                Wallet Codes Count:
-                <span id="walletCodesCount" class="fw-semibold">@Model.WalletCodesCount</span>
+            <h4 class="mb-1 fw-semibold">Pins (Root: @Model.RootCode)</h4>
+            <div class="text-muted small d-flex align-items-center gap-2 flex-wrap">
+                <span>Wallet Codes Count:</span>
+                <span id="walletCodesCount">@Model.WalletCodesCount</span>
             </div>
         </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <form id="generatePinsForm" class="row row-cols-lg-auto g-2 align-items-end justify-content-end">
-                @Html.AntiForgeryToken()
-                <div class="col">
-                    <label class="form-label mb-0 small fw-semibold">Type</label>
-                    <select name="Type" class="form-select form-select-sm" required>
-                        <option value="0" selected="@(Model.GenerateType == 0)">Session (0)</option>
-                        <option value="1" selected="@(Model.GenerateType == 1)">Exam (1)</option>
-                    </select>
-                </div>
-                <div class="col">
-                    <label class="form-label mb-0 small fw-semibold">Times</label>
-                    <select name="Times" class="form-select form-select-sm" required>
-                        <option value="1" selected="@(Model.GenerateTimes == 1)">1 session</option>
-                        <option value="4" selected="@(Model.GenerateTimes == 4)">4 sessions</option>
-                        <option value="16" selected="@(Model.GenerateTimes == 16)">16 sessions</option>
-                    </select>
-                </div>
-                <div class="col">
-                    <label class="form-label mb-0 small fw-semibold">Number</label>
-                    <input type="number" name="Number" value="@Model.GenerateNumber" min="1" max="10000" class="form-control form-control-sm" required />
-                </div>
-                <div class="col">
-                    <button type="submit" class="btn btn-sm btn-primary position-relative">
-                        <span class="btn-text">Generate Codes</span>
-                        <span class="spinner-border spinner-border-sm d-none" id="generateSpinner" role="status" aria-hidden="true"></span>
-                    </button>
-                </div>
-                <div class="col">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshPinsBtn">
-                        Refresh
-                    </button>
-                </div>
-            </form>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
+            <button id="openGenerateModal" class="btn btn-primary btn-sm" type="button">
+                <i class="bi bi-plus-circle me-1"></i> Generate Codes
+            </button>
+            <button id="refreshPinsBtn" class="btn btn-outline-secondary btn-sm" type="button">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
         </div>
     </div>
 
@@ -82,7 +59,7 @@
                 <tbody>
                     @if (Model.Pins.Count == 0)
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-3">No pins found.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">No pins found.</td></tr>
                     }
                     else
                     {
@@ -105,19 +82,56 @@
     </div>
 </div>
 
-<!-- Optional minimal styling -->
-<style>
-    #pin-page .spinner-border {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    #pinsTable td {
-        white-space: nowrap;
-    }
-</style>
+<!-- Modal (custom) -->
+<div class="pins-modal-overlay" id="generateModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="pins-modal" role="document">
+        <div class="pins-modal-header">
+            <h5 class="pins-modal-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                Generate Pins
+            </h5>
+            <button type="button" class="pins-modal-close" id="closeGenerateModal" aria-label="Close">&times;</button>
+        </div>
+        <div class="pins-modal-body">
+            <form id="generatePinsForm">
+                @Html.AntiForgeryToken()
+                <div class="pins-form-grid">
+                    <div>
+                        <label class="form-label">Type</label>
+                        <select name="Type" class="form-select" required>
+                            <option value="0">Session (0)</option>
+                            <option value="1">Exam (1)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Times</label>
+                        <select name="Times" class="form-select" required>
+                            <option value="1">1 session</option>
+                            <option value="4">4 sessions</option>
+                            <option value="16">16 sessions</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Number</label>
+                        <input type="number" name="Number" min="1" max="10000" value="1" class="form-control" required />
+                    </div>
+                </div>
+                <div class="pins-modal-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" id="cancelGenerateBtn">Cancel</button>
+                    <button type="submit" class="btn btn-gradient btn-sm" id="submitGenerateBtn">
+                        <span class="btn-text">Generate</span>
+                        <span class="spinner-border spinner-border-sm d-none" id="generateSpinner" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </form>
+            <small class="text-muted d-block mt-1">
+                Note: Times values allowed: 1, 4, 16. Number up to 10,000.
+            </small>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script src="~/js/pins.js?v=@DateTime.UtcNow.Ticks"></script>

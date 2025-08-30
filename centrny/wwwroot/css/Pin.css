@@ -1,0 +1,341 @@
+﻿/* Pins.css
+   Modern, clean styling for the Pins page.
+   Uses CSS variables for easy theming.
+*/
+
+:root {
+    --pins-bg: #f5f7fb;
+    --pins-surface: #ffffff;
+    --pins-border: #e2e8f0;
+    --pins-border-strong: #c7d1e0;
+    --pins-accent: #2563eb;
+    --pins-accent-hover: #1d4ed8;
+    --pins-accent-rgb: 37, 99, 235;
+    --pins-danger: #dc2626;
+    --pins-success: #059669;
+    --pins-text: #1e293b;
+    --pins-text-light: #64748b;
+    --pins-shadow: 0 4px 12px -2px rgba(30,41,59,.08), 0 2px 4px rgba(30,41,59,.06);
+    --pins-radius-sm: 4px;
+    --pins-radius: 8px;
+    --pins-radius-lg: 16px;
+    --pins-focus: 0 0 0 3px rgba(37,99,235,.35);
+    --pins-gradient: linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#6366f1 100%);
+    --pins-font-stack: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+}
+
+body {
+    font-family: var(--pins-font-stack);
+    background: var(--pins-bg);
+    color: var(--pins-text);
+}
+
+/* Card enhancements */
+.card {
+    border: 1px solid var(--pins-border);
+    border-radius: var(--pins-radius);
+    box-shadow: var(--pins-shadow);
+    background: var(--pins-surface);
+}
+
+.card-header {
+    background: linear-gradient(120deg, rgba(var(--pins-accent-rgb),0.10), rgba(var(--pins-accent-rgb),0));
+    border-bottom: 1px solid var(--pins-border);
+    font-weight: 600;
+    letter-spacing: .3px;
+}
+
+/* Table styling */
+.table {
+    margin-bottom: 0;
+}
+
+    .table thead th {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+        color: var(--pins-text-light);
+        background: #f1f5f9;
+        border-bottom: 1px solid var(--pins-border);
+    }
+
+    .table tbody td {
+        vertical-align: middle;
+        font-size: 0.78rem;
+        border-color: var(--pins-border);
+    }
+
+.table-hover tbody tr:hover {
+    background: rgba(var(--pins-accent-rgb), .05);
+}
+
+/* Badge-like cells (optional) */
+.table tbody td:nth-child(5),
+.table tbody td:nth-child(6) {
+    font-weight: 600;
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--pins-accent);
+    border-color: var(--pins-accent);
+    transition: background .2s, transform .15s;
+}
+
+    .btn-primary:hover {
+        background: var(--pins-accent-hover);
+        border-color: var(--pins-accent-hover);
+    }
+
+    .btn-primary:active {
+        transform: translateY(1px);
+    }
+
+.btn-outline-secondary {
+    border-color: var(--pins-border-strong);
+    color: var(--pins-text-light);
+}
+
+    .btn-outline-secondary:hover {
+        background: #e2e8f0;
+        color: var(--pins-text);
+    }
+
+/* Alerts */
+.alert {
+    border: none;
+    border-radius: var(--pins-radius-sm);
+    box-shadow: var(--pins-shadow);
+    font-size: 0.8rem;
+    padding: .55rem .75rem;
+}
+
+/* Wallet count highlight */
+#walletCodesCount {
+    display: inline-block;
+    padding: 2px 10px;
+    background: var(--pins-gradient);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(var(--pins-accent-rgb), .4);
+}
+
+/* Generate button standalone */
+#openGenerateModal {
+    font-weight: 600;
+    letter-spacing: .4px;
+}
+
+/* Modal (custom, no Bootstrap dependency required) */
+.pins-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    display: none;
+    opacity: 0;
+    z-index: 1050;
+    transition: opacity .25s ease;
+    backdrop-filter: blur(4px);
+}
+
+    .pins-modal-overlay.is-open {
+        display: flex;
+        opacity: 1;
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        padding: 4vh 1rem;
+    }
+
+.pins-modal {
+    width: 100%;
+    max-width: 520px;
+    background: var(--pins-surface);
+    border-radius: var(--pins-radius-lg);
+    box-shadow: var(--pins-shadow);
+    position: relative;
+    transform: translateY(40px) scale(.98);
+    opacity: 0;
+    transition: transform .35s cubic-bezier(.16,.8,.3,1), opacity .3s;
+    border: 1px solid var(--pins-border);
+}
+
+.pins-modal-overlay.is-open .pins-modal {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.pins-modal-header {
+    padding: 1rem 1.25rem .75rem;
+    border-bottom: 1px solid var(--pins-border);
+    background: linear-gradient(135deg, rgba(var(--pins-accent-rgb),0.08), rgba(var(--pins-accent-rgb),0));
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.pins-modal-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+}
+
+.pins-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: .25rem .45rem;
+    border-radius: var(--pins-radius-sm);
+    cursor: pointer;
+    color: var(--pins-text-light);
+    transition: background .2s, color .2s;
+}
+
+    .pins-modal-close:hover {
+        background: rgba(var(--pins-accent-rgb), .1);
+        color: var(--pins-text);
+    }
+
+.pins-modal-body {
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.pins-form-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+    margin-bottom: 1rem;
+}
+
+    .pins-form-grid .form-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 600;
+        color: var(--pins-text-light);
+        margin-bottom: .35rem;
+    }
+
+.form-control, .form-select {
+    border-radius: var(--pins-radius-sm);
+    border: 1px solid var(--pins-border-strong);
+    font-size: 0.8rem;
+    padding: .45rem .55rem;
+    box-shadow: none;
+}
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--pins-accent);
+        box-shadow: var(--pins-focus);
+        outline: none;
+    }
+
+.pins-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: .75rem 1.25rem 1.25rem;
+    gap: .75rem;
+    flex-wrap: wrap;
+}
+
+.btn-gradient {
+    background: var(--pins-gradient);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: .5px;
+    box-shadow: 0 4px 10px -2px rgba(var(--pins-accent-rgb), .5);
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-gradient:hover {
+        filter: brightness(.95);
+        color: #fff;
+    }
+
+    .btn-gradient:active {
+        transform: translateY(1px);
+    }
+
+    .btn-gradient .spinner-border {
+        margin-left: .5rem;
+    }
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--pins-border-strong);
+    color: var(--pins-text-light);
+    font-weight: 500;
+}
+
+    .btn-ghost:hover {
+        background: #e2e8f0;
+        color: var(--pins-text);
+    }
+
+/* Alert animation */
+.alert {
+    animation: fadeSlideIn .35s ease;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .pins-modal {
+        max-width: 95%;
+        border-radius: 14px;
+    }
+
+    .pins-form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .pins-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #walletCodesCount {
+        margin-top: .25rem;
+    }
+}
+
+/* Scrollbar subtle styling (WebKit) */
+.table-responsive::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 20px;
+}
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }

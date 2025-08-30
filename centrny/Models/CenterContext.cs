@@ -700,18 +700,38 @@ public partial class CenterContext : DbContext
                 .HasNoKey()
                 .ToTable("File");
 
+            entity.Property(e => e.DisplayName)
+                .HasMaxLength(200)
+                .HasColumnName("Display_Name");
             entity.Property(e => e.FileCode).HasColumnName("File_code");
+            entity.Property(e => e.FileExtension)
+                .HasMaxLength(20)
+                .HasColumnName("File_Extension");
             entity.Property(e => e.FileLocation)
                 .HasMaxLength(500)
                 .IsUnicode(false)
                 .HasColumnName("File_location");
+            entity.Property(e => e.FileSizeBytes).HasColumnName("File_Size_Bytes");
+            entity.Property(e => e.FileType)
+                .HasDefaultValue(2)
+                .HasColumnName("File_Type");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("insert_time");
             entity.Property(e => e.InsertUser).HasColumnName("insert_user");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("isActive");
             entity.Property(e => e.LessonCode).HasColumnName("Lesson_code");
             entity.Property(e => e.RootCode).HasColumnName("Root_code");
+            entity.Property(e => e.SortOrder).HasColumnName("Sort_Order");
+            entity.Property(e => e.VideoProvider).HasColumnName("Video_Provider");
+
+            entity.HasOne(d => d.FileTypeNavigation).WithMany()
+                .HasForeignKey(d => d.FileType)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_File_FileType_Lockup");
 
             entity.HasOne(d => d.LessonCodeNavigation).WithMany()
                 .HasForeignKey(d => d.LessonCode)
@@ -722,6 +742,10 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_File_Root");
+
+            entity.HasOne(d => d.VideoProviderNavigation).WithMany()
+                .HasForeignKey(d => d.VideoProvider)
+                .HasConstraintName("FK_File_VideoProvider_Lockup");
         });
 
         modelBuilder.Entity<Group>(entity =>

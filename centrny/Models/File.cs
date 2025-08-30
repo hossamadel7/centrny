@@ -17,7 +17,27 @@ public partial class File
 
     public DateTime InsertTime { get; set; }
 
+    public int FileType { get; set; }
+
+    public string? DisplayName { get; set; }
+
+    public int SortOrder { get; set; }
+
+    public int? VideoProvider { get; set; }
+
+    public string? FileExtension { get; set; }
+
+    public long? FileSizeBytes { get; set; }
+
+    public TimeOnly? Duration { get; set; }
+
+    public bool IsActive { get; set; }
+
+    public virtual Lockup FileTypeNavigation { get; set; } = null!;
+
     public virtual Lesson LessonCodeNavigation { get; set; } = null!;
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
+
+    public virtual Lockup? VideoProviderNavigation { get; set; }
 }
