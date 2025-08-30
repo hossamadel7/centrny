@@ -19,6 +19,20 @@ namespace centrny1.Controllers
             _context = context;
         }
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, string username, bool isCenter) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("Username"),
+                GetSessionString("RootIsCenter") == "True"
+            );
+        }
+
         // Default Index view
         public IActionResult Index()
         {
@@ -79,8 +93,10 @@ namespace centrny1.Controllers
                     return BadRequest(errors);
                 }
 
+                var (userCode, groupCode, rootCode, username, isCenter) = GetSessionContext();
                 model.InsertTime = DateTime.UtcNow;
                 model.StartTime = DateTime.UtcNow;
+                model.InsertUser = userCode ?? 0;
 
                 _context.Roots.Add(model);
                 await _context.SaveChangesAsync();
@@ -125,6 +141,10 @@ namespace centrny1.Controllers
             root.NoOfUser = updatedRoot.NoOfUser;
             root.IsCenter = updatedRoot.IsCenter;
 
+            var (userCode, _, _, _, _) = GetSessionContext();
+            root.LastUpdateUser = userCode ?? 0;
+            root.LastUpdateTime = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
             return Ok();
         }
@@ -138,6 +158,10 @@ namespace centrny1.Controllers
                 return NotFound();
 
             root.IsActive = false; // Soft delete
+            var (userCode, _, _, _, _) = GetSessionContext();
+            root.LastUpdateUser = userCode ?? 0;
+            root.LastUpdateTime = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
             return Ok();
         }
@@ -176,6 +200,8 @@ namespace centrny1.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveModuleAssignments([FromBody] ModuleAssignmentDto dto)
         {
+            var (userCode, _, _, _, _) = GetSessionContext();
+
             var existingAssignments = await _context.RootModules
                 .Where(rm => rm.RootCode == dto.RootCode)
                 .ToListAsync();
@@ -186,7 +212,8 @@ namespace centrny1.Controllers
                 _context.RootModules.Add(new RootModule
                 {
                     RootCode = dto.RootCode,
-                    ModuleCode = moduleCode
+                    ModuleCode = moduleCode,
+                   
                 });
             }
 

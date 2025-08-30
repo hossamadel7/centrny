@@ -116,9 +116,11 @@ $(function () {
                             html += `<td rowspan="${rowCount}">${student.yearName || ''}</td>`;
                         }
 
-                        const subjText = (subj.subjectName && subj.subjectName.toLowerCase().includes('philosophy'))
-                            ? `<span class="subject-text">${subj.subjectName}</span>`
-                            : `<span class="badge">${subj.subjectName || ''}</span>`;
+                        // NEW: Show subscribed badge if subj.isSubscribed is true
+                        let subjText = `<span class="badge">${subj.subjectName || ''}</span>`;
+                        if (subj.isSubscribed) {
+                            subjText += ` <span class="badge bg-success ms-1">${getJsString('subscribed') || 'Subscribed'}</span>`;
+                        }
 
                         html += `<td>${subjText}</td>`;
                         html += `<td style="font-weight:600;color:var(--text-muted);">${subj.teacherName || ''}</td>`;

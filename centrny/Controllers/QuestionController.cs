@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text.Json;
 using centrny.Attributes;
 using Microsoft.Extensions.Localization;
+using System.Collections.Generic;
+using System;
 
 namespace centrny.Controllers
 {
@@ -25,9 +27,24 @@ namespace centrny.Controllers
             _localizer = localizer;
         }
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private bool IsCenterUser() => GetSessionString("RootIsCenter") == "True";
+        private (int? rootCode, string rootName, bool isCenter, int? userCode) GetSessionContext()
+        {
+            return (
+                GetSessionInt("RootCode"),
+                GetSessionString("RootName") ?? "Unknown",
+                IsCenterUser(),
+                GetSessionInt("UserCode")
+            );
+        }
+        private int GetCurrentUserId() => GetSessionInt("UserCode") ?? 1;
+
         public IActionResult Index()
         {
-            var (userRootCode, rootName, isCenter) = GetUserContext();
+            var (userRootCode, rootName, isCenter, _) = GetSessionContext();
 
             if (!userRootCode.HasValue)
             {
@@ -40,56 +57,18 @@ namespace centrny.Controllers
             ViewBag.IsCenter = isCenter;
 
             _logger.LogInformation("Loading Question index for user {Username} (Root: {RootCode})",
-                User.Identity?.Name, userRootCode);
+                GetSessionString("Username"), userRootCode);
 
             return View();
-        }
-
-        // --- CLAIMS-BASED USER RETRIEVAL HELPERS ---
-
-        private int? GetCurrentUserRootCode()
-        {
-            var rootCodeClaim = User.FindFirst("RootCode");
-            if (rootCodeClaim != null && int.TryParse(rootCodeClaim.Value, out int rootCode))
-            {
-                return rootCode;
-            }
-            _logger.LogWarning("User {Username} missing or invalid RootCode claim", User.Identity?.Name);
-            return null;
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst("NameIdentifier");
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return userId;
-            }
-            return 1;
-        }
-
-        private bool IsCurrentUserCenter()
-        {
-            var isCenterClaim = User.FindFirst("IsCenter");
-            return isCenterClaim?.Value == "True";
-        }
-
-        private (int? rootCode, string rootName, bool isCenter) GetUserContext()
-        {
-            var rootCode = GetCurrentUserRootCode();
-            var rootName = User.FindFirst("RootName")?.Value ?? "Unknown";
-            var isCenter = IsCurrentUserCenter();
-            return (rootCode, rootName, isCenter);
         }
 
         // =========================
         // SUBJECT-YEAR PAIRS FOR FILTER
         // =========================
-
         [HttpGet]
         public JsonResult GetSubjectYearPairsByTeacher(int teacherCode)
         {
-            int? rootCode = GetCurrentUserRootCode();
+            var (rootCode, _, _, _) = GetSessionContext();
             if (!rootCode.HasValue)
                 return Json(new List<object>());
 
@@ -111,7 +90,6 @@ namespace centrny.Controllers
         // =========================
         // CHAPTERS, LESSONS, QUESTIONS (with pagination)
         // =========================
-
         [HttpGet]
         public JsonResult GetChaptersWithLessonsAndQuestions(
             int page = 1,
@@ -123,11 +101,10 @@ namespace centrny.Controllers
             int lessonsPageSize = 5,
             int questionsPageSize = 5)
         {
-            var rootCode = GetCurrentUserRootCode();
+            var (rootCode, _, _, _) = GetSessionContext();
             if (!rootCode.HasValue)
                 return Json(new { chapters = new List<object>(), totalCount = 0 });
 
-            // Parse lessonPages and questionPages maps
             var lessonPagesDict = !string.IsNullOrEmpty(lessonPages)
                 ? JsonSerializer.Deserialize<Dictionary<int, int>>(lessonPages)
                 : new Dictionary<int, int>();
@@ -154,7 +131,6 @@ namespace centrny.Controllers
                 {
                     int chapterLessonsPage = lessonPagesDict.ContainsKey(chapter.LessonCode) ? lessonPagesDict[chapter.LessonCode] : 1;
 
-                    // Lessons for this chapter
                     var lessonQuery = _context.Lessons
                         .Where(l => l.ChapterCode == chapter.LessonCode && l.RootCode == rootCode.Value);
 
@@ -169,7 +145,6 @@ namespace centrny.Controllers
                         {
                             int lessonQuestionsPage = questionPagesDict.ContainsKey(l.LessonCode) ? questionPagesDict[l.LessonCode] : 1;
 
-                            // Questions for this lesson
                             var questionsQuery = _context.Questions
                                 .Where(q => q.LessonCode == l.LessonCode);
 
@@ -405,7 +380,7 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetEduYearsByRoot()
         {
-            int? rootCode = GetCurrentUserRootCode();
+            var (rootCode, _, _, _) = GetSessionContext();
             if (!rootCode.HasValue)
                 return Json(new List<object>());
 
@@ -423,7 +398,7 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetTeachersByRoot()
         {
-            int? rootCode = GetCurrentUserRootCode();
+            var (rootCode, _, _, _) = GetSessionContext();
             if (!rootCode.HasValue)
                 return Json(new List<object>());
 
@@ -443,7 +418,7 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetSubjectsByTeacherYear(int teacherCode, int eduYearCode)
         {
-            int? rootCode = GetCurrentUserRootCode();
+            var (rootCode, _, _, _) = GetSessionContext();
             if (!rootCode.HasValue)
                 return Json(new List<object>());
 
@@ -463,7 +438,7 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult IsUserCenter()
         {
-            bool isCenter = IsCurrentUserCenter();
+            bool isCenter = IsCenterUser();
             return Json(new { isCenter = isCenter });
         }
 
@@ -473,11 +448,10 @@ namespace centrny.Controllers
         {
             try
             {
-                int? userRootCode = GetCurrentUserRootCode();
+                var (userRootCode, _, isCenterUser, _) = GetSessionContext();
                 if (!userRootCode.HasValue)
                     return Json(new { success = false, message = _localizer["UnableToDetermineRootAssignment"] });
 
-                bool isCenterUser = IsCurrentUserCenter();
                 if (!isCenterUser)
                 {
                     TeacherCode = _context.Teachers
@@ -571,7 +545,7 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult SearchQuestions(string term, int? subjectCode = null, int? yearCode = null)
         {
-            int? rootCode = GetCurrentUserRootCode();
+            var (rootCode, _, _, _) = GetSessionContext();
             if (!rootCode.HasValue || string.IsNullOrWhiteSpace(term))
                 return Json(new List<object>());
 
@@ -595,7 +569,7 @@ namespace centrny.Controllers
         [HttpGet]
         public JsonResult GetUserRootTeacherInfo()
         {
-            var (userRootCode, rootName, isCenter) = GetUserContext();
+            var (userRootCode, rootName, isCenter, userCode) = GetSessionContext();
 
             if (!userRootCode.HasValue)
             {
@@ -613,7 +587,7 @@ namespace centrny.Controllers
 
             return Json(new
             {
-                userCode = GetCurrentUserId(),
+                userCode = userCode ?? 0,
                 rootCode = userRootCode.Value,
                 teacherName = teacherName,
                 isCenter = isCenter

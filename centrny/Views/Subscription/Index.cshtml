@@ -1,132 +1,314 @@
 ﻿@{
     ViewData["Title"] = "Subscription Plans";
+    Layout = "_Layout";
 }
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-<link rel="stylesheet" href="~/css/Subscription.css" />
+<!-- Styles (Bootstrap + DataTables + Custom) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+<link rel="stylesheet" href="~/css/Subscription.css?v=@DateTime.UtcNow.Ticks" />
 
 <div class="subscription-page">
-    <div class="subscription-container">
+    <div class="container-fluid py-3">
+        <!-- Page Header with Gradient Title -->
         <div class="subscription-header">
-            <h2>Subscription Plans</h2>
-            <p style="color:black;">Create and manage subscription plans for your educational center</p>
-            <button class="btn create-plan-btn" onclick="openCreateModal()">
-                <i class="fas fa-plus"></i> Create New Plan
-            </button>
-        </div>
-
-        <!-- Loading state -->
-        <div id="loading-state" class="loading-spinner" style="display: none;">
-            <div class="spinner"></div>
-        </div>
-
-        <!-- Plans container -->
-        <div class="plans-grid" id="plans-container">
-            <!-- Subscription plans will be rendered here by JS -->
-        </div>
-
-        <!-- Empty state -->
-        <div id="empty-state" class="empty-state" style="display: none;">
-            <div class="empty-state-icon">📋</div>
-            <h3>No Subscription Plans Yet</h3>
-            <p>Get started by creating your first subscription plan to offer discounted session packages to your students.</p>
-        </div>
-    </div>
-</div>
-
-<!-- Modal -->
-<div class="modal fade subscription-modal" id="planModal" tabindex="-1" aria-labelledby="planModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form id="planForm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="planModalLabel">
-                        <i class="fas fa-edit"></i> Create/Edit Subscription Plan
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="page-title-section">
+                    <h3 class="page-title mb-0">
+                        <i class="bi bi-card-checklist me-2"></i>
+                        Subscription Plans
+                    </h3>
+                    <p class="page-subtitle text-muted mb-0">Manage subscription plans and student purchases</p>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" id="SubPlanCode" name="SubPlanCode" />
-
-                    <div class="form-group">
-                        <label for="SubPlanName" class="form-label">
-                            <i class="fas fa-tag"></i> Plan Name
-                        </label>
-                        <input type="text" class="form-control" id="SubPlanName" name="SubPlanName"
-                               placeholder="e.g., Monthly 4-Session Package" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="Price" class="form-label">
-                            <i class="fas fa-dollar-sign"></i> Price
-                        </label>
-                        <input type="number" class="form-control" id="Price" name="Price"
-                               placeholder="Enter price amount" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="Description" class="form-label">
-                            <i class="fas fa-file-alt"></i> Description
-                        </label>
-                        <textarea class="form-control" id="Description" name="Description"
-                                  placeholder="Describe the benefits and features of this plan..." required></textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="ExpiryMonths" class="form-label">
-                                    <i class="fas fa-calendar-alt"></i> Expiry Months
-                                </label>
-                                <input type="number" step="0.1" class="form-control" id="ExpiryMonths" name="ExpiryMonths"
-                                       placeholder="e.g., 1.0" required />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="TotalCount" class="form-label">
-                                    <i class="fas fa-list-ol"></i> Total Sessions
-                                </label>
-                                <input type="number" class="form-control" id="TotalCount" name="TotalCount"
-                                       placeholder="e.g., 4" required readonly />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Subjects Section -->
-                    <div id="subjects-section" class="mt-4">
-                        <label class="form-label d-block mb-2">
-                            <i class="fas fa-book"></i> Subjects in Plan
-                        </label>
-                        <!-- Only one year dropdown -->
-                        <div class="mb-3">
-                            <select id="main-year-select" class="form-select" required>
-                                <option value="">Select Year</option>
-                                <!-- JS will fill options -->
-                            </select>
-                        </div>
-                        <div id="subject-rows"></div>
-                        <div class="mt-3">
-                            <button type="button" class="btn add-subject-btn" id="add-subject-btn">
-                                <i class="fas fa-plus"></i> Add Subject
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Save Plan
+                <div class="action-buttons">
+                    <button class="btn btn-success me-2 modern-btn" id="btnRefresh">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span class="btn-text">Refresh</span>
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Cancel
+                    <button class="btn btn-primary modern-btn" id="btnAddPlan">
+                        <i class="bi bi-plus-circle"></i>
+                        <span class="btn-text">New Plan</span>
                     </button>
                 </div>
             </div>
-        </form>
+        </div>
+
+        <!-- Alert Messages Container -->
+        <div id="alertHost" class="alert-container"></div>
+
+        <!-- Main Table Card -->
+        <div class="table-card">
+            <div class="table-responsive">
+                <table id="plansTable" class="gradient-table w-100">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">#</th>
+                            <th>Plan Name</th>
+                            <th>Price</th>
+                            <th>Total Count</th>
+                            <th>Expiry (Months)</th>
+                            <th>Description</th>
+                            <th>Subjects</th>
+                            <th style="width:180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create / Edit Modal -->
+    <div class="modal fade" id="planModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <form id="planForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="planModalTitle">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Create Subscription Plan
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="SubPlanCode" />
+
+                        <!-- Plan Details Section -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Plan Information
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label required">Plan Name</label>
+                                        <input type="text" class="form-control modern-input" id="SubPlanName" placeholder="Enter plan name" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label class="form-label required">Price</label>
+                                        <input type="number" class="form-control modern-input" id="Price" min="0" placeholder="0" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label class="form-label required">Expiry (Months)</label>
+                                        <input type="number" step="0.1" class="form-control modern-input" id="ExpiryMonths" min="0" placeholder="0" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Description</label>
+                                        <input type="text" class="form-control modern-input" id="Description" placeholder="Plan description (optional)" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="section-divider" />
+
+                        <!-- Subjects Section -->
+                        <div class="form-section">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="section-title mb-0">
+                                    <i class="bi bi-book me-2"></i>
+                                    Subjects in Plan
+                                </h6>
+                                <button type="button" id="btnAddSubjectRow" class="btn btn-sm btn-outline-primary modern-btn">
+                                    <i class="bi bi-plus-circle"></i> Add Subject
+                                </button>
+                            </div>
+
+                            <div class="subjects-table-container">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered subjects-table" id="subjectsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width:220px;" class="required">
+                                                    <i class="bi bi-calendar me-1"></i>Year
+                                                </th>
+                                                <th style="width:260px;" class="required">
+                                                    <i class="bi bi-book me-1"></i>Subject
+                                                </th>
+                                                <th style="width:140px;" class="required">
+                                                    <i class="bi bi-123 me-1"></i>Count
+                                                </th>
+                                                <th style="width:80px;">
+                                                    <i class="bi bi-trash me-1"></i>Remove
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="subjectsTbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="total-count-section">
+                                <div class="badge bg-info total-count-badge">
+                                    <i class="bi bi-calculator me-1"></i>
+                                    Total Count: <span id="totalCountDisplay" class="fw-bold">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modern-btn" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Close
+                        </button>
+                        <button type="submit" class="btn btn-primary modern-btn" id="btnSavePlan">
+                            <i class="bi bi-check-circle me-1"></i>
+                            <span class="save-text">Save Plan</span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Delete Subscription Plan
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <div class="delete-icon mb-3">
+                            <i class="bi bi-trash3 text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="mb-3 fs-5">Are you sure you want to delete this subscription plan?</p>
+                        <p class="text-muted mb-0">This action cannot be undone.</p>
+                    </div>
+                    <input type="hidden" id="deleteSubPlanCode" />
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button class="btn btn-secondary modern-btn me-2" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button class="btn btn-danger modern-btn" id="btnConfirmDelete">
+                        <i class="bi bi-trash me-1"></i>
+                        <span class="delete-text">Delete Plan</span>
+                        <span class="spinner-border spinner-border-sm d-none"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Plan Modal -->
+    <div class="modal fade" id="buyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form id="buyForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-cart-plus me-2"></i>
+                            Buy Plan for Student
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="buy_SubPlanCode" />
+
+                        <!-- Student Search Section -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-person-search me-2"></i>
+                                Find Student
+                            </h6>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label required">Student Phone Number</label>
+                                        <input type="text" id="studentPhone" class="form-control modern-input"
+                                               placeholder="Enter student's phone number" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <button type="button" id="btnSearchStudent" class="btn btn-outline-primary w-100 modern-btn">
+                                        <i class="bi bi-search me-1"></i> Search Student
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Results Section -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-list-ul me-2"></i>
+                                Search Results
+                            </h6>
+                            <div class="search-results-container">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover modern-table" id="studentsResultTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 60px;">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </th>
+                                                <th>
+                                                    <i class="bi bi-person me-1"></i>Student Name
+                                                </th>
+                                                <th>
+                                                    <i class="bi bi-mortarboard me-1"></i>Academic Year
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="no-results">
+                                                <td colspan="3" class="text-center text-muted py-4">
+                                                    <i class="bi bi-search me-2"></i>
+                                                    Search for a student using their phone number
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <input type="hidden" id="selectedStudentCode" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="plan-info-section me-auto">
+                            <span class="badge bg-info plan-info-badge" id="buyPlanInfo">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select a plan and student
+                            </span>
+                        </div>
+                        <button type="button" class="btn btn-secondary modern-btn me-2" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Close
+                        </button>
+                        <button type="submit" class="btn btn-success modern-btn" id="btnConfirmBuy" disabled>
+                            <i class="bi bi-credit-card me-1"></i>
+                            <span class="buy-text">Confirm Purchase</span>
+                            <span class="spinner-border spinner-border-sm d-none"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="~/js/Subscription.js"></script>
+<!-- Anti-forgery Token -->
+@Html.AntiForgeryToken()
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script src="~/js/Subscription.js?v=@DateTime.UtcNow.Ticks"></script>

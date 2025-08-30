@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-using System.Security.Claims;
 
 namespace centrny.Controllers
 {
@@ -15,24 +14,27 @@ namespace centrny.Controllers
             _db = db;
         }
 
-        // --- Authority Check ---
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("Username")
+            );
+        }
+
+        // --- Authority Check via Session ---
         private bool UserHasTeacherManagementPermission()
         {
-            var username = User.Identity?.Name;
-            var user = _db.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = _db.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
-
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
             var page = _db.Pages.FirstOrDefault(p => p.PagePath == "TeacherManagement/Index");
-            if (page == null)
-                return false;
-
-            return _db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            if (page == null) return false;
+            return _db.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
         // --- Permission Helper ---
@@ -44,19 +46,19 @@ namespace centrny.Controllers
         }
 
         // STATIC version for use in views (Razor)
-        public static PagePermission GetPagePermissions(CenterContext db, ClaimsPrincipal user, string pagePath)
+        public static PagePermission GetPagePermissions(CenterContext db, System.Security.Claims.ClaimsPrincipal user, string pagePath)
         {
             var username = user.Identity?.Name;
             if (string.IsNullOrEmpty(username)) return new PagePermission();
+
             var currentUser = db.Users.FirstOrDefault(u => u.Username == username);
             if (currentUser == null) return new PagePermission();
-            var group = db.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
-            if (group == null) return new PagePermission();
+            var groupCode = currentUser.GroupCode;
+
             var page = db.Pages.FirstOrDefault(p => p.PagePath == pagePath);
             if (page == null) return new PagePermission();
-            var gp = db.GroupPages.FirstOrDefault(g => g.GroupCode == group.GroupCode && g.PageCode == page.PageCode);
+            var gp = db.GroupPages.FirstOrDefault(g => g.GroupCode == groupCode && g.PageCode == page.PageCode);
             if (gp == null) return new PagePermission();
-            // Use the real column names from your GroupPages model
             return new PagePermission
             {
                 CanInsert = gp.InsertFlag,
@@ -68,15 +70,11 @@ namespace centrny.Controllers
         // INSTANCE version for use in C# controller code
         public PagePermission GetPagePermissions(string pagePath)
         {
-            var username = User.Identity?.Name;
-            if (string.IsNullOrEmpty(username)) return new PagePermission();
-            var currentUser = _db.Users.FirstOrDefault(u => u.Username == username);
-            if (currentUser == null) return new PagePermission();
-            var group = _db.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
-            if (group == null) return new PagePermission();
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return new PagePermission();
             var page = _db.Pages.FirstOrDefault(p => p.PagePath == pagePath);
             if (page == null) return new PagePermission();
-            var gp = _db.GroupPages.FirstOrDefault(g => g.GroupCode == group.GroupCode && g.PageCode == page.PageCode);
+            var gp = _db.GroupPages.FirstOrDefault(g => g.GroupCode == groupCode.Value && g.PageCode == page.PageCode);
             if (gp == null) return new PagePermission();
             return new PagePermission
             {
@@ -88,12 +86,8 @@ namespace centrny.Controllers
 
         public int GetUserRootCode()
         {
-            string username = User.Identity.Name;
-            var user = _db.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null) return -1;
-            var group = _db.Groups.FirstOrDefault(g => g.GroupCode == user.GroupCode);
-            if (group == null) return -1;
-            return group.RootCode;
+            var (_, _, rootCode, _) = GetSessionContext();
+            return rootCode ?? -1;
         }
 
         public IActionResult Index()
@@ -102,13 +96,10 @@ namespace centrny.Controllers
             {
                 return View("~/Views/Login/AccessDenied.cshtml");
             }
-
-            // Pass page permissions to the view as ViewBag
             var perms = GetPagePermissions("TeacherManagement/Index");
             ViewBag.CanInsert = perms.CanInsert;
             ViewBag.CanUpdate = perms.CanUpdate;
             ViewBag.CanDelete = perms.CanDelete;
-
             return View();
         }
 
@@ -119,20 +110,19 @@ namespace centrny.Controllers
             {
                 return Json(new { error = "Access denied." });
             }
-            string username = User.Identity.Name;
-            var user = _db.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null) return Json(new { error = "User not found" });
-            var group = _db.Groups.FirstOrDefault(g => g.GroupCode == user.GroupCode);
-            if (group == null) return Json(new { error = "Group not found" });
-            var root = _db.Roots.FirstOrDefault(r => r.RootCode == group.RootCode);
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Json(new { error = "Session user/group/root missing" });
+
+            var root = _db.Roots.FirstOrDefault(r => r.RootCode == rootCode.Value);
             if (root == null) return Json(new { error = "Root not found" });
 
             return Json(new
             {
-                user_code = user.UserCode,
-                user_name = user.Username,
-                group_code = group.GroupCode,
-                user_root_code = root.RootCode,
+                user_code = userCode,
+                user_name = username,
+                group_code = groupCode,
+                user_root_code = rootCode,
                 root_code = root.RootCode,
                 root_name = root.RootName
             });
@@ -183,12 +173,10 @@ namespace centrny.Controllers
 
             if (teacher == null) return BadRequest("Invalid data.");
 
-            var user = _db.Users.FirstOrDefault(u => u.UserCode == teacher.InsertUser);
-            if (user == null) return BadRequest("User not found.");
-
             var root = _db.Roots.FirstOrDefault(r => r.RootCode == teacher.RootCode);
             if (root == null) return BadRequest("Root not found.");
 
+            var (userCode, _, _, _) = GetSessionContext();
             var newTeacher = new Teacher
             {
                 TeacherName = teacher.TeacherName,
@@ -197,7 +185,7 @@ namespace centrny.Controllers
                 IsActive = true,
                 IsStaff = true,
                 RootCode = teacher.RootCode,
-                InsertUser = teacher.InsertUser,
+                InsertUser = userCode ?? teacher.InsertUser,
                 InsertTime = DateTime.Now
             };
 
@@ -298,7 +286,6 @@ namespace centrny.Controllers
             if (!UserHasTeacherManagementPermission())
                 return Json(new { error = "Access denied." });
 
-            // Join Teach, Subject, Year, Branch to get subject name, year name, branch name
             var teachRecords = (from t in _db.Teaches
                                 join s in _db.Subjects on t.SubjectCode equals s.SubjectCode
                                 join y in _db.Years on t.YearCode equals y.YearCode
@@ -341,7 +328,6 @@ namespace centrny.Controllers
             if (!UserHasTeacherManagementPermission())
                 return Json(new { error = "Access denied." });
 
-            // Validate year
             var year = _db.Years.FirstOrDefault(y => y.YearCode == model.YearCode);
             if (year == null)
                 return BadRequest("Year not found!");
@@ -349,22 +335,20 @@ namespace centrny.Controllers
             if (year.EduYearCode == null)
                 return BadRequest("Year does not have a valid EduYearCode.");
 
-            // Validate subject
             var subject = _db.Subjects.FirstOrDefault(s => s.SubjectCode == model.SubjectCode && s.RootCode == model.RootCode);
             if (subject == null)
                 return BadRequest("Subject not found for this root.");
 
-            // Validate teacher
             var teacher = _db.Teachers.FirstOrDefault(t => t.TeacherCode == model.TeacherCode && t.RootCode == model.RootCode);
             if (teacher == null)
                 return BadRequest("Teacher not found for this root.");
 
-            // Find corresponding EduYear
             var eduYear = _db.EduYears.FirstOrDefault(e => e.EduCode == year.EduYearCode.Value && e.RootCode == model.RootCode);
             if (eduYear == null)
                 return BadRequest("Education year not found for this year and root.");
 
-            // Create Teach record
+            var (userCode, _, _, _) = GetSessionContext();
+
             var teach = new Teach
             {
                 SubjectCode = model.SubjectCode,
@@ -373,7 +357,7 @@ namespace centrny.Controllers
                 RootCode = model.RootCode,
                 YearCode = model.YearCode,
                 EduYearCode = eduYear.EduCode,
-                InsertUser = model.InsertUser,
+                InsertUser = userCode ?? model.InsertUser,
                 InsertTime = DateTime.Now,
                 CenterPercentage = null,
                 CenterAmount = null

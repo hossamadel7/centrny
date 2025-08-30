@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using System.Linq;
 using SubjectRes = centrny.Resources.Subject;
 
@@ -18,29 +17,27 @@ namespace centrny.Controllers
             _context = context;
         }
 
-        private bool UserHasSubjectPermission()
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
         {
-            var username = User.Identity?.Name;
-            var user = _context.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = _context.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
-
-            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Subject/Index");
-            if (page == null)
-                return false;
-
-            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("Username")
+            );
         }
 
-        private int GetCurrentUserId()
+        // --- Authority Check via Session ---
+        private bool UserHasSubjectPermission()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Subject/Index");
+            if (page == null) return false;
+            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
         public async Task<IActionResult> Index()
@@ -50,22 +47,13 @@ namespace centrny.Controllers
                 return View("~/Views/Login/AccessDenied.cshtml");
             }
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-
-            if (user == null)
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
 
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            ViewBag.UserRootCode = rootCode;
-            ViewBag.UserGroupCode = groupCode;
-            ViewBag.CurrentUserName = user.Username;
+            ViewBag.UserRootCode = rootCode.Value;
+            ViewBag.UserGroupCode = groupCode.Value;
+            ViewBag.CurrentUserName = username;
 
             return View();
         }
@@ -76,21 +64,12 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-
-            if (user == null)
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
 
             var subjects = await (from s in _context.Subjects
-                                  where s.RootCode == rootCode
+                                  where s.RootCode == rootCode.Value
                                   join r in _context.Roots on s.RootCode equals r.RootCode into rootJoin
                                   from r in rootJoin.DefaultIfEmpty()
                                   join y in _context.Years on s.YearCode equals y.YearCode into yearJoin
@@ -116,7 +95,6 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            // Return all composite key columns for Teach, and branch, center values
             var teachJoin = await (from t in _context.Teaches
                                    join teacher in _context.Teachers on t.TeacherCode equals teacher.TeacherCode
                                    join branch in _context.Branches on t.BranchCode equals branch.BranchCode
@@ -146,7 +124,6 @@ namespace centrny.Controllers
             if (dto == null)
                 return BadRequest("Invalid data");
 
-            // Find by composite key
             var teach = await _context.Teaches.FirstOrDefaultAsync(t =>
                 t.TeacherCode == dto.TeacherCode &&
                 t.SubjectCode == dto.SubjectCode &&
@@ -170,18 +147,12 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Unauthorized();
 
             var activeEduYearCodes = await _context.EduYears
-                .Where(e => e.IsActive && e.RootCode == rootCode)
+                .Where(e => e.IsActive && e.RootCode == rootCode.Value)
                 .Select(e => e.EduCode)
                 .ToListAsync();
 
@@ -199,18 +170,12 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Unauthorized();
 
             var teachers = await _context.Teachers
-                .Where(t => t.RootCode == rootCode && t.IsActive)
+                .Where(t => t.RootCode == rootCode.Value && t.IsActive)
                 .Select(t => new { t.TeacherCode, t.TeacherName })
                 .ToListAsync();
 
@@ -223,18 +188,12 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Unauthorized();
 
             var branches = await _context.Branches
-                .Where(b => b.RootCode == rootCode)
+                .Where(b => b.RootCode == rootCode.Value)
                 .Select(b => new { b.BranchCode, b.BranchName })
                 .ToListAsync();
 
@@ -250,20 +209,14 @@ namespace centrny.Controllers
             if (dto == null || dto.TeacherCode == 0 || dto.SubjectCode == 0 || dto.BranchCode == 0 || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Unauthorized();
 
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherCode == dto.TeacherCode && t.RootCode == rootCode);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherCode == dto.TeacherCode && t.RootCode == rootCode.Value);
             if (teacher == null) return BadRequest(SubjectRes.Subject_TeacherNotFound);
 
-            var branch = await _context.Branches.FirstOrDefaultAsync(b => b.BranchCode == dto.BranchCode && b.RootCode == rootCode);
+            var branch = await _context.Branches.FirstOrDefaultAsync(b => b.BranchCode == dto.BranchCode && b.RootCode == rootCode.Value);
             if (branch == null) return BadRequest(SubjectRes.Subject_BranchNotFound);
 
             var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
@@ -276,11 +229,11 @@ namespace centrny.Controllers
                 SubjectCode = dto.SubjectCode,
                 EduYearCode = year.EduYearCode.Value,
                 BranchCode = dto.BranchCode,
-                RootCode = rootCode,
+                RootCode = rootCode.Value,
                 YearCode = dto.YearCode,
                 CenterPercentage = dto.CenterPercentage,
                 CenterAmount = dto.CenterAmount,
-                InsertUser = userId,
+                InsertUser = userCode.Value,
                 InsertTime = DateTime.Now,
                 IsActive = true
             };
@@ -299,23 +252,17 @@ namespace centrny.Controllers
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Unauthorized();
 
             var subject = new Subject
             {
                 SubjectName = dto.SubjectName,
                 IsPrimary = dto.IsPrimary,
                 YearCode = dto.YearCode,
-                RootCode = rootCode,
-                InsertUser = userId,
+                RootCode = rootCode.Value,
+                InsertUser = userCode.Value,
                 InsertTime = DateTime.Now
             };
 
@@ -323,7 +270,7 @@ namespace centrny.Controllers
             await _context.SaveChangesAsync();
 
             var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
-            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == rootCode);
+            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == rootCode.Value);
 
             return Json(new
             {
@@ -345,6 +292,7 @@ namespace centrny.Controllers
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
+
             var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode);
             if (subject == null)
                 return NotFound(SubjectRes.Subject_SubjectNotFound);

@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using centrny.Models;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Security.Claims;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 
@@ -26,24 +25,30 @@ namespace centrny1.Controllers
             _context = context;
         }
 
-        // --- Authority Check ---
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? rootCode, int? userCode, int? groupCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("RootCode"),
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionString("Username")
+            );
+        }
+
+        // --- Authority Check via Session ---
         private bool UserHasItemPermission()
         {
-            var username = User.Identity?.Name;
-            var user = _context.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = _context.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
+            // You may want to cache this permission in session at login for best performance
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
 
             var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Item/Index");
-            if (page == null)
-                return false;
+            if (page == null) return false;
 
-            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
         public IActionResult Index()
@@ -62,10 +67,19 @@ namespace centrny1.Controllers
             if (!UserHasItemPermission())
                 return Json(new { success = false, message = "Access denied." });
 
+            var sessionRootCode = GetSessionInt("RootCode");
+            if (sessionRootCode == null)
+                return Unauthorized();
+
+            // If rootCode is not provided, use session value.
+            if (!rootCode.HasValue || rootCode.Value <= 0)
+                rootCode = sessionRootCode.Value;
+
             var query = (from i in _context.Items
                          where i.IsActive
                          join s in _context.Students on i.StudentCode equals s.StudentCode into studentJoin
                          from s in studentJoin.DefaultIfEmpty()
+                         where i.RootCode == rootCode.Value
                          select new
                          {
                              itemCode = i.ItemCode,
@@ -74,11 +88,6 @@ namespace centrny1.Controllers
                              itemKey = i.ItemKey,
                              rootCodeVal = i.RootCode
                          });
-
-            if (rootCode.HasValue && rootCode.Value > 0)
-            {
-                query = query.Where(i => i.rootCodeVal == rootCode.Value);
-            }
 
             var totalCount = query.Count();
 
@@ -109,15 +118,17 @@ namespace centrny1.Controllers
             if (!UserHasItemPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            var query = _context.Items
-                .Where(i => i.IsActive && (i.StudentCode == null || i.StudentCode == 0));
+            var sessionRootCode = GetSessionInt("RootCode");
+            if (sessionRootCode == null)
+                return Unauthorized();
 
-            if (rootCode.HasValue && rootCode.Value > 0)
-            {
-                query = query.Where(i => i.RootCode == rootCode.Value);
-            }
+            if (!rootCode.HasValue || rootCode.Value <= 0)
+                rootCode = sessionRootCode.Value;
 
-            var count = query.Count();
+            var count = _context.Items
+                .Where(i => i.IsActive && (i.StudentCode == null || i.StudentCode == 0) && i.RootCode == rootCode.Value)
+                .Count();
+
             return Json(new { freeCount = count });
         }
 
@@ -139,20 +150,7 @@ namespace centrny1.Controllers
             if (!UserHasItemPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int? userCode = null;
-
-            // Use claim "UserCode" if available
-            var claim = User.Claims.FirstOrDefault(c => c.Type == "UserCode");
-            if (claim != null && int.TryParse(claim.Value, out var codeFromClaim))
-                userCode = codeFromClaim;
-            // Fallback to username mapping
-            else if (!string.IsNullOrEmpty(User.Identity.Name))
-            {
-                var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
-                if (user != null)
-                    userCode = user.UserCode;
-            }
-
+            var userCode = GetSessionInt("UserCode");
             if (userCode == null)
                 return Unauthorized(new { error = "User not found." });
 
@@ -188,6 +186,15 @@ namespace centrny1.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var sessionRootCode = GetSessionInt("RootCode");
+            var sessionUserCode = GetSessionInt("UserCode");
+            if (sessionRootCode == null || sessionUserCode == null)
+                return Unauthorized();
+
+            // Always use session values for security
+            request.RootCode = sessionRootCode.Value;
+            request.InsertUserCode = sessionUserCode.Value;
+
             try
             {
                 var sql = "EXEC InsertIntoItem @RootCode, @InsertUser, @RecordCount, @ItemTypeCode";
@@ -200,7 +207,6 @@ namespace centrny1.Controllers
                     new SqlParameter("@ItemTypeCode", request.ItemTypeCode)
                 );
 
-                // Immediately fetch the last N items for this root/type (assuming sequential codes).
                 var lastInsertedItems = _context.Items
                     .Where(i => i.RootCode == request.RootCode
                              && i.ItemTypeKey == request.ItemTypeCode
@@ -210,7 +216,6 @@ namespace centrny1.Controllers
                     .Select(i => new { itemCode = i.ItemCode, itemKey = i.ItemKey })
                     .ToList();
 
-                // Return in ascending order (oldest to newest)
                 lastInsertedItems.Reverse();
 
                 return Ok(new

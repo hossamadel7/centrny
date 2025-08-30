@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Globalization;
+using Newtonsoft.Json;
 
 namespace centrny.Controllers
 {
@@ -95,9 +96,9 @@ namespace centrny.Controllers
                 // Find user with all necessary navigation properties
                 var user = await _context.Users
                     .Include(u => u.GroupCodeNavigation)
-                    .ThenInclude(g => g.RootCodeNavigation)
+                        .ThenInclude(g => g.RootCodeNavigation)
                     .Include(u => u.GroupCodeNavigation.GroupPages)
-                    .ThenInclude(gp => gp.PageCodeNavigation)
+                        .ThenInclude(gp => gp.PageCodeNavigation)
                     .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower().Trim());
 
                 if (user == null)
@@ -129,6 +130,61 @@ namespace centrny.Controllers
                 user.LastUpdateTime = DateTime.Now;
                 await _context.SaveChangesAsync();
 
+                // ==== SESSION STORAGE LOGIC ====
+                // Store user info in session
+                HttpContext.Session.SetInt32("UserCode", user.UserCode);
+                HttpContext.Session.SetString("Username", user.Username);
+                HttpContext.Session.SetString("Password", user.Password); // hashed password
+                HttpContext.Session.SetInt32("GroupCode", user.GroupCode);
+
+                // Store Group info
+                if (user.GroupCodeNavigation != null)
+                {
+                    HttpContext.Session.SetInt32("GroupCode", user.GroupCodeNavigation.GroupCode);
+                    HttpContext.Session.SetString("GroupName", user.GroupCodeNavigation.GroupName ?? "");
+
+                    // Store Root info
+                    if (user.GroupCodeNavigation.RootCodeNavigation != null)
+                    {
+                        var root = user.GroupCodeNavigation.RootCodeNavigation;
+                        HttpContext.Session.SetInt32("RootCode", root.RootCode);
+                        HttpContext.Session.SetString("RootName", root.RootName ?? "");
+                        HttpContext.Session.SetString("RootDomain", root.RootDomain ?? "");
+                        HttpContext.Session.SetString("RootIsCenter", root.IsCenter.ToString());
+
+                        if (!root.IsCenter)
+                        {
+                            // Get Teacher info by RootCode FK
+                            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.RootCode == root.RootCode);
+                            if (teacher != null)
+                            {
+                                HttpContext.Session.SetInt32("TeacherCode", teacher.TeacherCode);
+                                HttpContext.Session.SetString("TeacherName", teacher.TeacherName ?? "");
+                            }
+                        }
+                        else
+                        {
+                            // Get Center info
+                            var center = await _context.Centers.FirstOrDefaultAsync(c => c.RootCode == root.RootCode);
+                            if (center != null)
+                            {
+                                HttpContext.Session.SetInt32("CenterCode", center.CenterCode);
+                                HttpContext.Session.SetString("CenterName", center.CenterName ?? "");
+
+                                // Get branches for this center
+                                var branches = await _context.Branches
+                                    .Where(b => b.CenterCode == center.CenterCode)
+                                    .Select(b => new { b.BranchCode, b.BranchName })
+                                    .ToListAsync();
+
+                                var branchJson = JsonConvert.SerializeObject(branches);
+                                HttpContext.Session.SetString("Branches", branchJson);
+                            }
+                        }
+                    }
+                }
+                // ==== END SESSION STORAGE LOGIC ====
+
                 // Create authentication claims
                 var claims = new List<Claim>
                 {
@@ -141,12 +197,12 @@ namespace centrny.Controllers
                 // Add group and root information if available
                 if (user.GroupCodeNavigation != null)
                 {
-                    claims.Add(new Claim("GroupName", user.GroupCodeNavigation.GroupName));
+                    claims.Add(new Claim("GroupName", user.GroupCodeNavigation.GroupName ?? ""));
 
                     if (user.GroupCodeNavigation.RootCodeNavigation != null)
                     {
                         claims.Add(new Claim("RootCode", user.GroupCodeNavigation.RootCode.ToString()));
-                        claims.Add(new Claim("RootName", user.GroupCodeNavigation.RootCodeNavigation.RootName));
+                        claims.Add(new Claim("RootName", user.GroupCodeNavigation.RootCodeNavigation.RootName ?? ""));
                         claims.Add(new Claim("IsCenter", user.GroupCodeNavigation.RootCodeNavigation.IsCenter.ToString()));
                     }
 
@@ -223,6 +279,22 @@ namespace centrny.Controllers
         public async Task<IActionResult> Logout()
         {
             HttpContext.Session.Remove("SidebarPages");
+            // Remove all custom session keys
+            HttpContext.Session.Remove("UserCode");
+            HttpContext.Session.Remove("Username");
+            HttpContext.Session.Remove("Password");
+            HttpContext.Session.Remove("GroupCode");
+            HttpContext.Session.Remove("GroupName");
+            HttpContext.Session.Remove("RootCode");
+            HttpContext.Session.Remove("RootName");
+            HttpContext.Session.Remove("RootDomain");
+            HttpContext.Session.Remove("RootIsCenter");
+            HttpContext.Session.Remove("TeacherCode");
+            HttpContext.Session.Remove("TeacherName");
+            HttpContext.Session.Remove("CenterCode");
+            HttpContext.Session.Remove("CenterName");
+            HttpContext.Session.Remove("Branches");
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             _logger.LogInformation("User logged out: {Username}", User.Identity.Name);
             return RedirectToAction("Index");
@@ -231,7 +303,6 @@ namespace centrny.Controllers
         // Helper method to check if the logged-in user has default password (hashed)
         private bool IsDefaultPassword(ClaimsPrincipal user)
         {
-            // You may want to cache this in claims, but for now, check DB for the current user
             if (user.Identity.IsAuthenticated)
             {
                 var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -251,12 +322,10 @@ namespace centrny.Controllers
         [Authorize]
         public IActionResult ForceChangePassword()
         {
-            // If user already changed password, don't show force page
             if (!IsDefaultPassword(User))
             {
                 return RedirectToAction("Index", "Root");
             }
-            // Use ChangePassword.cshtml view instead of default
             return View("ChangePassword");
         }
 
@@ -288,7 +357,6 @@ namespace centrny.Controllers
                 return View("ChangePassword");
             }
 
-            // Update the user's password
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
             {
@@ -298,7 +366,7 @@ namespace centrny.Controllers
             var dbUser = await _context.Users.FindAsync(int.Parse(userId));
             if (dbUser != null)
             {
-                dbUser.Password = MD5hasher(newPassword); // Store hashed password
+                dbUser.Password = MD5hasher(newPassword);
                 await _context.SaveChangesAsync();
 
                 // Log out & force re-login with new password
@@ -310,10 +378,8 @@ namespace centrny.Controllers
             return View("ChangePassword");
         }
 
-        // Helper method to check if current user has access to a specific page
         public static bool HasPageAccess(ClaimsPrincipal user, string pagePath)
         {
-            // Extract page name from path for lookup
             var pageName = pagePath.TrimStart('/').Replace('/', '_');
             return user.HasClaim("PageAccess", pageName) || user.IsInRole("Admin");
         }

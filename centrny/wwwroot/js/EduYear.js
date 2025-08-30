@@ -146,9 +146,21 @@ if (eduForm) {
             })
             .then(result => {
                 closeEduModalFunc();
+                Swal.fire({
+                    icon: 'success',
+                    title: resxAddEduYear,
+                    text: eduEditMode ? 'Education year updated successfully.' : 'Education year added successfully.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
                 loadEduYears();
             })
             .catch(err => {
+                Swal.fire({
+                    icon: 'error',
+                    title: resxAddEduYear,
+                    text: err.message || resxLoading,
+                });
                 if (eduErrorDiv) eduErrorDiv.textContent = resxAddEduYear + ": " + (err.message || resxLoading);
             })
             .finally(() => {
@@ -185,18 +197,41 @@ function addEduYearActionListeners(tr, eduYear) {
     }
     if (deleteBtn) {
         deleteBtn.onclick = function () {
-            if (confirm(resxDelete + ": " + resxEduYearName + "?")) {
-                fetch('/EduYear/DeleteEduYear', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ eduCode: eduYear.eduCode })
-                })
-                    .then(r => {
-                        if (!r.ok) return r.text().then(t => { throw new Error(t); });
-                        loadEduYears();
+            Swal.fire({
+                title: resxDelete + ": " + resxEduYearName + "?",
+                text: "This action cannot be undone.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: resxDelete,
+                cancelButtonText: resxNo,
+                confirmButtonColor: "#d33"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/EduYear/DeleteEduYear', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ eduCode: eduYear.eduCode })
                     })
-                    .catch(err => alert(resxDelete + ": " + (err.message || resxLoading)));
-            }
+                        .then(r => {
+                            if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                            Swal.fire({
+                                icon: 'success',
+                                title: resxDelete,
+                                text: 'Education year deleted successfully.',
+                                timer: 1200,
+                                showConfirmButton: false
+                            });
+                            loadEduYears();
+                        })
+                        .catch(err => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: resxDelete,
+                                text: err.message || resxLoading,
+                            });
+                        });
+                }
+            });
         };
     }
 }
@@ -235,6 +270,11 @@ function loadEduYears() {
             loadLevelsAndYears();
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error loading education years',
+            });
             if (eduMsg) eduMsg.textContent = "Error loading education years";
             console.error('Error fetching edu years:', error);
             loadLevelsAndYears();
@@ -318,6 +358,11 @@ if (yearForm) {
         const levelCode = parseInt(yearLevelCodeInput?.value || '0');
 
         if (!yearName || isNaN(yearSort) || isNaN(levelCode)) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Fields',
+                text: 'Please fill all required fields.',
+            });
             if (yearErrorDiv) yearErrorDiv.textContent = "Please fill all required fields";
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -346,9 +391,21 @@ if (yearForm) {
             })
             .then(result => {
                 closeYearModalFunc();
+                Swal.fire({
+                    icon: 'success',
+                    title: yearEditMode ? resxEdit : resxAddYear,
+                    text: yearEditMode ? 'Year updated successfully.' : 'Year added successfully.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
                 loadLevelsAndYears();
             })
             .catch(err => {
+                Swal.fire({
+                    icon: 'error',
+                    title: yearEditMode ? resxEdit : resxAddYear,
+                    text: err.message || resxLoading,
+                });
                 if (yearErrorDiv) yearErrorDiv.textContent = resxAddYear + ": " + (err.message || resxLoading);
             })
             .finally(() => {
@@ -376,6 +433,11 @@ if (levelForm) {
         const levelName = levelNameInput?.value.trim() || '';
 
         if (!levelName) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Fields',
+                text: 'Please enter level name.',
+            });
             if (levelErrorDiv) levelErrorDiv.textContent = "Please enter level name";
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -395,9 +457,21 @@ if (levelForm) {
             })
             .then(result => {
                 closeLevelModalFunc();
+                Swal.fire({
+                    icon: 'success',
+                    title: resxAddLevel,
+                    text: 'Level added successfully.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
                 loadLevelsAndYears();
             })
             .catch(err => {
+                Swal.fire({
+                    icon: 'error',
+                    title: resxAddLevel,
+                    text: err.message || resxLoading,
+                });
                 if (levelErrorDiv) levelErrorDiv.textContent = resxAddLevel + ": " + (err.message || resxLoading);
             })
             .finally(() => {
@@ -488,6 +562,11 @@ function loadLevelsAndYears() {
             addLevelsAndYearsListeners();
         })
         .catch(err => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error loading data',
+            });
             levelsContainer.innerHTML = `<div style="color:#b33c3c;font-weight:600;">Error loading data</div>`;
         });
 }
@@ -536,30 +615,46 @@ function addLevelsAndYearsListeners() {
     document.querySelectorAll('.delete-year-btn').forEach(btn => {
         btn.onclick = function () {
             const yearCode = parseInt(this.getAttribute('data-year-code'));
-            if (confirm(resxDelete + ": " + resxYearName + "?")) {
-                fetch('/EduYear/DeleteYear', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ yearCode })
-                })
-                    .then(r => {
-                        if (!r.ok) return r.text().then(t => { throw new Error(t); });
-                        loadLevelsAndYears();
+            Swal.fire({
+                title: resxDelete + ": " + resxYearName + "?",
+                text: "This action cannot be undone.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: resxDelete,
+                cancelButtonText: resxNo,
+                confirmButtonColor: "#d33"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/EduYear/DeleteYear', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ yearCode })
                     })
-                    .catch(err => alert(resxDelete + ": " + (err.message || resxLoading)));
-            }
+                        .then(r => {
+                            if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                            Swal.fire({
+                                icon: 'success',
+                                title: resxDelete,
+                                text: 'Year deleted successfully.',
+                                timer: 1200,
+                                showConfirmButton: false
+                            });
+                            loadLevelsAndYears();
+                        })
+                        .catch(err => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: resxDelete,
+                                text: err.message || resxLoading,
+                            });
+                        });
+                }
+            });
         };
     });
 }
 
-// Initial load
+// Initial load (use only one way to avoid duplicate call)
 document.addEventListener('DOMContentLoaded', function () {
     loadEduYears();
 });
-
-// Fallback if DOMContentLoaded already fired
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadEduYears);
-} else {
-    loadEduYears();
-}

@@ -1,0 +1,98 @@
+﻿
+<div id="top" class="banner-style-two banner-bg">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div id="widgetBox" class="widget-box">
+                    <div class="widget-header widget-header-flat">
+                        <h4 class="widget-title lighter" style="margin-right: 30px"> Content  </h4>
+                        <button onclick="toggleFullScreen()" class="btn btn-primary" style="float: right;">🔄 Full Screen</button>
+                    </div>
+                    <div class="widget-body">
+
+                        <div class="row" style="padding: 1em 1em 1em 1em">
+                            <div class="col-sm-4">
+                                <select id="gym" class="form-control select2 form-mob" style="width: 100%"></select>
+                            </div>
+                            <div class="col-sm-4">
+                                <select id="column" class="form-control select2 form-mob" style="width: 100%"></select>
+                            </div>
+                        </div>
+                        <button id="save" type="submit" class="btn btn-success">
+                            Save
+                        </button>
+                        <div class="row" style="padding: 1em 1em 1em 1em">
+                            <div class="col-sm-12">
+
+                                <textarea id="content" name="content"></textarea><br>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+
+    <script>
+        // Initialize CodeMirror editor
+        var editor = CodeMirror.fromTextArea(document.getElementById('content'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            theme: 'default'
+        });
+
+        // Prepare the form before submission
+        function prepareForm() {
+            // Set the value of the textarea to the content of the editor
+            document.getElementById('content').value = editor.getValue();
+            return true; // submit the form
+        }
+
+        function toggleFullScreen() {
+            var widgetBox = document.getElementById("widgetBox");
+
+            if (!document.fullscreenElement) {
+                // Enter full screen
+                if (widgetBox.requestFullscreen) {
+                    widgetBox.requestFullscreen();
+                } else if (widgetBox.mozRequestFullScreen) { // Firefox
+                    widgetBox.mozRequestFullScreen();
+                } else if (widgetBox.webkitRequestFullscreen) { // Chrome, Safari, Opera
+                    widgetBox.webkitRequestFullscreen();
+                } else if (widgetBox.msRequestFullscreen) { // IE/Edge
+                    widgetBox.msRequestFullscreen();
+                }
+
+                $(".CodeMirror").css("height", "550px");
+            } else {
+                // Exit full screen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+
+                $(".CodeMirror").css("height","300px");
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/Js/Content.js?v=1"></script>
+}

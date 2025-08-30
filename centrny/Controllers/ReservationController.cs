@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,56 +20,37 @@ namespace centrny1.Controllers
             _context = context;
         }
 
-        // --- Authority Check ---
-        private bool UserHasReservationPermission()
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, bool isCenter) GetSessionContext()
         {
-            var username = User.Identity?.Name;
-            var user = _context.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = _context.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
-
-            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Reservation/Index");
-            if (page == null)
-                return false;
-
-            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("RootIsCenter") == "True"
+            );
         }
 
-        // Helper to get logged-in user's info from claims & DB (like EduYear)
-        private async Task<(int userCode, int groupCode, int rootCode, bool isCenter)> GetUserInfoAsync()
+        // --- Authority Check via Session ---
+        private bool UserHasReservationPermission()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            int userCode = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userCode);
-            if (user == null)
-                return (0, 0, 0, true);
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return (userCode, groupCode, 0, true);
-
-            int rootCode = group.RootCode;
-            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == rootCode);
-            bool isCenter = root?.IsCenter ?? true;
-            Console.WriteLine($"DEBUG ReservationController User: UserCode={userCode}, GroupCode={groupCode}, RootCode={rootCode}, IsCenter={isCenter}");
-            return (userCode, groupCode, rootCode, isCenter);
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
+            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Reservation/Index");
+            if (page == null) return false;
+            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             if (!UserHasReservationPermission())
             {
                 return View("~/Views/Login/AccessDenied.cshtml");
             }
-            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            var (_, _, rootCode, isCenter) = GetSessionContext();
             ViewBag.IsCenter = isCenter;
             ViewBag.RootCode = rootCode;
             return View();
@@ -79,7 +59,7 @@ namespace centrny1.Controllers
         [HttpGet("GetSingleTeacherForRoot")]
         public async Task<IActionResult> GetSingleTeacherForRoot()
         {
-            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            var (_, _, rootCode, isCenter) = GetSessionContext();
             if (isCenter) return Json(new { success = false, message = "Not applicable" });
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.RootCode == rootCode);
             if (teacher == null) return Json(new { success = false, message = "No teacher found" });
@@ -89,7 +69,7 @@ namespace centrny1.Controllers
         [HttpGet("GetRootReservations")]
         public async Task<IActionResult> GetRootReservations(DateTime? reservationDate)
         {
-            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            var (_, _, rootCode, isCenter) = GetSessionContext();
             if (!UserHasReservationPermission() || isCenter)
             {
                 return Json(new { success = false, message = "Access denied." });
@@ -132,7 +112,7 @@ namespace centrny1.Controllers
         [HttpPost("AddRootReservation")]
         public async Task<IActionResult> AddRootReservation([FromForm] Reservation reservation)
         {
-            var (_, _, rootCode, isCenter) = await GetUserInfoAsync();
+            var (_, _, rootCode, isCenter) = GetSessionContext();
             if (!UserHasReservationPermission() || isCenter)
             {
                 return Json(new { success = false, message = "Access denied." });
@@ -141,7 +121,6 @@ namespace centrny1.Controllers
             reservation.BranchCode = null;
             reservation.HallCode = null;
 
-            // Defensive validation
             if (reservation.TeacherCode == 0 || reservation.RTime == default ||
                 reservation.ReservationStartTime == null || reservation.ReservationEndTime == null)
             {
@@ -153,7 +132,6 @@ namespace centrny1.Controllers
             var date = reservation.RTime;
             var teacherCode = reservation.TeacherCode;
 
-            // Only compare with reservations that have non-null times
             var overlappingReservation = await _context.Reservations
                 .Where(r => r.RTime == date && r.TeacherCode == teacherCode
                     && r.ReservationStartTime != null && r.ReservationEndTime != null
@@ -177,7 +155,7 @@ namespace centrny1.Controllers
         public async Task<IActionResult> EditRootReservation([FromForm] int ReservationCode, [FromForm] string Description, [FromForm] int Capacity, [FromForm] decimal Cost, [FromForm] int Deposit, [FromForm] int? FinalCost,
             [FromForm] decimal? Period, [FromForm] TimeOnly? ReservationStartTime, [FromForm] TimeOnly? ReservationEndTime)
         {
-            var (_, _, _, isCenter) = await GetUserInfoAsync();
+            var (_, _, _, isCenter) = GetSessionContext();
             if (!UserHasReservationPermission() || isCenter)
             {
                 return Json(new { success = false, message = "Access denied." });
@@ -222,7 +200,7 @@ namespace centrny1.Controllers
         [HttpPost("DeleteRootReservation")]
         public async Task<IActionResult> DeleteRootReservation([FromForm] int reservationCode)
         {
-            var (_, _, _, isCenter) = await GetUserInfoAsync();
+            var (_, _, _, isCenter) = GetSessionContext();
             if (!UserHasReservationPermission() || isCenter)
             {
                 return Json(new { success = false, message = "Access denied." });
@@ -242,7 +220,7 @@ namespace centrny1.Controllers
             {
                 return Json(new { success = false, message = "Access denied." });
             }
-            var (_, _, rootCode, _) = await GetUserInfoAsync();
+            var (_, _, rootCode, _) = GetSessionContext();
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode)
                 .Select(b => new { branchCode = b.BranchCode, branchName = b.BranchName })
@@ -290,7 +268,7 @@ namespace centrny1.Controllers
             {
                 var hallReservations = reservations
                     .Where(r => r.HallCode == hall.HallCode)
-                    .OrderBy(r => r.ReservationStartTime) // Sort by start time
+                    .OrderBy(r => r.ReservationStartTime)
                     .ToList();
 
                 var row = new List<object> { hall.HallName };
@@ -324,13 +302,6 @@ namespace centrny1.Controllers
                 grid,
                 halls = halls.Select(h => new { hallCode = h.HallCode, hallName = h.HallName }).ToList()
             };
-
-            // Debug logging
-            Console.WriteLine($"DEBUG: Returning {halls.Count} halls");
-            foreach (var hall in halls)
-            {
-                Console.WriteLine($"DEBUG: Hall {hall.HallCode} - {hall.HallName}");
-            }
 
             return Json(result);
         }
@@ -374,9 +345,8 @@ namespace centrny1.Controllers
                 return Json(new { success = false, message = "Access denied." });
             }
 
-            // Check for schedule conflicts
             var reservationDate = DateOnly.FromDateTime(DateTime.Parse(Request.Form["RTime"]));
-            var dayOfWeek = reservationDate.ToDateTime(TimeOnly.MinValue).ToString("dddd"); // Gets "Sunday", "Monday", etc.
+            var dayOfWeek = reservationDate.ToDateTime(TimeOnly.MinValue).ToString("dddd");
 
             var conflictingSchedules = await _context.Schedules
                 .Where(s => s.BranchCode == reservation.BranchCode &&
@@ -393,13 +363,11 @@ namespace centrny1.Controllers
                 var scheduleStart = TimeOnly.FromDateTime(schedule.StartTime.Value);
                 var scheduleEnd = TimeOnly.FromDateTime(schedule.EndTime.Value);
 
-                // Check for time overlap
                 if (reservation.ReservationStartTime.HasValue && reservation.ReservationEndTime.HasValue)
                 {
                     var reservationStart = reservation.ReservationStartTime.Value;
                     var reservationEnd = reservation.ReservationEndTime.Value;
 
-                    // Check if times overlap: (start1 < end2) && (start2 < end1)
                     if (reservationStart < scheduleEnd && scheduleStart < reservationEnd)
                     {
                         var teacherName = schedule.TeacherCodeNavigation?.TeacherName ?? "Unknown Teacher";
@@ -464,7 +432,7 @@ namespace centrny1.Controllers
                 return Json(new { success = false, message = "Access denied." });
             }
 
-            var (userCode, _, rootCode, _) = await GetUserInfoAsync();
+            var (userCode, _, rootCode, _) = GetSessionContext();
             var newTeacher = new Teacher
             {
                 TeacherName = TeacherName,
@@ -472,8 +440,8 @@ namespace centrny1.Controllers
                 TeacherAddress = TeacherAddress,
                 IsActive = true,
                 IsStaff = false,
-                RootCode = rootCode,
-                InsertUser = userCode,
+                RootCode = rootCode ?? 0,
+                InsertUser = userCode ?? 0,
                 InsertTime = DateTime.Now
             };
             _context.Teachers.Add(newTeacher);

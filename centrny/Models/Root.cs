@@ -11,6 +11,8 @@ public partial class Root
 
     public string RootName { get; set; } = null!;
 
+    public string? RootDomain { get; set; }
+
     public string RootPhone { get; set; } = null!;
 
     public string RootEmail { get; set; } = null!;
@@ -44,6 +46,8 @@ public partial class Root
     public virtual ICollection<Center> Centers { get; set; } = new List<Center>();
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
+
+    public virtual ICollection<Content> Contents { get; set; } = new List<Content>();
 
     public virtual ICollection<EduYear> EduYears { get; set; } = new List<EduYear>();
 

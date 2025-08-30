@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace centrny.Controllers
 {
@@ -19,37 +19,34 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // Helper to get session values
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+
         public async Task<IActionResult> Index()
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var userCode = GetSessionInt("UserCode");
+            var groupCode = GetSessionInt("GroupCode");
+            var rootCode = GetSessionInt("RootCode");
+            var username = GetSessionString("Username");
+            var isCenterStr = GetSessionString("RootIsCenter");
+            var centerName = GetSessionString("CenterName");
+
+            if (userCode == null || groupCode == null || rootCode == null)
                 return Unauthorized();
 
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return Unauthorized();
+            bool isCenter = isCenterStr == "True";
 
-            int rootCode = group.RootCode;
-            bool isCenter = await _context.Roots.AnyAsync(r => r.RootCode == rootCode && r.IsCenter);
-
-            string centerName = null;
-            if (rootCode != 1)
-            {
-                var center = await _context.Centers.FirstOrDefaultAsync(c => c.RootCode == rootCode);
-                centerName = center?.CenterName ?? "Unknown Center";
-            }
-
-            ViewBag.UserRootCode = rootCode;
-            ViewBag.UserGroupCode = groupCode;
-            ViewBag.CurrentUserName = user.Username;
-            ViewBag.CenterName = centerName;
+            ViewBag.UserRootCode = rootCode.Value;
+            ViewBag.UserGroupCode = groupCode.Value;
+            ViewBag.CurrentUserName = username;
+            ViewBag.CenterName = centerName ?? "Unknown Center";
             ViewBag.IsCenter = isCenter;
-            ViewBag.UserCode = user.UserCode; // <--- ADD THIS LINE
+            ViewBag.UserCode = userCode.Value;
 
             return View();
         }
+
         [HttpGet]
         public async Task<IActionResult> GetRootsIsCenterTrue()
         {
@@ -71,10 +68,16 @@ namespace centrny.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCentersByRoot(int rootCode)
+        public async Task<IActionResult> GetCentersByRoot(int? rootCode = null)
         {
+            // Use session rootCode if not provided
+            if (rootCode == null)
+                rootCode = GetSessionInt("RootCode");
+            if (rootCode == null)
+                return Unauthorized();
+
             var centers = await _context.Centers
-                .Where(c => c.RootCode == rootCode)
+                .Where(c => c.RootCode == rootCode.Value)
                 .Select(c => new { c.CenterCode, c.CenterName, c.CenterPhone, c.CenterAddress, c.OwnerName, c.IsActive })
                 .ToListAsync();
 
@@ -82,10 +85,15 @@ namespace centrny.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBranchesByRootCode(int rootCode)
+        public async Task<IActionResult> GetBranchesByRootCode(int? rootCode = null)
         {
+            if (rootCode == null)
+                rootCode = GetSessionInt("RootCode");
+            if (rootCode == null)
+                return Unauthorized();
+
             var branches = await _context.Branches
-                .Where(b => b.RootCode == rootCode)
+                .Where(b => b.RootCode == rootCode.Value)
                 .Select(b => new { b.BranchCode, b.BranchName, b.Address, b.Phone, b.StartTime, b.CenterCode, b.IsActive })
                 .ToListAsync();
 
@@ -120,6 +128,9 @@ namespace centrny.Controllers
             var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == dto.RootCode);
             if (root == null) return BadRequest("Root not found.");
 
+            dto.InsertUser = GetSessionInt("UserCode") ?? 0;
+            dto.InsertTime = DateTime.Now;
+
             var center = new Center
             {
                 CenterName = dto.CenterName,
@@ -148,7 +159,6 @@ namespace centrny.Controllers
             center.CenterName = dto.CenterName;
             center.CenterAddress = dto.CenterAddress;
             center.CenterPhone = dto.CenterPhone;
-            // OwnerName and RootCode are not changed in edit
             await _context.SaveChangesAsync();
             return Ok();
         }
@@ -165,6 +175,10 @@ namespace centrny.Controllers
                 return BadRequest("Address is required.");
             if (string.IsNullOrWhiteSpace(dto.Phone))
                 return BadRequest("Phone is required.");
+
+            dto.InsertUser = GetSessionInt("UserCode") ?? 0;
+            dto.InsertTime = DateTime.Now;
+            dto.RootCode = GetSessionInt("RootCode") ?? dto.RootCode;
 
             var branch = new Branch
             {
@@ -196,7 +210,6 @@ namespace centrny.Controllers
             branch.Address = dto.Address;
             branch.Phone = dto.Phone;
             branch.StartTime = dto.StartTime;
-            // CenterCode, RootCode, InsertUser, InsertTime, IsActive are not changed in edit
             await _context.SaveChangesAsync();
             return Ok();
         }
@@ -233,9 +246,9 @@ namespace centrny.Controllers
             {
                 HallName = dto.HallName,
                 HallCapacity = dto.HallCapacity,
-                RootCode = dto.RootCode,
+                RootCode = GetSessionInt("RootCode") ?? dto.RootCode,
                 BranchCode = dto.BranchCode,
-                InsertUser = GetCurrentUserId(),
+                InsertUser = GetSessionInt("UserCode") ?? 0,
                 InsertTime = DateTime.Now
             };
 
@@ -270,14 +283,9 @@ namespace centrny.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-        }
     }
 
+    // DTOs remain unchanged
     public class HallCreateDto
     {
         public string HallName { get; set; }
@@ -299,7 +307,7 @@ namespace centrny.Controllers
         public bool IsActive { get; set; } = true;
         public string CenterPhone { get; set; } = null!;
         public string CenterAddress { get; set; } = null!;
-        public string? OwnerName { get; set; } // set by server from root
+        public string? OwnerName { get; set; }
         public int RootCode { get; set; }
         public int InsertUser { get; set; }
         public DateTime InsertTime { get; set; }

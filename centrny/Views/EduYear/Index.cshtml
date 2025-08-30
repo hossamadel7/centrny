@@ -26,7 +26,7 @@
 <input type="hidden" id="resxNoYears" value="@EduYearView.NoYearsFound" />
 <input type="hidden" id="resxNoLevels" value="@EduYearView.NoLevelsFound" />
 <input type="hidden" id="resxNoActiveEduYear" value="@EduYearView.NoActiveEduYear" />
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @{
     var isRtl = System.Threading.Thread.CurrentThread.CurrentUICulture.Name.StartsWith("ar");
     var dir = isRtl ? "rtl" : "ltr";
@@ -35,141 +35,134 @@
 <style>
     /* Mobile responsive fixes for Education Years */
     @@media (max-width: 768px) {
-        .table-card
-
-    {
-        padding: 1rem !important;
-        margin: 0.5rem !important;
-        max-width: 100vw !important;
-    }
-
-    .questions-header {
-        padding: 1rem 0 0.8rem 0 !important;
-        margin-bottom: 1rem !important;
-    }
-
-        .questions-header h2 {
-            font-size: 1.5rem !important;
+        .table-card {
+            padding: 1rem !important;
+            margin: 0.5rem !important;
+            max-width: 100vw !important;
         }
 
-    .gradient-table {
-        min-width: 100% !important;
-        width: 100% !important;
-        font-size: 0.85rem !important;
-    }
-
-        .gradient-table th,
-        .gradient-table td {
-            padding: 0.5rem 0.3rem !important;
-            font-size: 0.8rem !important;
-            white-space: nowrap !important;
+        .questions-header {
+            padding: 1rem 0 0.8rem 0 !important;
+            margin-bottom: 1rem !important;
         }
 
-    .btn-table {
-        padding: 0.3rem 0.5rem !important;
-        font-size: 0.75rem !important;
-        margin: 0.1rem !important;
-    }
+            .questions-header h2 {
+                font-size: 1.5rem !important;
+            }
 
-    .levels-years-container {
-        flex-direction: column !important;
-        gap: 1rem !important;
-    }
-
-    .level-box {
-        min-width: 100% !important;
-        max-width: 100% !important;
-        margin-bottom: 1rem !important;
-        padding: 1rem !important;
-    }
-
-    .level-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
-    }
-
-        .level-header h3 {
-            font-size: 1.1rem !important;
-            margin-right: 0 !important;
-            margin-bottom: 0.5rem !important;
+        .gradient-table {
+            min-width: 100% !important;
+            width: 100% !important;
+            font-size: 0.85rem !important;
         }
 
-    .years-table {
-        font-size: 0.8rem !important;
-    }
+            .gradient-table th,
+            .gradient-table td {
+                padding: 0.5rem 0.3rem !important;
+                font-size: 0.8rem !important;
+                white-space: nowrap !important;
+            }
 
-        .years-table th,
-        .years-table td {
-            padding: 0.4rem 0.2rem !important;
+        .btn-table {
+            padding: 0.3rem 0.5rem !important;
             font-size: 0.75rem !important;
+            margin: 0.1rem !important;
         }
 
-    .modal-box {
-        max-width: 95vw !important;
-        padding: 1rem !important;
-        margin: 1rem !important;
-    }
-
-    .form-group {
-        margin-bottom: 1rem !important;
-    }
-
-        .form-group input,
-        .form-group select {
-            font-size: 0.9rem !important;
-            padding: 0.5rem !important;
+        .levels-years-container {
+            flex-direction: column !important;
+            gap: 1rem !important;
         }
 
-    /* Stack action buttons vertically on mobile */
-    .gradient-table td:last-child {
-        white-space: normal !important;
-    }
+        .level-box {
+            min-width: 100% !important;
+            max-width: 100% !important;
+            margin-bottom: 1rem !important;
+            padding: 1rem !important;
+        }
 
-        .gradient-table td:last-child .btn-table {
+        .level-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+        }
+
+            .level-header h3 {
+                font-size: 1.1rem !important;
+                margin-right: 0 !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+        .years-table {
+            font-size: 0.8rem !important;
+        }
+
+            .years-table th,
+            .years-table td {
+                padding: 0.4rem 0.2rem !important;
+                font-size: 0.75rem !important;
+            }
+
+        .modal-box {
+            max-width: 95vw !important;
+            padding: 1rem !important;
+            margin: 1rem !important;
+        }
+
+        .form-group {
+            margin-bottom: 1rem !important;
+        }
+
+            .form-group input,
+            .form-group select {
+                font-size: 0.9rem !important;
+                padding: 0.5rem !important;
+            }
+        /* Stack action buttons vertically on mobile */
+        .gradient-table td:last-child {
+            white-space: normal !important;
+        }
+
+            .gradient-table td:last-child .btn-table {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 0.2rem !important;
+                text-align: center !important;
+            }
+
+        .years-table td:last-child .btn-table {
             display: block !important;
             width: 100% !important;
             margin-bottom: 0.2rem !important;
             text-align: center !important;
         }
-
-    .years-table td:last-child .btn-table {
-        display: block !important;
-        width: 100% !important;
-        margin-bottom: 0.2rem !important;
-        text-align: center !important;
-    }
-
     }
 
     @@media (max-width: 480px) {
-        .questions-header h2
+        .questions-header h2 {
+            font-size: 1.2rem !important;
+        }
 
-    {
-        font-size: 1.2rem !important;
-    }
+        .btn-table {
+            padding: 0.25rem 0.4rem !important;
+            font-size: 0.7rem !important;
+        }
 
-    .btn-table {
-        padding: 0.25rem 0.4rem !important;
-        font-size: 0.7rem !important;
-    }
+        .gradient-table th,
+        .gradient-table td {
+            padding: 0.3rem 0.2rem !important;
+            font-size: 0.75rem !important;
+        }
 
-    .gradient-table th,
-    .gradient-table td {
-        padding: 0.3rem 0.2rem !important;
-        font-size: 0.75rem !important;
-    }
+        .level-box {
+            padding: 0.8rem !important;
+        }
 
-    .level-box {
-        padding: 0.8rem !important;
-    }
-
-    .years-table th,
-    .years-table td {
-        padding: 0.3rem 0.1rem !important;
-        font-size: 0.7rem !important;
-    }
-
+        .years-table th,
+        .years-table td {
+            padding: 0.3rem 0.1rem !important;
+            font-size: 0.7rem !important;
+        }
     }
 
     /* Ensure proper table responsiveness */
@@ -185,12 +178,9 @@
     }
 
     @@media (max-width: 600px) {
-        .gradient-table
-
-    {
-        min-width: 100%;
-    }
-
+        .gradient-table {
+            min-width: 100%;
+        }
     }
 </style>
 
@@ -315,5 +305,6 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/EduYear.js"></script>
 }

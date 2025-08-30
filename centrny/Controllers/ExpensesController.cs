@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using centrny.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace centrny.Controllers
 {
@@ -11,28 +12,27 @@ namespace centrny.Controllers
     {
         private readonly CenterContext db = new CenterContext();
 
-        private User GetCurrentUser()
+        // Get values from session
+        private int? GetCurrentUserCode()
         {
-            var username = User.Identity.Name;
-            return db.Users.FirstOrDefault(u => u.Username == username);
+            return HttpContext.Session.GetInt32("UserCode");
         }
 
-        private int GetCurrentRootCode()
+        private int? GetCurrentRootCode()
         {
-            var user = GetCurrentUser();
-            if (user == null) return 0;
-            var group = db.Groups.FirstOrDefault(g => g.GroupCode == user.GroupCode);
-            return group?.RootCode ?? 0;
+            return HttpContext.Session.GetInt32("RootCode");
         }
 
         public IActionResult Index()
         {
-            var user = GetCurrentUser();
-            if (user == null) return Unauthorized();
-            int rootCode = GetCurrentRootCode();
+            var userCode = GetCurrentUserCode();
+            var rootCode = GetCurrentRootCode();
+
+            if (userCode == null || rootCode == null)
+                return Unauthorized();
 
             ViewBag.Employees = db.Employees
-                .Where(e => e.RootCode == rootCode)
+                .Where(e => e.RootCode == rootCode.Value)
                 .Select(e => new { e.EmployeeCode, e.EmployeeName })
                 .ToList();
 
@@ -42,12 +42,14 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetExpenses()
         {
-            var user = GetCurrentUser();
-            if (user == null) return Unauthorized();
-            int rootCode = GetCurrentRootCode();
+            var userCode = GetCurrentUserCode();
+            var rootCode = GetCurrentRootCode();
+
+            if (userCode == null || rootCode == null)
+                return Unauthorized();
 
             var expenses = db.Expenses
-                .Where(e => e.RootCode == rootCode && e.IsActive)
+                .Where(e => e.RootCode == rootCode.Value && e.IsActive)
                 .OrderByDescending(e => e.ExpenseTime)
                 .Select(e => new
                 {
@@ -65,11 +67,14 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult AddExpense([FromForm] Expense expense)
         {
-            var user = GetCurrentUser();
-            if (user == null) return Unauthorized();
+            var userCode = GetCurrentUserCode();
+            var rootCode = GetCurrentRootCode();
 
-            expense.RootCode = GetCurrentRootCode();
-            expense.InsertUser = user.UserCode;
+            if (userCode == null || rootCode == null)
+                return Unauthorized();
+
+            expense.RootCode = rootCode.Value;
+            expense.InsertUser = userCode.Value;
             expense.InsertTime = DateTime.Now;
             expense.ExpenseTime = DateOnly.FromDateTime(DateTime.Now);
             expense.IsActive = true;
@@ -82,6 +87,12 @@ namespace centrny.Controllers
         [HttpGet]
         public IActionResult GetExpense(int id)
         {
+            var userCode = GetCurrentUserCode();
+            var rootCode = GetCurrentRootCode();
+
+            if (userCode == null || rootCode == null)
+                return Unauthorized();
+
             var exp = db.Expenses
                 .Where(e => e.ExpensesCode == id && e.IsActive)
                 .Select(e => new {
@@ -100,6 +111,12 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult EditExpense([FromForm] Expense expense)
         {
+            var userCode = GetCurrentUserCode();
+            var rootCode = GetCurrentRootCode();
+
+            if (userCode == null || rootCode == null)
+                return Unauthorized();
+
             var exp = db.Expenses.FirstOrDefault(e => e.ExpensesCode == expense.ExpensesCode && e.IsActive);
             if (exp == null) return NotFound();
 
@@ -115,6 +132,12 @@ namespace centrny.Controllers
         [HttpPost]
         public IActionResult DeleteExpense(int id)
         {
+            var userCode = GetCurrentUserCode();
+            var rootCode = GetCurrentRootCode();
+
+            if (userCode == null || rootCode == null)
+                return Unauthorized();
+
             var exp = db.Expenses.FirstOrDefault(e => e.ExpensesCode == id && e.IsActive);
             if (exp == null) return NotFound();
 

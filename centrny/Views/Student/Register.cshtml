@@ -30,9 +30,7 @@
                 <i class="fas fa-graduation-cap fa-3x mb-3"></i>
                 <h1>@Localizer["Header_Welcome"] @Model.RootName</h1>
                 <p>@Localizer["Header_CreateProfile"]</p>
-                <div class="item-key-display">
-                    @Localizer["Label_ItemKey"]: @Model.ItemKey
-                </div>
+               
             </div>
 
             <!-- Body -->
@@ -188,11 +186,14 @@
                             <label class="form-label" for="eduYearCode">
                                 @Localizer["Label_EduYear"]
                             </label>
-                            <select class="form-select" id="eduYearCode">
-                                <option value="">@Localizer["Dropdown_EduYearDefault"]</option>
-                                @foreach (var eduYear in Model.AvailableEduYears)
+                            <select class="form-select" id="eduYearCode" disabled>
+                                @if (Model.AvailableEduYears.Count > 0)
                                 {
-                                    <option value="@eduYear.Value">@eduYear.Text</option>
+                                    <option value="@Model.AvailableEduYears[0].Value" selected>@Model.AvailableEduYears[0].Text</option>
+                                }
+                                else
+                                {
+                                    <option value="">@Localizer["Dropdown_EduYearDefault"]</option>
                                 }
                             </select>
                         </div>

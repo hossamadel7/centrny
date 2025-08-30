@@ -19,6 +19,11 @@ namespace centrny.Controllers
             _logger = logger;
         }
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private int GetCurrentUserId() => GetSessionInt("UserCode") ?? 1;
+
         // GET: /StudentExam?studentCode=123&examCode=456&itemKey=XYZ
         public IActionResult Index(int studentCode, int examCode, string itemKey = null)
         {
@@ -45,20 +50,16 @@ namespace centrny.Controllers
                 DateTime examStartTime;
                 if (studentExam == null)
                 {
-                    // Defensive: check if student exists
                     var studentExists = _context.Students.Any(s => s.StudentCode == studentCode);
                     if (!studentExists)
                         return Json(new { error = "Student not found." });
 
-                    // Defensive: check if exam exists
                     if (exam == null)
                         return Json(new { error = "Exam not found." });
 
-                    // Defensive: check if exam duration is set
                     if (exam.ExamTimer == null)
                         return Json(new { error = "Exam duration not set. Contact admin." });
 
-                    // Student enters exam the first time: create record and set start time
                     examStartTime = DateTime.UtcNow;
                     studentExam = new StudentExam
                     {
@@ -66,7 +67,7 @@ namespace centrny.Controllers
                         ExamCode = examCode,
                         ExamTimer = examStartTime,
                         IsActive = false,
-                        InsertUser = 1, // or the current user, or system user
+                        InsertUser = GetCurrentUserId(),
                         InsertTime = DateTime.Now
                     };
                     _context.StudentExams.Add(studentExam);
@@ -80,11 +81,9 @@ namespace centrny.Controllers
                     if (!studentExam.ExamTimer.HasValue)
                         return Json(new { error = "Exam timer not set for this exam attempt." });
 
-                    // Use previously set start time to prevent timer reset
                     examStartTime = studentExam.ExamTimer.Value;
                 }
 
-                // Refresh exam in case it was null above
                 exam = _context.Exams.FirstOrDefault(e => e.ExamCode == examCode);
                 if (exam == null)
                     return Json(new { error = "Exam not found." });
@@ -96,7 +95,6 @@ namespace centrny.Controllers
                 var elapsed = (DateTime.UtcNow - examStartTime).TotalSeconds;
                 var timeLeft = durationSeconds - elapsed;
 
-                // DO NOT mark as submitted here! Only return info.
                 if (timeLeft <= 0)
                 {
                     return Json(new
@@ -105,7 +103,7 @@ namespace centrny.Controllers
                         examStartTime = examStartTime.ToString("o"),
                         durationSeconds = durationSeconds,
                         timeExpired = true,
-                        timeLeft = 0  // Return timeLeft for client accuracy
+                        timeLeft = 0
                     });
                 }
 
@@ -113,7 +111,7 @@ namespace centrny.Controllers
                 {
                     examStartTime = examStartTime.ToString("o"),
                     durationSeconds = durationSeconds,
-                    timeLeft = (int)timeLeft  // Return timeLeft for client accuracy
+                    timeLeft = (int)timeLeft
                 });
             }
             catch (Exception ex)
@@ -153,7 +151,7 @@ namespace centrny.Controllers
             var alreadyTaken = _context.StudentExams.Any(se =>
                 se.StudentCode == studentCode &&
                 se.ExamCode == examCode &&
-                se.IsActive == true); // Submitted
+                se.IsActive == true);
 
             return Json(new
             {
@@ -213,12 +211,13 @@ namespace centrny.Controllers
 
                     if (studExam == null)
                     {
-                        // Defensive: should never happen, but create one with start time now.
                         studExam = new StudentExam
                         {
                             StudentCode = submission.StudentCode,
                             ExamCode = submission.ExamCode,
-                            ExamTimer = DateTime.UtcNow
+                            ExamTimer = DateTime.UtcNow,
+                            InsertUser = GetCurrentUserId(),
+                            InsertTime = DateTime.Now
                         };
                         _context.StudentExams.Add(studExam);
                         _context.SaveChanges();
@@ -239,7 +238,7 @@ namespace centrny.Controllers
                     var timeLeft = durationSeconds - elapsed;
                     if (timeLeft <= 0)
                     {
-                        studExam.IsActive = true; // Mark as submitted (late)
+                        studExam.IsActive = true;
                         _context.SaveChanges();
                         transaction.Commit();
                         return Json(new { message = "Time is up for this exam. Submission not accepted." });
@@ -306,7 +305,7 @@ namespace centrny.Controllers
                     studExam.ExamDegree = totalDegree;
                     studExam.StudentResult = studentDegree;
                     studExam.IsActive = true;
-                    studExam.InsertUser = int.TryParse(User.FindFirst("NameIdentifier")?.Value, out int userId) ? userId : 1;
+                    studExam.InsertUser = GetCurrentUserId();
                     studExam.InsertTime = DateTime.Now;
                     if (totalDegree > 0)
                     {

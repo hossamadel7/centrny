@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
@@ -20,39 +19,36 @@ namespace centrny.Controllers
             _context = context;
         }
 
-        // --- Authority Check ---
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private bool IsCenterUser() => GetSessionString("RootIsCenter") == "True";
+        private (int? rootCode, int? groupCode, int? userCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("RootCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("UserCode"),
+                GetSessionString("Username")
+            );
+        }
+
+        // --- Authority Check via Session ---
         private bool UserHasEduYearPermission()
         {
-            var username = User.Identity?.Name;
-            var user = _context.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = _context.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
-
-            // Use your page path as stored in Pages (adjust as needed)
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
             var page = _context.Pages.FirstOrDefault(p => p.PagePath == "EduYear/Index");
-            if (page == null)
-                return false;
-
-            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            if (page == null) return false;
+            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-        }
+        private int GetCurrentUserId() => GetSessionInt("UserCode") ?? 0;
 
         public IActionResult Index()
         {
             if (!UserHasEduYearPermission())
-            {
                 return View("~/Views/Login/AccessDenied.cshtml");
-            }
             return View();
         }
 
@@ -62,21 +58,12 @@ namespace centrny.Controllers
             if (!UserHasEduYearPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-
-            if (user == null)
+            var (rootCode, groupCode, userCode, username) = GetSessionContext();
+            if (rootCode == null)
                 return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
 
             var eduYears = await _context.EduYears
-                .Where(e => e.RootCode == rootCode)
+                .Where(e => e.RootCode == rootCode.Value)
                 .Select(e => new
                 {
                     eduCode = e.EduCode,
@@ -94,28 +81,19 @@ namespace centrny.Controllers
             if (!UserHasEduYearPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-
-            if (user == null)
+            var (rootCode, groupCode, userCode, username) = GetSessionContext();
+            if (rootCode == null)
                 return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
 
             var activeEduYear = await _context.EduYears
-                .Where(e => e.RootCode == rootCode && e.IsActive)
+                .Where(e => e.RootCode == rootCode.Value && e.IsActive)
                 .FirstOrDefaultAsync();
 
             if (activeEduYear == null)
                 return Json(new { activeEduYear = (object)null, levels = new List<object>() });
 
             var levels = await _context.Levels
-                .Where(l => l.RootCode == rootCode)
+                .Where(l => l.RootCode == rootCode.Value)
                 .OrderBy(l => l.LevelCode)
                 .Select(l => new
                 {
@@ -163,42 +141,29 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.EduName))
-                return BadRequest("Invalid data.");
+                return Json(new { success = false, message = "Invalid data." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
+            var (rootCode, groupCode, userCode, username) = GetSessionContext();
+            if (rootCode == null) return Json(new { success = false, message = "Unauthorized." });
 
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            // Ensure only one active EduYear per root
             if (dto.IsActive)
             {
-                var activeExists = await _context.EduYears.AnyAsync(e => e.RootCode == rootCode && e.IsActive);
+                var activeExists = await _context.EduYears.AnyAsync(e => e.RootCode == rootCode.Value && e.IsActive);
                 if (activeExists)
-                    return BadRequest("There is already an active Edu Year for this root. Only one can be active.");
+                    return Json(new { success = false, message = "There is already an active Edu Year for this root. Only one can be active." });
             }
 
             var eduYear = new EduYear
             {
                 EduName = dto.EduName,
                 IsActive = dto.IsActive,
-                RootCode = rootCode
+                RootCode = rootCode.Value
             };
 
             _context.EduYears.Add(eduYear);
             await _context.SaveChangesAsync();
 
-            return Json(new
-            {
-                eduCode = eduYear.EduCode,
-                eduName = eduYear.EduName,
-                isActive = eduYear.IsActive
-            });
+            return Json(new { success = true, eduCode = eduYear.EduCode, eduName = eduYear.EduName, isActive = eduYear.IsActive });
         }
 
         [HttpPost]
@@ -208,18 +173,17 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.EduName))
-                return BadRequest("Invalid data.");
+                return Json(new { success = false, message = "Invalid data." });
             var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.EduCode == dto.EduCode);
             if (eduYear == null)
-                return NotFound("EduYear not found.");
+                return Json(new { success = false, message = "EduYear not found." });
 
-            // Only check if setting to active
             if (dto.IsActive && !eduYear.IsActive)
             {
                 var activeExists = await _context.EduYears
                     .AnyAsync(e => e.RootCode == eduYear.RootCode && e.IsActive && e.EduCode != eduYear.EduCode);
                 if (activeExists)
-                    return BadRequest("There is already an active Edu Year for this root. Only one can be active.");
+                    return Json(new { success = false, message = "There is already an active Edu Year for this root. Only one can be active." });
             }
 
             eduYear.EduName = dto.EduName;
@@ -227,12 +191,7 @@ namespace centrny.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Json(new
-            {
-                eduCode = eduYear.EduCode,
-                eduName = eduYear.EduName,
-                isActive = eduYear.IsActive
-            });
+            return Json(new { success = true, eduCode = eduYear.EduCode, eduName = eduYear.EduName, isActive = eduYear.IsActive });
         }
 
         [HttpPost]
@@ -242,16 +201,16 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             if (dto == null || dto.EduCode == 0)
-                return BadRequest("Invalid data.");
+                return Json(new { success = false, message = "Invalid data." });
 
             var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.EduCode == dto.EduCode);
             if (eduYear == null)
-                return NotFound("EduYear not found.");
+                return Json(new { success = false, message = "EduYear not found." });
 
             _context.EduYears.Remove(eduYear);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Json(new { success = true, message = "Education year deleted successfully." });
         }
 
         [HttpPost]
@@ -261,24 +220,17 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
-                return BadRequest("Invalid data.");
+                return Json(new { success = false, message = "Invalid data." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
-
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
+            var (rootCode, groupCode, userCode, username) = GetSessionContext();
+            if (rootCode == null) return Json(new { success = false, message = "Unauthorized." });
 
             var activeEduYear = await _context.EduYears
-                .Where(e => e.RootCode == rootCode && e.IsActive)
+                .Where(e => e.RootCode == rootCode.Value && e.IsActive)
                 .FirstOrDefaultAsync();
 
             if (activeEduYear == null)
-                return BadRequest("No active Edu Year for this root.");
+                return Json(new { success = false, message = "No active Edu Year for this root." });
 
             var year = new Year
             {
@@ -286,20 +238,14 @@ namespace centrny.Controllers
                 YearSort = dto.YearSort,
                 LevelCode = dto.LevelCode,
                 EduYearCode = activeEduYear.EduCode,
-                InsertUser = userId,
+                InsertUser = userCode ?? 0,
                 InsertTime = DateTime.Now
             };
 
             _context.Years.Add(year);
             await _context.SaveChangesAsync();
 
-            return Json(new
-            {
-                yearCode = year.YearCode,
-                yearName = year.YearName,
-                yearSort = year.YearSort,
-                levelCode = year.LevelCode
-            });
+            return Json(new { success = true, yearCode = year.YearCode, yearName = year.YearName, yearSort = year.YearSort, levelCode = year.LevelCode });
         }
 
         [HttpPost]
@@ -309,10 +255,10 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
-                return BadRequest("Invalid data.");
+                return Json(new { success = false, message = "Invalid data." });
             var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
             if (year == null)
-                return NotFound("Year not found.");
+                return Json(new { success = false, message = "Year not found." });
 
             year.YearName = dto.YearName;
             year.YearSort = dto.YearSort;
@@ -320,32 +266,33 @@ namespace centrny.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Json(new
-            {
-                yearCode = year.YearCode,
-                yearName = year.YearName,
-                yearSort = year.YearSort,
-                levelCode = year.LevelCode
-            });
+            return Json(new { success = true, yearCode = year.YearCode, yearName = year.YearName, yearSort = year.YearSort, levelCode = year.LevelCode });
         }
 
         [HttpPost]
         public async Task<IActionResult> DeleteYear([FromBody] DeleteYearDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
+            try
+            {
+                if (dto == null || dto.YearCode == 0)
+                    return Json(new { success = false, message = "Invalid data." });
 
-            if (dto == null || dto.YearCode == 0)
-                return BadRequest("Invalid data.");
+                var year = await _context.Years.FindAsync(dto.YearCode);
+                if (year == null)
+                    return Json(new { success = false, message = "Year not found." });
 
-            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
-            if (year == null)
-                return NotFound("Year not found.");
-
-            _context.Years.Remove(year);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+                _context.Years.Remove(year);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, message = "Year deleted successfully." });
+            }
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("REFERENCE constraint \"FK_Student_Year\"") == true)
+            {
+                return Json(new { success = false, message = "Cannot delete year: There are students assigned to this year." });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "An unexpected error occurred." });
+            }
         }
 
         [HttpPost]
@@ -355,39 +302,27 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.LevelName))
-                return BadRequest("Invalid data.");
+                return Json(new { success = false, message = "Invalid data." });
 
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null) return Unauthorized();
+            var (rootCode, groupCode, userCode, username) = GetSessionContext();
+            if (rootCode == null) return Json(new { success = false, message = "Unauthorized." });
 
-            int groupCode = user.GroupCode;
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == groupCode);
-            if (group == null) return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            // Optional: Check for duplicate level name under root
-            var exists = await _context.Levels.AnyAsync(l => l.RootCode == rootCode && l.LevelName == dto.LevelName);
+            var exists = await _context.Levels.AnyAsync(l => l.RootCode == rootCode.Value && l.LevelName == dto.LevelName);
             if (exists)
-                return BadRequest("Level name already exists for this root.");
+                return Json(new { success = false, message = "Level name already exists for this root." });
 
             var level = new Level
             {
                 LevelName = dto.LevelName,
-                RootCode = rootCode,
-                InsertUser = userId,
+                RootCode = rootCode.Value,
+                InsertUser = userCode ?? 0,
                 InsertTime = DateTime.Now
             };
 
             _context.Levels.Add(level);
             await _context.SaveChangesAsync();
 
-            return Json(new
-            {
-                levelCode = level.LevelCode,
-                levelName = level.LevelName
-            });
+            return Json(new { success = true, levelCode = level.LevelCode, levelName = level.LevelName });
         }
 
         // DTOs

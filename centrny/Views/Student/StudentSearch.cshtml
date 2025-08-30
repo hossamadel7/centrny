@@ -18,284 +18,284 @@
     <title>@ViewData["Title"] - @Model.RootName</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+   <style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-        .search-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+    .search-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
 
-        .search-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            max-width: 800px;
-            width: 100%;
-        }
+    .search-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 800px;
+        width: 100%;
+    }
 
-        .search-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 40px 30px;
-        }
+    .search-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+        padding: 40px 30px;
+    }
 
-            .search-header h1 {
-                margin: 0;
-                font-size: 2rem;
-                font-weight: 600;
-            }
-
-            .search-header p {
-                margin: 10px 0 0 0;
-                opacity: 0.9;
-                font-size: 1.1rem;
-            }
-
-        .item-key-display {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 10px 15px;
-            margin-top: 20px;
+        .search-header h1 {
+            margin: 0;
+            font-size: 2rem;
             font-weight: 600;
         }
 
-        .search-body {
-            padding: 40px 30px;
+        .search-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
         }
 
-        .search-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
+    .item-key-display {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 10px 15px;
+        margin-top: 20px;
+        font-weight: 600;
+    }
+
+    .search-body {
+        padding: 40px 30px;
+    }
+
+    .search-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
 
-        .form-label {
-            font-weight: 600;
-            color: #333;
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+        }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px rgba(40, 167, 69, 0.3);
+        }
+
+    .btn-outline-primary {
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        padding: 12px 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #667eea;
+    }
+
+    .student-card {
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+
+        .student-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .student-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 3px;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .instructions {
+        background: #e7f3ff;
+        border-left: 4px solid #007bff;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 0 10px 10px 0;
+    }
+
+        .instructions h5 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
             margin-bottom: 8px;
-        }
-
-        .form-control {
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            padding: 12px 15px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-            .form-control:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-            }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 12px 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
-            }
-
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 8px 15px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-            .btn-success:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 5px 10px rgba(40, 167, 69, 0.3);
-            }
-
-        .btn-outline-primary {
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            padding: 12px 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .student-card {
-            background: white;
-            border: 2px solid #e1e5e9;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-
-            .student-card:hover {
-                border-color: #667eea;
-                transform: translateY(-2px);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            }
-
-        .student-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #6c757d;
-            margin-bottom: 3px;
-        }
-
-        .info-value {
-            font-size: 1rem;
             color: #495057;
-            font-weight: 500;
         }
 
-        .alert {
-            border-radius: 10px;
-            border: none;
+    .no-results {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
         }
 
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
+    #loadingSpinner {
+        display: none;
+    }
+
+    /* Language toggle switch styles */
+    .lang-toggle-switch {
+        margin-top: 16px;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 28px;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
 
-        .instructions {
-            background: #e7f3ff;
-            border-left: 4px solid #007bff;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 0 10px 10px 0;
-        }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 28px;
+    }
 
-            .instructions h5 {
-                color: #007bff;
-                margin-bottom: 15px;
-            }
-
-            .instructions ul {
-                margin: 0;
-                padding-left: 20px;
-            }
-
-            .instructions li {
-                margin-bottom: 8px;
-                color: #495057;
-            }
-
-        .no-results {
-            text-align: center;
-            padding: 40px 20px;
-            color: #6c757d;
-        }
-
-            .no-results i {
-                font-size: 3rem;
-                margin-bottom: 20px;
-                opacity: 0.5;
-            }
-
-        #loadingSpinner {
-            display: none;
-        }
-
-        /* Language toggle switch styles */
-        .lang-toggle-switch {
-            margin-top: 16px;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 28px;
-        }
-
-            .switch input {
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-
-        .slider {
+        .slider:before {
             position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
             transition: .4s;
-            border-radius: 28px;
+            border-radius: 50%;
         }
 
-            .slider:before {
-                position: absolute;
-                content: "";
-                height: 22px;
-                width: 22px;
-                left: 3px;
-                bottom: 3px;
-                background-color: white;
-                transition: .4s;
-                border-radius: 50%;
-            }
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
 
-        input:checked + .slider {
-            background-color: #2196F3;
+        input:checked + .slider:before {
+            transform: translateX(32px);
         }
 
-            input:checked + .slider:before {
-                transform: translateX(32px);
-            }
+    .lang-label {
+        position: absolute;
+        top: 3px;
+        font-size: 1rem;
+        font-weight: bold;
+    }
 
-        .lang-label {
-            position: absolute;
-            top: 3px;
-            font-size: 1rem;
-            font-weight: bold;
-        }
+    .lang-en {
+        left: 8px;
+        color: #2196F3;
+    }
 
-        .lang-en {
-            left: 8px;
-            color: #2196F3;
-        }
-
-        .lang-ar {
-            right: 8px;
-            color: #2196F3;
-        }
-    </style>
+    .lang-ar {
+        right: 8px;
+        color: #2196F3;
+    }
+</style>
 </head>
 
 <body>
@@ -408,6 +408,8 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const itemKey = '@Model.ItemKey';
         // Localized messages used in JS:
@@ -417,6 +419,8 @@
         const errorSearchFailed = "@Localizer["Error_SearchFailed"]";
         const errorNetwork = "@Localizer["Error_Network"]";
         const dialogConfirmLink = "@Localizer["Dialog_ConfirmLink"]";
+        const linkSuccessMsg = "@Localizer["Success_Linked"]";
+        const linkErrorMsg = "@Localizer["Error_LinkFailed"]";
 
         // For dynamic card generation in JS
         const labelName = "@Localizer["Label_Name"]";
@@ -429,6 +433,7 @@
         const labelYearName = "@Localizer["Label_YearName"]";
         const labelRegistrationDate = "@Localizer["Label_RegistrationDate"]";
         const btnLinkProfile = "@Localizer["Btn_LinkProfile"]";
+        const btnSearch = "@Localizer["Btn_Search"]";
 
         document.getElementById('searchForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -543,8 +548,17 @@
             return card;
         }
 
-        async function linkStudent(studentCode, studentName) {
-            if (!confirm(dialogConfirmLink.replace("{0}", studentName))) {
+        // global function
+        window.linkStudent = async function(studentCode, studentName) {
+            // SweetAlert2 confirmation
+            const result = await Swal.fire({
+                title: dialogConfirmLink.replace("{0}", studentName),
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: "@Localizer["Btn_Confirm"]",
+                cancelButtonText: "@Localizer["Btn_Cancel"]"
+            });
+            if (!result.isConfirmed) {
                 return;
             }
 
@@ -563,20 +577,36 @@
                     })
                 });
 
-                const result = await response.json();
+                const resultData = await response.json();
 
-                if (result.success) {
-                    alert(result.message);
-                    window.location.href = result.redirectUrl;
+                if (resultData.success) {
+                    // Show SweetAlert2 success, then redirect
+                    await Swal.fire({
+                        title: linkSuccessMsg,
+                        text: resultData.message,
+                        icon: 'success',
+                        confirmButtonText: "@Localizer["Btn_OK"]"
+                    });
+                    window.location.href = resultData.redirectUrl;
                 } else {
-                    showError(result.error || "@Localizer["Error_LinkFailed"]");
+                    Swal.fire({
+                        title: linkErrorMsg,
+                        text: resultData.error || linkErrorMsg,
+                        icon: 'error',
+                        confirmButtonText: "@Localizer["Btn_OK"]"
+                    });
                 }
             } catch (error) {
-                showError("@Localizer["Error_LinkFailed"]");
+                Swal.fire({
+                    title: linkErrorMsg,
+                    text: linkErrorMsg,
+                    icon: 'error',
+                    confirmButtonText: "@Localizer["Btn_OK"]"
+                });
             } finally {
                 showLoading(false);
             }
-        }
+        };
 
         function showLoading(show) {
             document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
@@ -584,11 +614,18 @@
             if (show) {
                 document.getElementById('searchBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + loadingMsg;
             } else {
-                document.getElementById('searchBtn').innerHTML = '<i class="fas fa-search me-2"></i>' + "@Localizer["Btn_Search"]";
+                document.getElementById('searchBtn').innerHTML = '<i class="fas fa-search me-2"></i>' + btnSearch;
             }
         }
 
         function showError(message) {
+            // SweetAlert2 error alert
+            Swal.fire({
+                title: "@Localizer["Error_Title"]",
+                text: message,
+                icon: 'error',
+                confirmButtonText: "@Localizer["Btn_OK"]"
+            });
             document.getElementById('errorText').textContent = message;
             document.getElementById('errorMessage').style.display = 'block';
         }

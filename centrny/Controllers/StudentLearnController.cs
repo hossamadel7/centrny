@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -20,12 +19,24 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, bool isCenter) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("RootIsCenter") == "True"
+            );
+        }
+
         public IActionResult Index()
         {
             return View();
         }
 
-        // Grouped Learn Data by Student
         [HttpGet]
         public async Task<IActionResult> GetGroupedLearnData(
             int page = 1,
@@ -35,16 +46,9 @@ namespace centrny.Controllers
             int? studentCode = null,
             string search = null)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
-
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
 
             var learnsQuery = from l in _context.Learns
                               join s in _context.Students on l.StudentCode equals s.StudentCode
@@ -53,7 +57,7 @@ namespace centrny.Controllers
                               join b in _context.Branches on l.BranchCode equals b.BranchCode
                               join y in _context.Years on l.YearCode equals y.YearCode
                               join sc in _context.Schedules on l.ScheduleCode equals sc.ScheduleCode
-                              where l.RootCode == rootCode
+                              where l.RootCode == rootCode.Value
                               select new
                               {
                                   l.StudentCode,
@@ -87,7 +91,7 @@ namespace centrny.Controllers
                 );
             }
 
-            var grouped = await learnsQuery
+            var groupedRaw = await learnsQuery
                 .GroupBy(l => new { l.StudentCode, l.StudentName, l.YearCode, l.YearName })
                 .Select(g => new
                 {
@@ -113,6 +117,41 @@ namespace centrny.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
+            var studentSubjectPairs = groupedRaw
+                .SelectMany(g => g.subjects.Select(s => new { StudentCode = g.studentCode, SubjectCode = s.subjectCode }))
+                .ToList();
+
+            var studentCodes = studentSubjectPairs.Select(x => x.StudentCode).Distinct().ToList();
+            var subjectCodes = studentSubjectPairs.Select(x => x.SubjectCode).Distinct().ToList();
+
+            var subscribedPairs = await _context.StudentSubjectPlans
+                .Where(ssp => studentCodes.Contains(ssp.StudentCode) && subjectCodes.Contains(ssp.SubjectCode))
+                .Select(ssp => new { ssp.StudentCode, ssp.SubjectCode })
+                .ToListAsync();
+
+            var subscribedSet = new HashSet<(int, int)>(subscribedPairs.Select(sp => (sp.StudentCode, sp.SubjectCode)));
+
+            var grouped = groupedRaw.Select(g => new
+            {
+                studentCode = g.studentCode,
+                studentName = g.studentName,
+                yearCode = g.yearCode,
+                yearName = g.yearName,
+                isOnline = g.isOnline,
+                isActive = g.isActive,
+                subjects = g.subjects.Select(s => new
+                {
+                    subjectCode = s.subjectCode,
+                    subjectName = s.subjectName,
+                    teacherName = s.teacherName,
+                    branchName = s.branchName,
+                    scheduleDay = s.scheduleDay,
+                    scheduleStart = s.scheduleStart,
+                    scheduleEnd = s.scheduleEnd,
+                    isSubscribed = subscribedSet.Contains((g.studentCode, s.subjectCode))
+                }).ToList()
+            }).ToList();
+
             int totalCount = await learnsQuery
                 .Select(l => new { l.StudentCode, l.YearCode })
                 .Distinct()
@@ -128,22 +167,13 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFilterOptions()
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
 
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
-
-            // Get active EduYear for this root
-            var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.RootCode == rootCode && e.IsActive);
+            var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.RootCode == rootCode.Value && e.IsActive);
             int? eduYearCode = eduYear?.EduCode;
 
-            // Only years that belong to the active eduYearCode
             var years = await _context.Years
                 .Where(y => y.EduYearCode == eduYearCode)
                 .OrderBy(y => y.YearName)
@@ -151,7 +181,7 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             var subjects = await _context.Subjects
-                .Where(s => s.RootCode == rootCode)
+                .Where(s => s.RootCode == rootCode.Value)
                 .OrderBy(s => s.SubjectName)
                 .Select(s => new { s.SubjectCode, s.SubjectName })
                 .ToListAsync();
@@ -166,19 +196,12 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchStudents(string term)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
-
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode);
-            if (group == null)
-                return Unauthorized();
-
-            int rootCode = group.RootCode;
 
             var students = await _context.Students
-                .Where(s => s.RootCode == rootCode && (s.StudentName.Contains(term) || s.StudentCode.ToString().Contains(term)))
+                .Where(s => s.RootCode == rootCode.Value && (s.StudentName.Contains(term) || s.StudentCode.ToString().Contains(term)))
                 .OrderBy(s => s.StudentName)
                 .Select(s => new { s.StudentCode, s.StudentName })
                 .Take(15)
@@ -190,29 +213,24 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAddLearnFormData(int studentCode, int yearCode)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode);
-            if (group == null)
-                return Unauthorized();
-            int rootCode = group.RootCode;
 
             var subjects = await _context.Subjects
-                .Where(s => s.RootCode == rootCode && s.YearCode == yearCode)
+                .Where(s => s.RootCode == rootCode.Value && s.YearCode == yearCode)
                 .OrderBy(s => s.SubjectName)
                 .Select(s => new { s.SubjectCode, s.SubjectName })
                 .ToListAsync();
 
             var activeEduYear = await _context.EduYears
-                .FirstOrDefaultAsync(e => e.RootCode == rootCode && e.IsActive);
+                .FirstOrDefaultAsync(e => e.RootCode == rootCode.Value && e.IsActive);
 
             return Json(new
             {
                 subjects,
                 eduYearCode = activeEduYear?.EduCode ?? 0,
-                rootCode
+                rootCode = rootCode.Value
             });
         }
 
@@ -276,9 +294,8 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddLearn([FromForm] LearnCreateDto dto)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Json(new { success = false, message = "Unauthorized" });
 
             bool exists = await _context.Learns.AnyAsync(l =>
@@ -297,11 +314,11 @@ namespace centrny.Controllers
                 ScheduleCode = dto.ScheduleCode,
                 EduYearCode = dto.EduYearCode,
                 BranchCode = dto.BranchCode,
-                RootCode = dto.RootCode,
+                RootCode = rootCode.Value,
                 YearCode = dto.YearCode,
                 IsOnline = dto.IsOnline,
                 IsActive = true,
-                InsertUser = userId,
+                InsertUser = userCode.Value,
                 InsertTime = DateTime.Now
             };
 
@@ -314,24 +331,14 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEditLearnFormData(int studentCode, int subjectCode, int yearCode)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
-                return Unauthorized();
-
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode);
-            if (group == null)
-                return Unauthorized();
-            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == group.RootCode);
-            if (root == null)
+            var (userCode, groupCode, rootCode, isCenter) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
 
             var learn = await _context.Learns.FirstOrDefaultAsync(l =>
                 l.StudentCode == studentCode && l.SubjectCode == subjectCode && l.YearCode == yearCode);
             if (learn == null)
                 return Json(new { success = false, message = "Learn record not found" });
-
-            var isCenter = root.IsCenter;
 
             if (isCenter)
             {
@@ -397,17 +404,17 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> EditLearn([FromForm] LearnEditDto dto)
         {
-            int userId = GetCurrentUserId();
+            var (userCode, groupCode, rootCode, isCenter) = GetSessionContext();
+            if (!userCode.HasValue)
+                return Json(new { success = false, message = "Unauthorized" });
+
             var learn = await _context.Learns.FirstOrDefaultAsync(l =>
                 l.StudentCode == dto.StudentCode && l.SubjectCode == dto.SubjectCode && l.YearCode == dto.YearCode);
 
             if (learn == null)
                 return Json(new { success = false, message = "Not found" });
 
-            var userEntity = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == userEntity.GroupCode);
-            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == group.RootCode);
-            if (root.IsCenter)
+            if (isCenter)
                 learn.TeacherCode = dto.TeacherCode;
 
             learn.ScheduleCode = dto.ScheduleCode;
@@ -419,9 +426,8 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudentSubjectsForYear(int studentCode, int yearCode)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
 
             var learns = await _context.Learns
@@ -478,9 +484,8 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateStudentSchedules([FromForm] StudentSchedulesUpdateDto dto)
         {
-            int userId = GetCurrentUserId();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userId);
-            if (user == null)
+            var (userCode, groupCode, rootCode, _) = GetSessionContext();
+            if (!userCode.HasValue)
                 return Json(new { success = false, message = "Unauthorized" });
 
             if (dto.SubjectCodes == null || dto.NewScheduleCodes == null || dto.SubjectCodes.Count != dto.NewScheduleCodes.Count)
@@ -507,25 +512,19 @@ namespace centrny.Controllers
             return Json(new { success = true });
         }
 
-        // ------------------- NEW ENDPOINT -------------------
-        // The full backend function for GetStudentStatistics with fixes and new exam/assignment filter.
-
         [HttpGet]
         public async Task<IActionResult> GetStudentStatistics(
             int studentCode,
             int yearCode,
             int? subjectCode = null,
-            bool? isExamFilter = null // NEW filter for exam/assignment
+            bool? isExamFilter = null
         )
         {
-            // Get all subjects the student is enrolled in for the year
             var learnsQuery = _context.Learns
                 .Where(l => l.StudentCode == studentCode && l.YearCode == yearCode);
 
             if (subjectCode.HasValue)
-            {
                 learnsQuery = learnsQuery.Where(l => l.SubjectCode == subjectCode.Value);
-            }
 
             var learns = await learnsQuery.ToListAsync();
             var subjects = learns.Select(l => l.SubjectCode).Distinct().ToList();
@@ -536,21 +535,18 @@ namespace centrny.Controllers
             {
                 var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == subjCode);
 
-                // Exams/Assignments
                 var examsQuery = _context.Exams
-     .Where(e => e.SubjectCode == subjCode && e.YearCode == yearCode && e.IsActive == true);
+                    .Where(e => e.SubjectCode == subjCode && e.YearCode == yearCode && e.IsActive == true);
 
                 if (isExamFilter.HasValue)
                     examsQuery = examsQuery.Where(e => e.IsExam == isExamFilter.Value);
 
                 var exams = await examsQuery.OrderBy(e => e.InserTime).ToListAsync();
 
-                // Get StudentExams for the student, then get the Exam records to filter by subject and year
                 var studentExams = await _context.StudentExams
                     .Where(se => se.StudentCode == studentCode)
                     .ToListAsync();
 
-                // Only keep the ones for this subject and year by looking up the Exam table
                 var studentExamList = new List<StudentExam>();
                 foreach (var se in studentExams)
                 {
@@ -572,17 +568,15 @@ namespace centrny.Controllers
                     {
                         examName = e.ExamName,
                         examDate = e.InserTime.ToString("yyyy-MM-dd"),
-                        examDegree = e.ExamDegree, // Show exam's max degree
-                        studentDegree = se?.StudentResult, // Show student's degree
+                        examDegree = e.ExamDegree,
+                        studentDegree = se?.StudentResult,
                         attended = se != null,
                         status = se != null ? "Attended" : "Missed"
                     };
                 }).ToList();
 
-                // Attendance
                 var schedules = learns.Where(l => l.SubjectCode == subjCode).Select(l => l.ScheduleCode).Distinct().ToList();
 
-                // Get all classes for those schedules
                 var classes = await _context.Classes
                     .Where(c => schedules.Contains((int)c.ScheduleCode) && c.YearCode == yearCode)
                     .OrderBy(c => c.ClassDate)
@@ -590,7 +584,6 @@ namespace centrny.Controllers
 
                 var classIds = classes.Select(c => c.ClassCode).ToList();
 
-                // Attend table: get all records for this student and these class codes
                 var attends = await _context.Attends
                     .Where(a => a.StudentId == studentCode && classIds.Contains(a.ClassId))
                     .ToListAsync();
@@ -639,13 +632,6 @@ namespace centrny.Controllers
             {
                 subjects = subjectStats
             });
-        }
-        // ----------------------------------------------------
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
         public class LearnCreateDto

@@ -18,6 +18,20 @@ namespace centrny.Controllers
         {
             _context = context;
         }
+
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("Username")
+            );
+        }
+
         // Use Unicode encoding to match SQL Server NVARCHAR hashing
         public static string MD5hasher(string input)
         {
@@ -36,21 +50,13 @@ namespace centrny.Controllers
         // --- Authority Check ---
         private bool UserHasSecurityPermission()
         {
-            var username = User.Identity?.Name;
-            var user = _context.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = _context.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
 
             var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Security/Index");
-            if (page == null)
-                return false;
+            if (page == null) return false;
 
-            return _context.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
         public IActionResult Index()
@@ -80,7 +86,6 @@ namespace centrny.Controllers
             return Json(roots);
         }
 
-        // --- NEW ENDPOINT: Fetch Branches by RootCode ---
         [HttpGet]
         public JsonResult GetBranchesByRoot(int rootCode)
         {
@@ -174,7 +179,6 @@ namespace centrny.Controllers
             return Json(new { success = true });
         }
 
-        // --- MODIFIED: Delete group deletes all users first ---
         [HttpPost]
         public JsonResult DeleteGroup(int groupCode)
         {

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using centrny.Models;
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using System.Globalization; // Added for culture detection
+using System.Globalization;
 
 namespace centrny.Controllers
 {
@@ -23,15 +22,16 @@ namespace centrny.Controllers
         }
 
         /// <summary>
-        /// Returns sidebar pages for the user, based on the pages the user's group is authorized to view
-        /// (according to GroupPages table), NOT according to RootModules or modules.
+        /// Returns sidebar pages for the user, based on the pages the user's group is authorized to view.
+        /// Uses session for best performance and caches by culture.
         /// </summary>
-        public static List<SidebarPageViewModel> GetSidebarPagesForUser(CenterContext db, ClaimsPrincipal user, ISession session)
+        public static List<SidebarPageViewModel> GetSidebarPagesForUser(CenterContext db, ISession session)
         {
-            var sessionKey = "SidebarPages";
-            // Remove cache if culture changes (for proper language switch)
-            var currentCulture = CultureInfo.CurrentUICulture.Name;
-            var cultureInSession = session?.GetString("SidebarPagesCulture");
+            const string sessionKey = "SidebarPages";
+            string currentCulture = CultureInfo.CurrentUICulture.Name;
+            string cultureInSession = session?.GetString("SidebarPagesCulture");
+
+            // Use session caching for best performance
             if (session != null && session.TryGetValue(sessionKey, out var cachedBytes) && cultureInSession == currentCulture)
             {
                 var cachedJson = System.Text.Encoding.UTF8.GetString(cachedBytes);
@@ -39,28 +39,24 @@ namespace centrny.Controllers
                 if (cached != null) return cached;
             }
 
-            var username = user.Identity?.Name;
-            if (string.IsNullOrEmpty(username)) return new List<SidebarPageViewModel>();
+            // Read context from session, not ClaimsPrincipal
+            int? userCode = session?.GetInt32("UserCode");
+            int? groupCode = session?.GetInt32("GroupCode");
 
-            var currentUser = db.Users.FirstOrDefault(u => u.Username == username);
-            if (currentUser == null) return new List<SidebarPageViewModel>();
-
-            var group = db.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
-            if (group == null) return new List<SidebarPageViewModel>();
+            if (userCode == null || groupCode == null)
+                return new List<SidebarPageViewModel>();
 
             // 1. Get all PageCodes authorized for this group from GroupPages table
             var groupPageCodes = db.GroupPages
-                .Where(gp => gp.GroupCode == group.GroupCode)
+                .Where(gp => gp.GroupCode == groupCode.Value)
                 .Select(gp => gp.PageCode)
                 .Distinct()
                 .ToList();
 
             if (!groupPageCodes.Any())
-            {
                 return new List<SidebarPageViewModel>();
-            }
 
-            var isArabic = currentCulture.StartsWith("ar");
+            bool isArabic = currentCulture.StartsWith("ar");
 
             // 2. Fetch allowed pages for this group, ordered by PageSort (if present)
             var allowedPages = db.Pages
@@ -74,11 +70,12 @@ namespace centrny.Controllers
                     Text = isArabic && !string.IsNullOrEmpty(p.PageNameAr) ? p.PageNameAr : p.PageName
                 }).ToList();
 
+            // Cache sidebar in session for best performance
             if (session != null)
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(allowedPages);
                 session.Set(sessionKey, System.Text.Encoding.UTF8.GetBytes(json));
-                session.SetString("SidebarPagesCulture", currentCulture); // Save current culture in session
+                session.SetString("SidebarPagesCulture", currentCulture);
             }
 
             return allowedPages;
@@ -132,6 +129,9 @@ namespace centrny.Controllers
                 case "employee": return "fas fa-user-tie";
                 case "item": return "fas fa-box";
                 case "root list": return "fas fa-sitemap";
+                case "reports": return "fas fa-chart-line";
+                case "subscription": return "fas fa-receipt";
+                case "subscription add": return "fas fa-plus-circle";
                 default: return "fas fa-file";
             }
         }

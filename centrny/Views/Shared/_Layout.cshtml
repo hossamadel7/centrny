@@ -7,8 +7,8 @@
 
     // Sidebar now shows pages according to GroupPages (group's authorized pages)
     var sidebarPages = User.Identity.IsAuthenticated
-        ? LayoutController.GetSidebarPagesForUser(DbContext, User, Context.Session)
-        : new List<SidebarPageViewModel>();
+      ? LayoutController.GetSidebarPagesForUser(DbContext, Context.Session)
+      : new List<SidebarPageViewModel>();
 
     // Fetch the root name for the logged-in user (fallback to "Centrny")
     string rootName = "Centrny";

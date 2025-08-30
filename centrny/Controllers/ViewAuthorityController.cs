@@ -20,23 +20,28 @@ namespace centrny.Controllers
     {
         private CenterContext db = new CenterContext();
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionInt("RootCode"),
+                GetSessionString("Username")
+            );
+        }
+
         private bool UserHasAuthorityPermission()
         {
-            var username = User.Identity.Name;
-            var user = db.Users.FirstOrDefault(u => u.Username == username);
-            if (user == null)
-                return false;
-
-            var userGroupCodes = db.Users
-                .Where(ug => ug.UserCode == user.UserCode)
-                .Select(ug => ug.GroupCode)
-                .ToList();
+            var groupCode = GetSessionInt("GroupCode");
+            if (groupCode == null) return false;
 
             var page = db.Pages.FirstOrDefault(p => p.PagePath == "ViewAuthority/Index");
-            if (page == null)
-                return false;
+            if (page == null) return false;
 
-            return db.GroupPages.Any(gp => userGroupCodes.Contains(gp.GroupCode) && gp.PageCode == page.PageCode);
+            return db.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
         }
 
         public IActionResult Index()

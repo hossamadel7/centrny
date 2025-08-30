@@ -25,6 +25,8 @@ public partial class CenterContext : DbContext
 
     public virtual DbSet<Class> Classes { get; set; }
 
+    public virtual DbSet<Content> Contents { get; set; }
+
     public virtual DbSet<EduYear> EduYears { get; set; }
 
     public virtual DbSet<Employee> Employees { get; set; }
@@ -411,6 +413,21 @@ public partial class CenterContext : DbContext
             entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.YearCode)
                 .HasConstraintName("FK_Class_Year");
+        });
+
+        modelBuilder.Entity<Content>(entity =>
+        {
+            entity.HasKey(e => e.ContentCode).HasName("PK_Content_1");
+
+            entity.ToTable("Content");
+
+            entity.Property(e => e.ContentCode).HasColumnName("Content_Code");
+            entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Contents)
+                .HasForeignKey(d => d.RootCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Content_Root");
         });
 
         modelBuilder.Entity<EduYear>(entity =>
@@ -1273,6 +1290,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.RootAddress)
                 .HasMaxLength(100)
                 .HasColumnName("Root_Address");
+            entity.Property(e => e.RootDomain).HasColumnName("Root_Domain");
             entity.Property(e => e.RootEmail)
                 .HasMaxLength(50)
                 .HasColumnName("Root_Email");

@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using System;
+using System.Collections.Generic;
 
 namespace centrny.Controllers
 {
@@ -16,6 +17,24 @@ namespace centrny.Controllers
             _context = context;
         }
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+
+        /// <summary>
+        /// For convenience, get all main session context at once.
+        /// Assumes you set these at login: RootCode, UserCode, GroupCode, Username
+        /// </summary>
+        private (int? rootCode, int? userCode, int? groupCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("RootCode"),
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                GetSessionString("Username")
+            );
+        }
+
         public IActionResult Index()
         {
             // The view will fetch data via AJAX
@@ -26,9 +45,12 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployees()
         {
-            int rootCode = GetCurrentUserRootCode();
+            var (rootCode, userCode, groupCode, username) = GetSessionContext();
+            if (rootCode == null)
+                return Unauthorized();
+
             var employees = await _context.Employees
-                .Where(e => e.RootCode == rootCode)
+                .Where(e => e.RootCode == rootCode.Value)
                 .Select(e => new {
                     e.EmployeeName,
                     e.EmployeePhone,
@@ -48,14 +70,17 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsersForDropdown()
         {
-            int rootCode = GetCurrentUserRootCode();
-            // Step 1: Get group codes with this root code
+            var (rootCode, userCode, groupCode, username) = GetSessionContext();
+            if (rootCode == null)
+                return Unauthorized();
+
+            // Get group codes for this root
             var groupCodes = await _context.Groups
-                .Where(g => g.RootCode == rootCode)
+                .Where(g => g.RootCode == rootCode.Value)
                 .Select(g => g.GroupCode)
                 .ToListAsync();
 
-            // Step 2: Get users in those groups
+            // Get users in those groups
             var users = await _context.Users
                 .Where(u => groupCodes.Contains(u.GroupCode))
                 .Select(u => new { u.UserCode, u.Username })
@@ -68,9 +93,12 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBranchesForDropdown()
         {
-            int rootCode = GetCurrentUserRootCode();
+            var (rootCode, userCode, groupCode, username) = GetSessionContext();
+            if (rootCode == null)
+                return Unauthorized();
+
             var branches = await _context.Branches
-                .Where(b => b.RootCode == rootCode)
+                .Where(b => b.RootCode == rootCode.Value)
                 .Select(b => new { b.BranchCode, b.BranchName })
                 .ToListAsync();
 
@@ -84,7 +112,9 @@ namespace centrny.Controllers
             if (dto == null)
                 return BadRequest();
 
-            int rootCode = GetCurrentUserRootCode();
+            var (rootCode, userCode, groupCode, username) = GetSessionContext();
+            if (rootCode == null || userCode == null)
+                return Unauthorized();
 
             var employee = new Employee
             {
@@ -96,8 +126,8 @@ namespace centrny.Controllers
                 IsActive = true, // always set to true
                 UserCode = dto.UserCode,
                 BranchCode = dto.BranchCode,
-                RootCode = rootCode,
-                InsertUser = GetCurrentUserId(),
+                RootCode = rootCode.Value,
+                InsertUser = userCode.Value,
                 InsertTime = DateTime.Now
             };
 
@@ -141,19 +171,6 @@ namespace centrny.Controllers
             _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();
             return Ok();
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-        }
-
-        private int GetCurrentUserRootCode()
-        {
-            // Assume RootCode is stored in claims (you may need to adjust this)
-            var rootCodeClaim = User.FindFirst("RootCode");
-            return rootCodeClaim != null ? int.Parse(rootCodeClaim.Value) : 0;
         }
     }
 
