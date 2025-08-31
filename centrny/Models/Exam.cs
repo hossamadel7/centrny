@@ -45,6 +45,8 @@ public partial class Exam
 
     public DateTime? LastUpdateTime { get; set; }
 
+    public int? SortOrder { get; set; }
+
     public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;

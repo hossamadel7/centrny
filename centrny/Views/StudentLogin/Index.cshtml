@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "Student Login";
+    Layout = "_Layout";
+}
+
+<link rel="stylesheet" href="~/css/StudentLogin.css" />
+
+<div class="login-container">
+    <div class="student-login-box">
+        <div class="login-header">
+            <h2 class="login-title">Student Portal</h2>
+            <p class="login-subtitle">Sign in to access your account</p>
+        </div>
+
+        <form id="studentLoginForm" method="post" autocomplete="off">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label for="Username" class="form-label">Username</label>
+                <input id="Username"
+                       name="username"
+                       class="form-control"
+                       maxlength="50"
+                       required
+                       placeholder="Enter your username"
+                       autocomplete="username" />
+            </div>
+
+            <div class="form-group">
+                <label for="Password" class="form-label">Password</label>
+                <div class="password-container">
+                    <input id="Password"
+                           name="password"
+                           type="password"
+                           class="form-control"
+                           maxlength="100"
+                           required
+                           placeholder="Enter your password"
+                           autocomplete="current-password" />
+                    <button type="button"
+                            id="toggleStudentPwd"
+                            class="password-toggle"
+                            aria-label="Toggle password visibility">
+                        Show
+                    </button>
+                </div>
+            </div>
+
+            <button id="btnStudentLogin" class="btn-login" type="submit">
+                <span class="login-text">Sign In</span>
+            </button>
+
+            <div id="studentLoginStatus" class="login-status"></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/studentLogin.js"></script>
+    <script>
+        // Enhanced password toggle functionality
+        document.getElementById('toggleStudentPwd').addEventListener('click', function() {
+            const passwordField = document.getElementById('Password');
+            const toggleButton = this;
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleButton.textContent = 'Hide';
+                toggleButton.setAttribute('aria-label', 'Hide password');
+            } else {
+                passwordField.type = 'password';
+                toggleButton.textContent = 'Show';
+                toggleButton.setAttribute('aria-label', 'Show password');
+            }
+        });
+
+        // Enhanced form submission with loading state
+        document.getElementById('studentLoginForm').addEventListener('submit', function() {
+            const submitButton = document.getElementById('btnStudentLogin');
+            const loginText = submitButton.querySelector('.login-text');
+
+            submitButton.disabled = true;
+            loginText.innerHTML = '<span class="loading-spinner"></span>Signing In...';
+
+            // Reset button state after 3 seconds (adjust based on your needs)
+            setTimeout(() => {
+                submitButton.disabled = false;
+                loginText.textContent = 'Sign In';
+            }, 3000);
+        });
+
+        // Show status messages with animation
+        function showLoginStatus(message, isError = true) {
+            const statusDiv = document.getElementById('studentLoginStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `login-status ${isError ? 'error' : 'success'}`;
+            statusDiv.style.display = 'block';
+
+            // Fade in animation
+            statusDiv.style.opacity = '0';
+            setTimeout(() => {
+                statusDiv.style.transition = 'opacity 0.3s ease';
+                statusDiv.style.opacity = '1';
+            }, 10);
+        }
+    </script>
+}

@@ -559,6 +559,7 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.LessonCode).HasColumnName("Lesson_Code");
+            entity.Property(e => e.SortOrder).HasColumnName("Sort_Order");
             entity.Property(e => e.SubjectCode).HasColumnName("Subject_Code");
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
@@ -696,14 +697,14 @@ public partial class CenterContext : DbContext
 
         modelBuilder.Entity<File>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("File");
+            entity.HasKey(e => e.FileCode);
 
+            entity.ToTable("File");
+
+            entity.Property(e => e.FileCode).HasColumnName("File_code");
             entity.Property(e => e.DisplayName)
                 .HasMaxLength(200)
                 .HasColumnName("Display_Name");
-            entity.Property(e => e.FileCode).HasColumnName("File_code");
             entity.Property(e => e.FileExtension)
                 .HasMaxLength(20)
                 .HasColumnName("File_Extension");
@@ -728,24 +729,15 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.SortOrder).HasColumnName("Sort_Order");
             entity.Property(e => e.VideoProvider).HasColumnName("Video_Provider");
 
-            entity.HasOne(d => d.FileTypeNavigation).WithMany()
-                .HasForeignKey(d => d.FileType)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_File_FileType_Lockup");
-
-            entity.HasOne(d => d.LessonCodeNavigation).WithMany()
+            entity.HasOne(d => d.LessonCodeNavigation).WithMany(p => p.Files)
                 .HasForeignKey(d => d.LessonCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_File_Lesson");
 
-            entity.HasOne(d => d.RootCodeNavigation).WithMany()
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Files)
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_File_Root");
-
-            entity.HasOne(d => d.VideoProviderNavigation).WithMany()
-                .HasForeignKey(d => d.VideoProvider)
-                .HasConstraintName("FK_File_VideoProvider_Lockup");
         });
 
         modelBuilder.Entity<Group>(entity =>
@@ -1587,9 +1579,6 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.RootCode)
                 .HasDefaultValue(1)
                 .HasColumnName("Root_Code");
-            entity.Property(e => e.StudemtPassword)
-                .HasMaxLength(50)
-                .HasColumnName("Studemt_Password");
             entity.Property(e => e.StudentBirthdate).HasColumnName("Student_Birthdate");
             entity.Property(e => e.StudentFatherJob)
                 .HasMaxLength(50)
@@ -1607,6 +1596,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.StudentName)
                 .HasMaxLength(100)
                 .HasColumnName("Student_Name");
+            entity.Property(e => e.StudentPassword)
+                .HasMaxLength(50)
+                .HasColumnName("Student_Password");
             entity.Property(e => e.StudentPhone)
                 .HasMaxLength(50)
                 .HasColumnName("Student_Phone");
@@ -2065,7 +2057,11 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => e.WalletCode1).HasName("PK_Wallet_Exam");
 
-            entity.ToTable("Wallet_Codes", tb => tb.HasTrigger("trg_UpdateWalletCodeStatus"));
+            entity.ToTable("Wallet_Codes", tb =>
+                {
+                    tb.HasTrigger("trg_AfterInsert_WalletCodes");
+                    tb.HasTrigger("trg_UpdateWalletCodeStatus");
+                });
 
             entity.Property(e => e.WalletCode1).HasColumnName("Wallet_Code");
             entity.Property(e => e.DateStart).HasColumnName("Date_Start");

@@ -228,7 +228,7 @@ body {
     }
 
 .btn-secondary {
-    background: white;
+    background: linear-gradient(135deg, #e17055 0%, #fd79a8 100%) !important;
     color: var(--pins-gray-700);
     border: 2px solid var(--pins-gray-200);
 }

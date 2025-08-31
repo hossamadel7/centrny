@@ -59,6 +59,8 @@ public partial class Root
 
     public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 
+    public virtual ICollection<File> Files { get; set; } = new List<File>();
+
     public virtual ICollection<Group> Groups { get; set; } = new List<Group>();
 
     public virtual ICollection<Hall> Halls { get; set; } = new List<Hall>();

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using centrny.Attributes;
 using centrny.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Logging;
 namespace centrny.Controllers
 {
     [Authorize]
+    [RequirePageAccess("Pin")]
     public class PinController : Controller
     {
         private readonly CenterContext _context;
@@ -36,6 +38,9 @@ namespace centrny.Controllers
             public string? Message { get; set; }
             public string? Error { get; set; }
             public int TotalCount { get; set; }
+            public int UsedCount { get; set; }
+            public int ActiveCount { get; set; }
+            public int SoldCount { get; set; }
             public int CurrentPage { get; set; } = 1;
             public int PageSize { get; set; } = 10;
             public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
@@ -99,6 +104,7 @@ namespace centrny.Controllers
             public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
             public bool HasNextPage => Page < TotalPages;
             public bool HasPreviousPage => Page > 1;
+            public int WalletCodesCount { get; set; }
         }
 
         // -------- Actions ----------
@@ -117,16 +123,30 @@ namespace centrny.Controllers
             try
             {
                 var totalCount = await GetPinsTotalCountAsync(rootCode.Value);
-                var pins = await GetPinsAsync(rootCode.Value, page, pageSize);
+                var pinsPage = await GetPinsAsync(rootCode.Value, page, pageSize);
                 var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
+
+                // Status counts for ALL pins of this root (not just page)
+                var statusCounts = await _context.Pins
+                    .Where(p => p.RootCode == rootCode.Value)
+                    .GroupBy(p => p.Status)
+                    .Select(g => new { g.Key, C = g.Count() })
+                    .ToListAsync();
+
+                int used = statusCounts.FirstOrDefault(s => s.Key == 0)?.C ?? 0;
+                int active = statusCounts.FirstOrDefault(s => s.Key == 1)?.C ?? 0;
+                int sold = statusCounts.FirstOrDefault(s => s.Key == 2)?.C ?? 0;
 
                 var vm = new PinsViewModel
                 {
                     RootCode = rootCode.Value,
                     UserCode = userCode.Value,
                     WalletCodesCount = walletCount,
-                    Pins = pins,
+                    Pins = pinsPage, // only current page for initial render
                     TotalCount = totalCount,
+                    UsedCount = used,
+                    ActiveCount = active,
+                    SoldCount = sold,
                     CurrentPage = page,
                     PageSize = pageSize,
                     Message = message,
@@ -140,8 +160,8 @@ namespace centrny.Controllers
                 _logger.LogError(ex, "Error loading pins page for RootCode={RootCode}", rootCode);
                 return View("Index", new PinsViewModel
                 {
-                    RootCode = rootCode.Value,
-                    UserCode = userCode.Value,
+                    RootCode = rootCode ?? 0,
+                    UserCode = userCode ?? 0,
                     Error = "Failed to load pins data."
                 });
             }
@@ -176,19 +196,7 @@ namespace centrny.Controllers
 
                 await GeneratePinsAsync(rootCode.Value, req.Type == 1, req.Times, req.Number, userCode.Value);
 
-                // Get updated data
-                var pins = await GetPinsAsync(rootCode.Value, 1, 10); // First page
-                var totalCount = await GetPinsTotalCountAsync(rootCode.Value);
-                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
-
-                return Json(new
-                {
-                    success = true,
-                    message = $"Successfully generated {req.Number} pins.",
-                    pins = pins,
-                    totalCount = totalCount,
-                    walletCodesCount = walletCount
-                });
+                return Json(new { success = true, message = $"Successfully generated {req.Number} pins." });
             }
             catch (SqlException sqlEx)
             {
@@ -234,7 +242,6 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Pin not found or access denied." });
                 }
 
-                // Update pin properties
                 pin.Watermark = req.Watermark;
                 pin.Type = req.Type;
                 pin.Times = req.Times;
@@ -282,7 +289,6 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Pin not found or access denied." });
                 }
 
-                // Check if pin is being used in OnlineAttends
                 var isUsed = await _context.OnlineAttends
                     .AnyAsync(oa => oa.PinCode == pinCode);
 
@@ -310,12 +316,11 @@ namespace centrny.Controllers
             }
         }
 
-        // GET: /Pin/List (AJAX)
+        // GET: /Pin/List (paged AJAX - still available if needed elsewhere)
         [HttpGet]
         public async Task<IActionResult> List(int page = 1, int pageSize = 10, string? search = null)
         {
             var rootCode = HttpContext.Session.GetInt32("RootCode");
-
             if (rootCode is null)
             {
                 return Json(new { success = false, error = "Session expired." });
@@ -333,7 +338,8 @@ namespace centrny.Controllers
                     Data = pins,
                     TotalCount = totalCount,
                     Page = page,
-                    PageSize = pageSize
+                    PageSize = pageSize,
+                    WalletCodesCount = walletCount
                 });
             }
             catch (Exception ex)
@@ -343,12 +349,66 @@ namespace centrny.Controllers
             }
         }
 
+        // NEW: /Pin/All (returns all pins for root for client-side pagination & stats)
+        [HttpGet]
+        public async Task<IActionResult> All(string? search = null)
+        {
+            var rootCode = HttpContext.Session.GetInt32("RootCode");
+            if (rootCode is null)
+            {
+                return Json(new { success = false, error = "Session expired." });
+            }
+
+            try
+            {
+                var query = _context.Pins
+                    .AsNoTracking()
+                    .Where(p => p.RootCode == rootCode.Value);
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    query = query.Where(p =>
+                        p.Watermark.Contains(search) ||
+                        p.PinCode.ToString().Contains(search));
+                }
+
+                var pins = await query
+                    .OrderByDescending(p => p.PinCode)
+                    .Select(p => new PinRow
+                    {
+                        PinCode = p.PinCode,
+                        Watermark = p.Watermark,
+                        Type = p.Type,
+                        Times = p.Times,
+                        Status = p.Status,
+                        IsActive = p.IsActive,
+                        InsertTime = p.InsertTime,
+                        InsertUser = p.InsertUser
+                    })
+                    .ToListAsync();
+
+                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
+
+                return Json(new
+                {
+                    success = true,
+                    data = pins,
+                    totalCount = pins.Count,
+                    walletCodesCount = walletCount
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading all pins for RootCode={RootCode}", rootCode);
+                return Json(new { success = false, error = "Failed to load all pins." });
+            }
+        }
+
         // GET: /Pin/Details/{id} (AJAX)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
             var rootCode = HttpContext.Session.GetInt32("RootCode");
-
             if (rootCode is null)
             {
                 return Json(new { success = false, error = "Session expired." });
@@ -377,7 +437,7 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Pin not found." });
                 }
 
-                return Json(new { success = true, pin = pin });
+                return Json(new { success = true, pin });
             }
             catch (Exception ex)
             {
@@ -386,12 +446,11 @@ namespace centrny.Controllers
             }
         }
 
-        // GET: /Pin/Stats (AJAX)
+        // GET: /Pin/Stats (AJAX) - still available (not strictly needed with /All)
         [HttpGet]
         public async Task<IActionResult> Stats()
         {
             var rootCode = HttpContext.Session.GetInt32("RootCode");
-
             if (rootCode is null)
             {
                 return Json(new { success = false, error = "Session expired." });
@@ -407,7 +466,6 @@ namespace centrny.Controllers
 
                 var totalPins = await _context.Pins.CountAsync(p => p.RootCode == rootCode.Value);
                 var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
-
                 var statsDict = stats.ToDictionary(s => s.Status, s => s.Count);
 
                 return Json(new
@@ -416,9 +474,9 @@ namespace centrny.Controllers
                     stats = new
                     {
                         total = totalPins,
-                        used = statsDict.GetValueOrDefault(0, 0),      // Status 0 = Used
-                        active = statsDict.GetValueOrDefault(1, 0),    // Status 1 = Active
-                        sold = statsDict.GetValueOrDefault(2, 0),      // Status 2 = Sold
+                        used = statsDict.GetValueOrDefault(0, 0),
+                        active = statsDict.GetValueOrDefault(1, 0),
+                        sold = statsDict.GetValueOrDefault(2, 0),
                         walletCodes = walletCount
                     }
                 });
@@ -466,14 +524,12 @@ namespace centrny.Controllers
         private async Task<int> GetPinsTotalCountAsync(int rootCode, string? search = null)
         {
             var query = _context.Pins.Where(p => p.RootCode == rootCode);
-
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(p =>
                     p.Watermark.Contains(search) ||
                     p.PinCode.ToString().Contains(search));
             }
-
             return await query.CountAsync();
         }
 
@@ -481,13 +537,16 @@ namespace centrny.Controllers
         {
             try
             {
-                return await _context.WalletCodes
+                var walletCode = await _context.WalletCodes
                     .Where(w => w.RootCode == rootCode && w.IsActive)
-                    .CountAsync();
+                    .OrderByDescending(w => w.WalletCode1)
+                    .FirstOrDefaultAsync();
+
+                return walletCode?.Count ?? 0;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error counting wallet codes for RootCode={RootCode}", rootCode);
+                _logger.LogWarning(ex, "Error getting wallet code count for RootCode={RootCode}", rootCode);
                 return 0;
             }
         }
@@ -506,7 +565,7 @@ namespace centrny.Controllers
             await using var command = new SqlCommand("Generate_Pins", connection)
             {
                 CommandType = CommandType.StoredProcedure,
-                CommandTimeout = 120 // 2 minutes timeout for large batches
+                CommandTimeout = 120
             };
 
             command.Parameters.Add(new SqlParameter("@rootcode", SqlDbType.Int) { Value = rootCode });
@@ -524,7 +583,6 @@ namespace centrny.Controllers
 
         // -------- Bulk Operations ----------
 
-        // POST: /Pin/BulkDelete (AJAX)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkDelete([FromForm] int[] pinCodes)
@@ -533,14 +591,10 @@ namespace centrny.Controllers
             var userCode = HttpContext.Session.GetInt32("UserCode");
 
             if (rootCode is null || userCode is null)
-            {
                 return Json(new { success = false, error = "Session expired." });
-            }
 
             if (pinCodes == null || pinCodes.Length == 0)
-            {
                 return Json(new { success = false, error = "No pins selected for deletion." });
-            }
 
             try
             {
@@ -549,11 +603,8 @@ namespace centrny.Controllers
                     .ToListAsync();
 
                 if (pins.Count == 0)
-                {
                     return Json(new { success = false, error = "No valid pins found for deletion." });
-                }
 
-                // Check if any pins are in use
                 var usedPins = await _context.OnlineAttends
                     .Where(oa => pinCodes.Contains(oa.PinCode))
                     .Select(oa => oa.PinCode)
@@ -574,11 +625,7 @@ namespace centrny.Controllers
 
                 _logger.LogInformation("Bulk deleted {Count} pins by user {UserCode}", pins.Count, userCode);
 
-                return Json(new
-                {
-                    success = true,
-                    message = $"Successfully deleted {pins.Count} pins."
-                });
+                return Json(new { success = true, message = $"Successfully deleted {pins.Count} pins." });
             }
             catch (Exception ex)
             {
@@ -587,7 +634,6 @@ namespace centrny.Controllers
             }
         }
 
-        // POST: /Pin/BulkUpdateStatus (AJAX)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkUpdateStatus([FromForm] int[] pinCodes, [FromForm] int status)
@@ -596,19 +642,13 @@ namespace centrny.Controllers
             var userCode = HttpContext.Session.GetInt32("UserCode");
 
             if (rootCode is null || userCode is null)
-            {
                 return Json(new { success = false, error = "Session expired." });
-            }
 
             if (pinCodes == null || pinCodes.Length == 0)
-            {
                 return Json(new { success = false, error = "No pins selected." });
-            }
 
             if (status < 0 || status > 2)
-            {
                 return Json(new { success = false, error = "Invalid status value. Must be 0 (Used), 1 (Active), or 2 (Sold)." });
-            }
 
             try
             {
@@ -627,11 +667,7 @@ namespace centrny.Controllers
                 _logger.LogInformation("Bulk updated status of {Count} pins to {Status} by user {UserCode}",
                     updatedCount, statusText, userCode);
 
-                return Json(new
-                {
-                    success = true,
-                    message = $"Successfully updated {updatedCount} pins to {statusText}."
-                });
+                return Json(new { success = true, message = $"Successfully updated {updatedCount} pins to {statusText}." });
             }
             catch (Exception ex)
             {

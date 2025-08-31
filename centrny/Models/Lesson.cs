@@ -43,6 +43,8 @@ public partial class Lesson
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 
+    public virtual ICollection<File> Files { get; set; } = new List<File>();
+
     public virtual User InsertUserNavigation { get; set; } = null!;
 
     public virtual ICollection<Lesson> InverseChapterCodeNavigation { get; set; } = new List<Lesson>();

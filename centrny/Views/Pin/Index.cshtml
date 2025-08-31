@@ -8,8 +8,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 }
 
+<script>
+    window.rootCode = '@Model.RootCode';
+</script>
+
 <div class="container-fluid" id="pin-page">
-    <!-- Page Header -->
     <div class="pins-page-header">
         <h1 class="pins-page-title">
             <i class="bi bi-shield-lock"></i>
@@ -19,82 +22,81 @@
 
         <div class="pins-stats-grid">
             <div class="pins-stat-card" style="--accent: var(--pins-primary)">
-                <div class="pins-stat-header">
-                    <i class="bi bi-wallet2 pins-stat-icon"></i>
-                </div>
+                <div class="pins-stat-header"><i class="bi bi-wallet2 pins-stat-icon"></i></div>
                 <h3 class="pins-stat-value" id="walletCodesCount">@Model.WalletCodesCount</h3>
-                <p class="pins-stat-label">Wallet Codes</p>
+                <p class="pins-stat-label">Wallet Codes Total Count</p>
             </div>
-
             <div class="pins-stat-card" style="--accent: var(--pins-success)">
-                <div class="pins-stat-header">
-                    <i class="bi bi-check-circle pins-stat-icon"></i>
-                </div>
-                <h3 class="pins-stat-value" id="activePinsCount">@Model.Pins.Count(p => p.Status == 1)</h3>
+                <div class="pins-stat-header"><i class="bi bi-check-circle pins-stat-icon"></i></div>
+                <h3 class="pins-stat-value" id="activePinsCount">@Model.ActiveCount</h3>
                 <p class="pins-stat-label">Active Pins</p>
             </div>
-
             <div class="pins-stat-card" style="--accent: var(--pins-warning)">
-                <div class="pins-stat-header">
-                    <i class="bi bi-currency-dollar pins-stat-icon"></i>
-                </div>
-                <h3 class="pins-stat-value" id="soldPinsCount">@Model.Pins.Count(p => p.Status == 2)</h3>
+                <div class="pins-stat-header"><i class="bi bi-currency-dollar pins-stat-icon"></i></div>
+                <h3 class="pins-stat-value" id="soldPinsCount">@Model.SoldCount</h3>
                 <p class="pins-stat-label">Sold Pins</p>
             </div>
-
             <div class="pins-stat-card" style="--accent: var(--pins-danger)">
-                <div class="pins-stat-header">
-                    <i class="bi bi-x-circle pins-stat-icon"></i>
-                </div>
-                <h3 class="pins-stat-value" id="usedPinsCount">@Model.Pins.Count(p => p.Status == 0)</h3>
+                <div class="pins-stat-header"><i class="bi bi-x-circle pins-stat-icon"></i></div>
+                <h3 class="pins-stat-value" id="usedPinsCount">@Model.UsedCount</h3>
                 <p class="pins-stat-label">Used Pins</p>
             </div>
         </div>
     </div>
 
-    <!-- Action Bar -->
+    <div class="row mb-3 gap-3">
+        <div class="col-auto">
+            <label for="filterType" class="form-label fw-semibold mb-1">Filter Type</label>
+            <select id="filterType" class="form-select form-select-sm">
+                <option value="">All Types</option>
+                <option value="session">Session</option>
+                <option value="exam">Exam</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="filterStatus" class="form-label fw-semibold mb-1">Filter Status</label>
+            <select id="filterStatus" class="form-select form-select-sm">
+                <option value="">All Status</option>
+                <option value="used">Used</option>
+                <option value="active">Active</option>
+                <option value="sold">Sold</option>
+            </select>
+        </div>
+    </div>
+
     <div class="pins-action-bar">
         <div class="pins-search-box">
             <i class="bi bi-search pins-search-icon"></i>
             <input type="text" class="pins-search-input" id="searchInput" placeholder="Search pins by watermark, pin code...">
         </div>
-
         <div class="pins-actions">
             <button id="openGenerateModal" class="btn-modern btn-primary" type="button">
-                <i class="bi bi-plus-circle"></i>
-                Generate Pins
+                <i class="bi bi-plus-circle"></i> Generate Pins
             </button>
             <button id="refreshPinsBtn" class="btn-modern btn-secondary" type="button">
-                <i class="bi bi-arrow-clockwise"></i>
-                Refresh
+                <i class="bi bi-arrow-clockwise"></i> Refresh
             </button>
         </div>
     </div>
 
-    <!-- Alerts Area -->
     <div id="alertsArea">
         @if (!string.IsNullOrWhiteSpace(Model.Message))
         {
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle me-2"></i>@Model.Message
-            </div>
+            <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>@Model.Message</div>
         }
         @if (!string.IsNullOrWhiteSpace(Model.Error))
         {
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle me-2"></i>@Model.Error
-            </div>
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@Model.Error</div>
         }
     </div>
 
-    <!-- Table Container -->
     <div class="pins-table-container">
         <div class="pins-table-header">
             <h2 class="pins-table-title">Pins List</h2>
             <div class="pins-table-meta">
-                <span>Total: <strong id="pinTotal">@Model.Pins.Count</strong></span>
+                <span>Total: <strong id="pinTotal">@Model.TotalCount</strong></span>
                 <span>|</span>
-                <span>Page: <strong id="currentPageDisplay">1</strong></span>
+                <span>Page: <strong id="currentPageDisplay">@Model.CurrentPage</strong></span>
             </div>
         </div>
 
@@ -117,19 +119,19 @@
                     {
                         <tr>
                             <td colspan="8" class="text-center py-5">
-                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <i class="bi bi-inbox text-muted" style="font-size:3rem;"></i>
                                 <p class="text-muted mt-3 mb-0">No pins found</p>
                             </td>
                         </tr>
                     }
                     else
                     {
-                        @foreach (var pin in Model.Pins.Take(10))
+                        @foreach (var pin in Model.Pins)  // initial page subset only; JS will replace
                         {
                             <tr data-pin="@pin.PinCode">
                                 <td><strong>@pin.PinCode</strong></td>
                                 <td>
-                                    <span class="text-truncate" style="max-width: 150px; display: block;" title="@pin.Watermark">
+                                    <span class="text-truncate" style="max-width:150px;display:block;" title="@pin.Watermark">
                                         @pin.Watermark
                                     </span>
                                 </td>
@@ -143,9 +145,9 @@
                                     @{
                                         var statusClass = pin.Status switch
                                         {
-                                            0 => "status-used",     // Used
-                                            1 => "status-active",   // Active
-                                            2 => "status-sold",     // Sold
+                                            0 => "status-used",
+                                            1 => "status-active",
+                                            2 => "status-sold",
                                             _ => "status-used"
                                         };
                                         var statusText = pin.Status switch
@@ -157,8 +159,7 @@
                                         };
                                     }
                                     <span class="status-badge @statusClass">
-                                        <span class="status-dot"></span>
-                                        @statusText
+                                        <span class="status-dot"></span>@statusText
                                     </span>
                                 </td>
                                 <td>
@@ -177,7 +178,7 @@
                                         <button class="btn-icon btn-edit" onclick="editPin(@pin.PinCode)" title="Edit Pin">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn-icon btn-delete" onclick="deletePin(@pin.PinCode)" title="Delete Pin">
+                                        <button class="btn-icon btn-delete" onclick="confirmDeletePin(@pin.PinCode)" title="Delete Pin">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -189,22 +190,11 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         <div class="pins-pagination-container">
             <div class="pins-pagination-info">
-                Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalPins">@Model.Pins.Count</span> results
+                Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalPins">@Model.TotalCount</span> results
             </div>
-            <div class="pins-pagination" id="paginationContainer">
-                <button class="pins-page-btn" id="prevPageBtn" disabled>
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-                <button class="pins-page-btn active">1</button>
-                <button class="pins-page-btn">2</button>
-                <button class="pins-page-btn">3</button>
-                <button class="pins-page-btn" id="nextPageBtn">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
-            </div>
+            <div class="pins-pagination" id="paginationContainer"></div>
         </div>
     </div>
 </div>
@@ -213,10 +203,7 @@
 <div class="pins-modal-overlay" id="generateModal">
     <div class="pins-modal">
         <div class="pins-modal-header">
-            <h3 class="pins-modal-title">
-                <i class="bi bi-plus-circle"></i>
-                Generate New Pins
-            </h3>
+            <h3 class="pins-modal-title"><i class="bi bi-plus-circle"></i> Generate New Pins</h3>
             <button type="button" class="pins-modal-close" id="closeGenerateModal">&times;</button>
         </div>
         <div class="pins-modal-body">
@@ -259,10 +246,7 @@
 <div class="pins-modal-overlay" id="editModal">
     <div class="pins-modal">
         <div class="pins-modal-header">
-            <h3 class="pins-modal-title">
-                <i class="bi bi-pencil"></i>
-                Edit Pin
-            </h3>
+            <h3 class="pins-modal-title"><i class="bi bi-pencil"></i> Edit Pin</h3>
             <button type="button" class="pins-modal-close" id="closeEditModal">&times;</button>
         </div>
         <div class="pins-modal-body">
@@ -318,5 +302,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/pins.js?v=@DateTime.UtcNow.Ticks"></script>
+    <script src="~/js/pins.js"></script>
 }
