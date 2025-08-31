@@ -43,6 +43,31 @@ namespace centrny.Controllers
             }
         }
 
+        [HttpGet("Learning")]
+        public async Task<IActionResult> Learning()
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+            {
+                _logger.LogWarning("Student not logged in, redirecting to login page at {DateTime}", DateTime.UtcNow);
+                return Redirect("/StudentLogin");
+            }
+
+            try
+            {
+                _logger.LogInformation("Loading learning view for StudentCode={StudentCode} at {DateTime}",
+                    studentCode.Value, DateTime.UtcNow);
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading learning view for StudentCode={StudentCode} at {DateTime}",
+                    studentCode, DateTime.UtcNow);
+                return View("Error");
+            }
+        }
+
         private async Task<StudentDashboardViewModel> GetStudentDashboardData(int studentCode)
         {
             var student = await _context.Students
@@ -155,6 +180,168 @@ namespace centrny.Controllers
             {
                 _logger.LogError(ex, "Error getting student subjects for StudentCode={StudentCode} at {DateTime}",
                     studentCode, DateTime.UtcNow);
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetLearningSubjects")]
+        public async Task<IActionResult> GetLearningSubjects()
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+            {
+                _logger.LogWarning("Unauthorized access to GetLearningSubjects at {DateTime}", DateTime.UtcNow);
+                return Json(new { error = "Student not logged in" });
+            }
+
+            try
+            {
+                var subjects = await _context.Learns
+                    .Where(l => l.StudentCode == studentCode.Value && l.IsActive)
+                    .Include(l => l.SubjectCodeNavigation)
+                    .Include(l => l.EduYearCodeNavigation)
+                    .Include(l => l.YearCodeNavigation)
+                    .Select(l => new
+                    {
+                        subjectCode = l.SubjectCode,
+                        subjectName = l.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
+                        eduYearName = l.EduYearCodeNavigation.EduName ?? "Unknown Year",
+                        yearCode = l.YearCode,
+                        eduYearCode = l.EduYearCode
+                    })
+                    .Distinct()
+                    .OrderBy(s => s.subjectName)
+                    .ToListAsync();
+
+                return Json(subjects);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting learning subjects for StudentCode={StudentCode} at {DateTime}",
+                    studentCode, DateTime.UtcNow);
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetSubjectChapters")]
+        public async Task<IActionResult> GetSubjectChapters(int subjectCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+            {
+                return Json(new { error = "Student not logged in" });
+            }
+
+            try
+            {
+                // Check if student is enrolled in this subject
+                var isEnrolled = await _context.Learns
+                    .AnyAsync(l => l.StudentCode == studentCode.Value &&
+                                  l.SubjectCode == subjectCode &&
+                                  l.IsActive);
+
+                if (!isEnrolled)
+                {
+                    return Json(new { error = "Student not enrolled in this subject" });
+                }
+
+                // Get chapters (lessons without ChapterCode)
+                var chapters = await _context.Lessons
+                    .Where(l => l.SubjectCode == subjectCode &&
+                               l.ChapterCode == null &&
+                               l.IsActive == true)
+                    .Include(l => l.SubjectCodeNavigation)
+                    .Select(l => new
+                    {
+                        lessonCode = l.LessonCode,
+                        chapterName = l.LessonName ?? "Unnamed Chapter",
+                       
+                        insertTime = l.InsertTime,
+                        subjectName = l.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
+                        lessonsCount = _context.Lessons.Count(lesson => lesson.ChapterCode == l.LessonCode && lesson.IsActive == true)
+                    })
+                    .OrderBy(c => c.insertTime)
+                    .ToListAsync();
+
+                return Json(chapters);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting chapters for SubjectCode={SubjectCode}, StudentCode={StudentCode} at {DateTime}",
+                    subjectCode, studentCode, DateTime.UtcNow);
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetChapterLessons")]
+        public async Task<IActionResult> GetChapterLessons(int chapterCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+            {
+                return Json(new { error = "Student not logged in" });
+            }
+
+            try
+            {
+                // Get chapter info
+                var chapter = await _context.Lessons
+                    .Include(l => l.SubjectCodeNavigation)
+                    .FirstOrDefaultAsync(l => l.LessonCode == chapterCode &&
+                                            l.ChapterCode == null &&
+                                            l.IsActive == true);
+
+                if (chapter == null)
+                {
+                    return Json(new { error = "Chapter not found" });
+                }
+
+                // Check if student is enrolled in this subject
+                var isEnrolled = await _context.Learns
+                    .AnyAsync(l => l.StudentCode == studentCode.Value &&
+                                  l.SubjectCode == chapter.SubjectCode &&
+                                  l.IsActive);
+
+                if (!isEnrolled)
+                {
+                    return Json(new { error = "Student not enrolled in this subject" });
+                }
+
+                // Get lessons for this chapter
+                var lessons = await _context.Lessons
+                    .Where(l => l.ChapterCode == chapterCode && l.IsActive == true)
+                    .Select(l => new
+                    {
+                        lessonCode = l.LessonCode,
+                        lessonName = l.LessonName ?? "Unnamed Lesson",
+                       
+                    
+                        insertTime = l.InsertTime,
+                        isActive = l.IsActive
+                    })
+                    .OrderBy(l => l.insertTime)
+                    .ToListAsync();
+
+                var result = new
+                {
+                    chapter = new
+                    {
+                        chapterCode = chapter.LessonCode,
+                        chapterName = chapter.LessonName,
+
+                        subjectName = chapter.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject",
+                        subjectCode = chapter.SubjectCode
+                    },
+                    lessons = lessons,
+                    totalLessons = lessons.Count
+                };
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting lessons for ChapterCode={ChapterCode}, StudentCode={StudentCode} at {DateTime}",
+                    chapterCode, studentCode, DateTime.UtcNow);
                 return Json(new { error = ex.Message });
             }
         }

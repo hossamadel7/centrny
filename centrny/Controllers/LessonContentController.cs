@@ -1,10 +1,8 @@
 ﻿using centrny.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace centrny.Controllers
@@ -27,9 +25,9 @@ namespace centrny.Controllers
 
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
 
-        #region Teacher Interface
+        #region Teacher Interface (Management + Filters)
 
-        // Teacher interface for managing lesson content
+        // Main teacher page
         public async Task<IActionResult> Index()
         {
             var userCode = GetSessionInt("UserCode");
@@ -43,36 +41,156 @@ namespace centrny.Controllers
 
             return View();
         }
-
-        // Get lessons for a teacher to select from
+        // REPLACE your current GetLessonFilters with this version
         [HttpGet]
-        public async Task<IActionResult> GetTeacherLessons(int? teacherCode = null)
+        public async Task<IActionResult> GetLessonFilters()
         {
             var rootCode = GetSessionInt("RootCode");
             if (rootCode == null) return Unauthorized();
 
-            var query = _context.Lessons
-                .Include(l => l.SubjectCodeNavigation)
-                .Include(l => l.EduYearCodeNavigation)
-                .Where(l => l.RootCode == rootCode.Value && l.IsActive);
-
-            if (teacherCode.HasValue)
-                query = query.Where(l => l.TeacherCode == teacherCode.Value);
-
-            var lessons = await query
-                .OrderBy(l => l.SubjectCode)
-                .ThenBy(l => l.LessonName)
-                .ToListAsync();
-
-            var result = lessons.Select(l => new
+            try
             {
-                l.LessonCode,
-                l.LessonName,
-                SubjectName = l.SubjectCodeNavigation?.SubjectName ?? "Unknown",
-                EduYearName = l.EduYearCodeNavigation?.EduName ?? "Unknown"
-            }).ToList();
+                // 1. Get the single ACTIVE EduYear for this root (adjust IsActive comparison if it's int)
+                var activeEduYear = await _context.EduYears
+                    .Where(e => e.RootCode == rootCode.Value && (e.IsActive == true || e.IsActive == true))
+                    .OrderBy(e => e.EduCode)
+                    .FirstOrDefaultAsync();
 
-            return Json(result);
+                int? activeEduYearCode = activeEduYear?.EduCode;
+
+                // 2. Subjects for the root
+                var subjects = await _context.Subjects
+                    .Where(s => s.RootCode == rootCode.Value)
+                    .Select(s => new
+                    {
+                        subjectCode = s.SubjectCode,
+                        subjectName = s.SubjectName
+                    })
+                    .OrderBy(s => s.subjectName)
+                    .ToListAsync();
+
+                // 3. Years: join via EduYears because Years has NO RootCode
+                IQueryable<Year> yearsBase = _context.Years;
+
+                if (activeEduYearCode.HasValue)
+                {
+                    yearsBase = yearsBase.Where(y => y.EduYearCode == activeEduYearCode.Value);
+                }
+                else
+                {
+                    // Fallback: if no active edu year, still restrict by root through join
+                    yearsBase =
+                        from y in _context.Years
+                        join ey in _context.EduYears on y.EduYearCode equals ey.EduCode
+                        where ey.RootCode == rootCode.Value
+                        select y;
+                }
+
+                var years = await (
+                    from y in yearsBase
+                    join ey in _context.EduYears on y.EduYearCode equals ey.EduCode
+                    where ey.RootCode == rootCode.Value
+                    select new
+                    {
+                        yearCode = y.YearCode,   // adjust if different
+                        yearName = y.YearName    // adjust if different
+                    })
+                    .OrderBy(y => y.yearName)
+                    .ToListAsync();
+
+                return Json(new
+                {
+                    subjects,
+                    years,
+                    activeEduYear = activeEduYearCode
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to load filters", details = ex.Message });
+            }
+        }
+
+
+        // REPLACE existing GetTeacherLessons with this version if Lesson has NO YearCode column
+        [HttpGet]
+        public async Task<IActionResult> GetTeacherLessons(
+            int? subjectCode = null,
+            int? yearCode = null)
+        {
+            var rootCode = GetSessionInt("RootCode");
+            if (rootCode == null) return Unauthorized();
+
+            try
+            {
+                // Base (unfiltered for chapters)
+                var baseQuery = _context.Lessons
+                    .Include(l => l.SubjectCodeNavigation)
+                    .Include(l => l.EduYearCodeNavigation)
+                    .Where(l => l.RootCode == rootCode.Value && l.IsActive);
+
+                // Filterable query for child lessons
+                var filteredQuery = baseQuery;
+
+                if (subjectCode.HasValue)
+                    filteredQuery = filteredQuery.Where(l => l.SubjectCode == subjectCode.Value);
+
+                if (yearCode.HasValue)
+                {
+                    // Year filter THROUGH EduYear join:
+                    filteredQuery =
+                        from l in filteredQuery
+                        join y in _context.Years on l.EduYearCode equals y.EduYearCode
+                        where y.YearCode == yearCode.Value
+                        select l;
+                }
+
+                var allLessons = await baseQuery
+                    .OrderBy(l => l.SubjectCode)
+                    .ThenBy(l => l.LessonName)
+                    .ToListAsync();
+
+                var filteredLessons = await filteredQuery
+                    .OrderBy(l => l.SubjectCode)
+                    .ThenBy(l => l.LessonName)
+                    .ToListAsync();
+
+                var chaptersRaw = allLessons.Where(l => l.ChapterCode == null).ToList();
+
+                var result = new List<object>();
+
+                foreach (var chapter in chaptersRaw)
+                {
+                    var children = filteredLessons
+                        .Where(l => l.ChapterCode == chapter.LessonCode)
+                        .Select(l => new
+                        {
+                            lessonCode = l.LessonCode,
+                            lessonName = l.LessonName,
+                            subjectName = l.SubjectCodeNavigation?.SubjectName ?? "Unknown",
+                            eduYearName = l.EduYearCodeNavigation?.EduName ?? "Unknown"
+                        })
+                        .ToList();
+
+                    if (children.Any())
+                    {
+                        result.Add(new
+                        {
+                            chapterCode = chapter.LessonCode,
+                            chapterName = chapter.LessonName,
+                            subjectName = chapter.SubjectCodeNavigation?.SubjectName ?? "Unknown",
+                            eduYearName = chapter.EduYearCodeNavigation?.EduName ?? "Unknown",
+                            lessons = children
+                        });
+                    }
+                }
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Error loading lessons", details = ex.Message });
+            }
         }
 
         // Get content (videos, files, and exams) for a specific lesson
@@ -84,12 +202,10 @@ namespace centrny.Controllers
 
             try
             {
-                // Get Files (videos and documents)
                 var filesData = await _context.Files
                     .Where(f => f.LessonCode == lessonCode && f.RootCode == rootCode.Value && f.IsActive)
                     .ToListAsync();
 
-                // Get Exams for this lesson
                 var examsData = await _context.Exams
                     .Where(e => e.LessonCode == lessonCode && e.IsActive == true)
                     .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { Exam = e, Teacher = t })
@@ -97,57 +213,51 @@ namespace centrny.Controllers
                     .Select(et => et.Exam)
                     .ToListAsync();
 
-                // Process files data
                 var files = filesData.Select(f => new
                 {
-                    ItemCode = f.FileCode,
-                    DisplayName = f.DisplayName ?? "Unknown",
-                    ItemType = f.FileType == 1 ? "Video" : "File",
-                    FileType = f.FileType, // 0=File, 1=Video
-                    SortOrder = f.SortOrder,
-                    VideoProvider = f.VideoProvider,
-                    VideoProviderName = f.VideoProvider == 0 ? "YouTube" :
-                                       f.VideoProvider == 1 ? "Bunny CDN" :
-                                       f.FileType == 1 ? "Unknown Provider" : null,
-                    FileExtension = f.FileExtension ?? "",
-                    FileSizeBytes = f.FileSizeBytes,
-                    FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
-                    Duration = f.Duration,
-                    DurationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
-                    ContentType = "content",
-                    // Exam properties (null for files)
-                    ExamDegree = (string)null,
-                    ExamTimer = (string)null,
-                    IsOnline = (bool?)null,
-                    IsDone = (bool?)null
+                    itemCode = f.FileCode,
+                    displayName = f.DisplayName ?? "Unknown",
+                    itemType = f.FileType == 1 ? "Video" : "File",
+                    fileType = f.FileType, // 0=File, 1=Video
+                    sortOrder = f.SortOrder,
+                    videoProvider = f.VideoProvider,
+                    videoProviderName = f.VideoProvider == 0 ? "YouTube" :
+                                        f.VideoProvider == 1 ? "Bunny CDN" :
+                                        f.FileType == 1 ? "Unknown Provider" : null,
+                    fileExtension = f.FileExtension ?? "",
+                    fileSizeBytes = f.FileSizeBytes,
+                    fileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                    duration = f.Duration,
+                    durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
+                    contentType = "content",
+                    examDegree = (string)null,
+                    examTimer = (string)null,
+                    isOnline = (bool?)null,
+                    isDone = (bool?)null
                 }).ToList();
 
-                // Process exams data
                 var exams = examsData.Select(e => new
                 {
-                    ItemCode = e.ExamCode,
-                    DisplayName = e.ExamName ?? "Unknown Exam",
-                    ItemType = "Exam",
-                    FileType = 3, // New type for exams
-                    SortOrder = e.SortOrder ?? 999,
-                    VideoProvider = (int?)null,
-                    VideoProviderName = (string)null,
-                    FileExtension = (string)null,
-                    FileSizeBytes = (long?)null,
-                    FileSizeFormatted = (string)null,
-                    Duration = (TimeSpan?)null,
-                    DurationFormatted = (string)null,
-                    ContentType = "exam",
-                    // Exam specific properties
-                    ExamDegree = e.ExamDegree,
-                    ExamTimer = e.ExamTimer.ToString(@"HH\:mm"),
-                    IsOnline = e.IsOnline,
-                    IsDone = e.IsDone
+                    itemCode = e.ExamCode,
+                    displayName = e.ExamName ?? "Unknown Exam",
+                    itemType = "Exam",
+                    fileType = 3,
+                    sortOrder = e.SortOrder ?? 999,
+                    videoProvider = (int?)null,
+                    videoProviderName = (string)null,
+                    fileExtension = (string)null,
+                    fileSizeBytes = (long?)null,
+                    fileSizeFormatted = (string)null,
+                    duration = (TimeSpan?)null,
+                    durationFormatted = (string)null,
+                    contentType = "exam",
+                    examDegree = e.ExamDegree,
+                    examTimer = e.ExamTimer.ToString(@"HH\:mm"),
+                    isOnline = e.IsOnline,
+                    isDone = e.IsDone
                 }).ToList();
 
-                // Combine into a single list
                 var allContent = files.Cast<object>().Concat(exams.Cast<object>()).ToList();
-
                 return Json(allContent);
             }
             catch (Exception ex)
@@ -165,7 +275,6 @@ namespace centrny.Controllers
 
             try
             {
-                // Get exams that are not yet linked to this lesson
                 var linkedExamCodes = await _context.Exams
                     .Where(e => e.LessonCode == lessonCode && e.IsActive == true)
                     .Select(e => e.ExamCode)
@@ -189,7 +298,7 @@ namespace centrny.Controllers
 
                 return Json(availableExams);
             }
-            catch (Exception ex)
+            catch
             {
                 return Json(new List<object>());
             }
@@ -219,10 +328,9 @@ namespace centrny.Controllers
                 exam.LastUpdateTime = DateTime.Now;
 
                 await _context.SaveChangesAsync();
-
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, "Error linking exam to lesson");
             }
@@ -252,10 +360,9 @@ namespace centrny.Controllers
                 exam.LastUpdateTime = DateTime.Now;
 
                 await _context.SaveChangesAsync();
-
                 return Ok(new { success = true });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, "Error unlinking exam from lesson");
             }
@@ -271,7 +378,7 @@ namespace centrny.Controllers
             if (userCode == null || rootCode == null)
                 return Unauthorized();
 
-            if (string.IsNullOrEmpty(dto.DisplayName) || string.IsNullOrEmpty(dto.VideoUrl))
+            if (string.IsNullOrWhiteSpace(dto.DisplayName) || string.IsNullOrWhiteSpace(dto.VideoUrl))
                 return BadRequest("Display name and video URL are required");
 
             try
@@ -285,7 +392,7 @@ namespace centrny.Controllers
                     LessonCode = dto.LessonCode,
                     InsertUser = userCode.Value,
                     InsertTime = DateTime.Now,
-                    FileType = 1,
+                    FileType = 1, // video
                     DisplayName = dto.DisplayName,
                     SortOrder = dto.SortOrder,
                     VideoProvider = dto.VideoProvider,
@@ -304,7 +411,7 @@ namespace centrny.Controllers
             }
         }
 
-        // Add file to lesson (with upload)
+        // Add file to lesson
         [HttpPost]
         public async Task<IActionResult> AddFile(int lessonCode, string displayName, int sortOrder, IFormFile file)
         {
@@ -320,25 +427,23 @@ namespace centrny.Controllers
             if (file.Length > _fileUploadSettings.MaxFileSizeBytes)
                 return BadRequest($"File size cannot exceed {_fileUploadSettings.MaxFileSizeBytes / (1024 * 1024)}MB");
 
-            if (string.IsNullOrEmpty(displayName))
+            if (string.IsNullOrWhiteSpace(displayName))
                 return BadRequest("Display name is required");
 
-            // Check file extension
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!_fileUploadSettings.AllowedExtensions.Contains(fileExtension))
                 return BadRequest($"File type {fileExtension} is not allowed");
 
             try
             {
-                // First, create the file record to get the FileCode
                 var fileRecord = new centrny.Models.File
                 {
-                    FileLocation = "temp", // Temporary, will update after we get FileCode
+                    FileLocation = "temp",
                     RootCode = rootCode.Value,
                     LessonCode = lessonCode,
                     InsertUser = userCode.Value,
                     InsertTime = DateTime.Now,
-                    FileType = 0, // File
+                    FileType = 0,
                     DisplayName = displayName,
                     SortOrder = sortOrder,
                     FileExtension = fileExtension,
@@ -349,20 +454,15 @@ namespace centrny.Controllers
                 _context.Files.Add(fileRecord);
                 await _context.SaveChangesAsync();
 
-                // Now create the actual file name using FileCode
                 var fileName = $"{fileRecord.FileCode}{fileExtension}";
+                Directory.CreateDirectory(_fileUploadSettings.UploadPath);
                 var fullPath = Path.Combine(_fileUploadSettings.UploadPath, fileName);
 
-                // Ensure directory exists
-                Directory.CreateDirectory(_fileUploadSettings.UploadPath);
-
-                // Save file to the configured upload location
                 using (var stream = new FileStream(fullPath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Update the file record with the actual file location (relative path)
                 var relativePath = Path.Combine("uploads", "files", fileName);
                 fileRecord.FileLocation = relativePath;
                 await _context.SaveChangesAsync();
@@ -381,7 +481,7 @@ namespace centrny.Controllers
             }
         }
 
-        // Update content sort order
+        // Update sort order for files + exams
         [HttpPost]
         public async Task<IActionResult> UpdateSortOrder([FromBody] List<UpdateSortOrderDto> items)
         {
@@ -394,7 +494,6 @@ namespace centrny.Controllers
                 {
                     if (item.ItemType == "exam")
                     {
-                        // Update exam sort order
                         var exam = await _context.Exams
                             .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { Exam = e, Teacher = t })
                             .Where(et => et.Exam.ExamCode == item.ItemCode && et.Teacher.RootCode == rootCode.Value)
@@ -410,7 +509,6 @@ namespace centrny.Controllers
                     }
                     else
                     {
-                        // Update file sort order (for files and videos)
                         var file = await _context.Files
                             .FirstOrDefaultAsync(f => f.FileCode == item.ItemCode && f.RootCode == rootCode.Value);
 
@@ -422,8 +520,7 @@ namespace centrny.Controllers
                 }
 
                 var changesCount = await _context.SaveChangesAsync();
-
-                return Ok(new { success = true, changesCount = changesCount });
+                return Ok(new { success = true, changesCount });
             }
             catch (Exception ex)
             {
@@ -431,7 +528,7 @@ namespace centrny.Controllers
             }
         }
 
-        // Delete content item
+        // Delete content file (not exams)
         [HttpDelete]
         public async Task<IActionResult> DeleteContent(int fileCode)
         {
@@ -444,35 +541,24 @@ namespace centrny.Controllers
             if (file == null)
                 return NotFound();
 
-            // If it's a physical file, delete from disk
             if (file.FileType == 0 && !string.IsNullOrEmpty(file.FileLocation))
             {
                 var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, file.FileLocation);
-
                 if (System.IO.File.Exists(fullPath))
                 {
-                    try
-                    {
-                        System.IO.File.Delete(fullPath);
-                    }
-                    catch
-                    {
-                        // Continue with database deletion even if file deletion fails
-                    }
+                    try { System.IO.File.Delete(fullPath); } catch { /* swallow */ }
                 }
             }
 
             _context.Files.Remove(file);
             await _context.SaveChangesAsync();
-
             return Ok();
         }
 
         #endregion
 
-        #region Student Interface - NEW 3-STEP SECURE FLOW
+        #region Student Interface - 3-Step Secure Flow
 
-        // STEP 1: Show PIN + Lesson entry form
         [HttpGet]
         public async Task<IActionResult> StudentViewer()
         {
@@ -481,10 +567,8 @@ namespace centrny.Controllers
 
             var rootCode = GetSessionInt("RootCode");
 
-            // For now, allow public access but load available lessons
             if (rootCode.HasValue)
             {
-                // Load available lessons for dropdown
                 var lessons = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
@@ -501,10 +585,9 @@ namespace centrny.Controllers
                 Console.WriteLine("⚠️ No rootCode in session - showing empty lesson list");
             }
 
-            return View(); // Show PIN + Lesson entry form
+            return View();
         }
 
-        // STEP 2: Validate PIN + Lesson and store in session
         [HttpPost]
         public async Task<IActionResult> AccessLesson(string pinCode, int lessonCode)
         {
@@ -517,77 +600,53 @@ namespace centrny.Controllers
 
             if (string.IsNullOrWhiteSpace(pinCode) || lessonCode <= 0)
             {
-                Console.WriteLine("❌ Invalid input: PIN or lesson code missing");
                 TempData["ErrorMessage"] = "Please enter both PIN code and select a lesson";
                 return RedirectToAction("StudentViewer");
             }
 
             try
             {
-                // SECURITY CHECK 1: Validate PIN with comprehensive checks
                 var pin = await _context.Pins
                     .FirstOrDefaultAsync(p => p.Watermark == pinCode &&
-                                       p.RootCode == rootCode &&
-                                       p.IsActive == 1 &&           // Active pin
-                                       p.Status == 1 &&             // Valid status
-                                       p.Times > 0);                // Has remaining uses
+                                              p.RootCode == rootCode &&
+                                              p.IsActive == 1 &&
+                                              p.Status == 1 &&
+                                              p.Times > 0);
 
                 if (pin == null)
                 {
-                    Console.WriteLine($"❌ PIN validation failed:");
-                    Console.WriteLine($"   - PIN not found, inactive, invalid status, or no remaining uses");
                     TempData["ErrorMessage"] = "Invalid or expired PIN code";
                     return RedirectToAction("StudentViewer");
                 }
 
-                Console.WriteLine($"✅ PIN validated: PinCode={pin.PinCode}, Type={pin.Type}, Times={pin.Times}, Status={pin.Status}");
-
-                // SECURITY CHECK 2: Validate lesson exists and is accessible
                 var lesson = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
                     .Include(l => l.TeacherCodeNavigation)
                     .FirstOrDefaultAsync(l => l.LessonCode == lessonCode &&
-                                       l.RootCode == rootCode &&
-                                       l.IsActive);
+                                              l.RootCode == rootCode &&
+                                              l.IsActive);
 
                 if (lesson == null)
                 {
-                    Console.WriteLine($"❌ Lesson validation failed: LessonCode={lessonCode} not found or inactive");
                     TempData["ErrorMessage"] = "Lesson not found or not available";
                     return RedirectToAction("StudentViewer");
                 }
 
-                Console.WriteLine($"✅ Lesson validated: {lesson.LessonName} - {lesson.SubjectCodeNavigation?.SubjectName}");
-
-                // SECURITY CHECK 3: Store validated access in session
                 HttpContext.Session.SetString("ValidatedPin", pinCode);
                 HttpContext.Session.SetInt32("AccessibleLesson", lessonCode);
                 HttpContext.Session.SetString("AccessGrantedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 HttpContext.Session.SetString("AccessGrantedToUser", GetCurrentUser());
 
-                Console.WriteLine($"✅ Session access granted:");
-                Console.WriteLine($"   - ValidatedPin: {pinCode}");
-                Console.WriteLine($"   - AccessibleLesson: {lessonCode}");
-                Console.WriteLine($"   - AccessGrantedAt: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
-
-                // Optional: Decrement PIN usage count
-                // pin.Times--;
-                // await _context.SaveChangesAsync();
-                // Console.WriteLine($"📉 PIN usage decremented: Times={pin.Times}");
-
-                // Redirect to actual lesson content with validated session
-                return RedirectToAction("ViewLesson", new { lessonCode = lessonCode, pinCode = pinCode });
+                return RedirectToAction("ViewLesson", new { lessonCode, pinCode });
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"❌ AccessLesson error: {ex.Message}");
                 TempData["ErrorMessage"] = "Error processing request. Please try again.";
                 return RedirectToAction("StudentViewer");
             }
         }
 
-        // STEP 3: Show lesson content with session validation
         [HttpGet]
         public async Task<IActionResult> ViewLesson(int lessonCode, string pinCode)
         {
@@ -595,78 +654,59 @@ namespace centrny.Controllers
             Console.WriteLine($"   - LessonCode: {lessonCode}");
             Console.WriteLine($"   - PinCode: {pinCode}");
 
-            // SECURITY CHECK: Validate session has proper access
             var sessionPin = HttpContext.Session.GetString("ValidatedPin");
             var sessionLesson = HttpContext.Session.GetInt32("AccessibleLesson");
             var sessionAccessTime = HttpContext.Session.GetString("AccessGrantedAt");
 
-            Console.WriteLine($"🔍 Session validation:");
-            Console.WriteLine($"   - SessionPin: {sessionPin}");
-            Console.WriteLine($"   - SessionLesson: {sessionLesson}");
-            Console.WriteLine($"   - SessionAccessTime: {sessionAccessTime}");
-
             if (sessionPin != pinCode || sessionLesson != lessonCode)
             {
-                Console.WriteLine($"❌ Session validation failed - redirecting to StudentViewer");
                 TempData["ErrorMessage"] = "Session expired or invalid access. Please enter your PIN again.";
                 return RedirectToAction("StudentViewer");
             }
-
-            Console.WriteLine($"✅ Session validated - proceeding to load lesson content");
 
             try
             {
                 var rootCode = GetSessionInt("RootCode");
 
-                // Load lesson details
                 var lesson = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
                     .Include(l => l.TeacherCodeNavigation)
-                    .FirstOrDefaultAsync(l => l.LessonCode == lessonCode && l.RootCode == rootCode && l.IsActive);
+                    .FirstOrDefaultAsync(l => l.LessonCode == lessonCode &&
+                                              l.RootCode == rootCode &&
+                                              l.IsActive);
 
                 if (lesson == null)
                 {
-                    Console.WriteLine($"❌ Lesson not found during ViewLesson");
                     TempData["ErrorMessage"] = "Lesson not available";
                     return RedirectToAction("StudentViewer");
                 }
 
-                // Load lesson content (videos, files, exams)
                 var content = await GetLessonContentForStudent(lessonCode, rootCode.Value);
 
-                // Pass data to view
                 ViewBag.Lesson = lesson;
                 ViewBag.LessonCode = lessonCode;
                 ViewBag.PinCode = pinCode;
                 ViewBag.LessonContent = content;
                 ViewBag.AccessGrantedAt = sessionAccessTime;
 
-                Console.WriteLine($"✅ Lesson content loaded successfully: {content.Count} items");
-
-                // Track lesson access
                 await TrackLessonAccess(lessonCode, pinCode);
-
-                return View(); // Show the actual lesson content
+                return View();
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"❌ Error loading lesson content: {ex.Message}");
                 TempData["ErrorMessage"] = "Error loading lesson content. Please try again.";
                 return RedirectToAction("StudentViewer");
             }
         }
 
-        // Helper method to get lesson content for students
         private async Task<List<object>> GetLessonContentForStudent(int lessonCode, int rootCode)
         {
-            // Get Files (videos and documents)
             var filesData = await _context.Files
                 .Where(f => f.LessonCode == lessonCode && f.RootCode == rootCode && f.IsActive)
                 .OrderBy(f => f.SortOrder)
                 .ToListAsync();
 
-            // Get Exams for this lesson
             var examsData = await _context.Exams
                 .Where(e => e.LessonCode == lessonCode && e.IsActive == true)
                 .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { Exam = e, Teacher = t })
@@ -675,184 +715,138 @@ namespace centrny.Controllers
                 .OrderBy(e => e.SortOrder ?? 999)
                 .ToListAsync();
 
-            // Process files data
             var files = filesData.Select(f => new
             {
-                ItemCode = f.FileCode,
-                DisplayName = f.DisplayName ?? "Unknown",
-                ItemType = f.FileType == 1 ? "Video" : "File",
-                FileType = f.FileType, // 0=File, 1=Video
-                SortOrder = f.SortOrder,
-                VideoProvider = f.VideoProvider,
-                VideoProviderName = f.VideoProvider == 0 ? "YouTube" :
-                                   f.VideoProvider == 1 ? "Bunny CDN" :
-                                   f.FileType == 1 ? "Unknown Provider" : null,
-                FileExtension = f.FileExtension ?? "",
-                FileSizeBytes = f.FileSizeBytes,
-                FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
-                Duration = f.Duration,
-                DurationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
-                ContentType = "content"
+                itemCode = f.FileCode,
+                displayName = f.DisplayName ?? "Unknown",
+                itemType = f.FileType == 1 ? "Video" : "File",
+                fileType = f.FileType,
+                sortOrder = f.SortOrder,
+                videoProvider = f.VideoProvider,
+                videoProviderName = f.VideoProvider == 0 ? "YouTube" :
+                                    f.VideoProvider == 1 ? "Bunny CDN" :
+                                    f.FileType == 1 ? "Unknown Provider" : null,
+                fileExtension = f.FileExtension ?? "",
+                fileSizeBytes = f.FileSizeBytes,
+                fileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                duration = f.Duration,
+                durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
+                contentType = "content"
             }).Cast<object>().ToList();
 
-            // Process exams data
             var exams = examsData.Select(e => new
             {
-                ItemCode = e.ExamCode,
-                DisplayName = e.ExamName ?? "Unknown Exam",
-                ItemType = "Exam",
-                FileType = 3, // Type for exams
-                SortOrder = e.SortOrder ?? 999,
-                VideoProvider = (int?)null,
-                VideoProviderName = (string)null,
-                FileExtension = (string)null,
-                FileSizeBytes = (long?)null,
-                FileSizeFormatted = (string)null,
-                Duration = (TimeSpan?)null,
-                DurationFormatted = (string)null,
-                ContentType = "exam",
-                // Exam specific properties
-                ExamDegree = e.ExamDegree,
-                ExamTimer = e.ExamTimer.ToString(@"HH\:mm"),
-                IsOnline = e.IsOnline,
-                IsDone = e.IsDone
+                itemCode = e.ExamCode,
+                displayName = e.ExamName ?? "Unknown Exam",
+                itemType = "Exam",
+                fileType = 3,
+                sortOrder = e.SortOrder ?? 999,
+                videoProvider = (int?)null,
+                videoProviderName = (string)null,
+                fileExtension = (string)null,
+                fileSizeBytes = (long?)null,
+                fileSizeFormatted = (string)null,
+                duration = (TimeSpan?)null,
+                durationFormatted = (string)null,
+                contentType = "exam",
+                examDegree = e.ExamDegree,
+                examTimer = e.ExamTimer.ToString(@"HH\:mm"),
+                isOnline = e.IsOnline,
+                isDone = e.IsDone
             }).Cast<object>().ToList();
 
-            // Combine and sort by SortOrder
-            var allContent = files.Concat(exams).OrderBy(item =>
+            return files.Concat(exams).OrderBy(o =>
             {
-                var sortOrderProp = item.GetType().GetProperty("SortOrder");
-                return sortOrderProp?.GetValue(item) ?? 999;
+                var prop = o.GetType().GetProperty("sortOrder") ?? o.GetType().GetProperty("SortOrder");
+                return prop?.GetValue(o) ?? 999;
             }).ToList();
-
-            return allContent;
         }
 
-        // Track lesson access for analytics
         private async Task TrackLessonAccess(int lessonCode, string pinCode)
         {
             try
             {
                 var rootCode = GetSessionInt("RootCode");
-                var studentCode = GetSessionInt("StudentCode"); // You'll need to set this in student login
+                var studentCode = GetSessionInt("StudentCode");
+                if (rootCode == null) return;
 
-                if (rootCode == null)
-                {
-                    Console.WriteLine("⚠️ Cannot track access: No rootCode in session");
-                    return;
-                }
-
-                // For now, use a default student code if not in session
                 var trackingStudentCode = studentCode ?? 1;
 
                 var pin = await _context.Pins
                     .FirstOrDefaultAsync(p => p.Watermark == pinCode && p.RootCode == rootCode.Value);
 
-                if (pin != null)
+                if (pin == null) return;
+
+                var existingAttend = await _context.OnlineAttends
+                    .FirstOrDefaultAsync(oa => oa.StudentCode == trackingStudentCode &&
+                                               oa.LessonCode == lessonCode &&
+                                               oa.PinCode == pin.PinCode &&
+                                               oa.RootCode == rootCode.Value);
+
+                if (existingAttend != null)
                 {
-                    // Check if this combination already exists in OnlineAttend
-                    var existingAttend = await _context.OnlineAttends
-                        .FirstOrDefaultAsync(oa => oa.StudentCode == trackingStudentCode &&
-                                           oa.LessonCode == lessonCode &&
-                                           oa.PinCode == pin.PinCode &&
-                                           oa.RootCode == rootCode.Value);
-
-                    if (existingAttend != null)
-                    {
-                        // Increment view count
-                        existingAttend.Views++;
-                        existingAttend.InsertTime = DateTime.Now;
-                        Console.WriteLine($"📊 Updated attendance: Views={existingAttend.Views}");
-                    }
-                    else
-                    {
-                        // Create new attend record
-                        var attend = new OnlineAttend
-                        {
-                            StudentCode = trackingStudentCode,
-                            LessonCode = lessonCode,
-                            PinCode = pin.PinCode,
-                            Views = 1,
-                            Status = true,
-                            RootCode = rootCode.Value,
-                            InsertUser = trackingStudentCode,
-                            InsertTime = DateTime.Now
-                        };
-                        _context.OnlineAttends.Add(attend);
-                        Console.WriteLine($"📊 Created new attendance record");
-                    }
-
-                    await _context.SaveChangesAsync();
+                    existingAttend.Views++;
+                    existingAttend.InsertTime = DateTime.Now;
                 }
+                else
+                {
+                    var attend = new OnlineAttend
+                    {
+                        StudentCode = trackingStudentCode,
+                        LessonCode = lessonCode,
+                        PinCode = pin.PinCode,
+                        Views = 1,
+                        Status = true,
+                        RootCode = rootCode.Value,
+                        InsertUser = trackingStudentCode,
+                        InsertTime = DateTime.Now
+                    };
+                    _context.OnlineAttends.Add(attend);
+                }
+
+                await _context.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"❌ Error tracking lesson access: {ex.Message}");
-                // Don't fail the request if tracking fails
+                // swallow tracking errors
             }
         }
 
         #endregion
 
-        #region Existing Student Content Access Methods (Updated with Better Security)
+        #region Existing Student Content Access Methods
 
-        // Generate secure video URL for student access
         [HttpGet]
         public async Task<IActionResult> GetSecureVideoUrl(int fileCode, string pinCode)
         {
             var rootCode = GetSessionInt("RootCode");
             if (rootCode == null) return Unauthorized();
 
-            Console.WriteLine($"🔐 GetSecureVideoUrl attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            Console.WriteLine($"   - FileCode: {fileCode}");
-            Console.WriteLine($"   - PinCode: {pinCode}");
-
-            // Validate session access first
             var sessionPin = HttpContext.Session.GetString("ValidatedPin");
             if (sessionPin != pinCode)
-            {
-                Console.WriteLine($"❌ Session validation failed for video access");
                 return BadRequest("Session expired. Please refresh and enter your PIN again.");
-            }
 
-            // Validate pin code with comprehensive checks
             var pin = await _context.Pins
                 .FirstOrDefaultAsync(p => p.Watermark == pinCode &&
-                                   p.RootCode == rootCode.Value &&
-                                   p.IsActive == 1 &&           // Active pin
-                                   p.Status == 1 &&             // Valid status
-                                   p.Times > 0);                // Has remaining uses
+                                          p.RootCode == rootCode.Value &&
+                                          p.IsActive == 1 &&
+                                          p.Status == 1 &&
+                                          p.Times > 0);
 
             if (pin == null)
-            {
-                Console.WriteLine($"❌ PIN validation failed for video access");
                 return BadRequest("Invalid or expired pin code");
-            }
 
-            Console.WriteLine($"✅ PIN validated for video access: PinCode={pin.PinCode}");
-
-            // Get video file
             var videoFile = await _context.Files
                 .Include(f => f.LessonCodeNavigation)
                 .FirstOrDefaultAsync(f => f.FileCode == fileCode && f.FileType == 1 && f.IsActive);
 
             if (videoFile == null)
-            {
-                Console.WriteLine($"❌ Video file not found: FileCode={fileCode}");
                 return NotFound("Video not found");
-            }
 
-            Console.WriteLine($"✅ Video file found: {videoFile.DisplayName}");
-
-            // Decrypt video URL
             var originalUrl = DecryptString(videoFile.FileLocation);
-
-            // Generate time-limited secure URL
             var expiryHours = videoFile.LessonCodeNavigation?.LessonExpireDays.HasValue == true
                 ? videoFile.LessonCodeNavigation.LessonExpireDays.Value * 24
                 : 24;
-
-            Console.WriteLine($"✅ Video access granted for {expiryHours} hours");
 
             return Json(new
             {
@@ -871,59 +865,36 @@ namespace centrny.Controllers
             var studentCode = GetSessionInt("StudentCode");
 
             if (rootCode == null)
-            {
-                Console.WriteLine($"❌ TrackAccess failed: No rootCode in session");
                 return Unauthorized("Root code not found in session");
-            }
 
-            // Use default student code if not in session
             var trackingStudentCode = studentCode ?? 1;
-
-            Console.WriteLine($"🔐 TrackAccess attempt by student {trackingStudentCode} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            Console.WriteLine($"   - LessonCode: {dto.LessonCode}");
-            Console.WriteLine($"   - PinCode: {dto.PinCode}");
-
-            // Validate session access
             var sessionPin = HttpContext.Session.GetString("ValidatedPin");
             if (sessionPin != dto.PinCode)
-            {
-                Console.WriteLine($"❌ Session validation failed for TrackAccess");
                 return BadRequest("Session expired. Please refresh and enter your PIN again.");
-            }
 
-            // Validate pin code with comprehensive checks
             var pin = await _context.Pins
                 .FirstOrDefaultAsync(p => p.Watermark == dto.PinCode &&
-                                   p.RootCode == rootCode.Value &&
-                                   p.IsActive == 1 &&           // Active pin
-                                   p.Status == 1 &&             // Valid status
-                                   p.Times > 0);                // Has remaining uses
+                                          p.RootCode == rootCode.Value &&
+                                          p.IsActive == 1 &&
+                                          p.Status == 1 &&
+                                          p.Times > 0);
 
             if (pin == null)
-            {
-                Console.WriteLine($"❌ Pin validation failed for TrackAccess");
                 return BadRequest("Invalid or expired pin code");
-            }
 
-            Console.WriteLine($"✅ Pin validated for TrackAccess: PinCode={pin.PinCode}, Times={pin.Times}");
-
-            // Check if this combination already exists in OnlineAttend
             var existingAttend = await _context.OnlineAttends
                 .FirstOrDefaultAsync(oa => oa.StudentCode == trackingStudentCode &&
-                                   oa.LessonCode == dto.LessonCode &&
-                                   oa.PinCode == pin.PinCode &&
-                                   oa.RootCode == rootCode.Value);
+                                           oa.LessonCode == dto.LessonCode &&
+                                           oa.PinCode == pin.PinCode &&
+                                           oa.RootCode == rootCode.Value);
 
             if (existingAttend != null)
             {
-                // Increment view count
                 existingAttend.Views++;
                 existingAttend.InsertTime = DateTime.Now;
-                Console.WriteLine($"✅ Updated existing attendance record: Views={existingAttend.Views}");
             }
             else
             {
-                // Create new attend record
                 var attend = new OnlineAttend
                 {
                     StudentCode = trackingStudentCode,
@@ -936,7 +907,6 @@ namespace centrny.Controllers
                     InsertTime = DateTime.Now
                 };
                 _context.OnlineAttends.Add(attend);
-                Console.WriteLine($"✅ Created new attendance record");
             }
 
             await _context.SaveChangesAsync();
@@ -946,13 +916,7 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateProgress([FromBody] UpdateProgressDto dto)
         {
-            var studentCode = GetSessionInt("StudentCode") ?? 1;
-            Console.WriteLine($"📊 UpdateProgress for student {studentCode}: Lesson={dto.LessonCode}");
-
-            // This method would track individual video progress
-            // You could implement this later when you want detailed progress tracking
-
-            // For now, just return OK as basic tracking is handled by TrackAccess
+            // Placeholder for more detailed tracking
             return Ok();
         }
 
@@ -962,146 +926,59 @@ namespace centrny.Controllers
             var rootCode = GetSessionInt("RootCode");
             if (rootCode == null) return Unauthorized();
 
-            Console.WriteLine($"=== DEBUG DOWNLOAD START ===");
-            Console.WriteLine($"FileCode: {fileCode}");
-            Console.WriteLine($"RootCode: {rootCode}");
-
             var file = await _context.Files
                 .FirstOrDefaultAsync(f => f.FileCode == fileCode &&
-                                   f.RootCode == rootCode &&
-                                   (f.FileType == 0 || f.FileType == 2) &&
-                                   f.IsActive);
+                                          f.RootCode == rootCode &&
+                                          (f.FileType == 0 || f.FileType == 2) &&
+                                          f.IsActive);
 
             if (file == null)
-            {
-                Console.WriteLine($"ERROR: File not found in database");
                 return NotFound("File not found in database");
-            }
 
-            Console.WriteLine($"Database file found:");
-            Console.WriteLine($"  - DisplayName: {file.DisplayName}");
-            Console.WriteLine($"  - FileExtension: {file.FileExtension}");
-            Console.WriteLine($"  - FileLocation: {file.FileLocation}");
-
-            // Try all possible paths where the file might be
             var fileName = $"{file.FileCode}{file.FileExtension}";
-
             var pathsToTry = new[]
             {
-        Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "files", fileName),
-        Path.Combine(_fileUploadSettings.UploadPath, fileName),
-        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "files", fileName),
-        Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot", "uploads", "files", fileName)
-    };
+                Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "files", fileName),
+                Path.Combine(_fileUploadSettings.UploadPath, fileName),
+                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "files", fileName),
+                Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot", "uploads", "files", fileName)
+            };
 
-            Console.WriteLine($"Trying paths for file: {fileName}");
-
-            string workingPath = null;
-            foreach (var path in pathsToTry)
-            {
-                Console.WriteLine($"  Trying: {path}");
-                Console.WriteLine($"  Exists: {System.IO.File.Exists(path)}");
-
-                if (System.IO.File.Exists(path))
-                {
-                    workingPath = path;
-                    Console.WriteLine($"  FOUND IT!");
-                    break;
-                }
-            }
+            string workingPath = pathsToTry.FirstOrDefault(System.IO.File.Exists);
 
             if (workingPath == null)
-            {
-                Console.WriteLine($"ERROR: File not found at any path");
-                Console.WriteLine($"Environment info:");
-                Console.WriteLine($"  WebRootPath: {_webHostEnvironment.WebRootPath}");
-                Console.WriteLine($"  ContentRootPath: {_webHostEnvironment.ContentRootPath}");
-                Console.WriteLine($"  CurrentDirectory: {Directory.GetCurrentDirectory()}");
-                Console.WriteLine($"  UploadSettings: {_fileUploadSettings.UploadPath}");
-
-                // List what's actually in the expected directory
-                var expectedDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "files");
-                if (Directory.Exists(expectedDir))
-                {
-                    var actualFiles = Directory.GetFiles(expectedDir);
-                    Console.WriteLine($"Files in {expectedDir}:");
-                    foreach (var f in actualFiles)
-                    {
-                        Console.WriteLine($"    {Path.GetFileName(f)}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Directory doesn't exist: {expectedDir}");
-                }
-
                 return NotFound($"Physical file not found: {fileName}");
-            }
 
             try
             {
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(workingPath);
                 var downloadName = $"{file.DisplayName}{file.FileExtension}";
                 var mimeType = GetMimeType(file.FileExtension);
-
-                Console.WriteLine($"SUCCESS: Returning file {downloadName} ({fileBytes.Length} bytes)");
-                Console.WriteLine($"=== DEBUG DOWNLOAD END ===");
-
                 return File(fileBytes, mimeType, downloadName);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"ERROR reading file: {ex.Message}");
                 return StatusCode(500, "Error reading file");
             }
-        }
-        // Helper method to clean filename for download
-        private string CleanFileName(string fileName)
-        {
-            // Remove invalid characters for file downloads
-            var invalidChars = Path.GetInvalidFileNameChars();
-            foreach (char c in invalidChars)
-            {
-                fileName = fileName.Replace(c, '_');
-            }
-
-            // Also replace some additional problematic characters
-            fileName = fileName.Replace(" ", "_").Replace(",", "_");
-
-            return fileName;
         }
 
         [HttpGet]
         public async Task<IActionResult> StreamVideo(string token, string url)
         {
-            // Validate token and check if not expired
             try
             {
                 var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(token));
-                var tokenParts = decodedToken.Split(':');
+                var parts = decodedToken.Split(':');
+                if (parts.Length != 2) return BadRequest("Invalid token");
 
-                if (tokenParts.Length != 2)
-                    return BadRequest("Invalid token");
-
-                var fileCode = int.Parse(tokenParts[0]);
-                var expiry = long.Parse(tokenParts[1]);
+                var expiry = long.Parse(parts[1]);
                 var expiryTime = DateTimeOffset.FromUnixTimeSeconds(expiry);
-
-                if (DateTimeOffset.Now > expiryTime)
-                    return BadRequest("Video link has expired");
+                if (DateTimeOffset.Now > expiryTime) return BadRequest("Video link has expired");
 
                 var decodedUrl = Uri.UnescapeDataString(url);
-
-                if (decodedUrl.Contains("youtube.com") || decodedUrl.Contains("youtu.be"))
-                {
-                    return Redirect(decodedUrl);
-                }
-                else
-                {
-                    return Redirect(decodedUrl);
-                }
+                return Redirect(decodedUrl);
             }
-            catch (Exception ex)
+            catch
             {
                 return BadRequest("Invalid token format");
             }
@@ -1119,39 +996,25 @@ namespace centrny.Controllers
             while (len >= 1024 && order < sizes.Length - 1)
             {
                 order++;
-                len = len / 1024;
+                len /= 1024;
             }
             return $"{len:0.##} {sizes[order]}";
         }
 
         private string EncryptString(string text)
         {
-            // Simple encryption - in production use stronger encryption
             var data = Encoding.UTF8.GetBytes(text);
             return Convert.ToBase64String(data);
         }
 
         private string DecryptString(string encryptedText)
         {
-            // Simple decryption - in production use stronger encryption
             var data = Convert.FromBase64String(encryptedText);
             return Encoding.UTF8.GetString(data);
         }
 
-        private string GenerateSecureVideoUrl(string originalUrl, int fileCode, int validHours)
-        {
-            // Generate time-based token
-            var expiry = DateTimeOffset.Now.AddHours(validHours).ToUnixTimeSeconds();
-            var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{fileCode}:{expiry}"));
-
-            // Return URL with token that your video player can validate
-            return $"/LessonContent/StreamVideo?token={token}&url={Uri.EscapeDataString(originalUrl)}";
-        }
-
-        // Helper method for file MIME types
-        private string GetMimeType(string extension)
-        {
-            return extension.ToLower() switch
+        private string GetMimeType(string extension) =>
+            extension.ToLower() switch
             {
                 ".pdf" => "application/pdf",
                 ".doc" => "application/msword",
@@ -1166,7 +1029,6 @@ namespace centrny.Controllers
                 ".gif" => "image/gif",
                 _ => "application/octet-stream"
             };
-        }
 
         private string GetCurrentUser()
         {
@@ -1188,12 +1050,12 @@ namespace centrny.Controllers
         public string VideoUrl { get; set; } = null!;
         public int VideoProvider { get; set; } // 0=YouTube, 1=Bunny CDN
         public int SortOrder { get; set; }
-        public string? Duration { get; set; } // "HH:MM:SS" format
+        public string? Duration { get; set; } // "HH:MM:SS"
     }
 
     public class UpdateSortOrderDto
     {
-        public int ItemCode { get; set; } // Can be FileCode or ExamCode
+        public int ItemCode { get; set; }
         public int SortOrder { get; set; }
         public string ItemType { get; set; } = "file"; // "file" or "exam"
     }
@@ -1205,7 +1067,6 @@ namespace centrny.Controllers
         public int SortOrder { get; set; }
     }
 
-    // DTOs for student functionality
     public class TrackAccessDto
     {
         public int LessonCode { get; set; }

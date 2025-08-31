@@ -14,6 +14,10 @@
             --shadow-lg: 0 8px 36px rgba(108,92,231,0.18);
         }
 
+        body {
+            background: #f5f7fb;
+        }
+
         .content-header {
             background: var(--primary-gradient);
             color: white;
@@ -23,13 +27,22 @@
             text-align: center;
         }
 
-        .lesson-selector {
+        .panel {
             background: white;
             border-radius: var(--border-radius-lg);
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem 1.5rem;
             box-shadow: var(--shadow-lg);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
+
+            .panel h6 {
+                font-size: .85rem;
+                letter-spacing: .5px;
+                text-transform: uppercase;
+                font-weight: 600;
+                color: #6c5ce7;
+                margin-bottom: .75rem;
+            }
 
         .content-section {
             background: white;
@@ -46,7 +59,7 @@
             padding: 1rem;
             margin-bottom: 1rem;
             cursor: default;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             position: relative;
         }
 
@@ -81,39 +94,43 @@
         }
 
         .content-badge {
-            font-size: 0.8rem;
-            padding: 0.3rem 0.8rem;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.65rem;
             border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: .5px;
         }
 
         .video-badge {
             background: #e74c3c;
-            color: white;
+            color: #fff;
         }
 
         .file-badge {
             background: #3498db;
-            color: white;
+            color: #fff;
         }
 
         .exam-badge {
             background: #f39c12;
-            color: white;
+            color: #fff;
         }
 
         .add-content-btn {
             background: var(--primary-gradient);
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             color: white;
-            padding: 0.8rem 1.5rem;
+            padding: 0.65rem 1.25rem;
             font-weight: 600;
-            transition: transform 0.2s ease;
+            font-size: .85rem;
+            transition: transform 0.2s ease, box-shadow .2s;
         }
 
             .add-content-btn:hover {
                 transform: translateY(-2px);
                 color: white;
+                box-shadow: 0 4px 14px rgba(108,92,231,.35);
             }
 
         .drag-handle {
@@ -136,7 +153,7 @@
 
         .empty-state {
             text-align: center;
-            padding: 3rem;
+            padding: 3rem 1rem;
             color: #6c757d;
         }
 
@@ -164,16 +181,15 @@
         }
 
         .drag-instructions {
-            background: #e8f2ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 8px;
-            padding: 0.75rem;
+            background: #eef2ff;
+            border: 1px solid #d6ddff;
+            border-radius: 10px;
+            padding: 0.75rem .9rem;
             margin-bottom: 1rem;
-            font-size: 0.9rem;
-            color: #0066cc;
+            font-size: 0.85rem;
+            color: #3d4b91;
         }
 
-        /* Success notification styles */
         .alert-success {
             border-left: 4px solid #28a745;
             animation: slideInRight 0.3s ease-out;
@@ -194,59 +210,127 @@
 
         }
 
-        .user-info {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: rgba(255,255,255,0.9);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            color: #666;
+        .filter-badge {
+            font-size: .65rem;
+            background: #6c5ce722;
+            color: #6c5ce7;
+            border: 1px solid #6c5ce733;
+            padding: .35rem .6rem;
+            border-radius: 30px;
+            margin-right: .4rem;
+            margin-top: .35rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+            .filter-badge i {
+                font-size: .7rem;
+            }
+
+        .filters-row .form-select {
+            font-size: .8rem;
+        }
+
+        .fade-in {
+            animation: fadeIn .25s ease;
+        }
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         }
     </style>
 </head>
 <body>
     <div class="container-fluid py-4">
         <div class="content-header position-relative">
-            <h1><i class="fas fa-play-circle me-2"></i>Lesson Content Management</h1>
-            <p class="mb-0">Add videos, files, and exams to your lessons with drag-and-drop organization</p>
+            <h1 class="h3 mb-2"><i class="fas fa-play-circle me-2"></i>Lesson Content Management</h1>
+            <p class="mb-0 opacity-75">Add videos, files, and exams to your lessons with drag-and-drop organization</p>
         </div>
 
-        <!-- Lesson Selector -->
-        <div class="lesson-selector">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <label for="lessonSelect" class="form-label fw-bold">Select Lesson:</label>
+        <!-- Filters -->
+        <div class="panel fade-in" id="filtersPanel">
+            <h6><i class="fas fa-filter me-1"></i> Filters</h6>
+            <div class="row g-3 filters-row">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold mb-1" for="filterYear">
+                        <i class="fas fa-calendar-alt me-1 text-primary"></i>Year
+                    </label>
+                    <select id="filterYear" class="form-select form-select-sm">
+                        <option value="">All Years</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold mb-1" for="filterSubject">
+                        <i class="fas fa-book me-1 text-primary"></i>Subject
+                    </label>
+                    <select id="filterSubject" class="form-select form-select-sm">
+                        <option value="">All Subjects</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold mb-1 invisible d-block">Apply</label>
+                    <button id="resetFiltersBtn" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="fas fa-undo me-1"></i> Reset Filters
+                    </button>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold mb-1 invisible d-block">Refresh</label>
+                    <button id="refreshFiltersBtn" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh Lists
+                    </button>
+                </div>
+            </div>
+            <div id="activeFilters" class="mt-2 d-flex flex-wrap"></div>
+        </div>
+
+        <!-- Lesson Selector & Actions -->
+        <div class="panel fade-in">
+            <h6><i class="fas fa-layer-group me-1"></i> Select Lesson</h6>
+            <div class="row align-items-end gy-3">
+                <div class="col-lg-6">
+                    <label for="lessonSelect" class="form-label small fw-semibold mb-1">Lesson</label>
                     <select class="form-select" id="lessonSelect">
                         <option value="">Choose a lesson to manage...</option>
                     </select>
+                    <div class="form-text" id="lessonsCountHelp"></div>
                 </div>
-                <div class="col-md-6 text-end">
-                    <button class="btn add-content-btn me-2" id="addVideoBtn" disabled>
-                        <i class="fas fa-video me-1"></i> Add Video
-                    </button>
-                    <button class="btn add-content-btn me-2" id="addFileBtn" disabled>
-                        <i class="fas fa-file me-1"></i> Add File
-                    </button>
-                    <button class="btn add-content-btn" id="addExamBtn" disabled>
-                        <i class="fas fa-clipboard-check me-1"></i> Add Exam
-                    </button>
+                <div class="col-lg-6 text-lg-end">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <button class="btn add-content-btn" id="addVideoBtn" disabled>
+                            <i class="fas fa-video me-1"></i> Video
+                        </button>
+                        <button class="btn add-content-btn" id="addFileBtn" disabled>
+                            <i class="fas fa-file me-1"></i> File
+                        </button>
+                        <button class="btn add-content-btn" id="addExamBtn" disabled>
+                            <i class="fas fa-clipboard-check me-1"></i> Exam
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Content List -->
-        <div class="content-section">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4><i class="fas fa-list me-2"></i>Lesson Content</h4>
+        <div class="content-section fade-in">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h4 class="h6 mb-2 mb-sm-0"><i class="fas fa-list me-2 text-primary"></i>Lesson Content</h4>
                 <small class="text-muted">Drag items by the grip handle to reorder</small>
             </div>
 
-            <!-- Drag Instructions -->
-            <div class="drag-instructions" id="dragInstructions" style="display: none;">
+            <div class="drag-instructions" id="dragInstructions" style="display:none;">
                 <i class="fas fa-info-circle me-2"></i>
-                <strong>Drag & Drop Instructions:</strong> Use the grip handle (<i class="fas fa-grip-vertical"></i>) to drag items to reorder them. Changes are saved automatically to the database.
+                <strong>Drag & Drop:</strong> Use the grip handle (<i class="fas fa-grip-vertical"></i>) to reorder items. Changes save automatically.
             </div>
 
             <div id="lessonContentList">
@@ -271,16 +355,14 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="videoDisplayName" class="form-label">Display Name *</label>
-                            <input type="text" class="form-control" id="videoDisplayName" required
-                                   placeholder="e.g., Introduction to Algebra">
+                            <input type="text" class="form-control" id="videoDisplayName" required placeholder="e.g., Introduction to Algebra">
                         </div>
                         <div class="mb-3">
                             <label for="videoUrl" class="form-label">Video URL *</label>
-                            <input type="url" class="form-control" id="videoUrl" required
-                                   placeholder="https://youtube.com/watch?v=... or Bunny CDN URL">
-                            <div class="form-text">Paste the full URL from YouTube or Bunny CDN</div>
+                            <input type="url" class="form-control" id="videoUrl" required placeholder="https://youtube.com/watch?v=...">
+                            <div class="form-text">Paste the full URL (YouTube or Bunny CDN)</div>
                         </div>
-                        <div class="row">
+                        <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="videoProvider" class="form-label">Video Provider *</label>
                                 <select class="form-select" id="videoProvider" required>
@@ -290,15 +372,14 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="videoDuration" class="form-label">Duration (optional)</label>
-                                <input type="text" class="form-control duration-input" id="videoDuration"
-                                       placeholder="00:05:30" pattern="^[0-9]{2}:[0-9]{2}:[0-9]{2}$">
+                                <input type="text" class="form-control duration-input" id="videoDuration" placeholder="00:05:30" pattern="^[0-9]{2}:[0-9]{2}:[0-9]{2}$">
                                 <div class="form-text">Format: HH:MM:SS</div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn add-content-btn">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn add-content-btn btn-sm">
                             <i class="fas fa-plus me-1"></i> Add Video
                         </button>
                     </div>
@@ -312,31 +393,30 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-file me-2"></i>Add File to Lesson</h5>
+                    <h5 class="modal-title"><i class="fas a-file me-2 fa-file"></i>Add File to Lesson</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="addFileForm" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="fileDisplayName" class="form-label">Display Name *</label>
-                            <input type="text" class="form-control" id="fileDisplayName" required
-                                   placeholder="e.g., Lesson Notes PDF">
+                            <input type="text" class="form-control" id="fileDisplayName" required placeholder="e.g., Lesson Notes PDF">
                         </div>
                         <div class="mb-3">
                             <label for="fileUpload" class="form-label">Choose File *</label>
                             <input type="file" class="form-control" id="fileUpload" required>
                             <div class="form-text">Maximum file size: 10MB</div>
                         </div>
-                        <div id="filePreview" class="mt-3" style="display: none;">
-                            <div class="alert alert-info">
+                        <div id="filePreview" class="mt-3" style="display:none;">
+                            <div class="alert alert-info mb-0">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <span id="fileInfo"></span>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn add-content-btn">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn add-content-btn btn-sm">
                             <i class="fas fa-upload me-1"></i> Upload File
                         </button>
                     </div>
@@ -360,16 +440,16 @@
                             <option value="">Choose an exam to link...</option>
                         </select>
                     </div>
-                    <div id="examDetails" class="mt-3" style="display: none;">
-                        <div class="alert alert-info">
+                    <div id="examDetails" class="mt-3" style="display:none;">
+                        <div class="alert alert-info mb-0">
                             <i class="fas fa-info-circle me-2"></i>
                             <div id="examInfo"></div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn add-content-btn" id="linkExamBtn" disabled>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn add-content-btn btn-sm" id="linkExamBtn" disabled>
                         <i class="fas fa-link me-1"></i> Link Exam
                     </button>
                 </div>
@@ -384,82 +464,211 @@
         let currentLessonCode = null;
         let sortable = null;
         let lessonContent = [];
+        let filtersLoaded = false;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTeacherLessons();
+        let currentSubjectFilter = '';
+        let currentYearFilter = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFilters().then(() => {
+                filtersLoaded = true;
+                loadTeacherLessons();
+            });
             initializeEventHandlers();
         });
 
+        /* ================== FILTERS ================== */
+
+        async function loadFilters() {
+            try {
+                const res = await fetch('/LessonContent/GetLessonFilters');
+                if (!res.ok) throw new Error('Failed to load filters');
+                const data = await res.json();
+                populateFilterSelects(data);
+            } catch (e) {
+                console.error('Error loading filters', e);
+                document.getElementById('activeFilters').innerHTML =
+                    '<span class="text-danger small">Failed to load filters</span>';
+            }
+        }
+
+        function populateFilterSelects(data) {
+            const subjSel = document.getElementById('filterSubject');
+            const yearSel = document.getElementById('filterYear');
+
+            const prevSubject = subjSel.value;
+            const prevYear = yearSel.value;
+
+            subjSel.innerHTML = '<option value="">All Subjects</option>';
+            yearSel.innerHTML = '<option value="">All Years</option>';
+
+            (data.subjects || []).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.subjectCode;
+                opt.textContent = s.subjectName;
+                subjSel.appendChild(opt);
+            });
+
+            // FIXED: use data.years instead of data.eduYears
+            (data.years || []).forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y.yearCode;
+                opt.textContent = y.yearName;
+                yearSel.appendChild(opt);
+            });
+
+            if ([...subjSel.options].some(o => o.value === prevSubject)) subjSel.value = prevSubject;
+            if ([...yearSel.options].some(o => o.value === prevYear)) yearSel.value = prevYear;
+
+            updateActiveFiltersBadges();
+        }
+
+        function updateActiveFiltersBadges() {
+            const container = document.getElementById('activeFilters');
+            container.innerHTML = '';
+            currentSubjectFilter = document.getElementById('filterSubject').value;
+            currentYearFilter = document.getElementById('filterYear').value;
+
+            const subjectText = document.getElementById('filterSubject').selectedOptions[0]?.text;
+            const yearText = document.getElementById('filterYear').selectedOptions[0]?.text;
+
+            if (!currentSubjectFilter && !currentYearFilter) {
+                container.innerHTML = '<span class="text-muted small"><i class="fas fa-info-circle me-1"></i>No active filters</span>';
+                return;
+            }
+
+            if (currentYearFilter) {
+                container.appendChild(createFilterBadge('Year', yearText, () => {
+                    document.getElementById('filterYear').value = '';
+                    filtersChanged();
+                }));
+            }
+            if (currentSubjectFilter) {
+                container.appendChild(createFilterBadge('Subject', subjectText, () => {
+                    document.getElementById('filterSubject').value = '';
+                    filtersChanged();
+                }));
+            }
+        }
+
+        function createFilterBadge(label, value, onRemove) {
+            const span = document.createElement('span');
+            span.className = 'filter-badge';
+            span.innerHTML = `<i class="fas fa-tag"></i><strong>${label}:</strong> ${value} <button type="button" class="btn btn-link p-0 m-0 text-decoration-none text-danger ms-1" style="line-height:1" title="Remove"><i class="fas fa-times"></i></button>`;
+            span.querySelector('button').addEventListener('click', onRemove);
+            return span;
+        }
+
+        function filtersChanged() {
+            updateActiveFiltersBadges();
+            currentLessonCode = null;
+            document.getElementById('lessonSelect').value = '';
+            disableActionButtons(true);
+            setContentEmptyState('Choose a lesson and manage its content');
+            loadTeacherLessons();
+        }
+
+        function disableActionButtons(disabled) {
+            document.querySelectorAll('#addVideoBtn,#addFileBtn,#addExamBtn')
+                .forEach(btn => btn.disabled = disabled);
+        }
+
+        /* ================== LESSONS DROPDOWN ================== */
+
         async function loadTeacherLessons() {
             try {
-                const response = await fetch('/LessonContent/GetTeacherLessons');
-                const lessons = await response.json();
+                const params = [];
+                if (currentSubjectFilter) params.push('subjectCode=' + encodeURIComponent(currentSubjectFilter));
+                if (currentYearFilter) params.push('yearCode=' + encodeURIComponent(currentYearFilter)); // FIXED param name
+                const query = params.length ? ('?' + params.join('&')) : '';
+                const response = await fetch('/LessonContent/GetTeacherLessons' + query);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
+                const chapters = await response.json();
                 const select = document.getElementById('lessonSelect');
                 select.innerHTML = '<option value="">Choose a lesson to manage...</option>';
 
-                lessons.forEach(lesson => {
-                    const option = document.createElement('option');
-                    option.value = lesson.lessonCode;
-                    option.textContent = `${lesson.lessonName} - ${lesson.subjectName} (${lesson.eduYearName})`;
-                    select.appendChild(option);
+                let totalLessons = 0;
+                chapters.forEach(chapter => {
+                    const lessonsArr = chapter.lessons || chapter.Lessons || [];
+                    if (lessonsArr.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        const chapterName = chapter.chapterName || chapter.ChapterName || 'Chapter';
+                        const subjectName = chapter.subjectName || chapter.SubjectName || 'Subject';
+                        const eduYearName = chapter.eduYearName || chapter.EduYearName || '';
+                        optgroup.label = `${chapterName} - ${subjectName} (${eduYearName})`;
+                        lessonsArr.forEach(lesson => {
+                            const option = document.createElement('option');
+                            option.value = lesson.lessonCode || lesson.LessonCode;
+                            option.textContent = lesson.lessonName || lesson.LessonName;
+                            optgroup.appendChild(option);
+                        });
+                        select.appendChild(optgroup);
+                        totalLessons += lessonsArr.length;
+                    }
                 });
+
+                document.getElementById('lessonsCountHelp').textContent =
+                    totalLessons > 0
+                        ? `${totalLessons} lesson${totalLessons === 1 ? '' : 's'} found`
+                        : 'No lessons match current filters';
+
+                if (totalLessons === 0) {
+                    select.innerHTML = '<option value="">No lessons available for filters</option>';
+                }
             } catch (error) {
                 console.error('Error loading lessons:', error);
                 alert('Error loading lessons. Please refresh the page.');
             }
         }
 
+        /* ================== CONTENT LIST ================== */
+
         async function loadLessonContent(lessonCode, showLoader = true) {
             try {
-                // Show loading indicator
                 if (showLoader) {
-                    const container = document.getElementById('lessonContentList');
-                    container.innerHTML = `
+                    document.getElementById('lessonContentList').innerHTML = `
                         <div class="text-center py-4">
                             <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-                            <p class="mt-2">Loading content...</p>
+                            <p class="mt-2 mb-0 small">Loading content...</p>
                         </div>
                     `;
                 }
-
-                // Add cache buster to prevent caching issues
-                const timestamp = new Date().getTime();
+                const timestamp = Date.now();
                 const response = await fetch(`/LessonContent/GetLessonContent?lessonCode=${lessonCode}&_t=${timestamp}`);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 const content = await response.json();
-                console.log(`✅ Loaded ${content.length} content items for lesson ${lessonCode} at ${new Date().toISOString()}`);
-
                 lessonContent = content;
                 renderContentList(content);
                 initializeSortable();
-
-                // Show/hide drag instructions
-                const dragInstructions = document.getElementById('dragInstructions');
-                if (dragInstructions) {
-                    dragInstructions.style.display = content.length > 0 ? 'block' : 'none';
-                }
-
-                return true; // Success indicator
-
+                document.getElementById('dragInstructions').style.display = content.length > 0 ? 'block' : 'none';
+                return true;
             } catch (error) {
-                console.error('❌ Error loading lesson content:', error);
-                const container = document.getElementById('lessonContentList');
-                container.innerHTML = `
+                console.error('Error loading lesson content:', error);
+                document.getElementById('lessonContentList').innerHTML = `
                     <div class="alert alert-danger text-center">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p class="mb-2">Error loading content</p>
-                        <button class="btn btn-sm btn-outline-danger" onclick="loadLessonContent(${lessonCode})">
-                            <i class="fas fa-redo"></i> Retry
-                        </button>
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Error loading content
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-danger" onclick="loadLessonContent(${lessonCode})">
+                                <i class="fas fa-redo"></i> Retry
+                            </button>
+                        </div>
                     </div>
                 `;
-                return false; // Failure indicator
+                return false;
             }
+        }
+
+        function setContentEmptyState(message) {
+            document.getElementById('lessonContentList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <h5>No lesson selected</h5>
+                    <p>${message}</p>
+                </div>
+            `;
         }
 
         function renderContentList(content) {
@@ -476,50 +685,35 @@
                 return;
             }
 
-            // Sort content by sortOrder
-            const sortedContent = [...content].sort((a, b) => {
-                const sortA = a.sortOrder || 999;
-                const sortB = b.sortOrder || 999;
-                return sortA - sortB;
-            });
-
-            console.log(`📋 Rendering ${sortedContent.length} items in sort order`);
+            const sortedContent = [...content].sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
 
             container.innerHTML = sortedContent.map((item, index) => {
                 const isVideo = item.fileType === 1;
-                const isFile = item.fileType === 0 || item.fileType === 2;
                 const isExam = item.fileType === 3;
 
-                let itemClass = 'file-item';
-                let badgeClass = 'file-badge';
-                let typeName = 'File';
-                let iconClass = 'fas fa-file-alt';
+                let itemClass = isVideo ? 'video-item' : isExam ? 'exam-item' : 'file-item';
+                let badgeClass = isVideo ? 'video-badge' : isExam ? 'exam-badge' : 'file-badge';
+                let typeName = isVideo ? 'Video' : isExam ? 'Exam' : 'File';
+                let iconClass = isVideo ? 'fas fa-play-circle' : isExam ? 'fas fa-clipboard-check' : 'fas fa-file-alt';
+
                 let metaInfo = '';
                 let actionButton = '';
 
                 if (isVideo) {
-                    itemClass = 'video-item';
-                    badgeClass = 'video-badge';
-                    typeName = 'Video';
-                    iconClass = 'fas fa-play-circle';
-                    metaInfo = `${item.videoProviderName || 'Unknown Provider'}${item.durationFormatted ? ` • ${item.durationFormatted}` : ''}`;
+                    metaInfo = `${item.videoProviderName || 'Unknown Provider'}${item.durationFormatted ? ' • ' + item.durationFormatted : ''}`;
                     actionButton = `<button class="btn btn-sm btn-outline-danger" onclick="deleteContent(${item.itemCode}, 'video')" title="Delete Video">
-                                     <i class="fas fa-trash"></i>
-                                   </button>`;
+                                        <i class="fas fa-trash"></i>
+                                    </button>`;
                 } else if (isExam) {
-                    itemClass = 'exam-item';
-                    badgeClass = 'exam-badge';
-                    typeName = 'Exam';
-                    iconClass = 'fas fa-clipboard-check';
-                    metaInfo = `${item.examTimer ? `Duration: ${item.examTimer}` : ''}${item.examDegree ? ` • Total: ${item.examDegree} marks` : ''}`;
+                    metaInfo = `${item.examTimer ? 'Duration: ' + item.examTimer : ''}${item.examDegree ? ' • Total: ' + item.examDegree + ' marks' : ''}`;
                     actionButton = `<button class="btn btn-sm btn-outline-warning" onclick="unlinkExam(${item.itemCode})" title="Unlink Exam">
-                                     <i class="fas fa-unlink"></i> Unlink
-                                   </button>`;
+                                        <i class="fas fa-unlink"></i> Unlink
+                                    </button>`;
                 } else {
-                    metaInfo = `${item.fileExtension}${item.fileSizeFormatted ? ` • ${item.fileSizeFormatted}` : ''}`;
+                    metaInfo = `${item.fileExtension || ''}${item.fileSizeFormatted ? ' • ' + item.fileSizeFormatted : ''}`;
                     actionButton = `<button class="btn btn-sm btn-outline-danger" onclick="deleteContent(${item.itemCode}, 'file')" title="Delete File">
-                                     <i class="fas fa-trash"></i>
-                                   </button>`;
+                                        <i class="fas fa-trash"></i>
+                                    </button>`;
                 }
 
                 return `
@@ -531,7 +725,7 @@
                             <div class="drag-handle me-3" title="Drag to reorder">
                                 <i class="fas fa-grip-vertical"></i>
                             </div>
-                            <div class="me-3" style="color: ${isVideo ? '#e74c3c' : isExam ? '#f39c12' : '#3498db'}; font-size: 1.5rem;">
+                            <div class="me-3" style="color:${isVideo ? '#e74c3c' : isExam ? '#f39c12' : '#3498db'}; font-size:1.4rem;">
                                 <i class="${iconClass}"></i>
                             </div>
                             <div class="flex-grow-1">
@@ -545,39 +739,30 @@
                                             <small class="text-muted sort-indicator">(Sort: ${item.sortOrder || 'None'})</small>
                                         </h6>
                                         <small class="text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            ${metaInfo}
+                                            <i class="fas fa-info-circle me-1"></i>${metaInfo}
                                         </small>
                                     </div>
-                                    <div>
-                                        ${actionButton}
-                                    </div>
+                                    <div>${actionButton}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
-
-            console.log(`✅ Content rendered successfully at ${new Date().toLocaleTimeString()}`);
         }
 
+        /* ================== SORTABLE ================== */
         function initializeSortable() {
             const container = document.getElementById('lessonContentList');
-
-            if (sortable) {
-                sortable.destroy();
-            }
+            if (sortable) sortable.destroy();
 
             sortable = new Sortable(container, {
                 handle: '.drag-handle',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
-                onEnd: function(evt) {
-                    if (evt.oldIndex !== evt.newIndex) {
-                        updateSortOrderAfterDrag();
-                    }
+                onEnd: evt => {
+                    if (evt.oldIndex !== evt.newIndex) updateSortOrderAfterDrag();
                 }
             });
         }
@@ -596,84 +781,40 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(sortData)
                 });
+                if (!response.ok) throw new Error('Failed to update sort order');
 
-                if (response.ok) {
-                    // Update visual indicators
-                    items.forEach((item, index) => {
-                        const sortIndicator = item.querySelector('.sort-indicator');
-                        if (sortIndicator) {
-                            sortIndicator.textContent = `(Sort: ${index + 1})`;
-                        }
+                items.forEach((item, index) => {
+                    const sortIndicator = item.querySelector('.sort-indicator');
+                    if (sortIndicator) sortIndicator.textContent = `(Sort: ${index + 1})`;
+                    const badge = item.querySelector('.content-badge');
+                    if (badge) badge.textContent = badge.textContent.replace(/#\d+/, `#${index + 1}`);
+                });
 
-                        const badge = item.querySelector('.content-badge');
-                        if (badge) {
-                            const badgeText = badge.textContent;
-                            badge.textContent = badgeText.replace(/#\d+/, `#${index + 1}`);
-                        }
-                    });
-
-                    showSuccessMessage('Content order updated successfully!');
-                } else {
-                    throw new Error('Failed to update sort order');
-                }
-            } catch (error) {
-                console.error('Error updating sort order:', error);
+                showSuccessMessage('Content order updated successfully!');
+            } catch (err) {
+                console.error(err);
                 alert('Error updating order. Please refresh the page.');
             }
         }
 
-        function showSuccessMessage(message) {
-            // Remove existing messages
-            document.querySelectorAll('.alert-success.position-fixed').forEach(msg => msg.remove());
-
-            const successDiv = document.createElement('div');
-            successDiv.className = 'alert alert-success position-fixed';
-            successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; width: auto; max-width: 400px;';
-            successDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
-
-            document.body.appendChild(successDiv);
-
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.parentNode.removeChild(successDiv);
-                }
-            }, 3000);
-        }
+        /* ================== CRUD ACTIONS ================== */
 
         async function deleteContent(itemCode, itemType) {
-            if (!confirm(`Are you sure you want to delete this ${itemType}?`)) {
-                return;
+            if (!confirm(`Are you sure you want to delete this ${itemType}?`)) return;
+
+            const itemElement = document.querySelector(`[data-item-code="${itemCode}"]`);
+            if (itemElement) {
+                itemElement.style.opacity = '0.5';
+                itemElement.style.pointerEvents = 'none';
             }
 
-            console.log(`🗑️ Deleting ${itemType} with code: ${itemCode} by hossamadel7 at ${new Date().toISOString()}`);
-
             try {
-                // Show loading state for the specific item
-                const itemElement = document.querySelector(`[data-item-code="${itemCode}"]`);
-                if (itemElement) {
-                    itemElement.style.opacity = '0.5';
-                    itemElement.style.pointerEvents = 'none';
-                }
-
-                const response = await fetch(`/LessonContent/DeleteContent?fileCode=${itemCode}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    console.log(`✅ ${itemType} deleted successfully`);
-                    showSuccessMessage(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted successfully!`);
-
-                    // Force immediate reload
-                    await forceReloadContent();
-                } else {
-                    throw new Error(`Delete failed: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('❌ Error deleting content:', error);
+                const response = await fetch(`/LessonContent/DeleteContent?fileCode=${itemCode}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Delete failed');
+                showSuccessMessage(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted successfully!`);
+                await forceReloadContent();
+            } catch (e) {
                 alert(`Error deleting ${itemType}. Please try again.`);
-
-                // Restore item state on error
-                const itemElement = document.querySelector(`[data-item-code="${itemCode}"]`);
                 if (itemElement) {
                     itemElement.style.opacity = '1';
                     itemElement.style.pointerEvents = 'auto';
@@ -682,66 +823,39 @@
         }
 
         async function unlinkExam(examCode) {
-            if (!confirm('Are you sure you want to unlink this exam from the lesson?')) {
-                return;
-            }
-
-            console.log(`🔗 Unlinking exam with code: ${examCode} by hossamadel7 at ${new Date().toISOString()}`);
-
+            if (!confirm('Are you sure you want to unlink this exam from the lesson?')) return;
             try {
                 const response = await fetch('/LessonContent/UnlinkExamFromLesson', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(examCode)
                 });
-
-                if (response.ok) {
-                    console.log('✅ Exam unlinked successfully');
-                    showSuccessMessage('Exam unlinked successfully!');
-                    await forceReloadContent();
-                } else {
-                    throw new Error(`Unlink failed: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('❌ Error unlinking exam:', error);
+                if (!response.ok) throw new Error('Unlink failed');
+                showSuccessMessage('Exam unlinked successfully!');
+                await forceReloadContent();
+            } catch {
                 alert('Error unlinking exam. Please try again.');
             }
         }
 
         async function forceReloadContent() {
-            console.log(`🔄 Force reloading content for lesson ${currentLessonCode} at ${new Date().toISOString()}`);
-
-            // Wait a bit for database to update
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Try multiple times if needed
+            if (!currentLessonCode) return;
+            await new Promise(r => setTimeout(r, 500));
             for (let attempt = 1; attempt <= 3; attempt++) {
-                console.log(`📡 Reload attempt ${attempt}/3`);
-
-                const success = await loadLessonContent(currentLessonCode, true);
-                if (success) {
-                    console.log(`✅ Content reloaded successfully on attempt ${attempt}`);
-                    return;
-                }
-
-                if (attempt < 3) {
-                    console.log(`⏳ Waiting before retry attempt ${attempt + 1}`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                }
+                const ok = await loadLessonContent(currentLessonCode, true);
+                if (ok) return;
+                await new Promise(r => setTimeout(r, 700));
             }
-
-            console.log('❌ All reload attempts failed');
-            alert('Content updated but display refresh failed. Please refresh the page manually.');
+            alert('Content updated but display did not refresh. Please reload the page.');
         }
 
         async function loadAvailableExams() {
             try {
                 const response = await fetch(`/LessonContent/GetAvailableExams?lessonCode=${currentLessonCode}`);
+                if (!response.ok) throw new Error();
                 const exams = await response.json();
-
                 const select = document.getElementById('examSelect');
                 select.innerHTML = '<option value="">Choose an exam to link...</option>';
-
                 exams.forEach(exam => {
                     const option = document.createElement('option');
                     option.value = exam.examCode;
@@ -749,49 +863,49 @@
                     option.dataset.examData = JSON.stringify(exam);
                     select.appendChild(option);
                 });
-            } catch (error) {
-                console.error('Error loading available exams:', error);
+            } catch {
                 alert('Error loading available exams.');
             }
         }
 
-        function initializeEventHandlers() {
-            // Lesson selection
-            document.getElementById('lessonSelect').addEventListener('change', function() {
-                currentLessonCode = this.value ? parseInt(this.value) : null;
-                const addBtns = document.querySelectorAll('#addVideoBtn, #addFileBtn, #addExamBtn');
+        /* ================== EVENT HANDLERS ================== */
 
+        function initializeEventHandlers() {
+            document.getElementById('filterSubject').addEventListener('change', filtersChanged);
+            document.getElementById('filterYear').addEventListener('change', filtersChanged);
+            document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+                document.getElementById('filterSubject').value = '';
+                document.getElementById('filterYear').value = '';
+                filtersChanged();
+            });
+            document.getElementById('refreshFiltersBtn').addEventListener('click', async () => {
+                await loadFilters();
+                loadTeacherLessons();
+            });
+
+            document.getElementById('lessonSelect').addEventListener('change', function () {
+                currentLessonCode = this.value ? parseInt(this.value) : null;
                 if (currentLessonCode) {
-                    addBtns.forEach(btn => btn.disabled = false);
+                    disableActionButtons(false);
                     loadLessonContent(currentLessonCode);
                 } else {
-                    addBtns.forEach(btn => btn.disabled = true);
-                    document.getElementById('lessonContentList').innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-folder-open"></i>
-                            <h5>No lesson selected</h5>
-                            <p>Choose a lesson from the dropdown to manage its content</p>
-                        </div>
-                    `;
+                    disableActionButtons(true);
+                    setContentEmptyState('Choose a lesson from the dropdown to manage its content');
                 }
             });
 
-            // Add buttons
-            document.getElementById('addVideoBtn').addEventListener('click', () => {
-                new bootstrap.Modal(document.getElementById('addVideoModal')).show();
-            });
-
-            document.getElementById('addFileBtn').addEventListener('click', () => {
-                new bootstrap.Modal(document.getElementById('addFileModal')).show();
-            });
-
+            document.getElementById('addVideoBtn').addEventListener('click', () =>
+                new bootstrap.Modal(document.getElementById('addVideoModal')).show()
+            );
+            document.getElementById('addFileBtn').addEventListener('click', () =>
+                new bootstrap.Modal(document.getElementById('addFileModal')).show()
+            );
             document.getElementById('addExamBtn').addEventListener('click', () => {
                 loadAvailableExams();
                 new bootstrap.Modal(document.getElementById('addExamModal')).show();
             });
 
-            // Exam selection
-            document.getElementById('examSelect').addEventListener('change', function() {
+            document.getElementById('examSelect').addEventListener('change', function () {
                 const examDetails = document.getElementById('examDetails');
                 const examInfo = document.getElementById('examInfo');
                 const linkBtn = document.getElementById('linkExamBtn');
@@ -813,13 +927,9 @@
                 }
             });
 
-            // Link exam button
-            document.getElementById('linkExamBtn').addEventListener('click', async function() {
+            document.getElementById('linkExamBtn').addEventListener('click', async () => {
                 const examCode = parseInt(document.getElementById('examSelect').value);
                 const currentContentCount = document.querySelectorAll('.content-item').length;
-
-                console.log(`🔗 Linking exam ${examCode} by hossamadel7 at ${new Date().toISOString()}`);
-
                 try {
                     const response = await fetch('/LessonContent/LinkExamToLesson', {
                         method: 'POST',
@@ -830,51 +940,42 @@
                             sortOrder: currentContentCount + 1
                         })
                     });
-
-                    if (response.ok) {
-                        bootstrap.Modal.getInstance(document.getElementById('addExamModal')).hide();
-                        console.log('✅ Exam linked successfully');
-                        showSuccessMessage('Exam linked successfully!');
-                        await forceReloadContent();
-                    } else {
-                        throw new Error(`Link failed: ${response.status}`);
-                    }
-                } catch (error) {
-                    console.error('❌ Error linking exam:', error);
+                    if (!response.ok) throw new Error();
+                    bootstrap.Modal.getInstance(document.getElementById('addExamModal')).hide();
+                    showSuccessMessage('Exam linked successfully!');
+                    await forceReloadContent();
+                } catch {
                     alert('Error linking exam. Please try again.');
                 }
             });
 
-            // File upload preview
-            document.getElementById('fileUpload').addEventListener('change', function() {
+            document.getElementById('fileUpload').addEventListener('change', function () {
                 const file = this.files[0];
                 const preview = document.getElementById('filePreview');
                 const fileInfo = document.getElementById('fileInfo');
-
                 if (file) {
                     const sizeFormatted = formatFileSize(file.size);
                     fileInfo.textContent = `${file.name} (${sizeFormatted})`;
                     preview.style.display = 'block';
-
+                    preview.className = file.size > 10 * 1024 * 1024
+                        ? 'mt-3 alert alert-danger'
+                        : 'mt-3 alert alert-info';
                     if (file.size > 10 * 1024 * 1024) {
-                        preview.className = 'mt-3 alert alert-danger';
                         fileInfo.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>File too large! Maximum size is 10MB.`;
-                    } else {
-                        preview.className = 'mt-3 alert alert-info';
                     }
                 } else {
                     preview.style.display = 'none';
                 }
             });
 
-            // Form submissions
             document.getElementById('addVideoForm').addEventListener('submit', handleVideoSubmit);
             document.getElementById('addFileForm').addEventListener('submit', handleFileSubmit);
         }
 
+        /* ================== VIDEO & FILE SUBMISSION ================== */
+
         async function handleVideoSubmit(e) {
             e.preventDefault();
-
             const currentContentCount = document.querySelectorAll('.content-item').length;
             const formData = {
                 lessonCode: currentLessonCode,
@@ -884,83 +985,69 @@
                 sortOrder: currentContentCount + 1,
                 duration: document.getElementById('videoDuration').value || null
             };
-
-            console.log(`🎥 Adding video by hossamadel7 at ${new Date().toISOString()}:`, formData);
-
             try {
                 const response = await fetch('/LessonContent/AddVideo', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-
-                if (response.ok) {
-                    bootstrap.Modal.getInstance(document.getElementById('addVideoModal')).hide();
-                    e.target.reset();
-                    console.log('✅ Video added successfully');
-                    showSuccessMessage('Video added successfully!');
-                    await forceReloadContent();
-                } else {
-                    const error = await response.text();
-                    throw new Error(error || `Add video failed: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('❌ Error adding video:', error);
-                alert(`Error adding video: ${error.message}`);
+                if (!response.ok) throw new Error(await response.text());
+                bootstrap.Modal.getInstance(document.getElementById('addVideoModal')).hide();
+                e.target.reset();
+                showSuccessMessage('Video added successfully!');
+                await forceReloadContent();
+            } catch (err) {
+                alert(`Error adding video: ${err.message}`);
             }
         }
 
         async function handleFileSubmit(e) {
             e.preventDefault();
-
             const fileInput = document.getElementById('fileUpload');
             const file = fileInput.files[0];
-
             if (!file || file.size > 10 * 1024 * 1024) {
                 alert('Please select a file under 10MB');
                 return;
             }
-
             const currentContentCount = document.querySelectorAll('.content-item').length;
             const formData = new FormData();
             formData.append('lessonCode', currentLessonCode);
             formData.append('displayName', document.getElementById('fileDisplayName').value);
             formData.append('sortOrder', currentContentCount + 1);
             formData.append('file', file);
-
-            console.log(`📄 Adding file by hossamadel7 at ${new Date().toISOString()}: ${file.name}`);
-
             try {
-                const response = await fetch('/LessonContent/AddFile', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    bootstrap.Modal.getInstance(document.getElementById('addFileModal')).hide();
-                    e.target.reset();
-                    document.getElementById('filePreview').style.display = 'none';
-                    console.log('✅ File added successfully');
-                    showSuccessMessage('File uploaded successfully!');
-                    await forceReloadContent();
-                } else {
-                    const error = await response.text();
-                    throw new Error(error || `File upload failed: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('❌ Error uploading file:', error);
-                alert(`Error uploading file: ${error.message}`);
+                const response = await fetch('/LessonContent/AddFile', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(await response.text());
+                bootstrap.Modal.getInstance(document.getElementById('addFileModal')).hide();
+                e.target.reset();
+                document.getElementById('filePreview').style.display = 'none';
+                showSuccessMessage('File uploaded successfully!');
+                await forceReloadContent();
+            } catch (err) {
+                alert(`Error uploading file: ${err.message}`);
             }
+        }
+
+        /* ================== UTILITIES ================== */
+
+        function showSuccessMessage(message) {
+            document.querySelectorAll('.alert-success.position-fixed').forEach(x => x.remove());
+            const successDiv = document.createElement('div');
+            successDiv.className = 'alert alert-success position-fixed';
+            successDiv.style.cssText = 'top:20px;right:20px;z-index:9999;max-width:400px;';
+            successDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 3000);
         }
 
         function formatFileSize(bytes) {
             const sizes = ['B', 'KB', 'MB', 'GB'];
             if (bytes === 0) return '0 B';
             const i = Math.floor(Math.log(bytes) / Math.log(1024));
-            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
         }
 
-        console.log('✅ Lesson Content Management loaded at 2025-08-30 21:50:53 UTC by hossamadel7');
+        console.log('✅ Lesson Content Management (Year filter fixed) loaded UTC ' + new Date().toISOString());
     </script>
 </body>
 </html>

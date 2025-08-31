@@ -6,14 +6,29 @@ class OnlineStudentDashboard {
         this.exams = [];
         this.stats = null;
         this.subscription = null;
+
+        // Learning system properties
+        this.learningSubjects = [];
+        this.chapters = [];
+        this.lessons = [];
+        this.currentSubject = null;
+        this.currentChapter = null;
+
         this.init();
     }
 
     init() {
         document.addEventListener('DOMContentLoaded', () => {
-            this.loadAll();
+            // Check if we're on the learning page
+            if (window.location.pathname.includes('/Learning')) {
+                this.initLearningSystem();
+            } else {
+                this.loadAll();
+            }
         });
     }
+
+    // ============ DASHBOARD FUNCTIONALITY ============
 
     async loadAll() {
         try {
@@ -202,6 +217,312 @@ class OnlineStudentDashboard {
         }).join('');
     }
 
+    // ============ LEARNING SYSTEM FUNCTIONALITY ============
+
+    initLearningSystem() {
+        this.setupLearningEventListeners();
+        this.loadLearningSubjects();
+    }
+
+    setupLearningEventListeners() {
+        // Subject selection
+        const subjectSelect = document.getElementById('subjectSelect');
+        const loadChaptersBtn = document.getElementById('loadChaptersBtn');
+
+        if (subjectSelect) {
+            subjectSelect.addEventListener('change', () => {
+                const selected = subjectSelect.value;
+                if (loadChaptersBtn) {
+                    loadChaptersBtn.disabled = !selected;
+                }
+            });
+        }
+
+        if (loadChaptersBtn) {
+            loadChaptersBtn.addEventListener('click', () => {
+                const selectedSubject = subjectSelect.value;
+                if (selectedSubject) {
+                    this.loadChapters(parseInt(selectedSubject));
+                }
+            });
+        }
+
+        // Navigation buttons
+        const backToSubjectsBtn = document.getElementById('backToSubjectsBtn');
+        const backToChaptersBtn = document.getElementById('backToChaptersBtn');
+
+        if (backToSubjectsBtn) {
+            backToSubjectsBtn.addEventListener('click', () => {
+                this.showSubjectSelection();
+            });
+        }
+
+        if (backToChaptersBtn) {
+            backToChaptersBtn.addEventListener('click', () => {
+                this.showChapters();
+            });
+        }
+    }
+
+    async loadLearningSubjects() {
+        try {
+            this.showLearningLoading('subjectSelection');
+            const response = await fetch('/OnlineStudent/GetLearningSubjects');
+
+            if (!response.ok) {
+                throw new Error('Failed to load subjects');
+            }
+
+            this.learningSubjects = await response.json();
+
+            if (this.learningSubjects.error) {
+                this.showAlert(this.learningSubjects.error, 'error');
+                return;
+            }
+
+            this.renderLearningSubjects();
+            this.hideLearningLoading('subjectSelection');
+        } catch (error) {
+            console.error('Error loading learning subjects:', error);
+            this.showAlert('Failed to load subjects', 'error');
+            this.hideLearningLoading('subjectSelection');
+        }
+    }
+
+    renderLearningSubjects() {
+        const subjectSelect = document.getElementById('subjectSelect');
+        if (!subjectSelect) return;
+
+        if (!this.learningSubjects || this.learningSubjects.length === 0) {
+            subjectSelect.innerHTML = '<option value="">No subjects available</option>';
+            return;
+        }
+
+        const options = ['<option value="">Select a subject...</option>'];
+        this.learningSubjects.forEach(subject => {
+            options.push(`
+                <option value="${subject.subjectCode}">
+                    ${this.escape(subject.subjectName)} - ${this.escape(subject.eduYearName)}
+                </option>
+            `);
+        });
+
+        subjectSelect.innerHTML = options.join('');
+    }
+
+    async loadChapters(subjectCode) {
+        try {
+            const selectedSubject = this.learningSubjects.find(s => s.subjectCode === subjectCode);
+            this.currentSubject = selectedSubject;
+
+            this.showChaptersSection();
+            this.showLearningLoading('chaptersSection');
+
+            const response = await fetch(`/OnlineStudent/GetSubjectChapters?subjectCode=${subjectCode}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to load chapters');
+            }
+
+            this.chapters = await response.json();
+
+            if (this.chapters.error) {
+                this.showAlert(this.chapters.error, 'error');
+                return;
+            }
+
+            this.renderChapters();
+            this.updateBreadcrumb(['Learning Center', this.currentSubject?.subjectName || 'Subject']);
+            this.hideLearningLoading('chaptersSection');
+        } catch (error) {
+            console.error('Error loading chapters:', error);
+            this.showAlert('Failed to load chapters', 'error');
+            this.hideLearningLoading('chaptersSection');
+        }
+    }
+
+    renderChapters() {
+        const chaptersGrid = document.getElementById('chaptersGrid');
+        if (!chaptersGrid) return;
+
+        if (!this.chapters || this.chapters.length === 0) {
+            chaptersGrid.innerHTML = this.emptyState('fa-layer-group', 'No Chapters', 'No chapters available for this subject');
+            return;
+        }
+
+        const cards = this.chapters.map(chapter => `
+            <div class="col-md-6 col-lg-4">
+                <div class="chapter-card card h-100" data-chapter-code="${chapter.lessonCode}">
+                    <div class="card-body">
+                        <div class="chapter-header">
+                            <h5 class="chapter-title">${this.escape(chapter.chapterName)}</h5>
+                            <span class="lessons-count-badge">
+                                ${chapter.lessonsCount} ${chapter.lessonsCount === 1 ? 'lesson' : 'lessons'}
+                            </span>
+                        </div>
+                        <p class="chapter-description">${this.escape(chapter.chapterDescription)}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                ${this.formatDate(chapter.insertTime)}
+                            </small>
+                            <i class="fas fa-arrow-right text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        chaptersGrid.innerHTML = cards;
+
+        // Add click listeners to chapter cards
+        chaptersGrid.querySelectorAll('.chapter-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const chapterCode = parseInt(card.dataset.chapterCode);
+                this.loadLessons(chapterCode);
+            });
+        });
+    }
+
+    async loadLessons(chapterCode) {
+        try {
+            const selectedChapter = this.chapters.find(c => c.lessonCode === chapterCode);
+            this.currentChapter = selectedChapter;
+
+            this.showLessonsSection();
+            this.showLearningLoading('lessonsSection');
+
+            const response = await fetch(`/OnlineStudent/GetChapterLessons?chapterCode=${chapterCode}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to load lessons');
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                this.showAlert(data.error, 'error');
+                return;
+            }
+
+            this.lessons = data.lessons;
+            this.renderLessons(data.chapter);
+            this.updateBreadcrumb([
+                'Learning Center',
+                this.currentSubject?.subjectName || 'Subject',
+                data.chapter?.chapterName || 'Chapter'
+            ]);
+            this.hideLearningLoading('lessonsSection');
+        } catch (error) {
+            console.error('Error loading lessons:', error);
+            this.showAlert('Failed to load lessons', 'error');
+            this.hideLearningLoading('lessonsSection');
+        }
+    }
+
+    renderLessons(chapter) {
+        const lessonsContainer = document.getElementById('lessonsContainer');
+        if (!lessonsContainer) return;
+
+        if (!this.lessons || this.lessons.length === 0) {
+            lessonsContainer.innerHTML = this.emptyState('fa-play-circle', 'No Lessons', 'No lessons available for this chapter');
+            return;
+        }
+
+        const chapterInfo = `
+            <div class="mb-4 p-3 bg-light rounded">
+                <h4>${this.escape(chapter.chapterName)}</h4>
+                <p class="text-muted mb-0">${this.escape(chapter.chapterDescription)}</p>
+                <small class="text-muted">Total lessons: ${this.lessons.length}</small>
+            </div>
+        `;
+
+        const lessonsList = this.lessons.map((lesson, index) => `
+            <div class="lesson-item">
+                <div class="lesson-header">
+                    <h6 class="lesson-title">
+                        <span class="me-2 text-primary">${index + 1}.</span>
+                        ${this.escape(lesson.lessonName)}
+                    </h6>
+                    <div class="lesson-actions">
+                        ${lesson.lessonVideo ? `
+                            <button class="btn btn-sm btn-outline-primary" onclick="window.open('${lesson.lessonVideo}', '_blank')">
+                                <i class="fas fa-play me-1"></i>Video
+                            </button>
+                        ` : ''}
+                        ${lesson.lessonPdf ? `
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.open('${lesson.lessonPdf}', '_blank')">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+                <p class="lesson-description">${this.escape(lesson.lessonDescription)}</p>
+                <small class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    Added: ${this.formatDate(lesson.insertTime)}
+                </small>
+            </div>
+        `).join('');
+
+        lessonsContainer.innerHTML = chapterInfo + lessonsList;
+    }
+
+    // Learning Navigation Methods
+    showSubjectSelection() {
+        document.getElementById('subjectSelection').style.display = 'block';
+        document.getElementById('chaptersSection').style.display = 'none';
+        document.getElementById('lessonsSection').style.display = 'none';
+        this.updateBreadcrumb(['Learning Center']);
+    }
+
+    showChaptersSection() {
+        document.getElementById('subjectSelection').style.display = 'none';
+        document.getElementById('chaptersSection').style.display = 'block';
+        document.getElementById('lessonsSection').style.display = 'none';
+    }
+
+    showChapters() {
+        document.getElementById('chaptersSection').style.display = 'block';
+        document.getElementById('lessonsSection').style.display = 'none';
+        this.updateBreadcrumb(['Learning Center', this.currentSubject?.subjectName || 'Subject']);
+    }
+
+    showLessonsSection() {
+        document.getElementById('chaptersSection').style.display = 'none';
+        document.getElementById('lessonsSection').style.display = 'block';
+    }
+
+    updateBreadcrumb(items) {
+        const breadcrumb = document.getElementById('breadcrumb');
+        if (!breadcrumb) return;
+
+        const breadcrumbItems = items.map((item, index) => {
+            const isLast = index === items.length - 1;
+            return isLast
+                ? `<li class="breadcrumb-item active">${this.escape(item)}</li>`
+                : `<li class="breadcrumb-item">${this.escape(item)}</li>`;
+        }).join('');
+
+        breadcrumb.innerHTML = breadcrumbItems;
+    }
+
+    showLearningLoading(section) {
+        const loadingSpinner = document.querySelector(`#${section} .loading-spinner`);
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'flex';
+        }
+    }
+
+    hideLearningLoading(section) {
+        const loadingSpinner = document.querySelector(`#${section} .loading-spinner`);
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
+    }
+
+    // ============ SHARED UTILITY METHODS ============
+
     formatTimeRange(start, end) {
         if (!start || !end) return 'Time TBD';
         return `${start} - ${end}`;
@@ -218,6 +539,7 @@ class OnlineStudentDashboard {
     showLoading() {
         document.querySelectorAll('.loading-spinner').forEach(el => el.style.display = 'flex');
     }
+
     hideLoading() {
         document.querySelectorAll('.loading-spinner').forEach(el => el.style.display = 'none');
     }
@@ -225,14 +547,24 @@ class OnlineStudentDashboard {
     showAlert(msg, type = 'info') {
         const container = document.getElementById('alertContainer');
         if (!container) return;
-        const cls = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+
+        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
         const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
         container.innerHTML = `
-            <div class="alert-message ${cls}">
-                <i class="fas ${icon}"></i>
-                <span>${this.escape(msg)}</span>
-            </div>`;
-        setTimeout(() => { container.innerHTML = ''; }, 5000);
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas ${icon} me-2"></i>
+                ${this.escape(msg)}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        setTimeout(() => {
+            const alert = container.querySelector('.alert');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
     }
 
     renderError(container, message) {
@@ -262,4 +594,5 @@ class OnlineStudentDashboard {
     }
 }
 
+// Initialize the dashboard system
 window.onlineStudentDashboard = new OnlineStudentDashboard();
