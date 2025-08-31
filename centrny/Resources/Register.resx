@@ -54,7 +54,6 @@
 	<data name="Label_FullName" xml:space="preserve"><value>Full Name</value></data>
 	<data name="Label_StudentPhone" xml:space="preserve"><value>Your Phone Number</value></data>
 	<data name="Label_ParentPhone" xml:space="preserve"><value>Parent/Guardian Phone</value></data>
-	<data name="Label_Birthdate" xml:space="preserve"><value>Date of Birth</value></data>
 	<data name="Label_Gender" xml:space="preserve"><value>Gender</value></data>
 	<data name="Label_Male" xml:space="preserve"><value>Male</value></data>
 	<data name="Label_Female" xml:space="preserve"><value>Female</value></data>

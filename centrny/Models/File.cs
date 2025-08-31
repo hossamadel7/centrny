@@ -33,11 +33,7 @@ public partial class File
 
     public bool IsActive { get; set; }
 
-    public virtual Lockup FileTypeNavigation { get; set; } = null!;
-
     public virtual Lesson LessonCodeNavigation { get; set; } = null!;
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
-
-    public virtual Lockup? VideoProviderNavigation { get; set; }
 }

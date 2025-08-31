@@ -43,7 +43,7 @@ public partial class Student
 
     public string? StudentUsername { get; set; }
 
-    public string? StudemtPassword { get; set; }
+    public string? StudentPassword { get; set; }
 
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
