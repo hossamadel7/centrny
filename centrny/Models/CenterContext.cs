@@ -1562,7 +1562,11 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => e.StudentCode);
 
-            entity.ToTable("Student");
+            entity.ToTable("Student", tb =>
+                {
+                    tb.HasTrigger("trg_Student_Insert");
+                    tb.HasTrigger("trg_Student_Update");
+                });
 
             entity.Property(e => e.StudentCode).HasColumnName("Student_Code");
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");

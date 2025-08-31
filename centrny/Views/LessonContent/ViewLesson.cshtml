@@ -1,0 +1,1174 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.LessonName - Lesson Content</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            --primary-color: #6c5ce7;
+            --border-radius-lg: 16px;
+            --shadow-lg: 0 8px 36px rgba(108,92,231,0.18);
+            --video-bg: #1a1a1a;
+            --secured-gradient: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+        }
+
+        body {
+            background: #f8f9fa;
+        }
+
+        .lesson-header {
+            background: var(--secured-gradient);
+            color: white;
+            padding: 2rem 0;
+            border-radius: var(--border-radius-lg);
+            margin-bottom: 2rem;
+            border-left: 4px solid #00b894;
+        }
+
+        .session-info {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .pin-entry-section {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
+
+        .video-player-container {
+            background: var(--video-bg);
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .video-player {
+            width: 100%;
+            min-height: 400px;
+            background: var(--video-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .video-placeholder {
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .video-controls {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 1rem;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .lesson-content {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        .content-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+            .content-item:hover {
+                background: #e9ecef;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+
+        .video-item {
+            border-left: 4px solid #e74c3c;
+            cursor: pointer;
+        }
+
+            .video-item:hover {
+                border-color: #c0392b;
+                box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+            }
+
+        .file-item {
+            border-left: 4px solid #3498db;
+        }
+
+            .file-item:hover {
+                border-color: #2980b9;
+                box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+            }
+
+        .exam-item {
+            border-left: 4px solid #f39c12;
+            cursor: pointer;
+        }
+
+            .exam-item:hover {
+                border-color: #e67e22;
+                box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+            }
+
+        .content-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .video-badge {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .file-badge {
+            background: #3498db;
+            color: white;
+        }
+
+        .exam-badge {
+            background: #f39c12;
+            color: white;
+        }
+
+        .pin-input {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .access-btn {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 0.8rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+            .access-btn:hover {
+                color: white;
+                transform: translateY(-2px);
+            }
+
+        .exit-btn {
+            background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .exit-btn:hover {
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(225, 112, 85, 0.3);
+            }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .lesson-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .current-video-info {
+            background: rgba(108,92,231,0.1) !important;
+            border: 2px solid var(--primary-color) !important;
+            border-left: 4px solid var(--primary-color) !important;
+        }
+
+        .unified-content-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .loading-spinner {
+            color: var(--primary-color);
+        }
+
+        .content-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+            min-width: 40px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .play-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .play-btn:hover {
+                background: #c0392b;
+                color: white;
+                transform: translateY(-1px);
+            }
+
+        .download-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .download-btn:hover {
+                background: #2980b9;
+                color: white;
+                transform: translateY(-1px);
+            }
+
+        .exam-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .exam-btn:hover {
+                background: #e67e22;
+                color: white;
+                transform: translateY(-1px);
+            }
+
+        #youtube-player {
+            width: 100%;
+            height: 400px;
+        }
+
+        .content-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        /* Scrollbar styling */
+        .unified-content-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .unified-content-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .unified-content-list::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+            .unified-content-list::-webkit-scrollbar-thumb:hover {
+                background: #5a4fcf;
+            }
+
+        .security-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 184, 148, 0.2);
+            border: 1px solid rgba(0, 184, 148, 0.3);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .lesson-stats {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            display: inline-block;
+            margin-right: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .access-time {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        /* Animation for content loading */
+        @@keyframes fadeInUp {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .content-item {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+            .content-item:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+
+            .content-item:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .content-item:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+
+            .content-item:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+
+            .content-item:nth-child(5) {
+                animation-delay: 0.5s;
+            }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .lesson-header
+
+        {
+            padding: 1.5rem 0;
+        }
+
+        .session-info {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .video-player-container {
+            min-height: 250px;
+        }
+
+        .video-player {
+            min-height: 250px;
+        }
+
+        .content-item {
+            padding: 1rem;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Secured Lesson Header -->
+        <div class="lesson-header text-center position-relative">
+            <div class="security-indicator">
+                <i class="fas fa-shield-check me-1"></i>
+                <strong>SECURED ACCESS</strong>
+            </div>
+
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-graduation-cap me-2"></i>@ViewBag.LessonName</h1>
+                    <p class="mb-2">
+                        <i class="fas fa-book me-1"></i>@ViewBag.SubjectName
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-chalkboard-teacher me-1"></i>@ViewBag.TeacherName
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-key me-1"></i>Secure access granted at
+                        <span class="access-time">@DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC</span>
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="session-info">
+                        <div><i class="fas fa-key me-1"></i><strong>PIN:</strong> @ViewBag.PinCode</div>
+                        <div><i class="fas fa-hashtag me-1"></i><strong>Lesson:</strong> @ViewBag.LessonCode</div>
+                        <div><i class="fas fa-clock me-1"></i><strong>Expires:</strong> @ViewBag.LessonExpireDays days</div>
+                        <div class="mt-2">
+                            <button class="btn exit-btn btn-sm" onclick="exitLesson()">
+                                <i class="fas fa-sign-out-alt me-1"></i>Exit Lesson
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-stats">
+                <div class="stat-item">
+                    <i class="fas fa-video me-1"></i>
+                    <span id="videoCount">0</span> Videos
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-file me-1"></i>
+                    <span id="fileCount">0</span> Files
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-clipboard-check me-1"></i>
+                    <span id="examCount">0</span> Exams
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-eye me-1"></i>
+                    <span id="progressPercent">0%</span> Viewed
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Player -->
+        <div class="video-player-container">
+            <div class="video-player" id="videoPlayer">
+                <div class="video-placeholder">
+                    <i class="fas fa-play-circle" style="font-size: 4rem; opacity: 0.3;"></i>
+                    <h5 class="mt-3">Select a video to start watching</h5>
+                    <p>Choose from the content list below</p>
+                </div>
+            </div>
+            <div class="video-controls" id="videoControls" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-0" id="currentVideoTitle">Video Title</h6>
+                        <small id="currentVideoInfo">Provider • Duration</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-light me-2" id="prevVideoBtn" title="Previous Video">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light me-2" id="playPauseBtn" title="Play/Pause">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" id="nextVideoBtn" title="Next Video">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="lesson-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5><i class="fas fa-layer-group me-2"></i>Lesson Content</h5>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshContent()" title="Refresh Content">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button class="btn exit-btn btn-sm" onclick="exitLesson()">
+                                <i class="fas fa-sign-out-alt me-1"></i>Exit
+                            </button>
+                        </div>
+                    </div>
+
+                    <small class="text-muted d-block mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Content is displayed in the order set by your teacher. Click on videos to play them.
+                    </small>
+
+                    <div id="unifiedContentContainer" class="unified-content-list">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-spinner fa-spin loading-spinner fa-2x"></i>
+                            <p class="mt-3">Loading all content...</p>
+                            <small>Please wait while we fetch your lesson materials</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- YouTube API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script>
+        let currentLessonCode = @ViewBag.LessonCode;
+        let currentPinCode = '@ViewBag.PinCode';
+        let lessonContent = [];
+        let currentVideoIndex = -1;
+        let watchTimer = null;
+        let youtubePlayer = null;
+
+        console.log('🔒 Secure ViewLesson loaded at @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC by hossamadel7');
+        console.log('📚 Lesson:', currentLessonCode, 'PIN:', currentPinCode);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎓 ViewLesson DOM loaded - starting content load');
+            initializeEventHandlers();
+            loadLessonContent(); // Auto-load since we're already validated
+        });
+
+        function initializeEventHandlers() {
+            // Video controls
+            document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+            document.getElementById('prevVideoBtn').addEventListener('click', () => changeVideo(currentVideoIndex - 1));
+            document.getElementById('nextVideoBtn').addEventListener('click', () => changeVideo(currentVideoIndex + 1));
+        }
+
+        async function loadLessonContent() {
+            console.log('📚 Loading content for lesson:', currentLessonCode);
+
+            try {
+                const response = await fetch(`/LessonContent/GetLessonContent?lessonCode=${currentLessonCode}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const content = await response.json();
+                console.log('✅ Raw content from server:', content);
+
+                if (content.length === 0) {
+                    showEmptyContent();
+                    return;
+                }
+
+                // Store lesson info
+                lessonContent = content;
+
+                // Update stats
+                updateContentStats(content);
+
+                // Render content list
+                renderCleanContentList();
+
+                // Auto-play first video if available
+                const videos = content.filter(item => item.fileType === 1);
+                if (videos.length > 0) {
+                    setTimeout(() => changeVideo(0), 500);
+                }
+
+                // Start tracking attendance
+                await trackLessonAccess();
+
+                console.log('✅ Content loaded and rendered successfully');
+
+            } catch (error) {
+                console.error('❌ Error loading lesson content:', error);
+                showErrorContent(error.message);
+            }
+        }
+
+        function updateContentStats(content) {
+            const videos = content.filter(item => item.fileType === 1);
+            const files = content.filter(item => item.fileType === 0 || item.fileType === 2);
+            const exams = content.filter(item => item.fileType === 3);
+
+            document.getElementById('videoCount').textContent = videos.length;
+            document.getElementById('fileCount').textContent = files.length;
+            document.getElementById('examCount').textContent = exams.length;
+
+            // For now, set progress to 0% - you can implement actual progress tracking later
+            document.getElementById('progressPercent').textContent = '0%';
+        }
+
+        function showEmptyContent() {
+            const container = document.getElementById('unifiedContentContainer');
+            container.innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-folder-open fa-3x mb-3" style="opacity: 0.3;"></i>
+                    <h5>No Content Available</h5>
+                    <p>This lesson doesn't have any content yet.</p>
+                    <p>Please contact your teacher if you think this is an error.</p>
+                </div>
+            `;
+        }
+
+        function showErrorContent(errorMessage) {
+            const container = document.getElementById('unifiedContentContainer');
+            container.innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <h5>Error Loading Content</h5>
+                    <p>${errorMessage}</p>
+                    <button class="btn btn-outline-danger btn-sm" onclick="loadLessonContent()">
+                        <i class="fas fa-redo me-1"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderCleanContentList() {
+            console.log('🎨 Rendering content list in database sort order');
+            const container = document.getElementById('unifiedContentContainer');
+
+            if (!container) {
+                console.error('❌ Container unifiedContentContainer not found!');
+                return;
+            }
+
+            // Filter out items with invalid itemCodes
+            const validContent = lessonContent.filter(item => {
+                const itemCode = item.itemCode || item.fileCode;
+                if (!itemCode || itemCode <= 0) {
+                    console.warn(`⚠️ Skipping item with invalid itemCode: ${itemCode}`, item);
+                    return false;
+                }
+                return true;
+            });
+
+            // Sort ONLY by sortOrder from database - respect teacher's arrangement
+            const sortedContent = validContent.sort((a, b) => {
+                const sortA = a.sortOrder || 999;
+                const sortB = b.sortOrder || 999;
+                return sortA - sortB;
+            });
+
+            console.log('📋 Content sorted by database sort order:', sortedContent);
+
+            if (sortedContent.length === 0) {
+                showEmptyContent();
+                return;
+            }
+
+            let html = '';
+            let videoIndex = 0;
+
+            sortedContent.forEach((item, index) => {
+                const isVideo = item.fileType === 1;
+                const isFile = item.fileType === 0 || item.fileType === 2;
+                const isExam = item.fileType === 3;
+
+                const itemVideoIndex = isVideo ? videoIndex : -1;
+
+                if (isVideo) {
+                    videoIndex++;
+                }
+
+                // Get item code (could be fileCode or itemCode)
+                const itemCode = item.itemCode || item.fileCode;
+                if (!itemCode || itemCode <= 0) {
+                    console.error(`❌ Item has invalid itemCode: ${itemCode}`, item);
+                    return;
+                }
+
+                // Determine item type for styling and functionality
+                let itemClass, iconHtml, badgeClass, badgeText, actionButton;
+
+                if (isVideo) {
+                    itemClass = 'video-item';
+                    iconHtml = '<i class="fas fa-play-circle" style="color: #e74c3c;"></i>';
+                    badgeClass = 'video-badge';
+                    badgeText = `Video ${itemVideoIndex + 1}`;
+                    actionButton = `<button class="play-btn" onclick="event.stopPropagation(); changeVideo(${itemVideoIndex});">
+                                     <i class="fas fa-play me-1"></i>Play Video
+                                   </button>`;
+                } else if (isExam) {
+                    itemClass = 'exam-item';
+                    iconHtml = '<i class="fas fa-clipboard-check" style="color: #f39c12;"></i>';
+                    badgeClass = 'exam-badge';
+                    badgeText = 'Exam';
+                    actionButton = `<button class="exam-btn" onclick="event.stopPropagation(); openExam(${itemCode});">
+                                     <i class="fas fa-pencil-alt me-1"></i>Take Exam
+                                   </button>`;
+                } else {
+                    itemClass = 'file-item';
+                    iconHtml = '<i class="fas fa-file-alt" style="color: #3498db;"></i>';
+                    badgeClass = 'file-badge';
+                    badgeText = 'Document';
+                    actionButton = `<button class="download-btn" onclick="event.stopPropagation(); downloadFile(${itemCode});">
+                                     <i class="fas fa-download me-1"></i>Download File
+                                   </button>`;
+                }
+
+                // Content metadata
+                let metaInfo = '';
+                if (isVideo) {
+                    metaInfo = `${item.videoProviderName || 'Unknown Provider'}${item.durationFormatted ? ` • Duration: ${item.durationFormatted}` : ''}`;
+                } else if (isExam) {
+                    metaInfo = `${item.examTimer ? `Duration: ${item.examTimer}` : ''}${item.examDegree ? ` • Total: ${item.examDegree} marks` : ''}`;
+                } else {
+                    metaInfo = `${item.fileExtension || ''}${item.fileSizeFormatted ? ` • Size: ${item.fileSizeFormatted}` : ''}`;
+                }
+
+                html += `
+                    <div class="content-item ${itemClass}"
+                         ${isVideo ? `data-video-index="${itemVideoIndex}" onclick="changeVideo(${itemVideoIndex})"` : ''}
+                         data-item-code="${itemCode}"
+                         data-item-type="${item.itemType}"
+                         style="animation-delay: ${index * 0.1}s;">
+                        <div class="d-flex align-items-start">
+                            <div class="content-icon">
+                                ${iconHtml}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <span class="content-badge ${badgeClass}">
+                                                ${badgeText}
+                                            </span>
+                                            ${item.displayName || 'Untitled'}
+                                        </h6>
+                                        <div class="content-meta">
+                                            ${metaInfo}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="content-actions">
+                                    ${actionButton}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            console.log('📝 Generated HTML length:', html.length);
+            container.innerHTML = html;
+            console.log('✅ Content rendered successfully in database sort order');
+        }
+
+        async function changeVideo(videoIndex) {
+            const videos = lessonContent.filter(item => item.fileType === 1);
+
+            console.log('🎬 Changing to video index:', videoIndex, 'Total videos:', videos.length);
+
+            if (videoIndex < 0 || videoIndex >= videos.length) {
+                console.log('❌ Invalid video index');
+                return;
+            }
+
+            const video = videos[videoIndex];
+            currentVideoIndex = videoIndex;
+
+            try {
+                const videoCode = video.itemCode || video.fileCode;
+                const response = await fetch(`/LessonContent/GetSecureVideoUrl?fileCode=${videoCode}&pinCode=${currentPinCode}`);
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert(error || 'Unable to load video');
+                    return;
+                }
+
+                const videoData = await response.json();
+                console.log('🎥 Video data received:', videoData);
+
+                // Load video based on provider
+                loadVideo(videoData);
+
+                // Update current video info
+                document.getElementById('currentVideoTitle').textContent = videoData.displayName;
+                document.getElementById('currentVideoInfo').textContent = `${videoData.provider} ${videoData.duration ? `• ${videoData.duration}` : ''}`;
+
+                // Show video controls
+                document.getElementById('videoControls').style.display = 'block';
+
+                // Update navigation buttons
+                document.getElementById('prevVideoBtn').disabled = videoIndex === 0;
+                document.getElementById('nextVideoBtn').disabled = videoIndex === videos.length - 1;
+
+                // Highlight current video in list
+                document.querySelectorAll('[data-video-index]').forEach(item => {
+                    item.classList.remove('current-video-info');
+                });
+                const currentItem = document.querySelector(`[data-video-index="${videoIndex}"]`);
+                if (currentItem) {
+                    currentItem.classList.add('current-video-info');
+                    currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                // Start watch time tracking
+                startWatchTracking(videoCode);
+
+            } catch (error) {
+                console.error('❌ Error loading video:', error);
+                alert('Error loading video. Please try again.');
+            }
+        }
+
+        function openExam(examCode) {
+            console.log('📝 Opening exam with code:', examCode);
+
+            if (!examCode || examCode <= 0) {
+                alert('Invalid exam selected');
+                return;
+            }
+
+            if (!currentPinCode) {
+                alert('Pin code not available. Please refresh and try again.');
+                return;
+            }
+
+            // Find the exam in our content
+            const exam = lessonContent.find(item => (item.itemCode || item.fileCode) === examCode && item.fileType === 3);
+            if (exam) {
+                const message = `Exam: ${exam.displayName}\n` +
+                               `Duration: ${exam.examTimer || 'Not specified'}\n` +
+                               `Total Marks: ${exam.examDegree || 'Not specified'}\n` +
+                               `Type: ${exam.isOnline ? 'Online' : 'Offline'}`;
+
+                if (confirm(message + '\n\nWould you like to start this exam?')) {
+                    // Redirect to exam taking interface
+                    const examUrl = `/Exam/TakeExam?examCode=${examCode}&pinCode=${encodeURIComponent(currentPinCode)}`;
+                    console.log('🔗 Opening exam URL:', examUrl);
+                    window.open(examUrl, '_blank');
+                }
+            } else {
+                alert('Exam not found');
+            }
+        }
+
+                async function downloadFile(fileCode) {
+            console.log('📥 Downloading file with code:', fileCode);
+
+            if (!fileCode || fileCode <= 0) {
+                alert('Invalid file selected');
+                return;
+            }
+
+            // Show loading indicator
+            const downloadBtn = event.target;
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Downloading...';
+            downloadBtn.disabled = true;
+
+            try {
+                // Use the smart download method (works for both teacher and student)
+                const downloadUrl = `/LessonContent/DownloadFile?fileCode=${fileCode}&pinCode=${encodeURIComponent(currentPinCode)}`;
+                console.log('🔗 Download URL:', downloadUrl);
+
+                const response = await fetch(downloadUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/octet-stream'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Download failed:', response.status, errorText);
+
+                    if (response.status === 401) {
+                        alert('Please log in to download files.');
+                    } else if (response.status === 404) {
+                        alert('File not found or has been deleted.');
+                    } else {
+                        alert(`Download failed: ${errorText || 'Unknown error'}`);
+                    }
+                    return;
+                }
+
+                // Create download
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `file_${fileCode}`;
+
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.style.display = 'none';
+                link.href = url;
+                link.download = filename;
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                console.log(`✅ File downloaded successfully: ${filename}`);
+
+            } catch (error) {
+                console.error('❌ Download error:', error);
+                alert('Failed to download file. Please check your internet connection and try again.');
+            } finally {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
+        }
+
+        function loadVideo(videoData) {
+            const player = document.getElementById('videoPlayer');
+
+            if (videoData.provider === 'YouTube') {
+                const videoId = extractYouTubeId(videoData.secureUrl);
+                if (videoId) {
+                    loadYouTubeVideo(videoId);
+                } else {
+                    showVideoError('Invalid YouTube URL');
+                }
+            } else if (videoData.provider === 'Bunny CDN') {
+                loadBunnyCDNVideo(videoData.secureUrl);
+            } else {
+                showVideoError('Unsupported video provider: ' + videoData.provider);
+            }
+        }
+
+        function extractYouTubeId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadYouTubeVideo(videoId) {
+            const player = document.getElementById('videoPlayer');
+
+            if (youtubePlayer) {
+                youtubePlayer.destroy();
+            }
+
+            player.innerHTML = '<div id="youtube-player"></div>';
+
+            youtubePlayer = new YT.Player('youtube-player', {
+                height: '400',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'playsinline': 1,
+                    'rel': 0,
+                    'modestbranding': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function loadBunnyCDNVideo(url) {
+            const player = document.getElementById('videoPlayer');
+
+            if (youtubePlayer) {
+                youtubePlayer.destroy();
+                youtubePlayer = null;
+            }
+
+            player.innerHTML = `
+                <video width="100%" height="400" controls controlsList="nodownload">
+                    <source src="${url}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            `;
+        }
+
+        function showVideoError(message) {
+            const player = document.getElementById('videoPlayer');
+
+            if (youtubePlayer) {
+                youtubePlayer.destroy();
+                youtubePlayer = null;
+            }
+
+            player.innerHTML = `
+                <div class="text-center text-white py-5">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #e74c3c;"></i>
+                    <h5 class="mt-3">${message}</h5>
+                    <p>Please try another video or contact support.</p>
+                    <button class="btn btn-outline-light btn-sm" onclick="loadLessonContent()">
+                        <i class="fas fa-redo me-1"></i> Refresh Content
+                    </button>
+                </div>
+            `;
+        }
+
+        function onPlayerReady(event) {
+            console.log('🎬 YouTube player ready');
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        function togglePlayPause() {
+            if (youtubePlayer) {
+                const state = youtubePlayer.getPlayerState();
+                if (state === YT.PlayerState.PLAYING) {
+                    youtubePlayer.pauseVideo();
+                } else {
+                    youtubePlayer.playVideo();
+                }
+            } else {
+                // Handle regular video element
+                const video = document.querySelector('video');
+                if (video) {
+                    if (video.paused) {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                }
+            }
+        }
+
+        function startWatchTracking(videoFileCode) {
+            if (watchTimer) {
+                clearInterval(watchTimer);
+            }
+
+            watchTimer = setInterval(() => {
+                updateWatchProgress(videoFileCode);
+            }, 10000); // Track every 10 seconds
+        }
+
+        async function updateWatchProgress(videoFileCode) {
+            try {
+                const progressData = {
+                    studentCode: 1, // Default student
+                    lessonCode: currentLessonCode,
+                    videoCode: videoFileCode,
+                    watchTime: "00:00:10",
+                    lastPosition: "00:01:30",
+                    isCompleted: false,
+                    completionPercentage: 25.5
+                };
+
+                await fetch('/LessonContent/UpdateProgress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(progressData)
+                });
+            } catch (error) {
+                console.error('❌ Error updating progress:', error);
+            }
+        }
+
+        async function trackLessonAccess() {
+            try {
+                const response = await fetch('/LessonContent/TrackAccess', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        lessonCode: currentLessonCode,
+                        pinCode: currentPinCode
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ Lesson access tracked successfully');
+                } else {
+                    console.warn('⚠️ Failed to track lesson access:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Error tracking access:', error);
+            }
+        }
+
+        function refreshContent() {
+            console.log('🔄 Refreshing content...');
+            loadLessonContent();
+        }
+
+        function exitLesson() {
+            if (confirm('Are you sure you want to exit this lesson?')) {
+                console.log('🚪 Exiting lesson at', new Date().toISOString());
+
+                // Clear watch timer
+                if (watchTimer) {
+                    clearInterval(watchTimer);
+                }
+
+                // Stop video if playing
+                if (youtubePlayer) {
+                    youtubePlayer.destroy();
+                }
+
+                // Redirect to PIN entry
+                window.location.href = '/LessonContent/StudentViewer';
+            }
+        }
+
+        function onYouTubeIframeAPIReady() {
+            console.log('🎬 YouTube API ready');
+        }
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function() {
+            if (watchTimer) {
+                clearInterval(watchTimer);
+            }
+        });
+
+        // Handle browser back button
+        window.addEventListener('popstate', function(event) {
+            if (confirm('Are you sure you want to leave this lesson?')) {
+                exitLesson();
+            } else {
+                // Prevent going back
+                history.pushState(null, null, window.location.href);
+            }
+        });
+
+        // Prevent back button initially
+        history.pushState(null, null, window.location.href);
+
+        console.log('✅ Secure Lesson Viewer fully loaded and ready at @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC');
+    </script>
+</body>
+</html>
