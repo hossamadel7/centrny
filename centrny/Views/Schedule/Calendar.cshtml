@@ -62,12 +62,27 @@
      data-lbl-warning="@Localizer["Lbl_Warning"]"
      data-msg-delete-warning="@Localizer["Msg_DeleteWarning"]"
      data-btn-delete-schedule="@Localizer["Btn_DeleteSchedule"]"
-     data-toast-calendar-loaded="@Localizer["Toast_CalendarLoaded"]"></div>
+     data-toast-calendar-loaded="@Localizer["Toast_CalendarLoaded"]"
+     data-success-title="@Localizer["successTitle"]"
+     data-error-title="@Localizer["errorTitle"]"
+     data-info-title="@Localizer["infoTitle"]"
+     data-lbl-warning-modal="@Localizer["lblWarning"]"
+     data-cancel="@Localizer["cancel"]"
+     data-submit="@Localizer["submit"]"
+     data-error-network="@Localizer["errorNetwork"]"
+     data-schedule-created="@Localizer["scheduleCreated"]"
+     data-schedule-updated="@Localizer["scheduleUpdated"]"
+     data-schedule-deleted="@Localizer["scheduleDeleted"]"
+     data-error-saving-schedule="@Localizer["errorSavingSchedule"]"
+     data-error-deleting-schedule="@Localizer["errorDeletingSchedule"]"
+     data-select-option="@Localizer["selectOption"]"
+     data-close="@Localizer["close"]"></div>
 
 <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.min.css' rel='stylesheet' />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 <link href="~/css/Calendar.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.min.css">
 
 <div class="schedule-page">
     <div class="calendar-container">
@@ -132,8 +147,6 @@
                         </button>
                     </div>
                 </div>
-
-              
 
                 <!-- Active Filters Display -->
                 <div class="active-filters mt-3" id="activeFiltersDisplay" style="display: none;">
@@ -487,8 +500,48 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/schedule-common.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.all.min.js"></script>
 
 <script>
+    // SweetAlert2 helpers for alerts
+    function swalSuccess(msg) {
+        Swal.fire({
+            icon: 'success',
+            title: getJsString('successTitle') || '',
+            text: msg,
+            showConfirmButton: false,
+            timer: 1700
+        });
+    }
+    function swalError(msg) {
+        Swal.fire({
+            icon: 'error',
+            title: getJsString('errorTitle') || '',
+            text: msg,
+            showConfirmButton: true
+        });
+    }
+    function swalConfirm(msg, cbOk) {
+        Swal.fire({
+            icon: 'warning',
+            title: getJsString('lblWarning') || '',
+            text: msg,
+            showCancelButton: true,
+            confirmButtonText: getJsString('submit') || 'OK',
+            cancelButtonText: getJsString('cancel') || 'Cancel'
+        }).then(result => {
+            if (result.isConfirmed && cbOk) cbOk();
+        });
+    }
+    function swalInfo(msg) {
+        Swal.fire({
+            icon: 'info',
+            title: getJsString('infoTitle') || '',
+            text: msg,
+            showConfirmButton: true
+        });
+    }
+
     window.selectedBranchCode = null;
     window.selectedTeacherCode = null;
     window.selectedYearCode = null;
@@ -499,6 +552,7 @@
         updateActiveFilters();
         if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
             window.scheduleManager.loadSchedules();
+            swalInfo(getJsString('loadingSchedules'));
         }
     }
 
@@ -508,6 +562,7 @@
         updateActiveFilters();
         if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
             window.scheduleManager.loadSchedules();
+            swalInfo(getJsString('loadingSchedules'));
         }
     }
 
@@ -517,6 +572,7 @@
         updateActiveFilters();
         if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
             window.scheduleManager.loadSchedules();
+            swalInfo(getJsString('loadingSchedules'));
         }
     }
 
@@ -537,6 +593,7 @@
 
         if (window.scheduleManager && typeof window.scheduleManager.loadSchedules === 'function') {
             window.scheduleManager.loadSchedules();
+            swalInfo(getJsString('loadingSchedules'));
         }
     }
 
@@ -552,22 +609,22 @@
 
         if (window.selectedBranchCode) {
             const branchFilter = document.getElementById('branchFilter');
-            const branchText = branchFilter?.selectedOptions[0]?.text || '@Localizer["Lbl_SelectedBranch"]';
-            addFilterTag('@Localizer["Label_Branch"]', branchText, 'branchFilter');
+            const branchText = branchFilter?.selectedOptions[0]?.text || getJsString('Lbl_SelectedBranch');
+            addFilterTag(getJsString('Label_Branch'), branchText, 'branchFilter');
             hasActiveFilters = true;
         }
 
         if (window.selectedTeacherCode) {
             const teacherFilter = document.getElementById('teacherFilter');
-            const teacherText = teacherFilter?.selectedOptions[0]?.text || '@Localizer["Lbl_SelectedTeacher"]';
-            addFilterTag('@Localizer["Label_Teacher"]', teacherText, 'teacherFilter');
+            const teacherText = teacherFilter?.selectedOptions[0]?.text || getJsString('Lbl_SelectedTeacher');
+            addFilterTag(getJsString('Label_Teacher'), teacherText, 'teacherFilter');
             hasActiveFilters = true;
         }
 
         if (window.selectedYearCode) {
             const yearFilter = document.getElementById('yearFilter');
-            const yearText = yearFilter?.selectedOptions[0]?.text || '@Localizer["Lbl_SelectedYear"]';
-            addFilterTag('@Localizer["Label_Year"]', yearText, 'yearFilter');
+            const yearText = yearFilter?.selectedOptions[0]?.text || getJsString('Lbl_SelectedYear');
+            addFilterTag(getJsString('Label_Year'), yearText, 'yearFilter');
             hasActiveFilters = true;
         }
 
@@ -609,7 +666,7 @@
                 if (teachersData.success && teachersData.teachers) {
                     const teacherFilter = document.getElementById('teacherFilter');
                     if (teacherFilter) {
-                        teacherFilter.innerHTML = '<option value="">@Localizer["Dropdown_AllTeachers"]</option>';
+                        teacherFilter.innerHTML = '<option value="">' + getJsString('dropdownAllTeachers') + '</option>';
 
                         teachersData.teachers.forEach(teacher => {
                             const option = document.createElement('option');
@@ -626,7 +683,7 @@
                     const teachersData = await teachersResponse.json();
 
                     if (teachersData.success && teachersData.teachers) {
-                        teacherFilter.innerHTML = '<option value="">@Localizer["Dropdown_AllTeachers"]</option>';
+                        teacherFilter.innerHTML = '<option value="">' + getJsString('dropdownAllTeachers') + '</option>';
                         teachersData.teachers.forEach(teacher => {
                             const option = document.createElement('option');
                             option.value = teacher.value;
@@ -643,7 +700,7 @@
             if (yearsData.success && yearsData.years) {
                 const yearFilter = document.getElementById('yearFilter');
                 if (yearFilter) {
-                    yearFilter.innerHTML = '<option value="">@Localizer["Dropdown_AllYears"]</option>';
+                    yearFilter.innerHTML = '<option value="">' + getJsString('dropdownAllYears') + '</option>';
 
                     yearsData.years.forEach(year => {
                         const option = document.createElement('option');
@@ -655,7 +712,7 @@
             }
 
         } catch (error) {
-            console.error('Error loading filter dropdowns:', error);
+            swalError(getJsString('errorNetwork'));
         }
     }
 
@@ -685,10 +742,7 @@
 
                 if (window.userContext.currentUserRootCode && window.scheduleManager.showToast) {
                     setTimeout(() => {
-                        window.scheduleManager.showToast(
-                            "@Localizer["Toast_CalendarLoaded"]".replace("{0}", window.userContext.userRootName),
-                            'success'
-                        );
+                        swalSuccess(getJsString('toastCalendarLoaded').replace("{0}", window.userContext.userRootName));
                     }, 1500);
                 }
             }
@@ -698,12 +752,14 @@
     window.refreshSchedules = () => {
         if (window.scheduleManager && window.scheduleManager.loadSchedules) {
             window.scheduleManager.loadSchedules();
+            swalInfo(getJsString('loadingSchedules'));
         }
     };
 
     window.addScheduleForDay = (day) => {
         if (window.scheduleManager && window.scheduleManager.addScheduleForDay) {
             window.scheduleManager.addScheduleForDay(day);
+            swalInfo(getJsString('tooltipAddScheduleForDay').replace("{0}", day));
         }
     };
 

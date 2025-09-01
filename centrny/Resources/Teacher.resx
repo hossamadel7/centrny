@@ -78,4 +78,15 @@
 	<data name="UserName" xml:space="preserve"><value>User Name</value></data>
 	<data name="RootName" xml:space="preserve"><value>Root Name</value></data>
 	<data name="NoEducationalYear" xml:space="preserve"><value>No educational year</value></data>
+	<!-- SweetAlert2 new resources -->
+	<data name="SuccessTitle" xml:space="preserve"><value>Success</value></data>
+	<data name="ErrorTitle" xml:space="preserve"><value>Error</value></data>
+	<data name="SuccessAddTeacher" xml:space="preserve"><value>Teacher added successfully.</value></data>
+	<data name="SuccessEditTeacher" xml:space="preserve"><value>Teacher updated successfully.</value></data>
+	<data name="SuccessDeleteTeacher" xml:space="preserve"><value>Teacher and associated teaching subjects deleted successfully.</value></data>
+	<data name="SuccessAddTeachSubject" xml:space="preserve"><value>Teaching subject added successfully.</value></data>
+	<data name="SuccessDeleteTeachSubject" xml:space="preserve"><value>Teaching subject deleted successfully.</value></data>
+	<data name="ErrorAction" xml:space="preserve"><value>An error occurred while performing the action.</value></data>
+	<data name="ErrorNetwork" xml:space="preserve"><value>Network error</value></data>
+	<data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
 </root>

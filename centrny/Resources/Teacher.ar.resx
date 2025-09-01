@@ -78,4 +78,15 @@
 	<data name="UserName" xml:space="preserve"><value>اسم المستخدم</value></data>
 	<data name="RootName" xml:space="preserve"><value>اسم الجذر</value></data>
 	<data name="NoEducationalYear" xml:space="preserve"><value>لا توجد سنة دراسية</value></data>
+	<!-- SweetAlert2 new resources -->
+	<data name="SuccessTitle" xml:space="preserve"><value>نجاح</value></data>
+	<data name="ErrorTitle" xml:space="preserve"><value>خطأ</value></data>
+	<data name="SuccessAddTeacher" xml:space="preserve"><value>تمت إضافة المعلم بنجاح</value></data>
+	<data name="SuccessEditTeacher" xml:space="preserve"><value>تم تعديل بيانات المعلم بنجاح</value></data>
+	<data name="SuccessDeleteTeacher" xml:space="preserve"><value>تم حذف المعلم وجميع المواد التي يدرسها بنجاح</value></data>
+	<data name="SuccessAddTeachSubject" xml:space="preserve"><value>تمت إضافة مادة التدريس بنجاح</value></data>
+	<data name="SuccessDeleteTeachSubject" xml:space="preserve"><value>تم حذف مادة التدريس بنجاح</value></data>
+	<data name="ErrorAction" xml:space="preserve"><value>حدث خطأ أثناء تنفيذ العملية</value></data>
+	<data name="ErrorNetwork" xml:space="preserve"><value>خطأ في الشبكة</value></data>
+	<data name="Cancel" xml:space="preserve"><value>إلغاء</value></data>
 </root>

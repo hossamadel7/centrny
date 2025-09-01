@@ -1,3 +1,10 @@
 ﻿@{
     Layout = "_Layout";
+    // Set resource culture from session if available
+    var resourceCulture = Context.Session.GetString("ResourceCulture");
+    if (!string.IsNullOrEmpty(resourceCulture))
+    {
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo(resourceCulture);
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo(resourceCulture);
+    }
 }

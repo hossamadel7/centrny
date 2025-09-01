@@ -336,5 +336,29 @@
 	<data name="infoPrefix" xml:space="preserve">
     <value>ℹ️ </value>
   </data>
+	<data name="Label_Type" xml:space="preserve"><value>النوع</value></data>
+	<data name="Label_CenterBranch" xml:space="preserve"><value>المركز / الفرع</value></data>
+	<data name="Label_TeacherSubject" xml:space="preserve"><value>المعلم / المادة</value></data>
+	<data name="Label_Actions" xml:space="preserve"><value>الإجراءات</value></data>
+	<data name="Dropdown_SelectHallOptional" xml:space="preserve"><value>اختر القاعة (اختياري)</value></data>
+	<!-- For active filters display -->
+	<data name="Lbl_SelectedBranch" xml:space="preserve"><value>الفرع المختار</value></data>
+	<data name="Lbl_SelectedTeacher" xml:space="preserve"><value>المعلم المختار</value></data>
+	<data name="Lbl_SelectedYear" xml:space="preserve"><value>السنة المختارة</value></data>
+	<!-- For JS and toasts -->
+	<data name="editSchedule" xml:space="preserve"><value>تعديل الجدول</value></data>
+	<data name="selectOption" xml:space="preserve"><value>اختر</value></data>
+	<data name="close" xml:space="preserve"><value>إغلاق</value></data>
+	<data name="errorPrefix" xml:space="preserve"><value>❌ خطأ: </value></data>
+	<data name="warningPrefix" xml:space="preserve"><value>⚠️ تحذير: </value></data>
+	<data name="successPrefix" xml:space="preserve"><value>✅ </value></data>
+	<data name="infoPrefix" xml:space="preserve"><value>ℹ️ </value></data>
 	<!-- Add more JS strings as needed -->
+	<data name="successTitle" xml:space="preserve"><value>نجاح</value></data>
+	<data name="errorTitle" xml:space="preserve"><value>خطأ</value></data>
+	<data name="infoTitle" xml:space="preserve"><value>معلومات</value></data>
+	<data name="lblWarning" xml:space="preserve"><value>تحذير!</value></data>
+	<data name="cancel" xml:space="preserve"><value>إلغاء</value></data>
+	<data name="submit" xml:space="preserve"><value>إرسال</value></data>
+	<data name="errorNetwork" xml:space="preserve"><value>حدث خطأ في الشبكة</value></data>
 </root>

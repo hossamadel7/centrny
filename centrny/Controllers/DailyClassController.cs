@@ -553,56 +553,70 @@ namespace centrny.Controllers
             try
             {
                 if (model == null)
-                {
                     return Json(new { success = false, error = "Invalid data received." });
-                }
 
                 var (userRootCode, rootName, isCenter) = await GetUserContext();
-
                 if (!userRootCode.HasValue)
-                {
                     return Json(new { success = false, error = "Unable to determine your root assignment." });
-                }
 
                 model.RootCode = userRootCode.Value;
 
-                // ENFORCE: If center user has a group branch, override posted branch code with user's group branch
+                // Center user branch override
                 if (isCenter)
                 {
                     var groupBranchCode = await GetCurrentUserGroupBranchCode();
                     if (groupBranchCode != null)
-                    {
                         model.BranchCode = groupBranchCode;
-                    }
                 }
 
-                // Validate required fields
-                if (string.IsNullOrEmpty(model.ClassName) ||
-                    string.IsNullOrEmpty(model.StartTime) || string.IsNullOrEmpty(model.EndTime))
-                {
+                // Basic required (common)
+                if (string.IsNullOrWhiteSpace(model.ClassName) ||
+                    string.IsNullOrWhiteSpace(model.StartTime) ||
+                    string.IsNullOrWhiteSpace(model.EndTime))
                     return Json(new { success = false, error = "Class name, start time, and end time are required." });
-                }
 
-                // Different validation based on user type
+                // Role‑specific validation
                 if (isCenter)
                 {
-                    // Center users must provide teacher and hall
-                    if (!model.TeacherCode.HasValue || !model.SubjectCode.HasValue ||
-                        !model.BranchCode.HasValue || !model.HallCode.HasValue || !model.EduYearCode.HasValue)
+                    if (!model.TeacherCode.HasValue)
+                        return Json(new { success = false, error = "Teacher is required." });
+                    if (!model.SubjectCode.HasValue)
+                        return Json(new { success = false, error = "Subject is required." });
+                    if (!model.BranchCode.HasValue)
+                        return Json(new { success = false, error = "Branch is required." });
+                    if (!model.EduYearCode.HasValue)
+                        return Json(new { success = false, error = "Educational year is required." });
+
+                    // Hall handling (optional if none exist)
+                    if (!model.HallCode.HasValue)
                     {
-                        return Json(new { success = false, error = "Teacher, subject, branch, hall, and education year are required." });
+                        var fallbackHall = await GetDefaultHallForRoot(userRootCode.Value); // now returns int?
+                        if (fallbackHall.HasValue)
+                        {
+                            model.HallCode = fallbackHall;
+                        }
+                        else
+                        {
+                            // No hall exists: allow null OR return error (choose policy)
+                            // return Json(new { success = false, error = "No hall exists. Please create a hall first." });
+                            // Allow null: just log
+                            _logger.LogWarning("Center user creating class without hall (no halls exist) Root {Root}", userRootCode.Value);
+                        }
                     }
                 }
                 else
                 {
-                    // Teacher users must provide center (hall is optional for teachers)
-                    if (!model.CenterCode.HasValue || !model.SubjectCode.HasValue ||
-                        !model.BranchCode.HasValue || !model.EduYearCode.HasValue)
-                    {
-                        return Json(new { success = false, error = "Center, subject, branch, and education year are required." });
-                    }
+                    // Teacher user path
+                    if (!model.CenterCode.HasValue)
+                        return Json(new { success = false, error = "Center is required." });
+                    if (!model.SubjectCode.HasValue)
+                        return Json(new { success = false, error = "Subject is required." });
+                    if (!model.BranchCode.HasValue)
+                        return Json(new { success = false, error = "Branch is required." });
+                    if (!model.EduYearCode.HasValue)
+                        return Json(new { success = false, error = "Educational year is required." });
 
-                    // For teachers, set TeacherCode to the teacher belonging to this root
+                    // Derive TeacherCode automatically
                     var teacherCode = await _context.Teachers
                         .AsNoTracking()
                         .Where(t => t.RootCode == userRootCode.Value && t.IsActive)
@@ -610,42 +624,35 @@ namespace centrny.Controllers
                         .FirstOrDefaultAsync();
 
                     if (teacherCode == 0)
-                    {
                         return Json(new { success = false, error = "No teacher found for your account." });
-                    }
 
                     model.TeacherCode = teacherCode;
 
-                    // For teachers, if no hall is provided, use default hall
+                    // Optional hall for teachers: attempt default if none provided
                     if (!model.HallCode.HasValue)
                     {
-                        model.HallCode = await GetDefaultHallForRoot(userRootCode.Value);
+                        var fallbackHall = await GetDefaultHallForRoot(userRootCode.Value);
+                        if (fallbackHall.HasValue)
+                            model.HallCode = fallbackHall;
                     }
                 }
 
-                // Parse and validate times
-                if (!TimeOnly.TryParse(model.StartTime, out TimeOnly startTime) ||
-                    !TimeOnly.TryParse(model.EndTime, out TimeOnly endTime))
-                {
+                // Parse times
+                if (!TimeOnly.TryParse(model.StartTime, out var startTime) ||
+                    !TimeOnly.TryParse(model.EndTime, out var endTime))
                     return Json(new { success = false, error = "Invalid time format." });
-                }
 
                 if (startTime >= endTime)
-                {
                     return Json(new { success = false, error = "End time must be after start time." });
-                }
 
-                // Validate resources belong to user's root
-                if (!await ValidateClassResourcesOptimized(model, userRootCode.Value))
-                {
+                // Validate foreign resources belong to root
+                var resourcesOk = await ValidateClassResourcesOptimized(model, userRootCode.Value);
+                if (!resourcesOk)
                     return Json(new { success = false, error = "One or more selected resources don't belong to your organization." });
-                }
 
-                // Parse the class date from the model
                 var classDate = model.ClassDate?.Date ?? DateTime.Today;
                 var classDateOnly = DateOnly.FromDateTime(classDate);
 
-                // Create new class
                 var newClass = new Class
                 {
                     ClassName = model.ClassName.Trim(),
@@ -653,36 +660,33 @@ namespace centrny.Controllers
                     ClassEndTime = endTime,
                     ClassDate = classDateOnly,
                     RootCode = userRootCode.Value,
-                    TeacherCode = model.TeacherCode.Value,
-                    SubjectCode = model.SubjectCode.Value,
-                    BranchCode = model.BranchCode.Value,
-                    HallCode = model.HallCode.Value,
-                    EduYearCode = model.EduYearCode.Value,
-                    YearCode = model.YearCode,
-                    NoOfStudents = 0, // Always start with 0, will be updated by attendance system
+                    TeacherCode = model.TeacherCode!.Value,           // validated above
+                    SubjectCode = model.SubjectCode!.Value,
+                    BranchCode = model.BranchCode!.Value,
+                    HallCode = model.HallCode,                        // may be null
+                    EduYearCode = model.EduYearCode!.Value,
+                    YearCode = model.YearCode,                        // optional
+                    NoOfStudents = 0,
                     ClassPrice = model.ClassPrice,
-                    InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1"),
-                    InsertTime = DateTime.Now,
-                    // Keep ScheduleCode and ReservationCode as null
                     ScheduleCode = null,
-                    ReservationCode = null
+                    ReservationCode = null,
+                    InsertUser = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "1"),
+                    InsertTime = DateTime.Now
                 };
 
                 _context.Classes.Add(newClass);
                 await _context.SaveChangesAsync();
-
-                // Clear relevant caches
                 ClearRelevantCaches(userRootCode.Value);
 
-                _logger.LogInformation("Created class {ClassName} for RootCode {RootCode} by user {Username} (UserType: {UserType})",
-                    newClass.ClassName, newClass.RootCode, User.Identity?.Name, isCenter ? "Center" : "Teacher");
+                _logger.LogInformation("Created class {ClassCode} (Hall={Hall}) Root {Root} User {User}",
+                    newClass.ClassCode, newClass.HallCode, userRootCode.Value, User.Identity?.Name);
 
                 return Json(new { success = true, id = newClass.ClassCode });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating class for user {Username}", User.Identity?.Name);
-                return Json(new { success = false, error = $"Unexpected error: {ex.Message}" });
+                _logger.LogError(ex, "Error creating class. Inner: {Inner}", ex.InnerException?.Message);
+                return Json(new { success = false, error = $"Unexpected error: {ex.InnerException?.Message ?? ex.Message}" });
             }
         }
 
@@ -1222,8 +1226,9 @@ namespace centrny.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating weekly classes for user {Username}", User.Identity?.Name);
-                return Json(new { success = false, error = $"Error generating classes: {ex.Message}" });
+                var innerError = ex.InnerException?.Message ?? ex.Message;
+                _logger.LogError(ex, "Error generating weekly classes for user {Username}. Inner: {Inner}", User.Identity?.Name, innerError);
+                return Json(new { success = false, error = $"Error generating classes: {innerError}" });
             }
         }              /// Get weekly class generation status for the UI (OPTIMIZED with caching)
                        /// </summary>
@@ -1748,15 +1753,14 @@ namespace centrny.Controllers
             return firstSubject > 0 ? firstSubject : 1; // Fallback to 1 if no subject found
         }
 
-        private async Task<int> GetDefaultHallForRoot(int rootCode)
+        private async Task<int?> GetDefaultHallForRoot(int rootCode)
         {
-            var firstHall = await _context.Halls
+            return await _context.Halls
                 .AsNoTracking()
                 .Where(h => h.RootCode == rootCode)
-                .Select(h => h.HallCode)
-                .FirstOrDefaultAsync();
-
-            return firstHall > 0 ? firstHall : 1; // Fallback to 1 if no hall found
+                .OrderBy(h => h.HallCode)
+                .Select(h => (int?)h.HallCode)
+                .FirstOrDefaultAsync(); // returns null if none
         }
 
         private async Task<int> GetDefaultBranchForRoot(int rootCode)

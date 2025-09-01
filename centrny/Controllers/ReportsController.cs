@@ -945,7 +945,7 @@ namespace centrny.Controllers
                             StudentId = studentCode,
                             AttendDate = DateTime.Now,
                             TeacherCode = classDetails.TeacherCode,
-                            HallId = classDetails.HallCode,
+                            HallId = (int)classDetails.HallCode,
                             ScheduleCode = classDetails.ScheduleCode,
                             SessionPrice = 0,
                             Type = 1,
@@ -1041,7 +1041,7 @@ namespace centrny.Controllers
                                 StudentId = studentCode,
                                 AttendDate = DateTime.Now,
                                 TeacherCode = classDetails.TeacherCode,
-                                HallId = classDetails.HallCode,  // ← Added
+                                HallId = (int)classDetails.HallCode,  // ← Added
                                 ScheduleCode = classDetails.ScheduleCode,  // ← Added
                                 SessionPrice = 0,  // ← Added
                                 Type = 1,  // ← Added
@@ -1607,7 +1607,7 @@ namespace centrny.Controllers
                             StudentId = studentCode,
                             AttendDate = DateTime.Now,
                             TeacherCode = classDetails.TeacherCode,
-                            HallId = classDetails.HallCode,
+                            HallId = (int)classDetails.HallCode,
                             ScheduleCode = classDetails.ScheduleCode,
                             SessionPrice = sessionPriceValue, // Now using decimal, not decimal?
                             Type = attendanceType,

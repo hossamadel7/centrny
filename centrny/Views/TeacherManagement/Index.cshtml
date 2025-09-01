@@ -8,7 +8,6 @@
     ViewBag.Title = Localizer["Title"];
     Layout = "_Layout";
 
-    // Permission for Add/Edit/Delete for this group on TeacherManagement/Index
     var perms = TeacherManagementController.GetPagePermissions(DbContext, User, "TeacherManagement/Index");
     ViewBag.CanInsert = perms.CanInsert;
     ViewBag.CanUpdate = perms.CanUpdate;
@@ -16,6 +15,9 @@
 }
 
 <link rel="stylesheet" href="~/css/Hamody.css" />
+<!-- SweetAlert2 CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.all.min.js"></script>
 
 <!-- Localized strings for JS -->
 <div id="js-localization"
@@ -34,15 +36,22 @@
      data-add-teaching-subject-btn="@Localizer["AddTeachingSubjectBtn"]"
      data-edit-btn="@Localizer["EditBtn"]"
      data-delete-btn="@Localizer["DeleteBtn"]"
-     data-no-educational-year="@Localizer["NoEducationalYear"]"></div>
+     data-no-educational-year="@Localizer["NoEducationalYear"]"
+     data-success-add-teacher="@Localizer["SuccessAddTeacher"]"
+     data-success-edit-teacher="@Localizer["SuccessEditTeacher"]"
+     data-success-delete-teacher="@Localizer["SuccessDeleteTeacher"]"
+     data-success-add-teach-subject="@Localizer["SuccessAddTeachSubject"]"
+     data-success-delete-teach-subject="@Localizer["SuccessDeleteTeachSubject"]"
+     data-error-action="@Localizer["ErrorAction"]"
+     data-error-network="@Localizer["ErrorNetwork"]"
+     data-success-title="@Localizer["SuccessTitle"]"
+     data-error-title="@Localizer["ErrorTitle"]"></div>
 
-<!-- Permissions for JS -->
 <div id="js-permissions"
      data-can-insert="@ViewBag.CanInsert"
      data-can-update="@ViewBag.CanUpdate"
      data-can-delete="@ViewBag.CanDelete"></div>
 
-<!-- Gradient and Centered Header -->
 <div class="questions-header" style="margin-bottom: 0;">
     <h2>
         <i class="fas fa-chalkboard-teacher"></i>
@@ -167,7 +176,6 @@
     </div>
 </div>
 
-<!-- Inline CSS for button colors and header -->
 <style>
     :root {
         --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
