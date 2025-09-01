@@ -313,18 +313,43 @@ $(document).ready(function () {
         `;
     }
 
+
     function showAddQuestionForm() {
         console.log("=== showAddQuestionForm called ===");
         isEditMode = false;
         editingQuestionId = null;
-        $('#add-question-section').show();
+
+        const formSection = $('#add-question-section');
+
+        // Show the form with animation
+        formSection.show();
+        setTimeout(() => {
+            formSection.addClass('show');
+        }, 10);
+
         resetQuestionForm();
         $('.question-form-header h3').html('<i class="fas fa-plus-circle"></i> Add Question');
         $('#save-question-btn').html('<i class="fas fa-save"></i> Save');
-    }
 
+        // Smooth scroll to the form
+        $('html, body').animate({
+            scrollTop: formSection.offset().top - 20
+        }, 300);
+
+        // Focus on the question content input
+        setTimeout(() => {
+            $('#question-content-input').focus();
+        }, 400);
+    }
     function hideAddQuestionForm() {
-        $('#add-question-section').hide();
+        const formSection = $('#add-question-section');
+
+        // Hide with animation
+        formSection.removeClass('show');
+        setTimeout(() => {
+            formSection.hide();
+        }, 300);
+
         resetQuestionForm();
         isEditMode = false;
         editingQuestionId = null;
@@ -501,7 +526,81 @@ $(document).ready(function () {
     // Global functions for question actions
     window.editQuestion = function (questionId) {
         console.log("Edit question:", questionId);
-        // Implementation here
+
+        $.ajax({
+            url: '/Question/GetQuestionForEdit',
+            type: 'GET',
+            data: { questionCode: questionId },
+            success: function (response) {
+                if (response.success && response.question) {
+                    const question = response.question;
+
+                    // Set edit mode
+                    isEditMode = true;
+                    editingQuestionId = questionId;
+
+                    // Show form
+                    const formSection = $('#add-question-section');
+                    formSection.show();
+                    setTimeout(() => {
+                        formSection.addClass('show');
+                    }, 10);
+
+                    // Update form header
+                    $('.question-form-header h3').html('<i class="fas fa-edit"></i> Edit Question');
+                    $('#save-question-btn').html('<i class="fas fa-save"></i> Save Changes');
+
+                    // Fill question content
+                    $('#question-content-input').val(question.questionContent);
+
+                    // Clear existing answers
+                    $('#answers-container').empty();
+                    answerIndex = 0;
+
+                    // Add answers
+                    if (question.answers && question.answers.length > 0) {
+                        question.answers.forEach(function (answer, index) {
+                            const answerHtml = `
+                            <div class="answer-group" data-answer-index="${index}">
+                                <input type="text" class="answer-input" placeholder="Answer Content" value="${escapeHtml(answer.content)}" required>
+                                <div class="correct-checkbox">
+                                    <input type="radio" name="correct-answer" value="${index}" id="correct-${index}" ${answer.isCorrect ? 'checked' : ''}>
+                                    <label for="correct-${index}">Correct</label>
+                                </div>
+                                <button type="button" class="remove-answer-btn" onclick="removeAnswer(${index})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                            $('#answers-container').append(answerHtml);
+                            answerIndex++;
+                        });
+                    } else {
+                        // Add default two empty answers
+                        resetQuestionForm();
+                    }
+
+                    updateRemoveButtons();
+                    $('#question-message').empty();
+
+                    // Smooth scroll to the form
+                    $('html, body').animate({
+                        scrollTop: formSection.offset().top - 20
+                    }, 300);
+
+                    // Focus on the question content input
+                    setTimeout(() => {
+                        $('#question-content-input').focus();
+                    }, 400);
+
+                } else {
+                    alert(response.message || 'Error occurred');
+                }
+            },
+            error: function () {
+                alert('Error occurred');
+            }
+        });
     };
 
     window.deleteQuestion = function (questionId) {
