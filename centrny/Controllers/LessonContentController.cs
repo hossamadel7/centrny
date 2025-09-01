@@ -298,12 +298,13 @@ namespace centrny.Controllers
                 return RedirectToAction("StudentViewer", new { lessonCode });
             }
         }
-
         [HttpGet]
         public async Task<IActionResult> CheckLessonAccess(int lessonCode)
         {
             var studentCode = GetSessionInt("StudentCode");
             var rootCode = GetSessionInt("RootCode");
+
+            Console.WriteLine($"🔍 CheckLessonAccess called for Student={studentCode}, Lesson={lessonCode}, Root={rootCode}");
 
             if (!studentCode.HasValue || !rootCode.HasValue)
             {
@@ -314,6 +315,28 @@ namespace centrny.Controllers
             {
                 var accessResult = await CheckStudentLessonAccess(studentCode.Value, lessonCode, rootCode.Value);
 
+                Console.WriteLine($"📋 Access result: {accessResult.Result}");
+
+                // NEW: If DirectAccess, set session variables for seamless access
+                if (accessResult.Result == LessonAccessResult.DirectAccess)
+                {
+                    // Extract pinCode from the redirect URL
+                    var uri = new Uri($"http://localhost{accessResult.RedirectUrl}");
+                    var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                    var pinCode = query["pinCode"];
+
+                    if (!string.IsNullOrEmpty(pinCode))
+                    {
+                        // Set session variables just like AccessLesson does
+                        HttpContext.Session.SetString("ValidatedPin", pinCode);
+                        HttpContext.Session.SetInt32("AccessibleLesson", lessonCode);
+                        HttpContext.Session.SetString("AccessGrantedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                        HttpContext.Session.SetString("AccessGrantedToUser", GetCurrentUser());
+
+                        Console.WriteLine($"✅ Session variables set for DirectAccess - Pin: {pinCode}, Lesson: {lessonCode}");
+                    }
+                }
+
                 return Json(new
                 {
                     result = accessResult.Result.ToString(),
@@ -323,7 +346,7 @@ namespace centrny.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in CheckLessonAccess: {ex.Message}");
+                Console.WriteLine($"❌ Error in CheckLessonAccess: {ex.Message}");
                 return Json(new { result = "RequirePIN", message = "Error checking access" });
             }
         }
@@ -863,7 +886,7 @@ namespace centrny.Controllers
             return View();
         }
 
-        
+
         private async Task CreateOrUpdateAttendanceRecord(int studentCode, int lessonCode, int pinCode, int rootCode)
         {
             try
@@ -877,8 +900,7 @@ namespace centrny.Controllers
 
                 if (existingAttend != null)
                 {
-                    // Increment views for existing record
-                    existingAttend.Views++;
+                    
                     existingAttend.InsertTime = DateTime.Now;
                     Console.WriteLine($"📈 Incremented views to {existingAttend.Views} for existing attendance record");
                 }
@@ -938,7 +960,7 @@ namespace centrny.Controllers
                     .FirstOrDefaultAsync(l => l.LessonCode == lessonCode &&
                                               l.RootCode == rootCode &&
                                               l.IsActive);
-                        
+
                 if (lesson == null)
                 {
                     TempData["ErrorMessage"] = "Lesson not available";
