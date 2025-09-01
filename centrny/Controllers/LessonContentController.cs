@@ -7,6 +7,12 @@ using System.Text;
 
 namespace centrny.Controllers
 {
+    public enum LessonAccessResult
+    {
+        DirectAccess,    // Student can access directly
+        RequirePIN,      // Student needs to enter PIN
+        AccessDenied     // Student cannot access (PIN owned by another student)
+    }
     public class LessonContentController : Controller
     {
         private readonly CenterContext _context;
@@ -40,6 +46,286 @@ namespace centrny.Controllers
             ViewBag.RootCode = rootCode.Value;
 
             return View();
+        }
+
+
+        private async Task<(LessonAccessResult Result, string Message, string RedirectUrl)> CheckStudentLessonAccess(
+            int studentCode, int lessonCode, int rootCode)
+        {
+            Console.WriteLine($"🔍 Checking seamless access for Student {studentCode}, Lesson {lessonCode}");
+
+            // Case 1: Check if student is already linked with lesson via OnlineAttend
+            var existingAttend = await _context.OnlineAttends
+                .Include(oa => oa.PinCodeNavigation)
+                .FirstOrDefaultAsync(oa => oa.StudentCode == studentCode &&
+                                           oa.LessonCode == lessonCode &&
+                                           oa.RootCode == rootCode);
+
+            if (existingAttend != null)
+            {
+                Console.WriteLine($"📋 Found existing OnlineAttend record with PIN {existingAttend.PinCode}");
+
+                // Check if PIN times > 0 (or pin still valid)
+                var pin = existingAttend.PinCodeNavigation;
+                if (pin == null)
+                {
+                    pin = await _context.Pins.FirstOrDefaultAsync(p => p.PinCode == existingAttend.PinCode);
+                }
+
+                if (pin != null && pin.Times >= 0) // Allow 0 or more (since student already has access)
+                {
+                    // Check expiry using OnlineAttend.ExpiryDate
+                    if (existingAttend.ExpiryDate.HasValue)
+                    {
+                        var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                        if (currentDate <= existingAttend.ExpiryDate.Value)
+                        {
+                            Console.WriteLine($"✅ Direct access granted - valid until {existingAttend.ExpiryDate.Value}");
+                            return (LessonAccessResult.DirectAccess,
+                                   "Access granted",
+                                   $"/LessonContent/ViewLesson?lessonCode={lessonCode}&pinCode={pin.Watermark}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"❌ Access expired on {existingAttend.ExpiryDate.Value}");
+                            return (LessonAccessResult.RequirePIN,
+                                   "Previous access has expired. Please enter PIN again.",
+                                   $"/LessonContent/StudentViewer?lessonCode={lessonCode}");
+                        }
+                    }
+                }
+
+                Console.WriteLine($"⚠️ Existing access invalid - PIN times: {pin?.Times}");
+                return (LessonAccessResult.RequirePIN,
+                       "Previous access no longer valid. Please enter PIN again.",
+                       $"/LessonContent/StudentViewer?lessonCode={lessonCode}");
+            }
+
+            // Case 2 & 4: Check if student is linked with any PIN that belongs to another student
+            var studentOwnedPins = await _context.Pins
+                .Where(p => p.StudentCode.HasValue &&
+                           p.StudentCode.Value != studentCode &&
+                           p.RootCode == rootCode &&
+                           p.IsActive == 1)
+                .Join(_context.OnlineAttends,
+                      p => p.PinCode,
+                      oa => oa.PinCode,
+                      (p, oa) => new { Pin = p, Attend = oa })
+                .Where(joined => joined.Attend.StudentCode == studentCode)
+                .Select(joined => joined.Pin)
+                .ToListAsync();
+
+            if (studentOwnedPins.Any())
+            {
+                Console.WriteLine($"❌ Student trying to use PIN owned by another student");
+                return (LessonAccessResult.AccessDenied,
+                       "Access denied. PIN belongs to another student.",
+                       null);
+            }
+
+            // Case 3: Check if student is linked with PIN but not with this specific lesson
+            var studentPinsWithoutThisLesson = await _context.OnlineAttends
+                .Where(oa => oa.StudentCode == studentCode &&
+                            oa.RootCode == rootCode &&
+                            oa.LessonCode != lessonCode) // Different lesson
+                .Include(oa => oa.PinCodeNavigation)
+                .Select(oa => oa.PinCodeNavigation)
+                .Where(p => p != null && p.Times > 0 && p.IsActive == 1)
+                .ToListAsync();
+
+            if (studentPinsWithoutThisLesson.Any())
+            {
+                Console.WriteLine($"📌 Student has valid PIN for other lessons, redirecting to PIN entry");
+                return (LessonAccessResult.RequirePIN,
+                       "Please enter your PIN to access this lesson.",
+                       $"/LessonContent/StudentViewer?lessonCode={lessonCode}");
+            }
+
+            // Case 5: Student is not linked with any PIN
+            Console.WriteLine($"🆕 Student not linked with any PIN, redirecting to PIN entry");
+            return (LessonAccessResult.RequirePIN,
+                   "Please enter PIN to access this lesson.",
+                   $"/LessonContent/StudentViewer?lessonCode={lessonCode}");
+        }
+
+        // <summary>
+        /// Enhanced AccessLesson method with proper PIN validation
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> AccessLesson(string pinCode, int lessonCode)
+        {
+            Console.WriteLine($"🔐 Enhanced AccessLesson attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+            Console.WriteLine($"   - LessonCode: {lessonCode}");
+            Console.WriteLine($"   - PinCode: {pinCode}");
+
+            var rootCode = GetSessionInt("RootCode");
+            var studentCode = GetSessionInt("StudentCode") ?? 1;
+
+            if (string.IsNullOrWhiteSpace(pinCode) || lessonCode <= 0)
+            {
+                TempData["ErrorMessage"] = "Please enter both PIN code and select a lesson";
+                return RedirectToAction("StudentViewer", new { lessonCode });
+            }
+
+            try
+            {
+                // Find the PIN record
+                var pin = await _context.Pins
+                    .FirstOrDefaultAsync(p => p.Watermark == pinCode &&
+                                              p.RootCode == rootCode &&
+                                              p.IsActive == 1);
+
+                if (pin == null)
+                {
+                    TempData["ErrorMessage"] = "Invalid PIN code";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                Console.WriteLine($"✅ PIN found: Times={pin.Times}, StudentCode={pin.StudentCode}, Status={pin.Status}");
+
+                // Validate PIN constraints
+                if (pin.Type != false)
+                {
+                    TempData["ErrorMessage"] = "PIN type not valid for lesson access";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                if (pin.Status != 1 && pin.Status != 2)
+                {
+                    TempData["ErrorMessage"] = "PIN is not active";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                // Case 3.1: Check if PIN times = 0 (exhausted)
+                if (pin.Times <= 0)
+                {
+                    Console.WriteLine($"❌ PIN exhausted: Times = {pin.Times}");
+                    TempData["ErrorMessage"] = "PIN has no remaining uses";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                // Case 4: Check if PIN belongs to another student
+                if (pin.StudentCode.HasValue && pin.StudentCode.Value != studentCode)
+                {
+                    Console.WriteLine($"❌ PIN belongs to student {pin.StudentCode.Value}, current student is {studentCode}");
+                    TempData["ErrorMessage"] = "This PIN belongs to another student";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                // Get lesson for validation
+                var lesson = await _context.Lessons
+                    .Include(l => l.SubjectCodeNavigation)
+                    .Include(l => l.EduYearCodeNavigation)
+                    .Include(l => l.TeacherCodeNavigation)
+                    .FirstOrDefaultAsync(l => l.LessonCode == lessonCode &&
+                                              l.RootCode == rootCode &&
+                                              l.IsActive);
+
+                if (lesson == null)
+                {
+                    TempData["ErrorMessage"] = "Lesson not found or not available";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                // Check for existing OnlineAttend record
+                var existingAttend = await _context.OnlineAttends
+                    .FirstOrDefaultAsync(oa => oa.StudentCode == studentCode &&
+                                               oa.LessonCode == lessonCode &&
+                                               oa.PinCode == pin.PinCode &&
+                                               oa.RootCode == rootCode.Value);
+
+                if (existingAttend != null)
+                {
+                    // Student already has access, just increment views
+                    existingAttend.Views++;
+                    existingAttend.InsertTime = DateTime.Now;
+                    Console.WriteLine($"📈 Incremented views to {existingAttend.Views}");
+                }
+                else
+                {
+                    // Create new OnlineAttend record (this will trigger the database trigger for ExpiryDate)
+                    var newAttend = new OnlineAttend
+                    {
+                        StudentCode = studentCode,
+                        LessonCode = lessonCode,
+                        PinCode = pin.PinCode,
+                        Views = 1,
+                        Status = true,
+                        RootCode = rootCode.Value,
+                        InsertUser = studentCode,
+                        InsertTime = DateTime.Now
+                        // ExpiryDate will be set by database trigger
+                    };
+
+                    _context.OnlineAttends.Add(newAttend);
+                    Console.WriteLine($"➕ Created new OnlineAttend record (PIN times handled by database)");
+
+                    // Link PIN to student if not already linked
+                    if (!pin.StudentCode.HasValue)
+                    {
+                        pin.StudentCode = studentCode;
+                        Console.WriteLine($"🔗 Linked PIN to student {studentCode}");
+                    }
+                }
+
+                // Update PIN status from 1 to 2 if needed
+                if (pin.Status == 1)
+                {
+                    pin.Status = 2;
+                    pin.LastUpdateTime = DateTime.Now;
+                    Console.WriteLine($"🔄 Updated PIN status from 1 to 2");
+                }
+                else
+                {
+                    pin.LastUpdateTime = DateTime.Now;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Set session variables for secure access
+                HttpContext.Session.SetString("ValidatedPin", pinCode);
+                HttpContext.Session.SetInt32("AccessibleLesson", lessonCode);
+                HttpContext.Session.SetString("AccessGrantedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                HttpContext.Session.SetString("AccessGrantedToUser", GetCurrentUser());
+
+                Console.WriteLine($"✅ Access granted, redirecting to ViewLesson");
+                return RedirectToAction("ViewLesson", new { lessonCode, pinCode });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in AccessLesson: {ex.Message}");
+                TempData["ErrorMessage"] = "Error processing request. Please try again.";
+                return RedirectToAction("StudentViewer", new { lessonCode });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckLessonAccess(int lessonCode)
+        {
+            var studentCode = GetSessionInt("StudentCode");
+            var rootCode = GetSessionInt("RootCode");
+
+            if (!studentCode.HasValue || !rootCode.HasValue)
+            {
+                return Json(new { result = "RequirePIN", message = "Please log in first" });
+            }
+
+            try
+            {
+                var accessResult = await CheckStudentLessonAccess(studentCode.Value, lessonCode, rootCode.Value);
+
+                return Json(new
+                {
+                    result = accessResult.Result.ToString(),
+                    message = accessResult.Message,
+                    redirectUrl = accessResult.RedirectUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CheckLessonAccess: {ex.Message}");
+                return Json(new { result = "RequirePIN", message = "Error checking access" });
+            }
         }
 
         [HttpGet]
@@ -106,6 +392,8 @@ namespace centrny.Controllers
                 return StatusCode(500, new { error = "Failed to load filters", details = ex.Message });
             }
         }
+
+
 
         [HttpGet]
         public async Task<IActionResult> GetTeacherLessons(
@@ -575,120 +863,7 @@ namespace centrny.Controllers
             return View();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AccessLesson(string pinCode, int lessonCode)
-        {
-            Console.WriteLine($"🔐 Enhanced AccessLesson attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            Console.WriteLine($"   - LessonCode: {lessonCode}");
-            Console.WriteLine($"   - PinCode: {pinCode}");
-            Console.WriteLine($"   - IP Address: {HttpContext.Connection.RemoteIpAddress}");
-
-            var rootCode = GetSessionInt("RootCode");
-            var studentCode = GetSessionInt("StudentCode") ?? 1; // Default student if no session
-
-            if (string.IsNullOrWhiteSpace(pinCode) || lessonCode <= 0)
-            {
-                TempData["ErrorMessage"] = "Please enter both PIN code and select a lesson";
-                return RedirectToAction("StudentViewer", new { lessonCode });
-            }
-
-            try
-            {
-                // Step 1: Find the PIN record
-                var pin = await _context.Pins
-                    .FirstOrDefaultAsync(p => p.Watermark == pinCode &&
-                                              p.RootCode == rootCode &&
-                                              p.IsActive == 1);
-
-                if (pin == null)
-                {
-                    TempData["ErrorMessage"] = "Invalid PIN code";
-                    return RedirectToAction("StudentViewer", new { lessonCode });
-                }
-
-                // Step 2: Validate PIN constraints
-                // Check type is false (0)
-                if (pin.Type != false)
-                {
-                    TempData["ErrorMessage"] = "PIN type not valid for lesson access";
-                    return RedirectToAction("StudentViewer", new { lessonCode });
-                }
-
-                // Check status is 1 or 2
-                if (pin.Status != 1 && pin.Status != 2)
-                {
-                    TempData["ErrorMessage"] = "PIN is not active";
-                    return RedirectToAction("StudentViewer", new { lessonCode });
-                }
-
-                // Step 3: Get lesson and check expiry
-                var lesson = await _context.Lessons
-                    .Include(l => l.SubjectCodeNavigation)
-                    .Include(l => l.EduYearCodeNavigation)
-                    .Include(l => l.TeacherCodeNavigation)
-                    .FirstOrDefaultAsync(l => l.LessonCode == lessonCode &&
-                                              l.RootCode == rootCode &&
-                                              l.IsActive);
-
-                if (lesson == null)
-                {
-                    TempData["ErrorMessage"] = "Lesson not found or not available";
-                    return RedirectToAction("StudentViewer", new { lessonCode });
-                }
-
-                // Step 4: Check PIN expiry based on lesson's LessonExpireDays
-                if (lesson.LessonExpireDays.HasValue && pin.LastUpdateTime.HasValue)
-                {
-                    var daysSinceLastUpdate = (DateTime.Now - pin.LastUpdateTime.Value).TotalDays;
-
-                    if (daysSinceLastUpdate > lesson.LessonExpireDays.Value)
-                    {
-                        // PIN has expired, set status to 0
-                        pin.Status = 0;
-                        pin.LastUpdateTime = DateTime.Now;
-                        await _context.SaveChangesAsync();
-
-                        TempData["ErrorMessage"] = "PIN has expired for this lesson";
-                        Console.WriteLine($"📅 PIN expired: {daysSinceLastUpdate} days > {lesson.LessonExpireDays.Value} allowed");
-                        return RedirectToAction("StudentViewer", new { lessonCode });
-                    }
-                }
-
-                // Step 5: Update PIN status from 1 to 2 if needed
-                if (pin.Status == 1)
-                {
-                    pin.Status = 2;
-                    pin.LastUpdateTime = DateTime.Now;
-                    Console.WriteLine($"🔄 Updated PIN status from 1 to 2");
-                }
-                else
-                {
-                    // Update LastUpdateTime for status 2 as well
-                    pin.LastUpdateTime = DateTime.Now;
-                }
-
-                await _context.SaveChangesAsync();
-
-                // Step 6: Handle attendance tracking
-                await CreateOrUpdateAttendanceRecord(studentCode, lessonCode, pin.PinCode, rootCode.Value);
-
-                // Step 7: Set session variables for secure access
-                HttpContext.Session.SetString("ValidatedPin", pinCode);
-                HttpContext.Session.SetInt32("AccessibleLesson", lessonCode);
-                HttpContext.Session.SetString("AccessGrantedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-                HttpContext.Session.SetString("AccessGrantedToUser", GetCurrentUser());
-
-                Console.WriteLine($"✅ PIN validation successful, redirecting to ViewLesson");
-                return RedirectToAction("ViewLesson", new { lessonCode, pinCode });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error in AccessLesson: {ex.Message}");
-                TempData["ErrorMessage"] = "Error processing request. Please try again.";
-                return RedirectToAction("StudentViewer", new { lessonCode });
-            }
-        }
-
+        
         private async Task CreateOrUpdateAttendanceRecord(int studentCode, int lessonCode, int pinCode, int rootCode)
         {
             try

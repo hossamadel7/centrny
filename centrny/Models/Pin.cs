@@ -27,7 +27,11 @@ public partial class Pin
 
     public DateTime? LastUpdateTime { get; set; }
 
+    public int? StudentCode { get; set; }
+
     public virtual ICollection<OnlineAttend> OnlineAttends { get; set; } = new List<OnlineAttend>();
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
+
+    public virtual Student? StudentCodeNavigation { get; set; }
 }

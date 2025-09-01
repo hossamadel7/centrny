@@ -59,6 +59,8 @@ public partial class Student
 
     public virtual ICollection<OnlineAttend> OnlineAttends { get; set; } = new List<OnlineAttend>();
 
+    public virtual ICollection<Pin> Pins { get; set; } = new List<Pin>();
+
     public virtual Root RootCodeNavigation { get; set; } = null!;
 
     public virtual ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
