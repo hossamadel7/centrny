@@ -1049,6 +1049,10 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.TeacherCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Lesson_Teacher");
+
+            entity.HasOne(d => d.YearCodeNavigation).WithMany(p => p.Lessons)
+                .HasForeignKey(d => d.YearCode)
+                .HasConstraintName("FK_Lesson_Year");
         });
 
         modelBuilder.Entity<Level>(entity =>
@@ -1236,6 +1240,10 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(1)
                 .HasColumnName("isActive");
+            entity.Property(e => e.LastUpdateTime)
+                .HasColumnType("datetime")
+                .HasColumnName("Last_Update_Time");
+            entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.RootCode).HasColumnName("Root_code");
             entity.Property(e => e.Times).HasDefaultValue(1);
             entity.Property(e => e.Watermark).HasMaxLength(20);
@@ -1562,11 +1570,7 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => e.StudentCode);
 
-            entity.ToTable("Student", tb =>
-                {
-                    tb.HasTrigger("trg_Student_Insert");
-                    tb.HasTrigger("trg_Student_Update");
-                });
+            entity.ToTable("Student");
 
             entity.Property(e => e.StudentCode).HasColumnName("Student_Code");
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");

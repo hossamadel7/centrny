@@ -60,4 +60,6 @@ public partial class Lesson
     public virtual Subject SubjectCodeNavigation { get; set; } = null!;
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
+
+    public virtual Year? YearCodeNavigation { get; set; }
 }

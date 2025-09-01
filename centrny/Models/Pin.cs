@@ -23,6 +23,10 @@ public partial class Pin
 
     public DateTime InsertTime { get; set; }
 
+    public int? LastUpdateUser { get; set; }
+
+    public DateTime? LastUpdateTime { get; set; }
+
     public virtual ICollection<OnlineAttend> OnlineAttends { get; set; } = new List<OnlineAttend>();
 
     public virtual Root RootCodeNavigation { get; set; } = null!;

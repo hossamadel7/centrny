@@ -76,6 +76,13 @@
                 box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
             }
 
+            .lesson-input:read-only {
+                background-color: #f8f9fa;
+                border-color: #28a745;
+                color: #28a745;
+                font-weight: 600;
+            }
+
         .access-btn {
             background: var(--primary-gradient);
             border: none;
@@ -109,6 +116,15 @@
             text-align: left;
         }
 
+        .lesson-info-section {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            text-align: left;
+        }
+
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -133,6 +149,28 @@
             animation: slideIn 0.3s ease-out;
         }
 
+        .back-to-learning {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+            .back-to-learning:hover {
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+            }
+
         @@keyframes slideIn {
             from
 
@@ -153,10 +191,27 @@
     <div class="access-container">
         <div class="access-header">
             <h1><i class="fas fa-graduation-cap me-2"></i>Lesson Access</h1>
-            <p class="mb-0">Enter your PIN code and lesson number</p>
+            <p class="mb-0">
+                @if (ViewBag.PreFilledLessonCode != null)
+                {
+                    <span>Enter your PIN code to access the selected lesson</span>
+                }
+                else
+                {
+                    <span>Enter your PIN code and lesson number</span>
+                }
+            </p>
         </div>
 
         <div class="access-card">
+            @if (ViewBag.PreFilledLessonCode != null)
+            {
+                <a href="/OnlineStudent/Learning" class="back-to-learning">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Learning
+                </a>
+            }
+
             @if (TempData["ErrorMessage"] != null)
             {
                 <div class="alert alert-danger error-message mb-4">
@@ -191,8 +246,21 @@
                            name="lessonCode"
                            placeholder="Enter lesson number"
                            min="1"
+                           value="@(ViewBag.PreFilledLessonCode ?? "")"
+                           @(ViewBag.PreFilledLessonCode != null ? "readonly" : "")
                            required>
-                    <small class="form-text text-muted">Enter the lesson number you want to access</small>
+                    <small class="form-text text-muted">
+                        @if (ViewBag.PreFilledLessonCode != null)
+                        {
+                            <span class="text-success">
+                                <i class="fas fa-check me-1"></i>Lesson selected from learning page
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Enter the lesson number you want to access</span>
+                        }
+                    </small>
                 </div>
 
                 <button type="submit" class="btn access-btn" id="accessBtn">
@@ -201,13 +269,33 @@
                 </button>
             </form>
 
+            @if (ViewBag.PreFilledLessonCode != null)
+            {
+                <div class="lesson-info-section">
+                    <h6><i class="fas fa-info-circle me-2"></i>Lesson Selected</h6>
+                    <p class="mb-2">
+                        <strong>Lesson Code:</strong> @ViewBag.PreFilledLessonCode
+                    </p>
+                    <p class="mb-0">
+                        <small class="text-muted">
+                            This lesson was automatically selected from your learning page.
+                            Simply enter your PIN code to access the content.
+                        </small>
+                    </p>
+                </div>
+            }
+
             <div class="info-section">
                 <h6><i class="fas fa-info-circle me-2"></i>How to Access</h6>
                 <ul class="mb-0 text-start">
                     <li><strong>PIN Code:</strong> Get this from your teacher</li>
-                    <li><strong>Lesson Code:</strong> Usually provided with the PIN</li>
+                    @if (ViewBag.PreFilledLessonCode == null)
+                    {
+                        <li><strong>Lesson Code:</strong> Usually provided with the PIN</li>
+                    }
                     <li><strong>Access:</strong> Valid PIN gives you access to videos, files, and exams</li>
                     <li><strong>Time Limit:</strong> Access may be time-limited based on lesson settings</li>
+                    <li><strong>PIN Validation:</strong> Your PIN must be active and not expired</li>
                 </ul>
             </div>
         </div>
@@ -218,13 +306,13 @@
         <div class="loading-content">
             <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
             <h5>Validating Access...</h5>
-            <p class="mb-0">Please wait while we verify your credentials</p>
+            <p class="mb-0">Please wait while we verify your credentials and PIN validity</p>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        console.log('🎓 StudentViewer PIN Entry loaded at @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC');
+        console.log('🎓 Enhanced StudentViewer PIN Entry loaded at @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC');
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('accessForm');
@@ -234,6 +322,8 @@
             const pinInput = document.getElementById('pinCode');
             const lessonInput = document.getElementById('lessonCode');
 
+            const isPreFilled = @(ViewBag.PreFilledLessonCode != null ? "true" : "false");
+
             // Auto-focus PIN input
             pinInput.focus();
 
@@ -241,16 +331,22 @@
             pinInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    lessonInput.focus();
+                    if (!isPreFilled) {
+                        lessonInput.focus();
+                    } else {
+                        form.submit();
+                    }
                 }
             });
 
-            lessonInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    form.submit();
-                }
-            });
+            if (!isPreFilled) {
+                lessonInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        form.submit();
+                    }
+                });
+            }
 
             // Handle form submission
             form.addEventListener('submit', function(e) {
@@ -266,11 +362,12 @@
                 // Show loading overlay
                 loadingOverlay.style.display = 'flex';
                 accessBtn.disabled = true;
-                btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validating...';
+                btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validating PIN...';
 
-                console.log('🔐 Access attempt:', {
+                console.log('🔐 Enhanced access attempt:', {
                     pin: pinCode,
                     lesson: lessonCode,
+                    preFilled: isPreFilled,
                     timestamp: new Date().toISOString()
                 });
             });
@@ -284,13 +381,17 @@
 
                 if (pinCode && lessonCode) {
                     btnText.textContent = 'Access Lesson';
+                } else if (isPreFilled && pinCode) {
+                    btnText.textContent = 'Access Lesson';
                 } else {
-                    btnText.textContent = 'Enter PIN and Lesson Code';
+                    btnText.textContent = isPreFilled ? 'Enter PIN Code' : 'Enter PIN and Lesson Code';
                 }
             }
 
             pinInput.addEventListener('input', validateInputs);
-            lessonInput.addEventListener('input', validateInputs);
+            if (!isPreFilled) {
+                lessonInput.addEventListener('input', validateInputs);
+            }
 
             // Initial validation
             validateInputs();
@@ -306,6 +407,11 @@
                     }, 1000);
                 }
             });
+
+            // Show pre-filled lesson info
+            if (isPreFilled) {
+                console.log('📚 Lesson pre-filled from learning page:', @(ViewBag.PreFilledLessonCode ?? 0));
+            }
         });
     </script>
 </body>

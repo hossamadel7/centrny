@@ -1,7 +1,11 @@
-﻿// OnlineStudent.js - synchronized with OnlineStudentController endpoints
+﻿// OnlineStudent.js - Fixed version with proper initialization and debugging
+// This replaces your existing OnlineStudent.js file
+
+console.log('OnlineStudent.js loading...');
 
 class OnlineStudentDashboard {
     constructor() {
+        console.log('OnlineStudentDashboard constructor called');
         this.subjects = [];
         this.exams = [];
         this.stats = null;
@@ -14,23 +18,45 @@ class OnlineStudentDashboard {
         this.currentSubject = null;
         this.currentChapter = null;
 
-        this.init();
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            // DOM already loaded
+            this.init();
+        }
     }
 
     init() {
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check if we're on the learning page
-            if (window.location.pathname.includes('/Learning')) {
+        console.log('OnlineStudentDashboard initializing...');
+        console.log('Current pathname:', window.location.pathname);
+
+        // Check which page we're on and initialize accordingly
+        const currentPath = window.location.pathname.toLowerCase();
+
+        if (currentPath.includes('learning') || currentPath.endsWith('/learning')) {
+            console.log('Detected Learning page, initializing learning system');
+            this.initLearningSystem();
+        } else if (currentPath.includes('onlinestudent') || currentPath === '/' || currentPath.includes('index')) {
+            console.log('Detected Dashboard page, initializing dashboard');
+            this.loadAll();
+        } else {
+            console.log('Unknown page, attempting to detect by elements');
+            // Fallback: detect by elements present
+            if (document.getElementById('subjectSelect')) {
+                console.log('Found subjectSelect element, initializing learning system');
                 this.initLearningSystem();
-            } else {
+            } else if (document.getElementById('subjectsGrid')) {
+                console.log('Found subjectsGrid element, initializing dashboard');
                 this.loadAll();
             }
-        });
+        }
     }
 
     // ============ DASHBOARD FUNCTIONALITY ============
 
     async loadAll() {
+        console.log('Loading dashboard data...');
         try {
             this.showLoading();
             await Promise.all([
@@ -42,21 +68,25 @@ class OnlineStudentDashboard {
             this.hideLoading();
             this.showAlert('Dashboard loaded', 'success');
         } catch (e) {
-            console.error(e);
+            console.error('Dashboard load error:', e);
             this.showAlert('Failed to load dashboard', 'error');
             this.hideLoading();
         }
     }
 
     async loadStats() {
-        const res = await fetch('/OnlineStudent/GetStudentStats');
-        if (!res.ok) throw new Error('Stats fetch failed');
-        this.stats = await res.json();
-        if (this.stats.error) {
-            this.showAlert(this.stats.error, 'error');
-            return;
+        try {
+            const res = await fetch('/OnlineStudent/GetStudentStats');
+            if (!res.ok) throw new Error('Stats fetch failed');
+            this.stats = await res.json();
+            if (this.stats.error) {
+                this.showAlert(this.stats.error, 'error');
+                return;
+            }
+            this.updateStats();
+        } catch (error) {
+            console.error('Error loading stats:', error);
         }
-        this.updateStats();
     }
 
     updateStats() {
@@ -89,30 +119,38 @@ class OnlineStudentDashboard {
     }
 
     async loadSubscription() {
-        const res = await fetch('/OnlineStudent/GetSubscriptionStatus');
-        if (!res.ok) throw new Error('Subscription fetch failed');
-        this.subscription = await res.json();
-        if (this.subscription.error) {
-            this.showAlert(this.subscription.error, 'error');
-            return;
-        }
-        const badge = document.getElementById('subscription-status');
-        if (badge) {
-            badge.textContent = this.subscription.status;
-            badge.className = `badge ${this.subscription.isSubscribed ? 'bg-success' : 'bg-secondary'}`;
+        try {
+            const res = await fetch('/OnlineStudent/GetSubscriptionStatus');
+            if (!res.ok) throw new Error('Subscription fetch failed');
+            this.subscription = await res.json();
+            if (this.subscription.error) {
+                this.showAlert(this.subscription.error, 'error');
+                return;
+            }
+            const badge = document.getElementById('subscription-status');
+            if (badge) {
+                badge.textContent = this.subscription.status;
+                badge.className = `badge ${this.subscription.isSubscribed ? 'bg-success' : 'bg-secondary'}`;
+            }
+        } catch (error) {
+            console.error('Error loading subscription:', error);
         }
     }
 
     async loadSubjects() {
-        const grid = document.getElementById('subjectsGrid');
-        const res = await fetch('/OnlineStudent/GetStudentSubjects');
-        if (!res.ok) throw new Error('Subjects fetch failed');
-        this.subjects = await res.json();
-        if (this.subjects.error) {
-            this.renderError(grid, this.subjects.error);
-            return;
+        try {
+            const grid = document.getElementById('subjectsGrid');
+            const res = await fetch('/OnlineStudent/GetStudentSubjects');
+            if (!res.ok) throw new Error('Subjects fetch failed');
+            this.subjects = await res.json();
+            if (this.subjects.error) {
+                this.renderError(grid, this.subjects.error);
+                return;
+            }
+            this.renderSubjects();
+        } catch (error) {
+            console.error('Error loading subjects:', error);
         }
-        this.renderSubjects();
     }
 
     renderSubjects() {
@@ -159,15 +197,19 @@ class OnlineStudentDashboard {
     }
 
     async loadExams() {
-        const grid = document.getElementById('examsGrid');
-        const res = await fetch('/OnlineStudent/GetAttendedExams');
-        if (!res.ok) throw new Error('Exams fetch failed');
-        this.exams = await res.json();
-        if (this.exams.error) {
-            this.renderError(grid, this.exams.error);
-            return;
+        try {
+            const grid = document.getElementById('examsGrid');
+            const res = await fetch('/OnlineStudent/GetAttendedExams');
+            if (!res.ok) throw new Error('Exams fetch failed');
+            this.exams = await res.json();
+            if (this.exams.error) {
+                this.renderError(grid, this.exams.error);
+                return;
+            }
+            this.renderExams();
+        } catch (error) {
+            console.error('Error loading exams:', error);
         }
-        this.renderExams();
     }
 
     renderExams() {
@@ -220,31 +262,45 @@ class OnlineStudentDashboard {
     // ============ LEARNING SYSTEM FUNCTIONALITY ============
 
     initLearningSystem() {
+        console.log('Initializing learning system...');
         this.setupLearningEventListeners();
-        this.loadLearningSubjects();
+        // Small delay to ensure DOM is fully ready
+        setTimeout(() => {
+            this.loadLearningSubjects();
+        }, 100);
     }
 
     setupLearningEventListeners() {
+        console.log('Setting up learning event listeners...');
+
         // Subject selection
         const subjectSelect = document.getElementById('subjectSelect');
         const loadChaptersBtn = document.getElementById('loadChaptersBtn');
 
         if (subjectSelect) {
+            console.log('Found subjectSelect, adding event listener');
             subjectSelect.addEventListener('change', () => {
                 const selected = subjectSelect.value;
+                console.log('Subject selected:', selected);
                 if (loadChaptersBtn) {
                     loadChaptersBtn.disabled = !selected;
                 }
             });
+        } else {
+            console.warn('subjectSelect element not found');
         }
 
         if (loadChaptersBtn) {
+            console.log('Found loadChaptersBtn, adding event listener');
             loadChaptersBtn.addEventListener('click', () => {
                 const selectedSubject = subjectSelect.value;
+                console.log('Load chapters clicked for subject:', selectedSubject);
                 if (selectedSubject) {
                     this.loadChapters(parseInt(selectedSubject));
                 }
             });
+        } else {
+            console.warn('loadChaptersBtn element not found');
         }
 
         // Navigation buttons
@@ -265,35 +321,57 @@ class OnlineStudentDashboard {
     }
 
     async loadLearningSubjects() {
+        console.log('Loading learning subjects...');
+
         try {
-            this.showLearningLoading('subjectSelection');
+            const subjectSelect = document.getElementById('subjectSelect');
+            if (!subjectSelect) {
+                console.error('subjectSelect element not found');
+                return;
+            }
+
+            // Show loading state
+            subjectSelect.innerHTML = '<option value="">Loading subjects...</option>';
+            console.log('Set loading state in dropdown');
+
             const response = await fetch('/OnlineStudent/GetLearningSubjects');
+            console.log('API response status:', response.status);
 
             if (!response.ok) {
-                throw new Error('Failed to load subjects');
+                throw new Error(`Failed to load subjects: ${response.status}`);
             }
 
             this.learningSubjects = await response.json();
+            console.log('Learning subjects data:', this.learningSubjects);
 
             if (this.learningSubjects.error) {
+                console.error('API returned error:', this.learningSubjects.error);
+                subjectSelect.innerHTML = `<option value="">Error: ${this.learningSubjects.error}</option>`;
                 this.showAlert(this.learningSubjects.error, 'error');
                 return;
             }
 
             this.renderLearningSubjects();
-            this.hideLearningLoading('subjectSelection');
+            console.log('Learning subjects rendered successfully');
         } catch (error) {
             console.error('Error loading learning subjects:', error);
+            const subjectSelect = document.getElementById('subjectSelect');
+            if (subjectSelect) {
+                subjectSelect.innerHTML = '<option value="">Failed to load subjects</option>';
+            }
             this.showAlert('Failed to load subjects', 'error');
-            this.hideLearningLoading('subjectSelection');
         }
     }
 
     renderLearningSubjects() {
         const subjectSelect = document.getElementById('subjectSelect');
-        if (!subjectSelect) return;
+        if (!subjectSelect) {
+            console.error('subjectSelect not found for rendering');
+            return;
+        }
 
         if (!this.learningSubjects || this.learningSubjects.length === 0) {
+            console.log('No learning subjects to render');
             subjectSelect.innerHTML = '<option value="">No subjects available</option>';
             return;
         }
@@ -308,9 +386,12 @@ class OnlineStudentDashboard {
         });
 
         subjectSelect.innerHTML = options.join('');
+        console.log(`Rendered ${this.learningSubjects.length} subjects in dropdown`);
     }
 
     async loadChapters(subjectCode) {
+        console.log('Loading chapters for subject:', subjectCode);
+
         try {
             const selectedSubject = this.learningSubjects.find(s => s.subjectCode === subjectCode);
             this.currentSubject = selectedSubject;
@@ -325,6 +406,7 @@ class OnlineStudentDashboard {
             }
 
             this.chapters = await response.json();
+            console.log('Chapters loaded:', this.chapters);
 
             if (this.chapters.error) {
                 this.showAlert(this.chapters.error, 'error');
@@ -360,7 +442,7 @@ class OnlineStudentDashboard {
                                 ${chapter.lessonsCount} ${chapter.lessonsCount === 1 ? 'lesson' : 'lessons'}
                             </span>
                         </div>
-                        <p class="chapter-description">${this.escape(chapter.chapterDescription)}</p>
+                        <p class="chapter-description">Subject: ${this.escape(chapter.subjectName)}</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">
                                 <i class="fas fa-clock me-1"></i>
@@ -385,6 +467,8 @@ class OnlineStudentDashboard {
     }
 
     async loadLessons(chapterCode) {
+        console.log('Loading lessons for chapter:', chapterCode);
+
         try {
             const selectedChapter = this.chapters.find(c => c.lessonCode === chapterCode);
             this.currentChapter = selectedChapter;
@@ -399,6 +483,7 @@ class OnlineStudentDashboard {
             }
 
             const data = await response.json();
+            console.log('Lessons loaded:', data);
 
             if (data.error) {
                 this.showAlert(data.error, 'error');
@@ -432,7 +517,7 @@ class OnlineStudentDashboard {
         const chapterInfo = `
             <div class="mb-4 p-3 bg-light rounded">
                 <h4>${this.escape(chapter.chapterName)}</h4>
-                <p class="text-muted mb-0">${this.escape(chapter.chapterDescription)}</p>
+                <p class="text-muted mb-0">Subject: ${this.escape(chapter.subjectName)}</p>
                 <small class="text-muted">Total lessons: ${this.lessons.length}</small>
             </div>
         `;
@@ -445,27 +530,45 @@ class OnlineStudentDashboard {
                         ${this.escape(lesson.lessonName)}
                     </h6>
                     <div class="lesson-actions">
-                        ${lesson.lessonVideo ? `
-                            <button class="btn btn-sm btn-outline-primary" onclick="window.open('${lesson.lessonVideo}', '_blank')">
-                                <i class="fas fa-play me-1"></i>Video
-                            </button>
-                        ` : ''}
-                        ${lesson.lessonPdf ? `
-                            <button class="btn btn-sm btn-outline-secondary" onclick="window.open('${lesson.lessonPdf}', '_blank')">
-                                <i class="fas fa-file-pdf me-1"></i>PDF
-                            </button>
-                        ` : ''}
+                        <button class="btn btn-primary btn-sm" onclick="window.onlineStudentDashboard.accessLesson(${lesson.lessonCode}, '${this.escape(lesson.lessonName)}')">
+                            <i class="fas fa-key me-1"></i>Access Lesson
+                        </button>
                     </div>
                 </div>
-                <p class="lesson-description">${this.escape(lesson.lessonDescription)}</p>
-                <small class="text-muted">
-                    <i class="fas fa-calendar me-1"></i>
-                    Added: ${this.formatDate(lesson.insertTime)}
-                </small>
+                <p class="lesson-description">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        Added: ${this.formatDate(lesson.insertTime)}
+                    </small>
+                </p>
             </div>
         `).join('');
 
         lessonsContainer.innerHTML = chapterInfo + lessonsList;
+    }
+
+    // Enhanced lesson access function
+    accessLesson(lessonCode, lessonName) {
+        console.log('Accessing lesson:', lessonCode, lessonName);
+
+        // Show confirmation dialog with lesson details
+        const confirmed = confirm(
+            `Access Lesson: "${lessonName}"\n\n` +
+            `Lesson Code: ${lessonCode}\n\n` +
+            `You will be redirected to enter your PIN code.\n` +
+            `Make sure you have a valid PIN from your teacher.\n\n` +
+            `Continue?`
+        );
+
+        if (confirmed) {
+            // Add loading state
+            this.showAlert('Redirecting to lesson access...', 'info');
+
+            // Redirect to StudentViewer with lesson code pre-filled
+            setTimeout(() => {
+                window.location.href = `/LessonContent/StudentViewer?lessonCode=${lessonCode}`;
+            }, 500);
+        }
     }
 
     // Learning Navigation Methods
@@ -546,7 +649,10 @@ class OnlineStudentDashboard {
 
     showAlert(msg, type = 'info') {
         const container = document.getElementById('alertContainer');
-        if (!container) return;
+        if (!container) {
+            console.log(`Alert (${type}): ${msg}`);
+            return;
+        }
 
         const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
         const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
@@ -595,4 +701,28 @@ class OnlineStudentDashboard {
 }
 
 // Initialize the dashboard system
+console.log('Creating OnlineStudentDashboard instance...');
 window.onlineStudentDashboard = new OnlineStudentDashboard();
+
+// Global function for backward compatibility and easy access
+function accessLesson(lessonCode, lessonName) {
+    console.log('Global accessLesson called:', lessonCode, lessonName);
+    if (window.onlineStudentDashboard) {
+        window.onlineStudentDashboard.accessLesson(lessonCode, lessonName);
+    } else {
+        console.error('OnlineStudentDashboard not initialized');
+        alert('System not ready. Please refresh the page.');
+    }
+}
+
+// Debug helper
+window.debugLearning = function () {
+    console.log('=== Learning System Debug Info ===');
+    console.log('Dashboard instance:', window.onlineStudentDashboard);
+    console.log('Current pathname:', window.location.pathname);
+    console.log('Subject select element:', document.getElementById('subjectSelect'));
+    console.log('Learning subjects data:', window.onlineStudentDashboard?.learningSubjects);
+    console.log('==================================');
+};
+
+console.log('OnlineStudent.js loaded successfully. Use debugLearning() for troubleshooting.');

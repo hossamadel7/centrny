@@ -41,7 +41,7 @@ namespace centrny.Controllers
 
             return View();
         }
-        // REPLACE your current GetLessonFilters with this version
+
         [HttpGet]
         public async Task<IActionResult> GetLessonFilters()
         {
@@ -50,7 +50,6 @@ namespace centrny.Controllers
 
             try
             {
-                // 1. Get the single ACTIVE EduYear for this root (adjust IsActive comparison if it's int)
                 var activeEduYear = await _context.EduYears
                     .Where(e => e.RootCode == rootCode.Value && (e.IsActive == true || e.IsActive == true))
                     .OrderBy(e => e.EduCode)
@@ -58,7 +57,6 @@ namespace centrny.Controllers
 
                 int? activeEduYearCode = activeEduYear?.EduCode;
 
-                // 2. Subjects for the root
                 var subjects = await _context.Subjects
                     .Where(s => s.RootCode == rootCode.Value)
                     .Select(s => new
@@ -69,7 +67,6 @@ namespace centrny.Controllers
                     .OrderBy(s => s.subjectName)
                     .ToListAsync();
 
-                // 3. Years: join via EduYears because Years has NO RootCode
                 IQueryable<Year> yearsBase = _context.Years;
 
                 if (activeEduYearCode.HasValue)
@@ -78,7 +75,6 @@ namespace centrny.Controllers
                 }
                 else
                 {
-                    // Fallback: if no active edu year, still restrict by root through join
                     yearsBase =
                         from y in _context.Years
                         join ey in _context.EduYears on y.EduYearCode equals ey.EduCode
@@ -92,8 +88,8 @@ namespace centrny.Controllers
                     where ey.RootCode == rootCode.Value
                     select new
                     {
-                        yearCode = y.YearCode,   // adjust if different
-                        yearName = y.YearName    // adjust if different
+                        yearCode = y.YearCode,
+                        yearName = y.YearName
                     })
                     .OrderBy(y => y.yearName)
                     .ToListAsync();
@@ -111,8 +107,6 @@ namespace centrny.Controllers
             }
         }
 
-
-        // REPLACE existing GetTeacherLessons with this version if Lesson has NO YearCode column
         [HttpGet]
         public async Task<IActionResult> GetTeacherLessons(
             int? subjectCode = null,
@@ -123,13 +117,11 @@ namespace centrny.Controllers
 
             try
             {
-                // Base (unfiltered for chapters)
                 var baseQuery = _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
                     .Where(l => l.RootCode == rootCode.Value && l.IsActive);
 
-                // Filterable query for child lessons
                 var filteredQuery = baseQuery;
 
                 if (subjectCode.HasValue)
@@ -137,7 +129,6 @@ namespace centrny.Controllers
 
                 if (yearCode.HasValue)
                 {
-                    // Year filter THROUGH EduYear join:
                     filteredQuery =
                         from l in filteredQuery
                         join y in _context.Years on l.EduYearCode equals y.EduYearCode
@@ -218,7 +209,7 @@ namespace centrny.Controllers
                     itemCode = f.FileCode,
                     displayName = f.DisplayName ?? "Unknown",
                     itemType = f.FileType == 1 ? "Video" : "File",
-                    fileType = f.FileType, // 0=File, 1=Video
+                    fileType = f.FileType,
                     sortOrder = f.SortOrder,
                     videoProvider = f.VideoProvider,
                     videoProviderName = f.VideoProvider == 0 ? "YouTube" :
@@ -266,7 +257,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Get available exams for linking
         [HttpGet]
         public async Task<IActionResult> GetAvailableExams(int lessonCode)
         {
@@ -304,7 +294,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Link existing exam to lesson
         [HttpPost]
         public async Task<IActionResult> LinkExamToLesson([FromBody] LinkExamDto dto)
         {
@@ -336,7 +325,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Unlink exam from lesson
         [HttpPost]
         public async Task<IActionResult> UnlinkExamFromLesson([FromBody] int examCode)
         {
@@ -368,7 +356,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Add video to lesson
         [HttpPost]
         public async Task<IActionResult> AddVideo([FromBody] AddVideoDto dto)
         {
@@ -411,7 +398,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Add file to lesson
         [HttpPost]
         public async Task<IActionResult> AddFile(int lessonCode, string displayName, int sortOrder, IFormFile file)
         {
@@ -481,7 +467,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Update sort order for files + exams
         [HttpPost]
         public async Task<IActionResult> UpdateSortOrder([FromBody] List<UpdateSortOrderDto> items)
         {
@@ -528,7 +513,6 @@ namespace centrny.Controllers
             }
         }
 
-        // Delete content file (not exams)
         [HttpDelete]
         public async Task<IActionResult> DeleteContent(int fileCode)
         {
@@ -557,17 +541,20 @@ namespace centrny.Controllers
 
         #endregion
 
-        #region Student Interface - 3-Step Secure Flow
+        #region Student Interface - Enhanced 3-Step Secure Flow with PIN Validation
 
         [HttpGet]
-        public async Task<IActionResult> StudentViewer()
+        public async Task<IActionResult> StudentViewer(int? lessonCode = null)
         {
             Console.WriteLine($"🔐 StudentViewer access attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
             Console.WriteLine($"📍 IP Address: {HttpContext.Connection.RemoteIpAddress}");
 
             var rootCode = GetSessionInt("RootCode");
 
-            if (rootCode.HasValue)
+            // Pre-fill lesson code if provided from learning page
+            ViewBag.PreFilledLessonCode = lessonCode;
+
+            if (rootCode.HasValue && !lessonCode.HasValue)
             {
                 var lessons = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
@@ -582,7 +569,7 @@ namespace centrny.Controllers
             else
             {
                 ViewBag.AvailableLessons = new List<Lesson>();
-                Console.WriteLine("⚠️ No rootCode in session - showing empty lesson list");
+                Console.WriteLine("⚠️ Lesson pre-filled or no rootCode - showing minimal lesson list");
             }
 
             return View();
@@ -591,34 +578,50 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AccessLesson(string pinCode, int lessonCode)
         {
-            Console.WriteLine($"🔐 AccessLesson attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+            Console.WriteLine($"🔐 Enhanced AccessLesson attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
             Console.WriteLine($"   - LessonCode: {lessonCode}");
             Console.WriteLine($"   - PinCode: {pinCode}");
             Console.WriteLine($"   - IP Address: {HttpContext.Connection.RemoteIpAddress}");
 
             var rootCode = GetSessionInt("RootCode");
+            var studentCode = GetSessionInt("StudentCode") ?? 1; // Default student if no session
 
             if (string.IsNullOrWhiteSpace(pinCode) || lessonCode <= 0)
             {
                 TempData["ErrorMessage"] = "Please enter both PIN code and select a lesson";
-                return RedirectToAction("StudentViewer");
+                return RedirectToAction("StudentViewer", new { lessonCode });
             }
 
             try
             {
+                // Step 1: Find the PIN record
                 var pin = await _context.Pins
                     .FirstOrDefaultAsync(p => p.Watermark == pinCode &&
                                               p.RootCode == rootCode &&
-                                              p.IsActive == 1 &&
-                                              p.Status == 1 &&
-                                              p.Times > 0);
+                                              p.IsActive == 1);
 
                 if (pin == null)
                 {
-                    TempData["ErrorMessage"] = "Invalid or expired PIN code";
-                    return RedirectToAction("StudentViewer");
+                    TempData["ErrorMessage"] = "Invalid PIN code";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
                 }
 
+                // Step 2: Validate PIN constraints
+                // Check type is false (0)
+                if (pin.Type != false)
+                {
+                    TempData["ErrorMessage"] = "PIN type not valid for lesson access";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                // Check status is 1 or 2
+                if (pin.Status != 1 && pin.Status != 2)
+                {
+                    TempData["ErrorMessage"] = "PIN is not active";
+                    return RedirectToAction("StudentViewer", new { lessonCode });
+                }
+
+                // Step 3: Get lesson and check expiry
                 var lesson = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
@@ -630,20 +633,105 @@ namespace centrny.Controllers
                 if (lesson == null)
                 {
                     TempData["ErrorMessage"] = "Lesson not found or not available";
-                    return RedirectToAction("StudentViewer");
+                    return RedirectToAction("StudentViewer", new { lessonCode });
                 }
 
+                // Step 4: Check PIN expiry based on lesson's LessonExpireDays
+                if (lesson.LessonExpireDays.HasValue && pin.LastUpdateTime.HasValue)
+                {
+                    var daysSinceLastUpdate = (DateTime.Now - pin.LastUpdateTime.Value).TotalDays;
+
+                    if (daysSinceLastUpdate > lesson.LessonExpireDays.Value)
+                    {
+                        // PIN has expired, set status to 0
+                        pin.Status = 0;
+                        pin.LastUpdateTime = DateTime.Now;
+                        await _context.SaveChangesAsync();
+
+                        TempData["ErrorMessage"] = "PIN has expired for this lesson";
+                        Console.WriteLine($"📅 PIN expired: {daysSinceLastUpdate} days > {lesson.LessonExpireDays.Value} allowed");
+                        return RedirectToAction("StudentViewer", new { lessonCode });
+                    }
+                }
+
+                // Step 5: Update PIN status from 1 to 2 if needed
+                if (pin.Status == 1)
+                {
+                    pin.Status = 2;
+                    pin.LastUpdateTime = DateTime.Now;
+                    Console.WriteLine($"🔄 Updated PIN status from 1 to 2");
+                }
+                else
+                {
+                    // Update LastUpdateTime for status 2 as well
+                    pin.LastUpdateTime = DateTime.Now;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Step 6: Handle attendance tracking
+                await CreateOrUpdateAttendanceRecord(studentCode, lessonCode, pin.PinCode, rootCode.Value);
+
+                // Step 7: Set session variables for secure access
                 HttpContext.Session.SetString("ValidatedPin", pinCode);
                 HttpContext.Session.SetInt32("AccessibleLesson", lessonCode);
                 HttpContext.Session.SetString("AccessGrantedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 HttpContext.Session.SetString("AccessGrantedToUser", GetCurrentUser());
 
+                Console.WriteLine($"✅ PIN validation successful, redirecting to ViewLesson");
                 return RedirectToAction("ViewLesson", new { lessonCode, pinCode });
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error in AccessLesson: {ex.Message}");
                 TempData["ErrorMessage"] = "Error processing request. Please try again.";
-                return RedirectToAction("StudentViewer");
+                return RedirectToAction("StudentViewer", new { lessonCode });
+            }
+        }
+
+        private async Task CreateOrUpdateAttendanceRecord(int studentCode, int lessonCode, int pinCode, int rootCode)
+        {
+            try
+            {
+                // Check if attendance record already exists
+                var existingAttend = await _context.OnlineAttends
+                    .FirstOrDefaultAsync(oa => oa.StudentCode == studentCode &&
+                                               oa.LessonCode == lessonCode &&
+                                               oa.PinCode == pinCode &&
+                                               oa.RootCode == rootCode);
+
+                if (existingAttend != null)
+                {
+                    // Increment views for existing record
+                    existingAttend.Views++;
+                    existingAttend.InsertTime = DateTime.Now;
+                    Console.WriteLine($"📈 Incremented views to {existingAttend.Views} for existing attendance record");
+                }
+                else
+                {
+                    // Create new attendance record
+                    var newAttend = new OnlineAttend
+                    {
+                        StudentCode = studentCode,
+                        LessonCode = lessonCode,
+                        PinCode = pinCode,
+                        Views = 1,
+                        Status = true,
+                        RootCode = rootCode,
+                        InsertUser = studentCode,
+                        InsertTime = DateTime.Now
+                    };
+
+                    _context.OnlineAttends.Add(newAttend);
+                    Console.WriteLine($"➕ Created new attendance record with 1 view");
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error updating attendance record: {ex.Message}");
+                // Don't throw - attendance tracking failure shouldn't block lesson access
             }
         }
 
@@ -661,7 +749,7 @@ namespace centrny.Controllers
             if (sessionPin != pinCode || sessionLesson != lessonCode)
             {
                 TempData["ErrorMessage"] = "Session expired or invalid access. Please enter your PIN again.";
-                return RedirectToAction("StudentViewer");
+                return RedirectToAction("StudentViewer", new { lessonCode });
             }
 
             try
@@ -675,28 +763,33 @@ namespace centrny.Controllers
                     .FirstOrDefaultAsync(l => l.LessonCode == lessonCode &&
                                               l.RootCode == rootCode &&
                                               l.IsActive);
-
+                        
                 if (lesson == null)
                 {
                     TempData["ErrorMessage"] = "Lesson not available";
-                    return RedirectToAction("StudentViewer");
+                    return RedirectToAction("StudentViewer", new { lessonCode });
                 }
 
                 var content = await GetLessonContentForStudent(lessonCode, rootCode.Value);
 
+                // Set ViewBag properties
                 ViewBag.Lesson = lesson;
                 ViewBag.LessonCode = lessonCode;
+                ViewBag.LessonName = lesson.LessonName;
+                ViewBag.SubjectName = lesson.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject";
                 ViewBag.PinCode = pinCode;
                 ViewBag.LessonContent = content;
                 ViewBag.AccessGrantedAt = sessionAccessTime;
+                ViewBag.LessonExpireDays = lesson.LessonExpireDays ?? 30;
 
-                await TrackLessonAccess(lessonCode, pinCode);
+                Console.WriteLine($"✅ ViewLesson loaded successfully with {content.Count} content items");
                 return View();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error in ViewLesson: {ex.Message}");
                 TempData["ErrorMessage"] = "Error loading lesson content. Please try again.";
-                return RedirectToAction("StudentViewer");
+                return RedirectToAction("StudentViewer", new { lessonCode });
             }
         }
 
@@ -762,56 +855,6 @@ namespace centrny.Controllers
             }).ToList();
         }
 
-        private async Task TrackLessonAccess(int lessonCode, string pinCode)
-        {
-            try
-            {
-                var rootCode = GetSessionInt("RootCode");
-                var studentCode = GetSessionInt("StudentCode");
-                if (rootCode == null) return;
-
-                var trackingStudentCode = studentCode ?? 1;
-
-                var pin = await _context.Pins
-                    .FirstOrDefaultAsync(p => p.Watermark == pinCode && p.RootCode == rootCode.Value);
-
-                if (pin == null) return;
-
-                var existingAttend = await _context.OnlineAttends
-                    .FirstOrDefaultAsync(oa => oa.StudentCode == trackingStudentCode &&
-                                               oa.LessonCode == lessonCode &&
-                                               oa.PinCode == pin.PinCode &&
-                                               oa.RootCode == rootCode.Value);
-
-                if (existingAttend != null)
-                {
-                    existingAttend.Views++;
-                    existingAttend.InsertTime = DateTime.Now;
-                }
-                else
-                {
-                    var attend = new OnlineAttend
-                    {
-                        StudentCode = trackingStudentCode,
-                        LessonCode = lessonCode,
-                        PinCode = pin.PinCode,
-                        Views = 1,
-                        Status = true,
-                        RootCode = rootCode.Value,
-                        InsertUser = trackingStudentCode,
-                        InsertTime = DateTime.Now
-                    };
-                    _context.OnlineAttends.Add(attend);
-                }
-
-                await _context.SaveChangesAsync();
-            }
-            catch
-            {
-                // swallow tracking errors
-            }
-        }
-
         #endregion
 
         #region Existing Student Content Access Methods
@@ -830,8 +873,7 @@ namespace centrny.Controllers
                 .FirstOrDefaultAsync(p => p.Watermark == pinCode &&
                                           p.RootCode == rootCode.Value &&
                                           p.IsActive == 1 &&
-                                          p.Status == 1 &&
-                                          p.Times > 0);
+                                          (p.Status == 1 || p.Status == 2));
 
             if (pin == null)
                 return BadRequest("Invalid or expired pin code");
@@ -876,40 +918,12 @@ namespace centrny.Controllers
                 .FirstOrDefaultAsync(p => p.Watermark == dto.PinCode &&
                                           p.RootCode == rootCode.Value &&
                                           p.IsActive == 1 &&
-                                          p.Status == 1 &&
-                                          p.Times > 0);
+                                          (p.Status == 1 || p.Status == 2));
 
             if (pin == null)
                 return BadRequest("Invalid or expired pin code");
 
-            var existingAttend = await _context.OnlineAttends
-                .FirstOrDefaultAsync(oa => oa.StudentCode == trackingStudentCode &&
-                                           oa.LessonCode == dto.LessonCode &&
-                                           oa.PinCode == pin.PinCode &&
-                                           oa.RootCode == rootCode.Value);
-
-            if (existingAttend != null)
-            {
-                existingAttend.Views++;
-                existingAttend.InsertTime = DateTime.Now;
-            }
-            else
-            {
-                var attend = new OnlineAttend
-                {
-                    StudentCode = trackingStudentCode,
-                    LessonCode = dto.LessonCode,
-                    PinCode = pin.PinCode,
-                    Views = 1,
-                    Status = true,
-                    RootCode = rootCode.Value,
-                    InsertUser = trackingStudentCode,
-                    InsertTime = DateTime.Now
-                };
-                _context.OnlineAttends.Add(attend);
-            }
-
-            await _context.SaveChangesAsync();
+            await CreateOrUpdateAttendanceRecord(trackingStudentCode, dto.LessonCode, pin.PinCode, rootCode.Value);
             return Ok();
         }
 
@@ -1088,6 +1102,17 @@ namespace centrny.Controllers
     {
         public string PinCode { get; set; } = null!;
         public int LessonCode { get; set; }
+    }
+
+    public class FileUploadSettings
+    {
+        public string UploadPath { get; set; } = "wwwroot/uploads/files";
+        public long MaxFileSizeBytes { get; set; } = 10 * 1024 * 1024; // 10MB
+        public List<string> AllowedExtensions { get; set; } = new()
+        {
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+            ".txt", ".jpg", ".jpeg", ".png", ".gif", ".mp4", ".avi"
+        };
     }
 
     #endregion

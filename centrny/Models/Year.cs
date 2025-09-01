@@ -35,6 +35,8 @@ public partial class Year
 
     public virtual ICollection<Learn> Learns { get; set; } = new List<Learn>();
 
+    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+
     public virtual Level LevelCodeNavigation { get; set; } = null!;
 
     public virtual ICollection<PlanSubject> PlanSubjects { get; set; } = new List<PlanSubject>();
