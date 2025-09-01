@@ -121,6 +121,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.AnswerContent)
                 .HasMaxLength(500)
                 .HasColumnName("Answer_Content");
+            entity.Property(e => e.AnswerImage)
+                .HasMaxLength(500)
+                .HasColumnName("Answer_Image");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -388,7 +391,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.HallCodeNavigation).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.HallCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Class_Hall");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.ClassInsertUserNavigations)
@@ -1007,9 +1009,7 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Updat_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
-            entity.Property(e => e.LessonExpireDays)
-                .HasDefaultValue(2)
-                .HasColumnName("Lesson_Expire_Days");
+            entity.Property(e => e.LessonExpireDays).HasColumnName("Lesson_Expire_Days");
             entity.Property(e => e.LessonName)
                 .HasMaxLength(100)
                 .HasColumnName("Lesson_Name");
@@ -1371,6 +1371,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.QuestionContent)
                 .HasMaxLength(500)
                 .HasColumnName("Question_Content");
+            entity.Property(e => e.QuestionImage)
+                .HasMaxLength(500)
+                .HasColumnName("Question_Image");
 
             entity.HasOne(d => d.ExamCodeNavigation).WithMany(p => p.Questions)
                 .HasForeignKey(d => d.ExamCode)

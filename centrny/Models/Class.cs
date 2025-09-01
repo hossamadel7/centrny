@@ -35,13 +35,15 @@ public partial class Class
 
     public int? YearCode { get; set; }
 
-    public int HallCode { get; set; }
+    public int? HallCode { get; set; }
 
     public int? ClassLessonCode { get; set; }
 
     public TimeOnly? ClassStartTime { get; set; }
 
     public TimeOnly? ClassEndTime { get; set; }
+
+    public DateOnly? ClassDate { get; set; }
 
     public decimal? TeacherSubAmount { get; set; }
 
@@ -53,8 +55,6 @@ public partial class Class
 
     public DateTime? LastUpdateTime { get; set; }
 
-    public DateOnly? ClassDate { get; set; }
-
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
     public virtual Branch BranchCodeNavigation { get; set; } = null!;
@@ -63,7 +63,7 @@ public partial class Class
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 
-    public virtual Hall HallCodeNavigation { get; set; } = null!;
+    public virtual Hall? HallCodeNavigation { get; set; }
 
     public virtual User InsertUserNavigation { get; set; } = null!;
 
