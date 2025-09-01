@@ -171,6 +171,41 @@
                 box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
             }
 
+        /* Enhanced alert styles for access checking */
+        .access-check-message {
+            animation: slideIn 0.3s ease-out;
+            margin-bottom: 1.5rem !important;
+        }
+
+        .alert-success {
+            background: #d1e7dd;
+            border-color: #badbcc;
+            color: #0f5132;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffecb5;
+            color: #664d03;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #f5c2c7;
+            color: #842029;
+        }
+
+        /* Pulse animation for access checking */
+        .checking-access {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
         @@keyframes slideIn {
             from
 
@@ -182,6 +217,23 @@
         to {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        }
+
+        @@keyframes pulse {
+            0%
+
+        {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+
+        100% {
+            opacity: 1;
         }
 
         }
@@ -269,35 +321,8 @@
                 </button>
             </form>
 
-            @if (ViewBag.PreFilledLessonCode != null)
-            {
-                <div class="lesson-info-section">
-                    <h6><i class="fas fa-info-circle me-2"></i>Lesson Selected</h6>
-                    <p class="mb-2">
-                        <strong>Lesson Code:</strong> @ViewBag.PreFilledLessonCode
-                    </p>
-                    <p class="mb-0">
-                        <small class="text-muted">
-                            This lesson was automatically selected from your learning page.
-                            Simply enter your PIN code to access the content.
-                        </small>
-                    </p>
-                </div>
-            }
 
-            <div class="info-section">
-                <h6><i class="fas fa-info-circle me-2"></i>How to Access</h6>
-                <ul class="mb-0 text-start">
-                    <li><strong>PIN Code:</strong> Get this from your teacher</li>
-                    @if (ViewBag.PreFilledLessonCode == null)
-                    {
-                        <li><strong>Lesson Code:</strong> Usually provided with the PIN</li>
-                    }
-                    <li><strong>Access:</strong> Valid PIN gives you access to videos, files, and exams</li>
-                    <li><strong>Time Limit:</strong> Access may be time-limited based on lesson settings</li>
-                    <li><strong>PIN Validation:</strong> Your PIN must be active and not expired</li>
-                </ul>
-            </div>
+            
         </div>
     </div>
 
@@ -411,6 +436,126 @@
             // Show pre-filled lesson info
             if (isPreFilled) {
                 console.log('📚 Lesson pre-filled from learning page:', @(ViewBag.PreFilledLessonCode ?? 0));
+            }
+
+            // ============ AUTOMATIC ACCESS CHECK FUNCTIONALITY ============
+
+            // Function to check lesson access automatically
+            function checkLessonAccess(lessonCode) {
+                console.log('🔍 Checking automatic access for lesson:', lessonCode);
+
+                fetch(`/LessonContent/CheckLessonAccess?lessonCode=${lessonCode}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('✅ Access check response:', data);
+
+                        if (data.result === 'DirectAccess') {
+                            console.log('🎯 Direct access granted - redirecting to lesson');
+
+                            // Show success message
+                            showAccessMessage('🎉 You already have access to this lesson! Redirecting...', 'success');
+
+                            // Hide the PIN form with fade effect
+                            form.style.opacity = '0.5';
+                            form.style.pointerEvents = 'none';
+                            accessBtn.disabled = true;
+                            btnText.innerHTML = '<i class="fas fa-check-circle me-2"></i>Access Granted';
+
+                            // Redirect after delay
+                            setTimeout(() => {
+                                console.log('🚀 Redirecting to:', data.redirectUrl);
+                                window.location.href = data.redirectUrl;
+                            }, 2500);
+
+                        } else if (data.result === 'RequirePIN') {
+                            console.log('🔐 PIN required - showing PIN form');
+                            showAccessMessage(data.message || 'Please enter your PIN to access this lesson.', 'info');
+
+                            // Ensure form is visible and enabled
+                            form.style.opacity = '1';
+                            form.style.pointerEvents = 'auto';
+
+                        } else if (data.result === 'AccessDenied') {
+                            console.log('❌ Access denied');
+                            showAccessMessage(data.message || 'Access denied for this lesson.', 'danger');
+
+                            // Disable the form
+                            form.style.opacity = '0.5';
+                            form.style.pointerEvents = 'none';
+                            accessBtn.disabled = true;
+                            btnText.innerHTML = '<i class="fas fa-times-circle me-2"></i>Access Denied';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Error checking lesson access:', error);
+                        showAccessMessage('Unable to check access status. Please try entering your PIN manually.', 'warning');
+
+                        // Ensure form remains accessible
+                        form.style.opacity = '1';
+                        form.style.pointerEvents = 'auto';
+                    });
+            }
+
+            function showAccessMessage(message, type) {
+                // Remove any existing access messages
+                const existingMessages = document.querySelectorAll('.access-check-message');
+                existingMessages.forEach(msg => msg.remove());
+
+                // Create new message
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `alert alert-${type} access-check-message mb-4`;
+
+                const iconMap = {
+                    'success': 'fa-check-circle',
+                    'info': 'fa-info-circle',
+                    'warning': 'fa-exclamation-triangle',
+                    'danger': 'fa-times-circle'
+                };
+
+                const icon = iconMap[type] || 'fa-info-circle';
+                messageDiv.innerHTML = `<i class="fas ${icon} me-2"></i>${message}`;
+
+                // Insert before the form
+                form.parentNode.insertBefore(messageDiv, form);
+
+                // Auto-remove info/warning messages after delay
+                if (type === 'info' || type === 'warning') {
+                    setTimeout(() => {
+                        if (messageDiv.parentNode) {
+                            messageDiv.style.opacity = '0';
+                            setTimeout(() => messageDiv.remove(), 300);
+                        }
+                    }, 4000);
+                }
+            }
+
+            // Automatic access check for pre-filled lessons
+            if (isPreFilled) {
+                const preFilledLessonCode = @(ViewBag.PreFilledLessonCode ?? 0);
+                if (preFilledLessonCode > 0) {
+                    console.log('📚 Pre-filled lesson detected, checking access automatically');
+
+                    // Show initial checking message
+                    showAccessMessage('🔍 Checking your access status...', 'info');
+
+                    // Add checking animation to the access card
+                    document.querySelector('.access-card').classList.add('checking-access');
+
+                    // Delay to let page finish loading
+                    setTimeout(() => {
+                        checkLessonAccess(preFilledLessonCode);
+
+                        // Remove checking animation after check completes
+                        setTimeout(() => {
+                            document.querySelector('.access-card')?.classList.remove('checking-access');
+                        }, 1500);
+                    }, 1200);
+                }
             }
         });
     </script>

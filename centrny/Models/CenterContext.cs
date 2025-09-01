@@ -1006,7 +1006,9 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Updat_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
-            entity.Property(e => e.LessonExpireDays).HasColumnName("Lesson_Expire_Days");
+            entity.Property(e => e.LessonExpireDays)
+                .HasDefaultValue(2)
+                .HasColumnName("Lesson_Expire_Days");
             entity.Property(e => e.LessonName)
                 .HasMaxLength(100)
                 .HasColumnName("Lesson_Name");
