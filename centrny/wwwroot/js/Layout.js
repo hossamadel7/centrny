@@ -68,6 +68,19 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleSidebar(false);
         }
     });
+
+    // Resource Language Toggle (for resource localization only)
+    const resourceLangForm = document.getElementById('resourceLangForm');
+    const resourceLangSwitchBtn = document.getElementById('resourceLangSwitchBtn');
+    const resourceLangHiddenInput = document.getElementById('resourceLangHiddenInput');
+    const returnUrlInput = document.getElementById('returnUrlInput');
+    if (resourceLangSwitchBtn && resourceLangForm && resourceLangHiddenInput && returnUrlInput) {
+        resourceLangSwitchBtn.addEventListener('click', function (e) {
+            // Set current URL before submitting form so user stays on same page after toggle
+            returnUrlInput.value = window.location.pathname + window.location.search + window.location.hash;
+            // Button submits the form, so nothing else needed
+        });
+    }
 });
 
 // ESC key support & focus trap minimal

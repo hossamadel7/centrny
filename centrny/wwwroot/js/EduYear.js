@@ -21,6 +21,12 @@ const resxNoYears = document.getElementById("resxNoYears")?.value || "No years f
 const resxNoLevels = document.getElementById("resxNoLevels")?.value || "No levels found for this root.";
 const resxNoActiveEduYear = document.getElementById("resxNoActiveEduYear")?.value || "No active Educational Year found. Please activate an Edu Year first.";
 
+const resxEduYearAdded = "Education year added successfully.";
+const resxEduYearEdited = "Education year edited successfully.";
+const resxYearAdded = "Year added successfully.";
+const resxYearEdited = "Year edited successfully.";
+const resxLevelAdded = "Level added successfully.";
+
 // DOM elements
 const eduModal = document.getElementById('addEduYearModal');
 const openEduBtn = document.getElementById('add-eduyear-btn');
@@ -126,13 +132,17 @@ if (eduForm) {
             return;
         }
 
-        let url, body;
+        let url, body, successMessage, titleMessage;
         if (eduEditMode && editCode) {
             url = '/EduYear/EditEduYear';
             body = JSON.stringify({ eduCode: editCode, eduName, isActive });
+            successMessage = resxEduYearEdited;
+            titleMessage = resxEdit + " " + resxAddEduYear;
         } else {
             url = '/EduYear/AddEduYear';
             body = JSON.stringify({ eduName, isActive });
+            successMessage = resxEduYearAdded;
+            titleMessage = resxAddEduYear;
         }
 
         fetch(url, {
@@ -148,8 +158,8 @@ if (eduForm) {
                 closeEduModalFunc();
                 Swal.fire({
                     icon: 'success',
-                    title: resxAddEduYear,
-                    text: eduEditMode ? 'Education year updated successfully.' : 'Education year added successfully.',
+                    title: titleMessage,
+                    text: successMessage,
                     timer: 1200,
                     showConfirmButton: false
                 });
@@ -158,10 +168,10 @@ if (eduForm) {
             .catch(err => {
                 Swal.fire({
                     icon: 'error',
-                    title: resxAddEduYear,
+                    title: titleMessage,
                     text: err.message || resxLoading,
                 });
-                if (eduErrorDiv) eduErrorDiv.textContent = resxAddEduYear + ": " + (err.message || resxLoading);
+                if (eduErrorDiv) eduErrorDiv.textContent = titleMessage + ": " + (err.message || resxLoading);
             })
             .finally(() => {
                 if (submitBtn) {
@@ -371,13 +381,17 @@ if (yearForm) {
             return;
         }
 
-        let url, body;
+        let url, body, successMessage, titleMessage;
         if (yearEditMode && yearCode) {
             url = '/EduYear/EditYear';
             body = JSON.stringify({ yearCode, yearName, yearSort, levelCode });
+            successMessage = resxYearEdited;
+            titleMessage = resxEdit + " " + resxAddYear;
         } else {
             url = '/EduYear/AddYear';
             body = JSON.stringify({ yearName, yearSort, levelCode });
+            successMessage = resxYearAdded;
+            titleMessage = resxAddYear;
         }
 
         fetch(url, {
@@ -393,8 +407,8 @@ if (yearForm) {
                 closeYearModalFunc();
                 Swal.fire({
                     icon: 'success',
-                    title: yearEditMode ? resxEdit : resxAddYear,
-                    text: yearEditMode ? 'Year updated successfully.' : 'Year added successfully.',
+                    title: titleMessage,
+                    text: successMessage,
                     timer: 1200,
                     showConfirmButton: false
                 });
@@ -403,10 +417,10 @@ if (yearForm) {
             .catch(err => {
                 Swal.fire({
                     icon: 'error',
-                    title: yearEditMode ? resxEdit : resxAddYear,
+                    title: titleMessage,
                     text: err.message || resxLoading,
                 });
-                if (yearErrorDiv) yearErrorDiv.textContent = resxAddYear + ": " + (err.message || resxLoading);
+                if (yearErrorDiv) yearErrorDiv.textContent = titleMessage + ": " + (err.message || resxLoading);
             })
             .finally(() => {
                 if (submitBtn) {
@@ -460,7 +474,7 @@ if (levelForm) {
                 Swal.fire({
                     icon: 'success',
                     title: resxAddLevel,
-                    text: 'Level added successfully.',
+                    text: resxLevelAdded,
                     timer: 1200,
                     showConfirmButton: false
                 });

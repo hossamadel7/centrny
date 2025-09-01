@@ -1,16 +1,21 @@
 ﻿@using centrny.Controllers
 @inject centrny.Models.CenterContext DbContext
 @{
-    var culture = System.Threading.Thread.CurrentThread.CurrentUICulture;
-    var isRtl = culture.Name.StartsWith("ar");
+    // Get current resource localization from session (preferred), fallback to current thread culture
+    var resourceCulture = Context.Session.GetString("ResourceCulture") ?? System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+
+    // Normalize (make sure only "ar" or "en" to avoid surprises if "ar-SA" sneaks in)
+    resourceCulture = resourceCulture.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? "ar" : "en";
+
+    var isRtl = resourceCulture == "ar";
     var dir = isRtl ? "rtl" : "ltr";
 
-    // Sidebar now shows pages according to GroupPages (group's authorized pages)
+    // Sidebar pages (authorized pages only)
     var sidebarPages = User.Identity.IsAuthenticated
-      ? LayoutController.GetSidebarPagesForUser(DbContext, Context.Session)
-      : new List<SidebarPageViewModel>();
+        ? LayoutController.GetSidebarPagesForUser(DbContext, Context.Session)
+        : new List<SidebarPageViewModel>();
 
-    // Fetch the root name for the logged-in user (fallback to "Centrny")
+    // Fetch root name for title (fallback to "Centrny")
     string rootName = "Centrny";
     if (User.Identity.IsAuthenticated)
     {
@@ -30,12 +35,12 @@
         }
     }
 
-    // For AR language, translate static labels
+    // Simple static label translations
     string logoutText = isRtl ? "تسجيل الخروج" : "Logout";
     string loginText = isRtl ? "تسجيل الدخول" : "Login";
 }
 <!DOCTYPE html>
-<html lang="@culture.Name" dir="@dir">
+<html lang="@resourceCulture" dir="@dir">
 <head>
     @RenderSection("Styles", required: false)
     <meta charset="utf-8" />
@@ -52,12 +57,9 @@
     <link rel="stylesheet" href="~/css/clasrio-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/centrny.styles.css" asp-append-version="true" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png">
+    <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png" />
 
-    <!-- Adaptive Sidebar Styles (RTL / LTR) -->
     <style>
-        /* Ensure body class controls direction-specific styling */
         body.ltr .modern-sidebar {
             left: 0;
             transform: translateX(-100%);
@@ -109,7 +111,7 @@
             }
 
         body.sidebar-open {
-            overflow: hidden; /* Prevent background scroll when sidebar open */
+            overflow: hidden;
         }
 
         .sidebar-header {
@@ -186,7 +188,7 @@
                 font-weight: 500;
                 text-decoration: none;
                 position: relative;
-                transition: background .25s,color .25s;
+                transition: background .25s, color .25s;
                 border-radius: 8px;
                 margin: 2px .65rem;
             }
@@ -232,10 +234,9 @@
                 }
 
         body.rtl .sidebar-footer .nav-link .nav-icon {
-            transform: scaleX(-1); /* mirror logout arrow direction */
+            transform: scaleX(-1);
         }
 
-        /* Top header alignment adjustments for RTL */
         .top-header {
             position: sticky;
             top: 0;
@@ -264,53 +265,6 @@
             align-items: center;
         }
 
-            .lang-toggle-switch .switch {
-                position: relative;
-                display: inline-block;
-                width: 70px;
-                height: 32px;
-                background: #1d4ed8;
-                border-radius: 32px;
-                cursor: pointer;
-            }
-
-                .lang-toggle-switch .switch input {
-                    display: none;
-                }
-
-                .lang-toggle-switch .switch .slider {
-                    position: absolute;
-                    top: 4px;
-                    left: 4px;
-                    width: 24px;
-                    height: 24px;
-                    background: #fff;
-                    border-radius: 50%;
-                    transition: transform .3s;
-                }
-
-                .lang-toggle-switch .switch input:checked + .slider {
-                    transform: translateX(38px);
-                }
-
-            .lang-toggle-switch .lang-label {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: .7rem;
-                font-weight: 600;
-                color: #fff;
-                letter-spacing: .5px;
-            }
-
-            .lang-toggle-switch .lang-en {
-                left: 10px;
-            }
-
-            .lang-toggle-switch .lang-ar {
-                right: 10px;
-            }
-
         /* Responsive improvements */
         @@media (max-width: 575.98px) {
             .modern-sidebar
@@ -332,15 +286,12 @@
 
     <!-- Modern Sidebar -->
     <nav class="modern-sidebar" id="modernSidebar" aria-label="Main Sidebar" tabindex="-1">
-        <!-- Sidebar Header -->
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <img src="~/Image/clasrio-high-resolution-logo-transparent (2).png" alt="Clasrio" />
             </div>
-           
         </div>
 
-        <!-- User Profile Section (Only when authenticated) -->
         @if (User.Identity.IsAuthenticated)
         {
             <div class="sidebar-user-profile">
@@ -348,17 +299,12 @@
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <div class="user-info">
-                    <div class="user-name">
-                        @User.Identity.Name
-                    </div>
-                    <div class="user-role">
-                        @User.FindFirst("GroupName")?.Value
-                    </div>
+                    <div class="user-name">@User.Identity.Name</div>
+                    <div class="user-role">@User.FindFirst("GroupName")?.Value</div>
                 </div>
             </div>
         }
 
-        <!-- Navigation Menu -->
         <div class="sidebar-nav">
             <ul class="nav-list" role="menu">
                 @if (sidebarPages.Any())
@@ -379,7 +325,6 @@
             </ul>
         </div>
 
-        <!-- Sidebar Footer -->
         <div class="sidebar-footer">
             @if (User.Identity.IsAuthenticated)
             {
@@ -398,9 +343,7 @@
         </div>
     </nav>
 
-    <!-- Main Content Wrapper -->
     <div class="main-wrapper" id="mainWrapper">
-        <!-- Top Header -->
         <header class="top-header">
             <div class="header-left">
                 <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Open Menu">
@@ -409,59 +352,54 @@
                 <span class="page-title">@ViewData["Title"]</span>
             </div>
             <div class="header-right">
-                <!-- Language Toggle Switch -->
-                <div class="lang-toggle-switch">
-                    <form id="langForm" method="post" asp-controller="Home" asp-action="SetLanguage" style="display:inline;">
-                        <input type="hidden" name="culture" id="langHiddenInput" value="@(culture.Name.StartsWith("ar") ? "ar" : "en")" />
-                        <label class="switch" aria-label="Language Switch">
-                            <input type="checkbox" id="langSwitch" @(culture.Name.StartsWith("ar") ? "checked" : "")>
-                            <span class="slider"></span>
-                            <span class="lang-label lang-en">EN</span>
-                            <span class="lang-label lang-ar">AR</span>
-                        </label>
-                    </form>
-                </div>
+                <!-- Language Toggle -->
+                <form id="resourceLangForm"
+                      method="post"
+                      asp-controller="Layout"
+                      asp-action="SetResourceLanguage"
+                      style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="resourceCulture" id="resourceLangHiddenInput" value="@(isRtl ? "en" : "ar")" />
+                    <input type="hidden" name="returnUrl" id="returnUrlInput" />
+                    <button type="submit" class="btn btn-outline-primary" id="resourceLangSwitchBtn">
+                        @(isRtl ? "English" : "Arabic")
+                    </button>
+                </form>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        var returnUrlInput = document.getElementById('returnUrlInput');
+                        if (returnUrlInput) {
+                            returnUrlInput.value = window.location.pathname + window.location.search + window.location.hash;
+                        }
+                    });
+                </script>
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="main-content">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Hidden Logout Form -->
     @if (User.Identity.IsAuthenticated)
     {
-        <form id="logoutForm" method="post" asp-controller="Login" asp-action="Logout" style="display: none;">
+        <form id="logoutForm" method="post" asp-controller="Login" asp-action="Logout" style="display:none;">
             @Html.AntiForgeryToken()
         </form>
     }
 
-    <!-- JavaScript Libraries -->
+    <!-- OPTIONAL: Temporary debug (remove after confirming) -->
+    @* 
+    <div style="position:fixed;bottom:6px;right:8px;z-index:9999;background:#222;color:#fff;padding:4px 8px;font-size:11px;border-radius:4px;opacity:.8">
+        Sess:@Context.Session.GetString("ResourceCulture") |
+        Thread:@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName
+    </div>
+    *@
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    <!-- Sidebar / Layout Script -->
     <script src="~/js/Layout.js" asp-append-version="true"></script>
-
-    <!-- Language Switch Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var langSwitch = document.getElementById('langSwitch');
-            var langForm = document.getElementById('langForm');
-            var langHiddenInput = document.getElementById('langHiddenInput');
-
-            if (langSwitch) {
-                langSwitch.addEventListener('change', function () {
-                    langHiddenInput.value = langSwitch.checked ? 'ar' : 'en';
-                    langForm.submit();
-                });
-            }
-        });
-    </script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

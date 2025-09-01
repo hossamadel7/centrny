@@ -15,6 +15,7 @@
 }
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
+<p>CurrentUICulture: @System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName</p>
 <head>
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
@@ -28,6 +29,8 @@
     }
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="/css/Hamody.css" />
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.27/dist/sweetalert2.min.css" />
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
@@ -77,13 +80,11 @@
                 margin-right: 12px;
                 color: #4f8cff;
             }
+
         @@media (max-width: 900px) {
-            .branch-gradient-header h2
-
-        {
-            font-size: 1.6rem;
-        }
-
+            .branch-gradient-header h2 {
+                font-size: 1.6rem;
+            }
         }
 
         .branch-actions,
@@ -195,9 +196,16 @@
          data-modal-title-add-branch="@Localizer["ModalTitle_AddBranch"]"
          data-label-center-name="@Localizer["Label_CenterName"]"
          data-label-branch-name="@Localizer["Label_BranchName"]"
+         data-label-branch-address="@Localizer["Label_BranchAddress"]"
+         data-label-branch-phone="@Localizer["Label_BranchPhone"]"
+         data-label-branch-starttime="@Localizer["Label_BranchStartTime"]"
+         data-modal-title-edit-branch="@Localizer["ModalTitle_EditBranch"]"
          data-button-save="@Localizer["Button_Save"]"
          data-alert-center-add-success="@Localizer["Alert_CenterAddSuccess"]"
          data-alert-branch-add-success="@Localizer["Alert_BranchAddSuccess"]"
+         data-alert-branch-update-success="@Localizer["Alert_BranchUpdateSuccess"]"
+         data-alert-branch-update-failed="@Localizer["Alert_BranchUpdateFailed"]"
+         data-alert-branch-update-error="@Localizer["Alert_BranchUpdateError"]"
          data-alert-center-branch-limit="@Localizer["Alert_CenterBranchLimit"]"
          data-alert-center-delete-success="@Localizer["Alert_CenterDeleteSuccess"]"
          data-alert-branch-delete-success="@Localizer["Alert_BranchDeleteSuccess"]"
@@ -312,6 +320,42 @@
             </div>
         </div>
     </div>
+    <!-- Edit Branch Modal -->
+    <div class="modal fade" id="editBranchModal" tabindex="-1" aria-labelledby="editBranchModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="editBranchForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editBranchModalLabel"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="editBranchCode" name="BranchCode" />
+                        <div class="mb-3">
+                            <label for="editBranchName" class="form-label" id="label-branch-name-edit"></label>
+                            <input type="text" class="form-control" id="editBranchName" name="BranchName" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBranchAddress" class="form-label" id="label-branch-address-edit"></label>
+                            <input type="text" class="form-control" id="editBranchAddress" name="Address" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBranchPhone" class="form-label" id="label-branch-phone-edit"></label>
+                            <input type="text" class="form-control" id="editBranchPhone" name="Phone" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBranchStartTime" class="form-label" id="label-branch-starttime-edit"></label>
+                            <input type="date" class="form-control" id="editBranchStartTime" name="StartTime" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="button-cancel-edit-branch"></button>
+                        <button type="submit" class="btn btn-primary" id="button-save-branch-edit"></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- Add/Edit Hall Modal -->
     <div class="modal fade" id="addHallModal" tabindex="-1" aria-labelledby="addHallModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -368,6 +412,8 @@
             </div>
         </div>
     </div>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.27/dist/sweetalert2.all.min.js"></script>
     @section Scripts {
         <script>
             const userRootCode = @userRootCode;

@@ -21,6 +21,8 @@ public partial class OnlineAttend
 
     public DateTime InsertTime { get; set; }
 
+    public DateOnly? ExpiryDate { get; set; }
+
     public virtual Lesson LessonCodeNavigation { get; set; } = null!;
 
     public virtual Pin PinCodeNavigation { get; set; } = null!;

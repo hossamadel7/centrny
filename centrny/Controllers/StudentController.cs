@@ -1769,7 +1769,7 @@ namespace centrny.Controllers
                     TeacherCode = classEntity.TeacherCode,
                     ScheduleCode = classEntity.ScheduleCode,
                     ClassId = request.ClassCode,
-                    HallId = classEntity.HallCode,
+                    HallId = (int)classEntity.HallCode,
                     StudentId = student.StudentCode,
                     AttendDate = DateTime.Now,
                     SessionPrice = sessionPriceToSave,

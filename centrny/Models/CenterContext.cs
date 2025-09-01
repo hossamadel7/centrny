@@ -388,7 +388,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.HallCodeNavigation).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.HallCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Class_Hall");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.ClassInsertUserNavigations)
@@ -1130,6 +1129,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.LessonCode).HasColumnName("Lesson_code");
             entity.Property(e => e.PinCode).HasColumnName("Pin_code");
             entity.Property(e => e.RootCode).HasColumnName("Root_code");
+            entity.Property(e => e.ExpiryDate).HasColumnName("Expiry_Date");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -1245,6 +1245,7 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.RootCode).HasColumnName("Root_code");
+            entity.Property(e => e.StudentCode).HasColumnName("Student_Code");
             entity.Property(e => e.Times).HasDefaultValue(1);
             entity.Property(e => e.Watermark).HasMaxLength(20);
 
@@ -1252,6 +1253,10 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Pin_Root");
+
+            entity.HasOne(d => d.StudentCodeNavigation).WithMany(p => p.Pins)
+                .HasForeignKey(d => d.StudentCode)
+                .HasConstraintName("FK_Pin_Student");
         });
 
         modelBuilder.Entity<PlanSubject>(entity =>
@@ -1673,7 +1678,6 @@ public partial class CenterContext : DbContext
             entity.ToTable("Student_Exam", tb =>
                 {
                     tb.HasTrigger("CalculateStudentPercentage");
-                    tb.HasTrigger("DecreaseWalletCount");
                     tb.HasTrigger("InsertQuestionsToStudentAnswers");
                     tb.HasTrigger("UpdateExamAverageMark");
                 });

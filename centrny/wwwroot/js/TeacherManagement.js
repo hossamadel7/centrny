@@ -1,25 +1,62 @@
 ﻿console.log("TeacherManagement.js loaded");
 
+// SweetAlert2 helpers
+function swalSuccess(msg) {
+    Swal.fire({
+        icon: 'success',
+        title: $('#js-localization').data('success-title') || '',
+        text: msg,
+        showConfirmButton: false,
+        timer: 1700
+    });
+}
+function swalError(msg) {
+    Swal.fire({
+        icon: 'error',
+        title: $('#js-localization').data('error-title') || '',
+        text: msg,
+        showConfirmButton: true
+    });
+}
+function swalConfirm(msg) {
+    return Swal.fire({
+        icon: 'warning',
+        title: '',
+        text: msg,
+        showCancelButton: true,
+        confirmButtonText: $('#js-localization').data('submit') || 'OK',
+        cancelButtonText: $('#js-localization').data('cancel') || 'Cancel'
+    });
+}
+
 $(function () {
     // Localized JS strings
-    const deleteTeacherConfirm = getJsString('delete-teacher-confirm');
-    const deleteTeachConfirm = getJsString('delete-teach-confirm');
-    const noSubjectsFound = getJsString('no-subjects-found');
-    const fillAllFields = getJsString('fill-all-fields');
-    const processingText = getJsString('processing');
-    const submitText = getJsString('submit');
-    const saveChangesText = getJsString('save-changes') || "Save Changes";
-    const addTeacherText = getJsString('add-teacher-btn') || "Add Teacher";
-    const addTeachingSubjectBtn = getJsString('add-teaching-subject-btn');
-    const showSubjectsBtn = getJsString('show-subjects-btn');
-    const editBtnText = getJsString('edit-btn');
-    const deleteBtnText = getJsString('delete-btn');
-    const noEduYear = getJsString('no-educational-year');
-    const userCodeText = getJsString('usercode');
-    const userNameText = getJsString('username');
-    const rootNameText = getJsString('rootname');
-    const phoneText = getJsString('phone');
-    const addressText = getJsString('address');
+    const loc = $('#js-localization');
+    const deleteTeacherConfirm = loc.data('delete-teacher-confirm');
+    const deleteTeachConfirm = loc.data('delete-teach-confirm');
+    const noSubjectsFound = loc.data('no-subjects-found');
+    const fillAllFields = loc.data('fill-all-fields');
+    const processingText = loc.data('processing');
+    const submitText = loc.data('submit');
+    const saveChangesText = loc.data('save-changes') || "Save Changes";
+    const addTeacherText = loc.data('add-teacher-btn') || "Add Teacher";
+    const addTeachingSubjectBtn = loc.data('add-teaching-subject-btn');
+    const showSubjectsBtn = loc.data('show-subjects-btn');
+    const editBtnText = loc.data('edit-btn');
+    const deleteBtnText = loc.data('delete-btn');
+    const noEduYear = loc.data('no-educational-year');
+    const userCodeText = loc.data('usercode');
+    const userNameText = loc.data('username');
+    const rootNameText = loc.data('rootname');
+    const phoneText = loc.data('phone');
+    const addressText = loc.data('address');
+    const successAddTeacher = loc.data('success-add-teacher') || "Teacher added!";
+    const successEditTeacher = loc.data('success-edit-teacher') || "Teacher updated!";
+    const successDeleteTeacher = loc.data('success-delete-teacher') || "Teacher deleted!";
+    const successAddTeachSubject = loc.data('success-add-teach-subject') || "Teaching subject added!";
+    const successDeleteTeachSubject = loc.data('success-delete-teach-subject') || "Teaching subject deleted!";
+    const errorAction = loc.data('error-action') || "Action failed.";
+    const errorNetwork = loc.data('error-network') || "Network error.";
 
     // Permission flags from view
     const jsPerms = $('#js-permissions');
@@ -48,7 +85,7 @@ $(function () {
         method: 'GET',
         success: function (data) {
             if (data.error) {
-                $('#user-info').text(data.error);
+                swalError(data.error);
                 return;
             }
             loggedInUserCode = data.user_code;
@@ -59,7 +96,8 @@ $(function () {
                 rootNameText + ': <b>' + data.root_name + '</b>'
             );
             loadTeachers(loggedInUserRootCode);
-        }
+        },
+        error: function () { swalError(errorNetwork); }
     });
 
     function loadTeachers(rootCode) {
@@ -85,11 +123,12 @@ $(function () {
                 </div>
                 `).join('');
                 $('#teachers-list').html(html);
-            }
+            },
+            error: function () { swalError(errorNetwork); }
         });
     }
 
-    // Style for button row (matches unified theme)
+    // Button row style
     $('<style>').text(`
         .teacher-btn-row {
             display: flex;
@@ -99,30 +138,12 @@ $(function () {
             align-items: center;
             margin-bottom: 0.5em;
         }
-        .teacher-card .modern-btn {
-            min-width: 120px;
-        }
-        .teacher-card .show-subjects-btn {
-            background: var(--primary-gradient-light) !important;
-            color: var(--primary-color) !important;
-            font-weight: 600 !important;
-        }
-        .teacher-card .add-teachsubject-btn {
-            background: var(--secondary-gradient) !important;
-            color: #fff !important;
-        }
-        .teacher-card .edit-teacher-btn {
-            background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
-            color: #fff !important;
-        }
-        .teacher-card .delete-teacher-btn {
-            background: var(--danger-gradient) !important;
-            color: #fff !important;
-        }
-        .teacher-card .modern-btn:hover, .teacher-card .modern-btn:focus {
-            box-shadow: var(--shadow-lg) !important;
-            transform: scale(1.05) !important;
-        }
+        .teacher-card .modern-btn { min-width: 120px; }
+        .teacher-card .show-subjects-btn { background: var(--primary-gradient-light) !important; color: var(--primary-color) !important; font-weight: 600 !important; }
+        .teacher-card .add-teachsubject-btn { background: var(--secondary-gradient) !important; color: #fff !important; }
+        .teacher-card .edit-teacher-btn { background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important; color: #fff !important; }
+        .teacher-card .delete-teacher-btn { background: var(--danger-gradient) !important; color: #fff !important; }
+        .teacher-card .modern-btn:hover, .teacher-card .modern-btn:focus { box-shadow: var(--shadow-lg) !important; transform: scale(1.05) !important; }
     `).appendTo('head');
 
     $(document).on('click', '#openAddTeacher', function () {
@@ -141,6 +162,11 @@ $(function () {
             RootCode: loggedInUserRootCode,
             InsertUser: loggedInUserCode
         };
+        if (!teacherData.TeacherName || !teacherData.TeacherPhone) {
+            swalError(fillAllFields);
+            resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
+            return;
+        }
         $.ajax({
             url: '/TeacherManagement/AddTeacher',
             method: 'POST',
@@ -149,11 +175,11 @@ $(function () {
             success: function (res) {
                 $('#addTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
-                alert(res.message);
+                swalSuccess(successAddTeacher);
                 resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
             },
             error: function (xhr) {
-                alert("Failed to add teacher: " + xhr.responseText);
+                swalError(errorAction + ": " + xhr.responseText);
                 resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
             }
         });
@@ -172,6 +198,8 @@ $(function () {
             $('#editTeacherAddress').val(teacher.teacherAddress);
             resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
             $('#editTeacherModal').modal('show');
+        }).fail(function () {
+            swalError(errorNetwork);
         });
     });
 
@@ -184,6 +212,11 @@ $(function () {
             TeacherPhone: $('#editTeacherPhone').val(),
             TeacherAddress: $('#editTeacherAddress').val()
         };
+        if (!teacherEdit.TeacherName || !teacherEdit.TeacherPhone) {
+            swalError(fillAllFields);
+            resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
+            return;
+        }
         $.ajax({
             url: '/TeacherManagement/EditTeacher',
             method: 'POST',
@@ -192,11 +225,11 @@ $(function () {
             success: function (res) {
                 $('#editTeacherModal').modal('hide');
                 loadTeachers(loggedInUserRootCode);
-                alert(res.message);
+                swalSuccess(successEditTeacher);
                 resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
             },
             error: function (xhr) {
-                alert("Failed to edit teacher: " + xhr.responseText);
+                swalError(errorAction + ": " + xhr.responseText);
                 resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
             }
         });
@@ -208,15 +241,21 @@ $(function () {
 
     $(document).on('click', '.delete-teacher-btn', function () {
         let teacherCode = $(this).data('teacher');
-        if (!confirm(deleteTeacherConfirm)) return;
-        $.ajax({
-            url: '/TeacherManagement/DeleteTeacher',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(teacherCode),
-            success: function (res) {
-                loadTeachers(loggedInUserRootCode);
-                alert(res.message);
+        swalConfirm(deleteTeacherConfirm).then(result => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/TeacherManagement/DeleteTeacher',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(teacherCode),
+                    success: function (res) {
+                        loadTeachers(loggedInUserRootCode);
+                        swalSuccess(successDeleteTeacher);
+                    },
+                    error: function (xhr) {
+                        swalError(errorAction + ": " + xhr.responseText);
+                    }
+                });
             }
         });
     });
@@ -250,7 +289,8 @@ $(function () {
                     html += '</ul>';
                 }
                 $container.html(html).slideDown();
-            }
+            },
+            error: function () { swalError(errorNetwork); }
         });
     });
 
@@ -293,13 +333,17 @@ $(function () {
                                             $subjectSelect.append($('<option>', { value: subject.subjectCode, text: subject.subjectName }));
                                         }
                                         $('#addTeachSubjectModal').modal('show');
-                                    }
+                                    },
+                                    error: function () { swalError(errorNetwork); }
                                 });
-                            }
+                            },
+                            error: function () { swalError(errorNetwork); }
                         });
-                    }
+                    },
+                    error: function () { swalError(errorNetwork); }
                 });
-            }
+            },
+            error: function () { swalError(errorNetwork); }
         });
     });
 
@@ -315,7 +359,7 @@ $(function () {
         let branchCode = $('#branchSelect').val();
         let yearCode = $('#yearSelect').val();
         if (!subjectCode || !branchCode || !currentTeacherCode || !loggedInUserRootCode || !yearCode) {
-            alert(fillAllFields);
+            swalError(fillAllFields);
             resetSubmitButton(teachSubjectSubmitBtn, submitText);
             return;
         }
@@ -336,11 +380,11 @@ $(function () {
             success: function (res) {
                 $('#addTeachSubjectModal').modal('hide');
                 $(`.show-subjects-btn[data-teacher="${currentTeacherCode}"]`).trigger('click');
-                alert(res.message);
+                swalSuccess(successAddTeachSubject);
                 resetSubmitButton(teachSubjectSubmitBtn, submitText);
             },
             error: function (xhr) {
-                alert("Failed to add teaching subject: " + xhr.responseText);
+                swalError(errorAction + ": " + xhr.responseText);
                 resetSubmitButton(teachSubjectSubmitBtn, submitText);
             }
         });
@@ -349,15 +393,21 @@ $(function () {
     $(document).on('click', '.delete-teach-btn', function () {
         let teacherCode = $(this).data('teacher');
         let subjectCode = $(this).data('subject');
-        if (!confirm(deleteTeachConfirm)) return;
-        $.ajax({
-            url: '/TeacherManagement/DeleteTeach',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ TeacherCode: teacherCode, SubjectCode: subjectCode }),
-            success: function (res) {
-                $(`.show-subjects-btn[data-teacher="${teacherCode}"]`).trigger('click');
-                alert(res.message);
+        swalConfirm(deleteTeachConfirm).then(result => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/TeacherManagement/DeleteTeach',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ TeacherCode: teacherCode, SubjectCode: subjectCode }),
+                    success: function (res) {
+                        $(`.show-subjects-btn[data-teacher="${teacherCode}"]`).trigger('click');
+                        swalSuccess(successDeleteTeachSubject);
+                    },
+                    error: function (xhr) {
+                        swalError(errorAction + ": " + xhr.responseText);
+                    }
+                });
             }
         });
     });

@@ -50,16 +50,16 @@ namespace centrny.Controllers
                 System.Threading.Thread.CurrentThread.CurrentUICulture = ci;
                 System.Threading.Thread.CurrentThread.CurrentCulture = ci;
 
-                // Optional: persist language in session/cookie for future requests
-                HttpContext.Session.SetString("CurrentCulture", culture);
+                // Save language in session for localization
+                HttpContext.Session.SetString("ResourceCulture", lang == "ar" ? "ar" : "en");
             }
             else
             {
                 // If persisted, use the session value
-                var sessionCulture = HttpContext.Session.GetString("CurrentCulture");
+                var sessionCulture = HttpContext.Session.GetString("ResourceCulture");
                 if (!string.IsNullOrWhiteSpace(sessionCulture))
                 {
-                    CultureInfo ci = new CultureInfo(sessionCulture);
+                    CultureInfo ci = new CultureInfo(sessionCulture == "ar" ? "ar-SA" : "en-US");
                     System.Threading.Thread.CurrentThread.CurrentUICulture = ci;
                     System.Threading.Thread.CurrentThread.CurrentCulture = ci;
                 }
@@ -81,7 +81,7 @@ namespace centrny.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string username, string password, string returnUrl = null)
+        public async Task<IActionResult> Login(string username, string password, string returnUrl = null, string lang = null)
         {
             try
             {
@@ -184,6 +184,20 @@ namespace centrny.Controllers
                     }
                 }
                 // ==== END SESSION STORAGE LOGIC ====
+
+                // ==== LANGUAGE SESSION LOGIC ====
+                // Save language/culture to session for localization
+                if (!string.IsNullOrEmpty(lang))
+                {
+                    HttpContext.Session.SetString("ResourceCulture", lang == "ar" ? "ar" : "en");
+                }
+                else
+                {
+                    // If not specified, default to previous session value or "en"
+                    var previousCulture = HttpContext.Session.GetString("ResourceCulture");
+                    HttpContext.Session.SetString("ResourceCulture", previousCulture ?? "en");
+                }
+                // ==== END LANGUAGE SESSION LOGIC ====
 
                 // Create authentication claims
                 var claims = new List<Claim>
@@ -294,6 +308,7 @@ namespace centrny.Controllers
             HttpContext.Session.Remove("CenterCode");
             HttpContext.Session.Remove("CenterName");
             HttpContext.Session.Remove("Branches");
+            HttpContext.Session.Remove("ResourceCulture"); // Clear language on logout
 
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             _logger.LogInformation("User logged out: {Username}", User.Identity.Name);

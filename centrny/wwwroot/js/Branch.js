@@ -1,5 +1,50 @@
 ﻿// === Localized Branch Management JS with Center/Branch Limit and NESTED Layout, RTL/LTR action alignment, edit/delete for branches/halls ===
 
+// SweetAlert2 helpers
+function swalSuccess(msg) {
+    Swal.fire({
+        icon: 'success',
+        title: '',
+        text: msg,
+        showConfirmButton: false,
+        timer: 1600
+    });
+}
+function swalError(msg) {
+    Swal.fire({
+        icon: 'error',
+        title: '',
+        text: msg,
+        showConfirmButton: true
+    });
+}
+function swalWarning(msg) {
+    Swal.fire({
+        icon: 'warning',
+        title: '',
+        text: msg,
+        showConfirmButton: true
+    });
+}
+function swalInfo(msg) {
+    Swal.fire({
+        icon: 'info',
+        title: '',
+        text: msg,
+        showConfirmButton: true
+    });
+}
+function swalConfirm(msg, confirmBtnText, cancelBtnText) {
+    return Swal.fire({
+        icon: 'warning',
+        title: '',
+        text: msg,
+        showCancelButton: true,
+        confirmButtonText: confirmBtnText || 'Yes',
+        cancelButtonText: cancelBtnText || 'Cancel'
+    });
+}
+
 function getJsString(key) {
     key = key.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
     let v = $('#js-localization').data(key);
@@ -36,6 +81,14 @@ function setBranchLabels() {
     $('#addBranchModalLabel')?.text(getJsString('modalTitleAddBranch'));
     $('#label-branch-name')?.text(getJsString('labelBranchName'));
     $('#button-save-branch')?.html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+
+    $('#editBranchModalLabel').text(getJsString('modalTitleEditBranch'));
+    $('#label-branch-name-edit').text(getJsString('labelBranchName'));
+    $('#label-branch-address-edit').text(getJsString('labelBranchAddress'));
+    $('#label-branch-phone-edit').text(getJsString('labelBranchPhone'));
+    $('#label-branch-starttime-edit').text(getJsString('labelBranchStartTime'));
+    $('#button-cancel-edit-branch').text(getJsString('buttonCancel'));
+    $('#button-save-branch-edit').html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
 }
 
 // ---- Global State -----
@@ -86,6 +139,10 @@ $(document).ready(function () {
         e.preventDefault();
         await submitAddBranch();
     });
+    $('#editBranchForm').on('submit', async function (e) {
+        e.preventDefault();
+        await submitEditBranch();
+    });
 });
 
 async function loadRoots() {
@@ -130,6 +187,7 @@ async function loadCentersAndBranches(rootCode) {
             $('#centerBranchSection').prepend('<div id="limit-alert" class="alert alert-warning"></div>');
         $('#limit-alert').text(getJsString('alertCenterBranchLimit')).show();
         $('#add-center-btn').hide();
+        swalWarning(getJsString('alertCenterBranchLimit'));
     } else {
         $('#limit-alert').hide();
         $('#add-center-btn').show();
@@ -205,12 +263,18 @@ async function loadCentersAndBranches(rootCode) {
                         </button>`;
                     }
 
+                    // Get all branch props for edit modal, add as data attributes
                     branchList.append(`
                         <li class="list-group-item branch-card d-flex flex-column align-items-start">
                             <div class="d-flex align-items-center" style="width:100%;">
                                 <span style="flex:1;text-align:left;">${branch.branchName}</span>
                                 <span class="${branchActionClass}">
-                                    <button class="btn-table edit edit-branch-btn" data-branch-code="${branch.branchCode}" data-branch-name="${branch.branchName}">
+                                    <button class="btn-table edit edit-branch-btn"
+                                        data-branch-code="${branch.branchCode}"
+                                        data-branch-name="${branch.branchName}"
+                                        data-branch-address="${branch.address || ''}"
+                                        data-branch-phone="${branch.phone || ''}"
+                                        data-branch-starttime="${branch.startTime || ''}">
                                         <i class="fas fa-pencil"></i>
                                     </button>
                                     <button class="btn-table delete delete-branch-btn"
@@ -234,34 +298,50 @@ async function loadCentersAndBranches(rootCode) {
 
     $('.delete-center-btn').off().on('click', function () {
         const centerCode = $(this).attr('data-center-code');
-        if (confirm(getJsString('confirmDeleteCenter'))) {
-            fetch(`/Branch/DeleteCenter?centerCode=${centerCode}`, { method: 'DELETE' })
-                .then(r => {
-                    if (r.ok) {
-                        loadCentersAndBranches(currentRootCode);
-                        alert(getJsString('alertCenterDeleteSuccess'));
-                    }
-                });
-        }
+        swalConfirm(getJsString('confirmDeleteCenter')).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/Branch/DeleteCenter?centerCode=${centerCode}`, { method: 'DELETE' })
+                    .then(r => {
+                        if (r.ok) {
+                            loadCentersAndBranches(currentRootCode);
+                            swalSuccess(getJsString('alertCenterDeleteSuccess'));
+                        } else {
+                            swalError(getJsString('alertCenterBranchLimit'));
+                        }
+                    })
+                    .catch(() => swalError(getJsString('alertCenterBranchLimit')));
+            }
+        });
     });
 
     $('.delete-branch-btn').off().on('click', function () {
         const branchCode = $(this).attr('data-branch-code');
-        if (confirm(getJsString('confirmDeleteBranch'))) {
-            fetch(`/Branch/DeleteBranch?branchCode=${branchCode}`, { method: 'DELETE' })
-                .then(r => {
-                    if (r.ok) {
-                        loadCentersAndBranches(currentRootCode);
-                        alert(getJsString('alertBranchDeleteSuccess'));
-                    }
-                });
-        }
+        swalConfirm(getJsString('confirmDeleteBranch')).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/Branch/DeleteBranch?branchCode=${branchCode}`, { method: 'DELETE' })
+                    .then(r => {
+                        if (r.ok) {
+                            loadCentersAndBranches(currentRootCode);
+                            swalSuccess(getJsString('alertBranchDeleteSuccess'));
+                        } else {
+                            swalError(getJsString('alertCenterBranchLimit'));
+                        }
+                    })
+                    .catch(() => swalError(getJsString('alertCenterBranchLimit')));
+            }
+        });
     });
 
+    // Edit Branch button - now opens modal with details
     $('.edit-branch-btn').off().on('click', function () {
-        // You can implement a modal for editing branch, fill values here
-        // Example: $('#editBranchModal').modal('show');
-        alert('Edit branch functionality is not implemented yet.');
+        $('#editBranchCode').val($(this).attr('data-branch-code'));
+        $('#editBranchName').val($(this).attr('data-branch-name'));
+        $('#editBranchAddress').val($(this).attr('data-branch-address'));
+        $('#editBranchPhone').val($(this).attr('data-branch-phone'));
+        $('#editBranchStartTime').val($(this).attr('data-branch-starttime'));
+
+        var myModal = new bootstrap.Modal(document.getElementById('editBranchModal'));
+        myModal.show();
     });
 
     $('.add-branch-btn').off().on('click', function () {
@@ -289,9 +369,11 @@ async function loadCentersAndBranches(rootCode) {
 
     $('.delete-hall-btn').off().on('click', function () {
         const hallCode = $(this).attr('data-hall-code');
-        if (confirm(getJsString('confirmDeleteHall'))) {
-            deleteHall(hallCode);
-        }
+        swalConfirm(getJsString('confirmDeleteHall')).then((result) => {
+            if (result.isConfirmed) {
+                deleteHall(hallCode);
+            }
+        });
     });
 
     $('#centerBranchSection').show();
@@ -327,7 +409,7 @@ async function submitAddHall() {
     const branchCode = parseInt($('#hallBranchCode').val(), 10);
 
     if (!hallName || isNaN(hallCapacity) || isNaN(rootCode) || isNaN(branchCode)) {
-        alert(getJsString('alertFillAllFields'));
+        swalWarning(getJsString('alertFillAllFields'));
         return;
     }
 
@@ -349,12 +431,12 @@ async function submitAddHall() {
             var modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
             await loadCentersAndBranches(currentRootCode);
-            alert(getJsString('alertHallAddSuccess'));
+            swalSuccess(getJsString('alertHallAddSuccess'));
         } else {
-            alert(getJsString('alertHallAddFailed'));
+            swalError(getJsString('alertHallAddFailed'));
         }
     } catch (err) {
-        alert(getJsString('alertHallAddError'));
+        swalError(getJsString('alertHallAddError'));
     } finally {
         submitBtn.prop('disabled', false).html(originalText);
     }
@@ -383,12 +465,12 @@ async function submitEditHall() {
             var modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
             await loadCentersAndBranches(currentRootCode);
-            alert(getJsString('alertHallUpdateSuccess'));
+            swalSuccess(getJsString('alertHallUpdateSuccess'));
         } else {
-            alert(getJsString('alertHallUpdateFailed'));
+            swalError(getJsString('alertHallUpdateFailed'));
         }
     } catch (err) {
-        alert(getJsString('alertHallUpdateError'));
+        swalError(getJsString('alertHallUpdateError'));
     } finally {
         submitBtn.prop('disabled', false).html(originalText);
     }
@@ -399,12 +481,12 @@ async function deleteHall(hallCode) {
         const res = await fetch(`/Branch/DeleteHall?hallCode=${hallCode}`, { method: 'DELETE' });
         if (res.ok) {
             await loadCentersAndBranches(currentRootCode);
-            alert(getJsString('alertHallDeleteSuccess'));
+            swalSuccess(getJsString('alertHallDeleteSuccess'));
         } else {
-            alert(getJsString('alertHallDeleteFailed'));
+            swalError(getJsString('alertHallDeleteFailed'));
         }
     } catch (err) {
-        alert(getJsString('alertHallDeleteError'));
+        swalError(getJsString('alertHallDeleteError'));
     }
 }
 
@@ -426,7 +508,7 @@ async function submitAddCenter() {
     const isActive = true;
 
     if (!centerName || !centerAddress || !centerPhone || isNaN(rootCode)) {
-        alert(getJsString('alertFillAllFields'));
+        swalWarning(getJsString('alertFillAllFields'));
         return;
     }
     const submitBtn = $('#addCenterForm button[type="submit"]');
@@ -449,10 +531,10 @@ async function submitAddCenter() {
         if (res.ok) {
             $('#addCenterModal').modal('hide');
             await loadCentersAndBranches(currentRootCode);
-            alert(getJsString('alertCenterAddSuccess'));
+            swalSuccess(getJsString('alertCenterAddSuccess'));
         } else {
             const text = await res.text();
-            alert(text || getJsString('alertCenterBranchLimit'));
+            swalError(text || getJsString('alertCenterBranchLimit'));
         }
     } finally {
         submitBtn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
@@ -472,7 +554,7 @@ async function submitAddBranch() {
     const isActive = true;
 
     if (!branchName || !address || !phone || !startTime || isNaN(rootCode) || isNaN(centerCode)) {
-        alert(getJsString('alertFillAllFields'));
+        swalWarning(getJsString('alertFillAllFields'));
         return;
     }
     const submitBtn = $('#addBranchForm button[type="submit"]');
@@ -496,12 +578,56 @@ async function submitAddBranch() {
         if (res.ok) {
             $('#addBranchModal').modal('hide');
             await loadCentersAndBranches(currentRootCode);
-            alert(getJsString('alertBranchAddSuccess'));
+            swalSuccess(getJsString('alertBranchAddSuccess'));
         } else {
             const text = await res.text();
-            alert(text || getJsString('alertCenterBranchLimit'));
+            swalError(text || getJsString('alertCenterBranchLimit'));
         }
     } finally {
         submitBtn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+    }
+}
+
+// --------- Edit Branch handler -------------
+async function submitEditBranch() {
+    const branchCode = $('#editBranchCode').val();
+    const branchName = $('#editBranchName').val();
+    const address = $('#editBranchAddress').val();
+    const phone = $('#editBranchPhone').val();
+    const startTime = $('#editBranchStartTime').val();
+
+    if (!branchName || !address || !phone || !startTime) {
+        swalWarning(getJsString('alertFillAllFields'));
+        return;
+    }
+    const submitBtn = $('#button-save-branch-edit');
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+    try {
+        const res = await fetch('/Branch/EditBranch', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                BranchCode: branchCode,
+                BranchName: branchName,
+                Address: address,
+                Phone: phone,
+                StartTime: startTime
+            })
+        });
+
+        if (res.ok) {
+            var myModalEl = document.getElementById('editBranchModal');
+            var modal = bootstrap.Modal.getInstance(myModalEl);
+            modal.hide();
+            await loadCentersAndBranches(currentRootCode);
+            swalSuccess(getJsString('alertBranchUpdateSuccess'));
+        } else {
+            swalError(getJsString('alertBranchUpdateFailed'));
+        }
+    } catch (err) {
+        swalError(getJsString('alertBranchUpdateError'));
+    } finally {
+        submitBtn.prop('disabled', false).html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
     }
 }

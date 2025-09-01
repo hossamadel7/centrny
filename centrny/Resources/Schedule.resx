@@ -336,5 +336,29 @@
 	<data name="infoPrefix" xml:space="preserve">
     <value>ℹ️ </value>
   </data>
+	<data name="Label_Type" xml:space="preserve"><value>Type</value></data>
+	<data name="Label_CenterBranch" xml:space="preserve"><value>Center / Branch</value></data>
+	<data name="Label_TeacherSubject" xml:space="preserve"><value>Teacher / Subject</value></data>
+	<data name="Label_Actions" xml:space="preserve"><value>Actions</value></data>
+	<data name="Dropdown_SelectHallOptional" xml:space="preserve"><value>Select Hall (Optional)</value></data>
+	<!-- For active filters display -->
+	<data name="Lbl_SelectedBranch" xml:space="preserve"><value>Selected Branch</value></data>
+	<data name="Lbl_SelectedTeacher" xml:space="preserve"><value>Selected Teacher</value></data>
+	<data name="Lbl_SelectedYear" xml:space="preserve"><value>Selected Year</value></data>
+	<!-- For JS and toasts -->
+	<data name="editSchedule" xml:space="preserve"><value>Edit Schedule</value></data>
+	<data name="selectOption" xml:space="preserve"><value>Select</value></data>
+	<data name="close" xml:space="preserve"><value>Close</value></data>
+	<data name="errorPrefix" xml:space="preserve"><value>❌ Error: </value></data>
+	<data name="warningPrefix" xml:space="preserve"><value>⚠️ Warning: </value></data>
+	<data name="successPrefix" xml:space="preserve"><value>✅ </value></data>
+	<data name="infoPrefix" xml:space="preserve"><value>ℹ️ </value></data>
 	<!-- Add more JS strings as needed -->
+	<data name="successTitle" xml:space="preserve"><value>Success</value></data>
+	<data name="errorTitle" xml:space="preserve"><value>Error</value></data>
+	<data name="infoTitle" xml:space="preserve"><value>Info</value></data>
+	<data name="lblWarning" xml:space="preserve"><value>Warning!</value></data>
+	<data name="cancel" xml:space="preserve"><value>Cancel</value></data>
+	<data name="submit" xml:space="preserve"><value>Submit</value></data>
+	<data name="errorNetwork" xml:space="preserve"><value>Network error occurred</value></data>
 </root>

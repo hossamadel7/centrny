@@ -676,7 +676,7 @@ namespace centrny.Controllers
 
                 if (startTime >= endTime)
                 {
-                    return Json(new { success = false, error = "End time must be after start time." });
+                    return Json(new { success = false, error = "Time Confilct occured." });
                 }
 
                 var baseDate = new DateTime(2000, 1, 1);
