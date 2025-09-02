@@ -43,6 +43,18 @@ public partial class Root
 
     public DateTime? LastUpdateTime { get; set; }
 
+    public string? RootBodyColor { get; set; }
+
+    public string? RootButtonColor { get; set; }
+
+    public string? RootBodyFont { get; set; }
+
+    public string? RootButtonFontColor { get; set; }
+
+    public string? RootButtonFontColor2 { get; set; }
+
+    public string? RootBackgroundColor { get; set; }
+
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
     public virtual ICollection<Branch> Branches { get; set; } = new List<Branch>();
@@ -96,4 +108,6 @@ public partial class Root
     public virtual ICollection<Teach> Teaches { get; set; } = new List<Teach>();
 
     public virtual ICollection<WalletCode> WalletCodes { get; set; } = new List<WalletCode>();
+
+    public virtual ICollection<Year> Years { get; set; } = new List<Year>();
 }

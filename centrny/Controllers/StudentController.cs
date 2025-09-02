@@ -25,6 +25,17 @@ namespace centrny.Controllers
             _logger = logger;
         }
 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+            );
+        }
         // ==================== REGISTRATION METHODS ====================
 
         /// <summary>
@@ -74,7 +85,7 @@ namespace centrny.Controllers
 
                 var availableYears = selectedEduYearCode.HasValue
                     ? await _context.Years
-                        .Where(y => y.EduYearCode == selectedEduYearCode)
+                        .Where(y => y.RootCode == selectedEduYearCode)
                         .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
                         .ToListAsync()
                     : new List<SelectListItem>();
@@ -112,11 +123,14 @@ namespace centrny.Controllers
         [HttpGet]
         [Route("Student/GetYearsForEduYear/{eduYearCode}")]
         public async Task<IActionResult> GetYearsForEduYear(int eduYearCode)
+
         {
+            var (userCode, groupCode, rootCode) = GetSessionContext();
+
             try
             {
                 var years = await _context.Years
-                    .Where(y => y.EduYearCode == eduYearCode)
+                    .Where(y => y.RootCode == rootCode)
                     .Select(y => new { Value = y.YearCode, Text = y.YearName })
                     .ToListAsync();
 
@@ -721,6 +735,7 @@ namespace centrny.Controllers
         [Route("Register/{root_code:int}")]
         public async Task<IActionResult> PublicRegister(int root_code)
         {
+            var (userCode, groupCode, rootCode) = GetSessionContext();
             try
             {
                 // Validate that the root exists and is active
@@ -750,7 +765,7 @@ namespace centrny.Controllers
                 {
                     // Only get years for the active EduYear
                     availableYears = await _context.Years
-                        .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                        .Where(y => y.RootCode ==rootCode)
                         .Select(y => new SelectListItem { Value = y.YearCode.ToString(), Text = y.YearName })
                         .ToListAsync();
                 }

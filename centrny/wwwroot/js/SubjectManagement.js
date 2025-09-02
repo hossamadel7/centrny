@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOMContentLoaded fired, JS running!");
 
-    // Modal & Form Elements
+    // ---------- ELEMENTS ----------
     const modal = document.getElementById('addSubjectModal');
     const openBtn = document.getElementById('add-subject-btn');
     const closeBtn = document.getElementById('closeModal');
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalTitle = document.getElementById('modalTitle');
     const subjectCodeInput = document.getElementById('subjectCode');
 
-    // Add Teacher to Subject Modal & Form
+    // Add Teacher modal elements
     const addTeacherModal = document.getElementById('addTeacherToSubjectModal');
     const closeAddTeacherModalBtn = document.getElementById('closeAddTeacherToSubjectModal');
     const addTeacherForm = document.getElementById('addTeacherToSubjectForm');
@@ -23,35 +23,45 @@ document.addEventListener('DOMContentLoaded', function () {
     const branchSelect = document.getElementById('addTeacherBranchCode');
     const addTeacherSubjectName = document.getElementById('addTeacherSubjectName');
     const addTeacherYearCode = document.getElementById('addTeacherYearCode');
-    const addTeacherEduYearCode = document.getElementById('addTeacherEduYearCode');
+    const addTeacherEduYearCode = document.getElementById('addTeacherEduYearCode'); // legacy
     const addTeacherCenterPercentage = document.getElementById('addTeacherCenterPercentage');
     const addTeacherCenterAmount = document.getElementById('addTeacherCenterAmount');
 
-    // Submit buttons
     const addSubjectSubmitBtn = document.querySelector('#addSubjectForm button[type="submit"]');
     const addTeacherSubmitBtn = document.querySelector('#addTeacherToSubjectForm button[type="submit"]');
 
-    const saveChangesText = "Save Changes";
-    const addSubjectText = "Add Subject";
-
-    let editMode = false;
-    let selectedSubjectData = {};
-
+    // ---------- HELPERS ----------
+    function unwrap(p) {
+        if (Array.isArray(p)) return p;
+        if (p && Array.isArray(p.data)) return p.data;
+        return [];
+    }
+    function safe(name, fallback) {
+        try {
+            if (typeof window[name] !== 'undefined') return window[name];
+        } catch { }
+        return fallback;
+    }
     function resetSubmitButton(btn, defaultText) {
         if (btn) {
-            btn.textContent = defaultText || saveChangesText;
+            btn.textContent = defaultText;
             btn.disabled = false;
         }
     }
 
+    let editMode = false;
+    let selectedSubjectData = {};
+
+    // ---------- MODAL ----------
     function openModal(isEdit = false, subject = null) {
+        if (!modal || !form) return;
         modal.style.display = "flex";
-        errorDiv.textContent = "";
+        if (errorDiv) errorDiv.textContent = "";
         form.reset();
         editMode = isEdit;
-        modalTitle.textContent = isEdit ? editTitle : addTitle;
-        subjectCodeInput.value = '';
-        resetSubmitButton(addSubjectSubmitBtn, isEdit ? saveChangesText : addSubjectText);
+        if (modalTitle) modalTitle.textContent = isEdit ? safe('editTitle', 'Edit Subject') : safe('addTitle', 'Add Subject');
+        if (subjectCodeInput) subjectCodeInput.value = '';
+        resetSubmitButton(addSubjectSubmitBtn, isEdit ? safe('saveChangesText', 'Save Changes') : safe('addSubjectText', 'Add Subject'));
         if (!isEdit) {
             loadYears();
         } else if (subject) {
@@ -59,115 +69,127 @@ document.addEventListener('DOMContentLoaded', function () {
             form.subjectName.value = subject.subjectName;
             form.isPrimary.value = subject.isPrimary ? "true" : "false";
             loadYears(subject.yearCode);
-            // If you want to fill centerPercentage/centerAmount here, set their values from subject if present:
-            // form.centerPercentage.value = subject.centerPercentage ?? '';
-            // form.centerAmount.value = subject.centerAmount ?? '';
         }
     }
     function closeModalFunc() {
-        modal.style.display = "none";
+        if (modal) modal.style.display = "none";
         editMode = false;
-        resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
+        resetSubmitButton(addSubjectSubmitBtn, safe('saveChangesText', 'Save Changes'));
     }
+
     if (openBtn) openBtn.onclick = () => openModal(false);
     if (closeBtn) closeBtn.onclick = closeModalFunc;
-    window.onclick = function (event) {
-        if (event.target === modal) closeModalFunc();
-        if (event.target === addTeacherModal) {
+    window.onclick = function (e) {
+        if (e.target === modal) closeModalFunc();
+        if (e.target === addTeacherModal) {
             addTeacherModal.style.display = "none";
-            resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+            resetSubmitButton(addTeacherSubmitBtn, safe('assignTeacherText', 'Assign'));
         }
     };
 
+    // ---------- YEARS ----------
     function loadYears(selectedYearCode = null) {
-        yearSelect.innerHTML = `<option value="">${loadingYearsText}</option>`;
-        fetch('/Subject/GetActiveYears')
+        if (!yearSelect) return;
+        yearSelect.innerHTML = `<option value="">${safe('loadingYearsText', 'Loading years...')}</option>`;
+        fetch('/Subject/GetActiveYears', { cache: 'no-store' })
             .then(resp => {
-                if (!resp.ok) throw new Error('Network response was not ok');
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
                 return resp.json();
             })
-            .then(data => {
+            .then(payload => {
+                console.log('GetActiveYears payload:', payload); // debug
+                const list = unwrap(payload);
                 yearSelect.innerHTML = "";
-                if (!data || data.length === 0) {
-                    yearSelect.innerHTML = `<option value="">${noActiveYearsText}</option>`;
+                if (!list.length) {
+                    yearSelect.innerHTML = `<option value="">${safe('noActiveYearsText', 'No years available')}</option>`;
                     return;
                 }
-                data.forEach(y => {
+                list.forEach(y => {
                     const selected = (selectedYearCode && y.yearCode == selectedYearCode) ? 'selected' : '';
-                    yearSelect.innerHTML += `<option value="${y.yearCode}" ${selected}>${y.yearName}</option>`;
+                    const label = (y.yearName || '').replace(/</g, "&lt;");
+                    yearSelect.innerHTML += `<option value="${y.yearCode}" ${selected}>${label}</option>`;
                 });
             })
-            .catch(() => {
-                yearSelect.innerHTML = `<option value="">${errorLoadingYearsText}</option>`;
+            .catch(err => {
+                console.error('loadYears error:', err);
+                yearSelect.innerHTML = `<option value="">${safe('errorLoadingYearsText', 'Error loading years')}</option>`;
             });
     }
 
-    form.onsubmit = function (e) {
-        e.preventDefault();
-        errorDiv.textContent = "";
-        addSubjectSubmitBtn.textContent = processingText;
-        addSubjectSubmitBtn.disabled = true;
+    // ---------- FORM SUBMIT (ADD / EDIT SUBJECT) ----------
+    if (form) {
+        form.onsubmit = function (e) {
+            e.preventDefault();
+            if (errorDiv) errorDiv.textContent = "";
+            if (addSubjectSubmitBtn) {
+                addSubjectSubmitBtn.textContent = safe('processingText', 'Processing...');
+                addSubjectSubmitBtn.disabled = true;
+            }
 
-        const subjectName = form.subjectName.value.trim();
-        const isPrimary = form.isPrimary.value === "true";
-        const yearCode = parseInt(form.yearCode.value);
-        const subjectCode = subjectCodeInput.value;
+            const subjectName = form.subjectName.value.trim();
+            const isPrimary = form.isPrimary.value === "true";
+            const yearCode = parseInt(form.yearCode.value);
+            const subjectCode = subjectCodeInput.value;
 
-        // If you add centerPercentage/centerAmount fields to the edit modal, get them here:
-        // const centerPercentage = form.centerPercentage ? form.centerPercentage.value : null;
-        // const centerAmount = form.centerAmount ? form.centerAmount.value : null;
+            if (!subjectName || !yearCode) {
+                resetSubmitButton(addSubjectSubmitBtn, editMode ? safe('saveChangesText', 'Save Changes') : safe('addSubjectText', 'Add Subject'));
+                if (errorDiv) errorDiv.textContent = safe('pleaseFillFieldsText', 'Please fill required fields.');
+                return;
+            }
 
-        if (!subjectName || !yearCode) {
-            resetSubmitButton(addSubjectSubmitBtn, editMode ? saveChangesText : addSubjectText);
-            errorDiv.textContent = pleaseFillFieldsText;
-            return;
-        }
+            const endpoint = (editMode && subjectCode) ? '/Subject/EditSubject' : '/Subject/AddSubject';
+            const body = (editMode && subjectCode)
+                ? { subjectCode, subjectName, isPrimary, yearCode }
+                : { subjectName, isPrimary, yearCode };
 
-        let requestBody = { subjectName, isPrimary, yearCode };
-        if (editMode && subjectCode) {
-            requestBody.subjectCode = subjectCode;
-            // If you add center fields:
-            // requestBody.centerPercentage = centerPercentage ? parseFloat(centerPercentage) : null;
-            // requestBody.centerAmount = centerAmount ? parseFloat(centerAmount) : null;
-            fetch('/Subject/EditSubject', {
+            fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify(body)
             })
                 .then(r => {
                     if (!r.ok) return r.text().then(t => { throw new Error(t); });
                     return r.json();
                 })
-                .then(editedSubject => {
-                    updateSubjectRow(editedSubject);
-                    resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
+                .then(obj => {
+                    if (editMode) {
+                        updateSubjectRow(obj);
+                        resetSubmitButton(addSubjectSubmitBtn, safe('saveChangesText', 'Save Changes'));
+                    } else {
+                        addSubjectRow(obj);
+                        resetSubmitButton(addSubjectSubmitBtn, safe('addSubjectText', 'Add Subject'));
+                    }
                     closeModalFunc();
                 })
                 .catch(err => {
-                    resetSubmitButton(addSubjectSubmitBtn, saveChangesText);
-                    errorDiv.textContent = couldNotEditText + ": " + (err.message || "Unknown error");
+                    resetSubmitButton(addSubjectSubmitBtn, editMode ? safe('saveChangesText', 'Save Changes') : safe('addSubjectText', 'Add Subject'));
+                    if (errorDiv) {
+                        errorDiv.textContent =
+                            (editMode ? safe('couldNotEditText', 'Could not edit subject')
+                                : safe('couldNotAddText', 'Could not add subject')) +
+                            ": " + (err.message || "Unknown error");
+                    }
                 });
-        } else {
-            fetch('/Subject/AddSubject', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            })
-                .then(r => {
-                    if (!r.ok) return r.text().then(t => { throw new Error(t); });
-                    return r.json();
-                })
-                .then(newSubject => {
-                    addSubjectRow(newSubject);
-                    resetSubmitButton(addSubjectSubmitBtn, addSubjectText);
-                    closeModalFunc();
-                })
-                .catch(err => {
-                    resetSubmitButton(addSubjectSubmitBtn, addSubjectText);
-                    errorDiv.textContent = couldNotAddText + ": " + (err.message || "Unknown error");
-                });
-        }
-    };
+        };
+    }
+
+    // ---------- SUBJECT ROW HELPERS ----------
+    function subjectRowHTML(subject) {
+        const name = (subject.subjectName ?? '').replace(/</g, "&lt;");
+        const yearName = (subject.yearName ?? '').replace(/</g, "&lt;");
+        return `
+            <td class="subject-name-cell">${name}</td>
+            <td>${subject.isPrimary ? safe('yesText', 'Yes') : safe('noText', 'No')}</td>
+            <td>${yearName}</td>
+            <td style="text-align:center;">
+                <div class="subject-btn-row">
+                    <button class="modern-btn edit-btn" data-code="${subject.subjectCode}">${safe('editTitle', 'Edit')}</button>
+                    <button class="modern-btn delete-btn" data-code="${subject.subjectCode}">${safe('closeText', 'Delete')}</button>
+                    <button class="modern-btn primary-btn add-teacher-btn" data-code="${subject.subjectCode}">${safe('addTeacherText', 'Add Teacher')}</button>
+                    <button class="modern-btn secondary-btn show-teachers-btn" data-code="${subject.subjectCode}">${safe('showTeachersText', 'Show Teachers')}</button>
+                </div>
+            </td>`;
+    }
 
     function addSubjectRow(subject) {
         if (!tbody) return;
@@ -176,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.setAttribute('data-code', subject.subjectCode);
         tr.setAttribute('data-subject-code', subject.subjectCode);
         tr.setAttribute('data-year-code', subject.yearCode);
-        tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
+        tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? ""); // legacy
         tr.innerHTML = subjectRowHTML(subject);
         tbody.appendChild(tr);
 
@@ -192,45 +214,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateSubjectRow(subject) {
+        if (!tbody) return;
         const tr = tbody.querySelector(`tr[data-code="${subject.subjectCode}"]`);
-        if (tr) {
-            tr.setAttribute('data-subject-code', subject.subjectCode);
-            tr.setAttribute('data-year-code', subject.yearCode);
-            tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
-            tr.innerHTML = subjectRowHTML(subject);
-            addActionListeners(tr, subject);
-        }
+        if (!tr) return;
+        tr.setAttribute('data-subject-code', subject.subjectCode);
+        tr.setAttribute('data-year-code', subject.yearCode);
+        tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
+        tr.innerHTML = subjectRowHTML(subject);
+        addActionListeners(tr, subject);
     }
 
-    function subjectRowHTML(subject) {
-        return `
-        <td class="subject-name-cell">${subject.subjectName ?? ''}</td>
-        <td>${subject.isPrimary ? yesText : noText}</td>
-        <td>${subject.yearName ?? ''}</td>
-        <td style="text-align:center;">
-            <div class="subject-btn-row">
-                <button class="modern-btn edit-btn" data-code="${subject.subjectCode}">${editTitle}</button>
-                <button class="modern-btn delete-btn" data-code="${subject.subjectCode}">${closeText}</button>
-                <button class="modern-btn primary-btn add-teacher-btn" data-code="${subject.subjectCode}">${addTeacherText}</button>
-                <button class="modern-btn secondary-btn show-teachers-btn" data-code="${subject.subjectCode}">${showTeachersText}</button>
-            </div>
-        </td>
-    `;
+    function removeSubjectRow(subjectCode) {
+        if (!tbody) return;
+        const tr = tbody.querySelector(`tr[data-code="${subjectCode}"]`);
+        const trTeachers = tbody.querySelector(`tr.teachers-row[data-subject-code="${subjectCode}"]`);
+        if (tr) tr.remove();
+        if (trTeachers) trTeachers.remove();
     }
 
+    // ---------- ACTION LISTENERS ----------
     function addActionListeners(tr, subject) {
+        if (!tr) return;
         const editBtn = tr.querySelector('.edit-btn');
         const deleteBtn = tr.querySelector('.delete-btn');
         const addTeacherBtn = tr.querySelector('.add-teacher-btn');
         const showTeachersBtn = tr.querySelector('.show-teachers-btn');
-        if (editBtn) {
-            editBtn.onclick = function () {
-                openModal(true, subject);
-            };
-        }
+
+        if (editBtn) editBtn.onclick = () => openModal(true, subject);
+
         if (deleteBtn) {
             deleteBtn.onclick = function () {
-                if (confirm(deleteConfirmText)) {
+                if (confirm(safe('deleteConfirmText', 'Are you sure?'))) {
                     fetch('/Subject/DeleteSubject', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -240,68 +254,73 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (!r.ok) return r.text().then(t => { throw new Error(t); });
                             removeSubjectRow(subject.subjectCode);
                         })
-                        .catch(err => alert(couldNotDeleteText + ": " + (err.message || "Unknown error")));
+                        .catch(err => alert(safe('couldNotDeleteText', 'Could not delete') + ": " + (err.message || "Unknown error")));
                 }
             };
         }
+
         if (addTeacherBtn) {
             addTeacherBtn.onclick = function () {
                 selectedSubjectData = {
                     SubjectCode: tr.getAttribute('data-subject-code'),
                     SubjectName: tr.querySelector('.subject-name-cell').textContent,
                     YearCode: tr.getAttribute('data-year-code'),
-                    EduYearCode: tr.getAttribute('data-eduyear-code')
+                    EduYearCode: tr.getAttribute('data-eduyear-code') // legacy
                 };
 
-                addTeacherSubjectName.value = selectedSubjectData.SubjectName;
-                addTeacherYearCode.value = selectedSubjectData.YearCode;
-                addTeacherEduYearCode.value = selectedSubjectData.EduYearCode;
-                resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+                if (addTeacherSubjectName) addTeacherSubjectName.value = selectedSubjectData.SubjectName;
+                if (addTeacherYearCode) addTeacherYearCode.value = selectedSubjectData.YearCode;
+                if (addTeacherEduYearCode) addTeacherEduYearCode.value = selectedSubjectData.EduYearCode || '';
+                resetSubmitButton(addTeacherSubmitBtn, safe('assignTeacherText', 'Assign'));
 
                 fetch('/Subject/GetTeachersByRoot')
-                    .then(resp => resp.json())
-                    .then(teachers => {
-                        teacherSelect.innerHTML = "";
-                        teachers.forEach(t => {
-                            teacherSelect.innerHTML += `<option value="${t.teacherCode}">${t.teacherName}</option>`;
-                        });
+                    .then(r => r.json())
+                    .then(p => {
+                        const teachers = unwrap(p);
+                        if (teacherSelect) {
+                            teacherSelect.innerHTML = "";
+                            teachers.forEach(t => {
+                                teacherSelect.innerHTML += `<option value="${t.teacherCode}">${(t.teacherName || '').replace(/</g, "&lt;")}</option>`;
+                            });
+                        }
                     });
 
                 fetch('/Subject/GetBranchesByRoot')
-                    .then(resp => resp.json())
-                    .then(branches => {
-                        branchSelect.innerHTML = "";
-                        branches.forEach(b => {
-                            branchSelect.innerHTML += `<option value="${b.branchCode}">${b.branchName}</option>`;
-                        });
+                    .then(r => r.json())
+                    .then(p => {
+                        const branches = unwrap(p);
+                        if (branchSelect) {
+                            branchSelect.innerHTML = "";
+                            branches.forEach(b => {
+                                branchSelect.innerHTML += `<option value="${b.branchCode}">${(b.branchName || '').replace(/</g, "&lt;")}</option>`;
+                            });
+                        }
                     });
 
-                addTeacherCenterPercentage.value = "";
-                addTeacherCenterAmount.value = "";
-
-                addTeacherModal.style.display = "flex";
+                if (addTeacherCenterPercentage) addTeacherCenterPercentage.value = "";
+                if (addTeacherCenterAmount) addTeacherCenterAmount.value = "";
+                if (addTeacherModal) addTeacherModal.style.display = "flex";
             };
         }
+
         if (showTeachersBtn) {
             showTeachersBtn.onclick = function () {
                 const subjectCode = tr.getAttribute('data-subject-code');
-                const trTeachers = document.querySelector(`tr.teachers-row[data-subject-code="${subjectCode}"]`);
+                const trTeachers = tbody.querySelector(`tr.teachers-row[data-subject-code="${subjectCode}"]`);
                 if (!trTeachers) return;
                 const td = trTeachers.querySelector('.teachers-list-td');
-
                 if (trTeachers.style.display === "none" || trTeachers.style.display === "") {
-                    td.innerHTML = `<div class="text-muted">${processingText}</div>`;
+                    td.innerHTML = `<div class="text-muted">${safe('processingText', 'Loading...')}</div>`;
                     fetch('/Subject/GetTeachersForSubject?subjectCode=' + subjectCode)
-                        .then(resp => resp.json())
-                        .then(data => {
-                            if (!data || data.length === 0) {
-                                td.innerHTML = `<span class="text-danger">${noTeachersAssignedText}</span>`;
+                        .then(r => r.json())
+                        .then(p => {
+                            const data = unwrap(p);
+                            if (!data.length) {
+                                td.innerHTML = `<span class="text-danger">${safe('noTeachersAssignedText', 'No teachers assigned')}</span>`;
                             } else {
                                 let html = '<ul style="margin-bottom:0">';
-                                data.forEach(teacher => {
-                                    html += `<li>
-                                        ${teacher.teacherName} <span style="color:#888;font-size:0.97em;">(${teacher.branchName || ''})</span>
-                                    </li>`;
+                                data.forEach(t => {
+                                    html += `<li>${(t.teacherName || '').replace(/</g, "&lt;")} <span style="color:#888;font-size:0.95em;">(${(t.branchName || '').replace(/</g, "&lt;")})</span></li>`;
                                 });
                                 html += '</ul>';
                                 td.innerHTML = html;
@@ -315,102 +334,93 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function removeSubjectRow(subjectCode) {
-        const tr = tbody.querySelector(`tr[data-code="${subjectCode}"]`);
-        const trTeachers = tbody.querySelector(`tr.teachers-row[data-subject-code="${subjectCode}"]`);
-        if (tr) tr.remove();
-        if (trTeachers) trTeachers.remove();
-    }
-
+    // ---------- LOAD SUBJECTS ----------
     function loadSubjects() {
         fetch('/Subject/GetSubjects')
-            .then(response => {
-                if (response.status === 401) {
-                    if (subjectMsg) subjectMsg.textContent = unauthorizedText;
+            .then(r => {
+                if (r.status === 401) {
+                    if (subjectMsg) subjectMsg.textContent = safe('unauthorizedText', 'Unauthorized');
                     return [];
                 }
-                if (response.status === 404) {
-                    if (subjectMsg) subjectMsg.textContent = notFoundText;
+                if (r.status === 404) {
+                    if (subjectMsg) subjectMsg.textContent = safe('notFoundText', 'Not found');
                     return [];
                 }
-                return response.json();
+                return r.json();
             })
-            .then(data => {
+            .then(p => {
                 if (!tbody) return;
                 tbody.innerHTML = '';
                 if (subjectMsg) subjectMsg.textContent = '';
-
-                if (!data || data.length === 0) {
-                    if (subjectMsg) subjectMsg.textContent = noSubjectsText;
+                const data = unwrap(p); // in case you later wrap this endpoint
+                if (!data.length) {
+                    if (subjectMsg) subjectMsg.textContent = safe('noSubjectsText', 'No subjects');
                     return;
                 }
-
-                data.forEach(subject => {
-                    const tr = document.createElement('tr');
-                    tr.classList.add('subject-row');
-                    tr.setAttribute('data-code', subject.subjectCode);
-                    tr.setAttribute('data-subject-code', subject.subjectCode);
-                    tr.setAttribute('data-year-code', subject.yearCode);
-                    tr.setAttribute('data-eduyear-code', subject.eduYearCode ?? "");
-                    tr.innerHTML = subjectRowHTML(subject);
-                    tbody.appendChild(tr);
-
-                    const trTeachers = document.createElement('tr');
-                    trTeachers.classList.add('teachers-row');
-                    trTeachers.setAttribute('data-subject-code', subject.subjectCode);
-                    trTeachers.style.display = "none";
-                    trTeachers.innerHTML = `<td colspan="4" class="teachers-list-td"></td>`;
-                    tbody.appendChild(trTeachers);
-
-                    addActionListeners(tr, subject);
-                });
+                data.forEach(subject => addSubjectRow(subject));
             })
-            .catch(error => {
-                if (subjectMsg) subjectMsg.textContent = errorLoadingText;
-                console.error('Error fetching subjects:', error);
+            .catch(err => {
+                if (subjectMsg) subjectMsg.textContent = safe('errorLoadingText', 'Error loading subjects');
+                console.error('loadSubjects error:', err);
             });
     }
 
-    addTeacherForm.onsubmit = function (e) {
-        e.preventDefault();
-        addTeacherSubmitBtn.textContent = processingText;
-        addTeacherSubmitBtn.disabled = true;
-        const data = {
-            TeacherCode: parseInt(teacherSelect.value),
-            SubjectCode: parseInt(selectedSubjectData.SubjectCode),
-            EduYearCode: parseInt(selectedSubjectData.EduYearCode),
-            BranchCode: parseInt(branchSelect.value),
-            RootCode: 0,
-            YearCode: parseInt(selectedSubjectData.YearCode),
-            CenterPercentage: addTeacherCenterPercentage.value ? parseFloat(addTeacherCenterPercentage.value) : null,
-            CenterAmount: addTeacherCenterAmount.value ? parseFloat(addTeacherCenterAmount.value) : null
-        };
+    // ---------- ADD TEACHER SUBMIT ----------
+    if (addTeacherForm) {
+        addTeacherForm.onsubmit = function (e) {
+            e.preventDefault();
+            if (addTeacherSubmitBtn) {
+                addTeacherSubmitBtn.textContent = safe('processingText', 'Processing...');
+                addTeacherSubmitBtn.disabled = true;
+            }
 
-        fetch('/Subject/AddTeacherToSubject', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-            .then(r => {
-                if (!r.ok) return r.text().then(t => { throw new Error(t); });
-                return r.json();
+            // Legacy EduYearCode retained; set to 0 if missing
+            const eduYearParsed = selectedSubjectData.EduYearCode && !isNaN(parseInt(selectedSubjectData.EduYearCode))
+                ? parseInt(selectedSubjectData.EduYearCode)
+                : 0;
+
+            const payload = {
+                TeacherCode: parseInt(teacherSelect.value),
+                SubjectCode: parseInt(selectedSubjectData.SubjectCode),
+                EduYearCode: eduYearParsed,
+                BranchCode: parseInt(branchSelect.value),
+                RootCode: 0, // backend derives
+                YearCode: parseInt(selectedSubjectData.YearCode),
+                CenterPercentage: addTeacherCenterPercentage && addTeacherCenterPercentage.value
+                    ? parseFloat(addTeacherCenterPercentage.value)
+                    : null,
+                CenterAmount: addTeacherCenterAmount && addTeacherCenterAmount.value
+                    ? parseFloat(addTeacherCenterAmount.value)
+                    : null
+            };
+
+            fetch('/Subject/AddTeacherToSubject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             })
-            .then(resp => {
-                resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
-                addTeacherModal.style.display = "none";
-            })
-            .catch(err => {
-                resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
-                alert(couldNotAssignTeacherText + ": " + (err.message || "Unknown error"));
-            });
-    };
+                .then(r => {
+                    if (!r.ok) return r.text().then(t => { throw new Error(t); });
+                    return r.json();
+                })
+                .then(() => {
+                    resetSubmitButton(addTeacherSubmitBtn, safe('assignTeacherText', 'Assign'));
+                    if (addTeacherModal) addTeacherModal.style.display = "none";
+                })
+                .catch(err => {
+                    resetSubmitButton(addTeacherSubmitBtn, safe('assignTeacherText', 'Assign'));
+                    alert(safe('couldNotAssignTeacherText', 'Could not assign teacher') + ": " + (err.message || "Unknown error"));
+                });
+        };
+    }
 
     if (closeAddTeacherModalBtn) {
         closeAddTeacherModalBtn.onclick = function () {
-            addTeacherModal.style.display = "none";
-            resetSubmitButton(addTeacherSubmitBtn, assignTeacherText);
+            if (addTeacherModal) addTeacherModal.style.display = "none";
+            resetSubmitButton(addTeacherSubmitBtn, safe('assignTeacherText', 'Assign'));
         };
     }
 
+    // ---------- INITIAL LOAD ----------
     loadSubjects();
 });

@@ -49,6 +49,17 @@ namespace centrny.Controllers
             }
             return null;
         }
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+            );
+        }
 
         private bool IsCurrentUserTeacher()
         {
@@ -408,6 +419,7 @@ namespace centrny.Controllers
 
         public async Task<IActionResult> Calendar()
         {
+           
             var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
             int? groupBranchCode = await GetCurrentUserGroupBranchCode();
 
@@ -447,7 +459,7 @@ namespace centrny.Controllers
 
                 var years = await _context.Years
                     .AsNoTracking()
-                    .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                    .Where(y => y.RootCode == rootCode)
                     .OrderBy(y => y.YearSort)
                     .ToListAsync();
                 ViewData["YearCode"] = new SelectList(years, "YearCode", "YearName");
@@ -1222,7 +1234,7 @@ namespace centrny.Controllers
                     {
                         years = await _context.Years
                             .AsNoTracking()
-                            .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                            .Where(y => y.RootCode == userRootCode)
                             .OrderBy(y => y.YearSort)
                             .Select(y => new
                             {
@@ -1235,23 +1247,7 @@ namespace centrny.Controllers
                 }
 
                 // If no years found through the above methods, get all years for the root
-                if (!years.Any())
-                {
-                    years = await _context.Years
-                        .AsNoTracking()
-                        .Join(_context.EduYears, y => y.EduYearCode, e => e.EduCode, (y, e) => new { Year = y, EduYear = e })
-                        .Where(joined => joined.EduYear.RootCode == userRootCode.Value)
-                        .OrderBy(joined => joined.Year.YearSort)
-                        .Select(joined => new
-                        {
-                            value = joined.Year.YearCode,
-                            text = joined.Year.YearName,
-                            yearSort = joined.Year.YearSort
-                        })
-                        .Distinct()
-                        .ToListAsync<object>();
-                }
-
+               
                 _logger.LogInformation("Found {Count} years for user root {RootCode}", years.Count, userRootCode);
 
                 return Json(new { success = true, years = years });
@@ -1546,10 +1542,7 @@ namespace centrny.Controllers
         public IActionResult GetByRootCode(int rootCode) =>
             Ok(_context.EduYears.AsNoTracking().Where(e => e.RootCode == rootCode && e.IsActive).Select(e => new { e.EduCode, e.EduName }).ToList());
 
-        [HttpGet]
-        public IActionResult GetByEduYearCode(int eduYearCode) =>
-            Ok(_context.Years.AsNoTracking().Where(y => y.EduYearCode == eduYearCode).Select(y => new { y.YearCode, y.YearName }).ToList());
-
+       
         [HttpGet]
         public IActionResult GetYearsForSubjectTeacher(int teacherCode, int subjectCode) =>
             Ok(_context.Teaches
@@ -1562,6 +1555,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetYearsByEduYear(int eduYearCode)
         {
+            var (userCode, groupCode, rootCode) = GetSessionContext();
             try
             {
                 var userRootCode = GetCurrentUserRootCode();
@@ -1572,7 +1566,7 @@ namespace centrny.Controllers
 
                 var years = await _context.Years
                     .AsNoTracking()
-                    .Where(y => y.EduYearCode == eduYearCode)
+                    .Where(y => y.RootCode == rootCode)
                     .OrderBy(y => y.YearSort)
                     .Select(y => new
                     {

@@ -26,13 +26,13 @@ namespace centrny.Controllers
         private (int? rootCode, int? groupCode, int? userCode, string username) GetSessionContext()
         {
             return (
-                GetSessionInt("RootCode"),
+                   _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
                 GetSessionInt("GroupCode"),
                 GetSessionInt("UserCode"),
                 GetSessionString("Username")
             );
         }
-
+      
         // --- Authority Check via Session ---
         private bool UserHasEduYearPermission()
         {
@@ -103,7 +103,7 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             var years = await _context.Years
-                .Where(y => y.EduYearCode == activeEduYear.EduCode)
+                .Where(y => y.RootCode == activeEduYear.EduCode)
                 .Select(y => new
                 {
                     yearCode = y.YearCode,
@@ -216,8 +216,7 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddYear([FromBody] AddYearDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
+            
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
                 return Json(new { success = false, message = "Invalid data." });
@@ -237,7 +236,7 @@ namespace centrny.Controllers
                 YearName = dto.YearName,
                 YearSort = dto.YearSort,
                 LevelCode = dto.LevelCode,
-                EduYearCode = activeEduYear.EduCode,
+                RootCode = rootCode,
                 InsertUser = userCode ?? 0,
                 InsertTime = DateTime.Now
             };

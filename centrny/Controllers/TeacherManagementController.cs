@@ -232,17 +232,13 @@ namespace centrny.Controllers
             if (!UserHasTeacherManagementPermission())
                 return Json(new { error = "Access denied." });
 
-            var eduYearCodes = _db.EduYears
+            var Years = _db.Years
                 .Where(e => e.RootCode == rootCode)
-                .Select(e => e.EduCode)
+                .Select(e => e.YearCode)
                 .ToList();
 
-            var years = _db.Years
-                .Where(y => y.EduYearCode.HasValue && eduYearCodes.Contains(y.EduYearCode.Value))
-                .Select(y => new { yearCode = y.YearCode, yearName = y.YearName, eduYearCode = y.EduYearCode })
-                .ToList();
-
-            return Json(years);
+          
+            return Json(Years);
         }
 
         [HttpGet]
@@ -332,8 +328,7 @@ namespace centrny.Controllers
             if (year == null)
                 return BadRequest("Year not found!");
 
-            if (year.EduYearCode == null)
-                return BadRequest("Year does not have a valid EduYearCode.");
+            
 
             var subject = _db.Subjects.FirstOrDefault(s => s.SubjectCode == model.SubjectCode && s.RootCode == model.RootCode);
             if (subject == null)
@@ -343,7 +338,7 @@ namespace centrny.Controllers
             if (teacher == null)
                 return BadRequest("Teacher not found for this root.");
 
-            var eduYear = _db.EduYears.FirstOrDefault(e => e.EduCode == year.EduYearCode.Value && e.RootCode == model.RootCode);
+            var eduYear = _db.EduYears.FirstOrDefault( year=> year.RootCode == model.RootCode);
             if (eduYear == null)
                 return BadRequest("Education year not found for this year and root.");
 

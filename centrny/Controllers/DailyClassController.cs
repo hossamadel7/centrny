@@ -29,6 +29,16 @@ namespace centrny.Controllers
 
         // ==================== HELPER METHODS ====================
 
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+            );
+        }
+
         private async Task<int?> GetCurrentUserGroupBranchCode()
         {
             var username = User.Identity.Name;
@@ -107,16 +117,7 @@ namespace centrny.Controllers
                 return View();
             }
 
-            // Any additional data loading for classes, reservations, etc. can go here
-            // Example: load classes for the selected date (optional)
-            // var dailyClasses = await _context.Classes.Where(c => c.ClassDate == selectedDate && c.RootCode == rootCode).ToListAsync();
-            // ViewBag.DailyClasses = dailyClasses;
 
-            // Example: load reservations for the selected date (optional)
-            // var reservations = await _context.Reservations.Where(r => r.ReservationDate == selectedDate && r.RootCode == rootCode).ToListAsync();
-            // ViewBag.Reservations = reservations;
-
-            // Page subtitle and banners (example)
             ViewBag.PageSubTitle = "Manage your daily classes";
             ViewBag.DayOfWeek = selectedDate.ToString("dddd");
             System.Diagnostics.Debug.WriteLine($"Userrrr: {user?.Username}, RootCode: {user?.GroupCodeNavigation?.RootCode}, branchcode: {user?.GroupCodeNavigation?.BranchCode}");
@@ -1722,10 +1723,12 @@ namespace centrny.Controllers
             return hasActiveSchedules && (!hasScheduleBasedClasses && (isSaturday || !hasScheduleBasedClasses));
         }
         [HttpGet]
-        public async Task<IActionResult> GetYearsForEduYear(int eduYearCode)
+        public async Task<IActionResult> GetYearsForEduYear()
         {
+            var (userCode, groupCode, rootCode) = GetSessionContext();
+
             var years = await _context.Years
-                .Where(y => y.EduYearCode == eduYearCode)
+                .Where(y => y.RootCode == rootCode)
                 .Select(y => new { value = y.YearCode, text = y.YearName })
                 .ToListAsync();
             return Json(new { years });

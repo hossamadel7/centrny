@@ -19,6 +19,7 @@ namespace centrny.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly FileUploadSettings _fileUploadSettings;
 
+
         public LessonContentController(
             CenterContext context,
             IWebHostEnvironment webHostEnvironment,
@@ -29,7 +30,17 @@ namespace centrny.Controllers
             _fileUploadSettings = fileUploadSettings.Value;
         }
 
+        // --- SESSION HELPERS ---
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+            );
+        }
 
         #region Teacher Interface (Management + Filters)
 
@@ -354,8 +365,8 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLessonFilters()
         {
-            var rootCode = GetSessionInt("RootCode");
-            if (rootCode == null) return Unauthorized();
+            var (userCode, groupCode, rootCode) = GetSessionContext();
+
 
             try
             {
@@ -380,21 +391,21 @@ namespace centrny.Controllers
 
                 if (activeEduYearCode.HasValue)
                 {
-                    yearsBase = yearsBase.Where(y => y.EduYearCode == activeEduYearCode.Value);
+                    yearsBase = yearsBase.Where(y => y.RootCode == rootCode);
                 }
                 else
                 {
                     yearsBase =
                         from y in _context.Years
-                        join ey in _context.EduYears on y.EduYearCode equals ey.EduCode
-                        where ey.RootCode == rootCode.Value
+                       
+                        where y.RootCode == rootCode.Value
                         select y;
                 }
 
                 var years = await (
                     from y in yearsBase
-                    join ey in _context.EduYears on y.EduYearCode equals ey.EduCode
-                    where ey.RootCode == rootCode.Value
+                  
+                    where y.RootCode == rootCode.Value
                     select new
                     {
                         yearCode = y.YearCode,
@@ -442,7 +453,7 @@ namespace centrny.Controllers
                 {
                     filteredQuery =
                         from l in filteredQuery
-                        join y in _context.Years on l.EduYearCode equals y.EduYearCode
+                        join y in _context.Years on l.RootCode equals y.RootCode
                         where y.YearCode == yearCode.Value
                         select l;
                 }

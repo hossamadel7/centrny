@@ -33,10 +33,7 @@ namespace centrny.Controllers
             {
                 ViewBag.Error = _localizer["UnableToDetermineRootAssignment"];
                 return View();
-            }
-
-            ViewBag.CurrentUserRootCode = userRootCode;
-            ViewBag.UserRootName = rootName;
+            }           
             ViewBag.IsCenter = isCenter;
 
             _logger.LogInformation("Loading Question index for user {Username} (Root: {RootCode})",

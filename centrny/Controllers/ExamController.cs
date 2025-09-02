@@ -97,10 +97,17 @@ namespace centrny.Controllers
                 return Json(new { error = ex.Message });
             }
         }
-        /// <summary>
-        /// Gets the current user's RootCode from claims - REQUIRED for all users
-        /// </summary>
-        /// 
+        // --- SESSION HELPERS ---
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+            );
+        }
 
         private int? GetCurrentUserRootCode()
         {
@@ -650,7 +657,8 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFilterYears()
         {
-            var (rootCode, _, _) = await GetUserContext();
+            var (userCode, groupCode, rootCode) = GetSessionContext();
+            
             if (!rootCode.HasValue) return Json(new List<object>());
 
             // Get all EduYear codes that are active and belong to this root
@@ -661,9 +669,9 @@ namespace centrny.Controllers
 
             // Return all Years for this root that are associated with an active EduYear
             var years = await (from y in _context.Years
-                               join edu in _context.EduYears on y.EduYearCode equals edu.EduCode
-                               where edu.RootCode == rootCode.Value
-                                     && edu.IsActive
+                               
+                               where y.RootCode == rootCode.Value
+                                    
                                select new { value = y.YearCode, text = y.YearName })
                    .OrderBy(y => y.text)
                    .ToListAsync();
