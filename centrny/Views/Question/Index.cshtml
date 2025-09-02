@@ -12,6 +12,7 @@
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
 <head>
+    <!-- Your existing head content stays the same -->
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
     @if (isArabic)
@@ -25,6 +26,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/Hamody.css" rel="stylesheet" />
     <style>
+        /* Your existing styles stay the same */
         :root {
             --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
             --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
@@ -47,12 +49,6 @@
         html[dir="rtl"] #chapter-lesson-container,
         html[dir="rtl"] .modal-content {
             direction: rtl;
-            text-align: right;
-        }
-
-        html[dir="rtl"] .form-label,
-        html[dir="rtl"] .form-group,
-        html[dir="rtl"] .modal-actions {
             text-align: right;
         }
 
@@ -85,304 +81,346 @@
                 text-align: center;
             }
 
-            .questions-header i {
-                margin-right: 12px;
-                color: #4f8cff;
-            }
-
-        @@media (max-width: 900px) {
-            .questions-header h2 {
-                font-size: 1.6rem;
-            }
+        /* Enhanced Chapter Dropdown */
+        .chapter-selector {
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
         }
 
+            .chapter-selector h3 {
+                color: var(--primary-color);
+                margin-bottom: 1rem;
+                font-weight: 600;
+            }
+
+        #chapter-dropdown {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            background: #fafbff;
+            font-size: 1.1rem;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+            #chapter-dropdown:focus {
+                border-color: var(--primary-color);
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+            }
+
+        /* Enhanced Add Question Form */
+        .add-question-section {
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
+            display: none;
+            /* Add smooth animation */
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+            .add-question-section.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        /* Questions Display */
+        .questions-display {
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(108,92,231,0.11);
+            display: none;
+        }
+
+        .question-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .question-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(108, 92, 231, 0.15);
+            }
+
+        .question-content {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .answers-container {
+            margin-top: 1rem;
+        }
+
+        .answer-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            transition: background-color 0.2s ease;
+        }
+
+            .answer-item.correct {
+                background: #d4edda;
+                border-color: #c3e6cb;
+                color: #155724;
+            }
+
+            .answer-item:hover {
+                background: #f1f3f4;
+            }
+
+            .answer-item.correct:hover {
+                background: #c8e6c9;
+            }
+
+        .question-form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+            .question-form-header h3 {
+                color: var(--primary-color);
+                margin: 0;
+                font-weight: 600;
+            }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+                color: #333;
+            }
+
+        .modern-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            background: #fafbff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+            .modern-input:focus {
+                border-color: var(--primary-color);
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+            }
+
+        textarea.modern-input {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Dynamic Answers Section */
+        .answers-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #f0f0f0;
+        }
+
+            .answers-section h4 {
+                color: var(--primary-color);
+                margin-bottom: 1.5rem;
+                font-weight: 600;
+            }
+
+        .answer-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .answer-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .correct-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+            .correct-checkbox input[type="radio"] {
+                width: 18px;
+                height: 18px;
+                accent-color: var(--primary-color);
+            }
+
+        .remove-answer-btn {
+            background: var(--danger-gradient);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+            .remove-answer-btn:hover {
+                transform: scale(1.1);
+            }
+
+        .add-answer-btn {
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+            .add-answer-btn:hover {
+                transform: translateY(-2px);
+            }
+
         .modern-btn {
-            font-weight: 600 !important;
-            padding: 0.65rem 1.3rem !important;
-            border-radius: var(--border-radius) !important;
-            border: none !important;
-            color: #fff !important;
-            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
-            font-size: 1rem !important;
-            cursor: pointer !important;
-            margin-right: 0.4rem !important;
-            transition: transform 0.16s, box-shadow 0.16s !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 0.5em !important;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10);
+            font-size: 1rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            transition: transform 0.16s, box-shadow 0.16s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5em;
         }
 
             .modern-btn.primary-btn {
-                background: var(--primary-gradient) !important;
-                color: #fff !important;
-            }
-
-            .modern-btn.success-btn {
-                background: var(--success-gradient) !important;
-                color: #fff !important;
-            }
-
-            .modern-btn.warning-btn {
-                background: var(--danger-gradient) !important;
-                color: #fff !important;
+                background: var(--primary-gradient);
             }
 
             .modern-btn.secondary-btn {
-                background: var(--primary-gradient-light) !important;
-                color: var(--primary-color) !important;
-                font-weight: 600 !important;
+                background: var(--primary-gradient-light);
+                color: var(--primary-color);
             }
 
-            .modern-btn:hover, .modern-btn:focus {
-                box-shadow: var(--shadow-lg) !important;
-                transform: scale(1.05) !important;
+            .modern-btn.success-btn {
+                background: var(--success-gradient);
             }
 
-        .modal-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(30, 30, 30, 0.45);
-            z-index: 9999;
-            display: none;
+            .modern-btn.danger-btn {
+                background: var(--danger-gradient);
+            }
+
+            .modern-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        /* Loading and Empty States */
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+
+            .empty-state i {
+                font-size: 3rem;
+                color: #ddd;
+                margin-bottom: 1rem;
+            }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .questions-header h2
+
+        {
+            font-size: 1.8rem;
+        }
+
+        .chapter-selector,
+        .questions-display,
+        .add-question-section {
+            padding: 1rem;
+        }
+
+        .answer-group {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+
+        .correct-checkbox {
             justify-content: center;
-            align-items: center;
-            transition: opacity 0.25s;
         }
 
-        .modal-content {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: var(--shadow-lg);
-            padding: 32px 24px;
-            max-width: 520px;
-            width: 100%;
-            position: relative;
-            z-index: 10000;
-            animation: modalUpFade 0.35s cubic-bezier(.4,0,.2,1);
+        .form-actions {
+            flex-direction: column;
         }
 
-        @@keyframes modalUpFade {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        @@media (max-width: 600px) {
-            .modal-content {
-                max-width: 95vw;
-                padding: 16px 8px;
-            }
-        }
-
-        textarea.modern-input,
-        #question-content {
-            width: 100%;
-            min-height: 85px;
-            font-size: 1.13em;
-            border-radius: 12px;
-            border: 1.5px solid #e0e0e0;
-            background: #fafbff;
-            padding: 10px 14px;
-            resize: vertical;
-            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.06);
-            margin-top: 6px;
-            transition: border-color 0.18s;
-        }
-
-            textarea.modern-input:focus,
-            #question-content:focus {
-                border-color: var(--primary-color, #6c5ce7);
-                outline: none;
-            }
-
-        .question-actions .modern-btn.success-btn,
-        .question-actions .modern-btn.warning-btn {
-            min-width: 38px;
-            padding: 8px 0 !important;
-            justify-content: center !important;
-            gap: 0 !important;
-        }
-
-            .question-actions .modern-btn.success-btn span,
-            .question-actions .modern-btn.warning-btn span {
-                display: none !important;
-            }
-        /* Mobile-specific button styling for question management */
-        @@media (max-width: 768px) {
-            /* Make all buttons smaller on mobile */
-            .modern-btn, .btn-table
-
-        {
-            padding: 0.4rem 0.8rem !important;
-            font-size: 0.85rem !important;
-            margin-right: 0.25rem !important;
-            margin-bottom: 0.25rem !important;
-            min-height: auto !important;
-            line-height: 1.2 !important;
-        }
-
-        /* Specific button adjustments */
-        .add-lesson-btn,
-        .add-question-btn,
-        .show-answers-btn,
-        .add-answers-btn {
-            padding: 0.35rem 0.6rem !important;
-            font-size: 0.8rem !important;
-        }
-
-        /* Chapter header buttons */
-        .chapter-header .btn-table {
-            padding: 0.3rem 0.5rem !important;
-            font-size: 0.75rem !important;
-        }
-
-        /* Question action buttons - make them even smaller */
-        .question-actions .btn-table {
-            padding: 0.25rem 0.4rem !important;
-            font-size: 0.7rem !important;
-            min-width: 30px !important;
-            margin-right: 0.15rem !important;
-        }
-
-        /* Answer action buttons */
-        .answer-actions .btn-table {
-            padding: 0.2rem 0.3rem !important;
-            font-size: 0.65rem !important;
-            min-width: 28px !important;
-        }
-
-        /* Main action buttons (Add Chapter, etc.) */
-        #add-chapter-btn {
-            padding: 0.5rem 1rem !important;
-            font-size: 0.9rem !important;
-        }
-
-        /* Search and pagination buttons */
-        #questionSearchBtn,
-        #questionSearchClearBtn,
         .modern-btn {
-            padding: 0.35rem 0.7rem !important;
-            font-size: 0.8rem !important;
-        }
-
-        /* Button text adjustments - hide some text, keep icons */
-        .question-actions .btn-table span,
-        .answer-actions .btn-table span {
-            display: none !important;
-        }
-
-        /* Show only icons for action buttons on mobile */
-        .question-actions .btn-table i,
-        .answer-actions .btn-table i {
-            margin: 0 !important;
-        }
-
-        /* Compact button rows */
-        .question-actions,
-        .answer-actions {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 0.15rem !important;
-            margin-top: 0.3rem !important;
-        }
-
-        /* Modal buttons */
-        .modal-actions .modern-btn {
-            padding: 0.4rem 0.8rem !important;
-            font-size: 0.85rem !important;
-            margin: 0.1rem !important;
-        }
-
-        /* Pagination buttons */
-        .lesson-pagination .modern-btn,
-        .question-pagination .modern-btn,
-        #pagination-container .modern-btn {
-            padding: 0.25rem 0.5rem !important;
-            font-size: 0.75rem !important;
-        }
-
-        }
-
-        /* Extra small mobile devices */
-        @@media (max-width: 480px) {
-            .modern-btn, .btn-table
-
-        {
-            padding: 0.3rem 0.5rem !important;
-            font-size: 0.75rem !important;
-        }
-
-        .question-actions .btn-table {
-            padding: 0.2rem 0.3rem !important;
-            font-size: 0.65rem !important;
-            min-width: 26px !important;
-        }
-
-        #add-chapter-btn {
-            padding: 0.4rem 0.8rem !important;
-            font-size: 0.85rem !important;
-        }
-
-        /* Stack buttons in action rows */
-        .question-actions {
-            flex-direction: column !important;
-            align-items: stretch !important;
-        }
-
-            .question-actions .btn-table {
-                width: 100% !important;
-                margin-bottom: 0.1rem !important;
-                text-align: center !important;
-                justify-content: center !important;
-            }
-
-                /* Show text again on very small screens when stacked */
-                .question-actions .btn-table span {
-                    display: inline !important;
-                    margin-left: 0.3rem !important;
-                }
-
-        }
-
-        /* Chapter and lesson blocks mobile optimization */
-        @@media (max-width: 768px) {
-            .chapter-block
-
-        {
-            margin-bottom: 1rem !important;
-        }
-
-        .lesson-block {
-            margin-bottom: 0.5rem !important;
-        }
-
-        .question-row {
-            padding: 0.5rem !important;
-            margin-bottom: 0.5rem !important;
-        }
-
-        .chapter-header {
-            padding: 0.5rem !important;
-            flex-wrap: wrap !important;
-        }
-
-        .lesson-header {
-            padding: 0.4rem !important;
-        }
-
-        /* Make content text smaller on mobile */
-        .question-content {
-            font-size: 0.9rem !important;
-            line-height: 1.3 !important;
+            width: 100%;
+            justify-content: center;
         }
 
         }
@@ -398,193 +436,114 @@
 
     <div id="js-localization"
          data-search-placeholder="@Localizer["SearchPlaceholder"]"
-         data-search-btn="@Localizer["SearchBtn"]"
-         data-clear-btn="@Localizer["ClearBtn"]"
-         data-teaching-label="@Localizer["TeachingLabel"]"
-         data-add-chapter-btn="@Localizer["AddChapterBtn"]"
-         data-add-lesson-btn="@Localizer["AddLessonBtn"]"
-         data-add-question-btn="@Localizer["AddQuestionBtn"]"
-         data-add-answers-btn="@Localizer["AddAnswersBtn"]"
-         data-show-answers-btn="@Localizer["ShowAnswersBtn"]"
-         data-edit-btn="@Localizer["EditBtn"]"
-         data-delete-btn="@Localizer["DeleteBtn"]"
-         data-no-teaching-subjects="@Localizer["NoTeachingSubjects"]"
+         data-chapter-name="@Localizer["ChapterName"]"
+         data-select-chapter="@Localizer["SelectChapter"]"
          data-no-chapters="@Localizer["NoChapters"]"
-         data-no-lessons="@Localizer["NoLessons"]"
-         data-no-questions="@Localizer["NoQuestions"]"
-         data-no-answers="@Localizer["NoAnswers"]"
-         data-select-option="@Localizer["SelectOption"]"
-         data-select="@Localizer["Select"]"
-         data-cancel-btn="@Localizer["CancelBtn"]"
+         data-loading="@Localizer["Loading"]"
+         data-add-question="@Localizer["AddQuestion"]"
+         data-question-content="@Localizer["QuestionContent"]"
+         data-answers="@Localizer["Answers"]"
+         data-add-answer="@Localizer["AddAnswer"]"
+         data-remove-answer="@Localizer["RemoveAnswer"]"
+         data-correct-answer="@Localizer["CorrectAnswer"]"
+         data-save="@Localizer["Save"]"
+         data-cancel="@Localizer["Cancel"]"
          data-processing="@Localizer["Processing"]"
          data-saved="@Localizer["Saved"]"
-         data-failed="@Localizer["Failed"]"
          data-error-occurred="@Localizer["ErrorOccurred"]"
          data-please-fill-all-fields="@Localizer["PleaseFillAllFields"]"
-         data-please-fill-required-fields="@Localizer["PleaseFillRequiredFields"]"
-         data-add-another-answer="@Localizer["AddAnotherAnswer"]"
-         data-remove-answer="@Localizer["RemoveAnswer"]"
-         data-answer-content-placeholder="@Localizer["AnswerContentPlaceholder"]"
-         data-is-correct="@Localizer["IsCorrect"]"
-         data-is-correct-answer="@Localizer["IsCorrectAnswer"]"
-         data-only-one-correct-answer="@Localizer["OnlyOneCorrectAnswer"]"
+         data-select-correct-answer="@Localizer["SelectCorrectAnswer"]"
          data-add-at-least-one-answer="@Localizer["AddAtLeastOneAnswer"]"
-         data-lesson-name="@Localizer["LessonName"]"
-         data-chapter-name="@Localizer["ChapterName"]"
-         data-education-year="@Localizer["EducationYear"]"
-         data-teacher="@Localizer["Teacher"]"
-         data-subject="@Localizer["Subject"]"
-         data-question-content="@Localizer["QuestionContent"]"
-         data-exam-code="@Localizer["ExamCode"]"
-         data-back-btn="@Localizer["BackBtn"]"
-         data-page="@Localizer["Page"]"
-         data-of="@Localizer["Of"]"
-         data-previous="@Localizer["Previous"]"
-         data-next="@Localizer["Next"]"
-         data-delete-question-confirm="@Localizer["DeleteQuestionConfirm"]"
-         data-delete-answer-confirm="@Localizer["DeleteAnswerConfirm"]"
-         data-no-questions-found="@Localizer["NoQuestionsFound"]"
-         data-found-questions="@Localizer["FoundQuestions"]"
-         data-lesson="@Localizer["Lesson"]" />
+         data-no-questions="@Localizer["NoQuestions"]"
+         data-edit="@Localizer["Edit"]"
+         data-delete="@Localizer["Delete"]"
+         data-enter-question-content="@Localizer["EnterQuestionContent"]"
+         data-answer-content="@Localizer["AnswerContent"]"
+         data-correct="@Localizer["Correct"]" />
 
-  
-
-    <div id="chapter-lesson-container">
-        <div id="question-search-bar" style="margin: 24px 0 16px 0; text-align: left;">
-            <input type="text" id="questionSearchInput" class="modern-input secondary-btn" style="width:260px;max-width:100%;" />
-            <button id="questionSearchBtn" class="modern-btn secondary-btn" style="margin-left:8px;"></button>
-            <button id="questionSearchClearBtn" class="modern-btn secondary-btn" style="margin-left:6px;display:none;"></button>
+    <div class="container-fluid">
+        <!-- Chapter Selector -->
+        <div class="chapter-selector">
+            <h3><i class="fas fa-book"></i> @Localizer["SelectChapter"]</h3>
+            <select id="chapter-dropdown" class="form-select">
+                <option value="">@Localizer["SelectChapter"]...</option>
+            </select>
         </div>
-        <div id="question-search-results" style="display:none; margin-bottom: 30px;"></div>
-        <button class="modern-btn primary-btn" id="add-chapter-btn" style="margin:16px 0;"></button>
-        <div id="subject-year-filter-bar" style="margin: 12px 0 16px 0; text-align: left; display:none;">
-            <label for="subjectYearFilter" style="margin-right: 6px;"><b></b></label>
-            <select id="subjectYearFilter" class="modern-input secondary-btn" style="width:280px;max-width:100%;"></select>
-        </div>
-        <div id="chapters-container"></div>
-        <div id="pagination-container" style="margin-top: 20px; text-align: center;"></div>
-    </div>
 
-    <!-- MODALS -->
-    <div id="chapter-modal" class="modal-background">
-        <div class="modal-content">
-            <h3 id="chapter-modal-title"></h3>
-            <form id="chapter-form" autocomplete="off">
-                <div class="form-group">
-                    <label for="chapter-lessonname"><span id="chapter-name-label"></span><span style="color:red;">*</span></label>
-                    <input type="text" id="chapter-lessonname" name="LessonName" required class="modern-input secondary-btn" />
-                </div>
-                <div class="form-group">
-                    <label for="chapter-eduyearcode"><span id="education-year-label"></span><span style="color:red;">*</span></label>
-                    <!-- Only one active edu year, hidden input for value, show as readonly text -->
-                    <input type="hidden" id="chapter-eduyearcode" name="EduYearCode" />
-                    <input type="text" id="chapter-eduyearcode-view" class="modern-input secondary-btn" readonly tabindex="-1" style="background: #f5fafd;" />
-                </div>
-                <div class="form-group" id="teacher-group" style="display:none;">
-                    <label for="chapter-teachercode"><span id="teacher-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-teachercode" name="TeacherCode" class="modern-input secondary-btn"></select>
-                </div>
-                <input type="hidden" id="chapter-teachercode-hidden" name="TeacherCode" />
-                <div class="form-group">
-                    <label for="chapter-subjectcode"><span id="subject-label"></span><span style="color:red;">*</span></label>
-                    <select id="chapter-subjectcode" name="SubjectCode" required class="modern-input secondary-btn"></select>
-                </div>
-                <input type="hidden" id="chapter-yearcode" name="YearCode" />
-                <div class="modal-actions">
-                    <button type="submit" class="modern-btn primary-btn" id="save-chapter-btn"></button>
-                    <button type="button" id="cancel-chapter-btn" class="modern-btn secondary-btn"></button>
-                </div>
-                <div id="chapter-message"></div>
-            </form>
-        </div>
-    </div>
+        <!-- MOVED: Add Question Form - Now appears right after chapter selector -->
+        <div id="add-question-section" class="add-question-section">
+            <div class="question-form-header">
+                <h3><i class="fas fa-plus-circle"></i> @Localizer["AddQuestion"]</h3>
+                <button id="close-question-form" class="modern-btn secondary-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
-    <div id="lesson-modal" class="modal-background">
-        <div class="modal-content">
-            <h3 id="lesson-modal-title"></h3>
-            <form id="lesson-form" autocomplete="off">
+            <form id="question-form">
                 <div class="form-group">
-                    <label for="lesson-name"><span id="lesson-name-label"></span><span style="color:red;">*</span></label>
-                    <input type="text" id="lesson-name" name="LessonName" required class="modern-input secondary-btn" />
-                </div>
-                <input type="hidden" id="lesson-rootcode" name="RootCode" />
-                <input type="hidden" id="lesson-teachercode" name="TeacherCode" />
-                <input type="hidden" id="lesson-subjectcode" name="SubjectCode" />
-                <input type="hidden" id="lesson-eduyearcode" name="EduYearCode" />
-                <input type="hidden" id="lesson-chaptercode" name="ChapterCode" />
-                <input type="hidden" id="lesson-yearcode" name="YearCode" />
-                <div class="modal-actions">
-                    <button type="submit" class="modern-btn primary-btn" id="save-lesson-btn"></button>
-                    <button type="button" id="cancel-lesson-btn" class="modern-btn secondary-btn"></button>
-                </div>
-                <div id="lesson-message"></div>
-            </form>
-        </div>
-    </div>
-
-    <div id="question-modal" class="modal-background">
-        <div class="modal-content">
-            <h3 id="question-modal-title"></h3>
-            <form id="question-form" autocomplete="off">
-                <input type="hidden" id="question-id" name="QuestionCode" />
-                <input type="hidden" id="question-lessoncode" name="LessonCode" />
-                <div class="form-group">
-                    <label for="question-content"><span id="question-content-label"></span><span style="color:red;">*</span></label>
-                    <textarea id="question-content" name="QuestionContent" required class="modern-input"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="question-examcode"><span id="exam-code-label"></span></label>
-                    <input type="number" id="question-examcode" name="ExamCode" class="modern-input secondary-btn" />
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="modern-btn primary-btn" id="save-question-btn"></button>
-                    <button type="button" id="cancel-question-btn" class="modern-btn secondary-btn"></button>
-                </div>
-                <div id="question-message"></div>
-            </form>
-        </div>
-    </div>
-
-    <div id="answers-modal" class="modal-background">
-        <div class="modal-content">
-            <h3 id="answers-modal-title"></h3>
-            <form id="answers-form" autocomplete="off">
-                <input type="hidden" id="answers-questioncode" name="QuestionCode" />
-                <div id="answers-fields">
-                    <!-- Dynamic answer fields here -->
-                </div>
-                <button type="button" id="add-more-answer-btn" class="modern-btn secondary-btn" style="margin-bottom:8px;"></button>
-                <div class="modal-actions">
-                    <button type="submit" class="modern-btn primary-btn" id="save-answers-btn"></button>
-                    <button type="button" id="cancel-answers-btn" class="modern-btn secondary-btn"></button>
-                </div>
-                <div id="answers-message"></div>
-            </form>
-        </div>
-    </div>
-
-    <div id="edit-answer-modal" class="modal-background">
-        <div class="modal-content">
-            <h3 id="edit-answer-modal-title"></h3>
-            <form id="edit-answer-form" autocomplete="off">
-                <input type="hidden" id="edit-answer-code" name="AnswerCode" />
-                <input type="hidden" id="edit-answer-questioncode" name="QuestionCode" />
-                <div class="form-group">
-                    <label for="edit-answer-content"><span id="edit-answer-content-label"></span><span style="color:red;">*</span></label>
-                    <input type="text" id="edit-answer-content" name="AnswerContent" required class="modern-input secondary-btn" />
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="edit-answer-istrue" name="IsTrue" />
-                        <span id="edit-answer-istrue-label"></span>
+                    <label for="question-content-input">
+                        @Localizer["QuestionContent"] <span style="color: red;">*</span>
                     </label>
+                    <textarea id="question-content-input" class="modern-input" rows="4"
+                              placeholder="@Localizer["EnterQuestionContent"]"></textarea>
                 </div>
-                <div class="modal-actions">
-                    <button type="submit" class="modern-btn success-btn" id="save-edit-answer-btn"></button>
-                    <button type="button" id="cancel-edit-answer-btn" class="modern-btn secondary-btn"></button>
+
+                <div class="answers-section">
+                    <h4><i class="fas fa-list"></i> @Localizer["Answers"]</h4>
+                    <div id="answers-container">
+                        <!-- Initial answer fields -->
+                        <div class="answer-group" data-answer-index="0">
+                            <input type="text" class="answer-input" placeholder="@Localizer["AnswerContent"]" required>
+                            <div class="correct-checkbox">
+                                <input type="radio" name="correct-answer" value="0" id="correct-0">
+                                <label for="correct-0">@Localizer["Correct"]</label>
+                            </div>
+                            <button type="button" class="remove-answer-btn" onclick="removeAnswer(0)" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="answer-group" data-answer-index="1">
+                            <input type="text" class="answer-input" placeholder="@Localizer["AnswerContent"]" required>
+                            <div class="correct-checkbox">
+                                <input type="radio" name="correct-answer" value="1" id="correct-1">
+                                <label for="correct-1">@Localizer["Correct"]</label>
+                            </div>
+                            <button type="button" class="remove-answer-btn" onclick="removeAnswer(1)" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" id="add-answer-btn" class="add-answer-btn">
+                        <i class="fas fa-plus"></i> @Localizer["AddAnswer"]
+                    </button>
                 </div>
-                <div id="edit-answer-message"></div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancel-question-btn" class="modern-btn secondary-btn">
+                        <i class="fas fa-times"></i> @Localizer["Cancel"]
+                    </button>
+                    <button type="submit" id="save-question-btn" class="modern-btn primary-btn">
+                        <i class="fas fa-save"></i> @Localizer["Save"]
+                    </button>
+                </div>
+
+                <div id="question-message" class="mt-3"></div>
             </form>
+        </div>
+
+        <!-- Questions Display -->
+        <div id="questions-display" class="questions-display">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 id="selected-chapter-title"><i class="fas fa-question-circle"></i> @Localizer["Questions"]</h3>
+                <button id="add-question-btn" class="modern-btn primary-btn">
+                    <i class="fas fa-plus"></i> @Localizer["AddQuestion"]
+                </button>
+            </div>
+            <div id="questions-container">
+                <!-- Questions will be loaded here -->
+            </div>
         </div>
     </div>
 

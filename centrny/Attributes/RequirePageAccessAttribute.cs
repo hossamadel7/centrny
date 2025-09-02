@@ -2,18 +2,34 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
 
 namespace centrny.Attributes
 {
     public class RequirePageAccessAttribute : ActionFilterAttribute, IAsyncActionFilter
     {
         private readonly string _pagePath;
-        private readonly string _permission; // "view", "insert", "update", "delete"
+        private readonly string _permission;
+        private readonly bool _allowAnonymous;
 
-        public RequirePageAccessAttribute(string pagePath, string permission = "view")
+        // Primary constructor - just requires page path
+        public RequirePageAccessAttribute(string pagePath)
+            : this(pagePath, "view", false)
         {
-            _pagePath = pagePath;
-            _permission = permission.ToLower();
+        }
+
+        // Secondary constructor for specific permissions
+        public RequirePageAccessAttribute(string pagePath, string permission)
+            : this(pagePath, permission, false)
+        {
+        }
+
+        // Full constructor with all options
+        public RequirePageAccessAttribute(string pagePath, string permission, bool allowAnonymous)
+        {
+            _pagePath = pagePath ?? throw new ArgumentNullException(nameof(pagePath));
+            _permission = permission?.ToLower() ?? "view";
+            _allowAnonymous = allowAnonymous;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -25,7 +41,7 @@ namespace centrny.Attributes
             logger.LogInformation("Checking access for: Page='{PagePath}', Permission='{Permission}', User='{Username}'",
                 _pagePath, _permission, context.HttpContext.User.Identity?.Name ?? "Anonymous");
 
-            // Skip if not authenticated
+            // Check authentication
             if (!context.HttpContext.User.Identity.IsAuthenticated)
             {
                 logger.LogWarning("User not authenticated - redirecting to login");
@@ -36,6 +52,14 @@ namespace centrny.Attributes
 
             try
             {
+                // === DOMAIN-SPECIFIC AUTHENTICATION CHECK ===
+                var domainValidationResult = await ValidateDomainSpecificAuth(context.HttpContext, dbContext, logger);
+                if (domainValidationResult != null)
+                {
+                    context.Result = domainValidationResult;
+                    return;
+                }
+
                 // Get user's group code
                 var groupCodeClaim = context.HttpContext.User.FindFirst("GroupCode");
                 if (groupCodeClaim == null || !int.TryParse(groupCodeClaim.Value, out int groupCode))
@@ -71,6 +95,90 @@ namespace centrny.Attributes
             }
         }
 
+        /// <summary>
+        /// Validates domain-specific authentication to ensure users can only access their domain's content
+        /// </summary>
+        private async Task<IActionResult> ValidateDomainSpecificAuth(HttpContext httpContext, CenterContext dbContext, ILogger logger)
+        {
+            logger.LogInformation("=== DOMAIN-SPECIFIC AUTH CHECK ===");
+
+            // Get domain root code from session (set during login)
+            var domainRootCode = httpContext.Session.GetInt32("DomainRootCode");
+            var host = httpContext.Request.Host.Host;
+
+            // If no domain root code in session, try to resolve it
+            if (!domainRootCode.HasValue)
+            {
+                domainRootCode = await ResolveDomainRootCode(host, dbContext, logger);
+                if (domainRootCode.HasValue)
+                {
+                    httpContext.Session.SetInt32("DomainRootCode", domainRootCode.Value);
+                }
+            }
+
+            if (!domainRootCode.HasValue)
+            {
+                logger.LogError("Could not resolve domain root code for host: {Host}", host);
+                return new RedirectToActionResult("Index", "Login", new { error = "domain_not_recognized" });
+            }
+
+            logger.LogInformation("Domain '{Host}' mapped to RootCode: {RootCode}", host, domainRootCode.Value);
+
+            // Get user's root code from claims
+            var userRootCodeClaim = httpContext.User.FindFirst("RootCode");
+            if (userRootCodeClaim == null || !int.TryParse(userRootCodeClaim.Value, out int userRootCode))
+            {
+                logger.LogError("User '{Username}' missing or invalid RootCode claim", httpContext.User.Identity?.Name);
+                return new RedirectToActionResult("Index", "Login", null);
+            }
+
+            // Verify user's root code matches domain's root code
+            if (userRootCode != domainRootCode.Value)
+            {
+                logger.LogWarning("Domain/User RootCode mismatch - Domain: {DomainRootCode}, User: {UserRootCode}, User: '{Username}'",
+                    domainRootCode.Value, userRootCode, httpContext.User.Identity?.Name);
+
+                // User is authenticated but for different domain/root - sign them out
+                await httpContext.SignOutAsync();
+                httpContext.Session.Clear();
+
+                return new RedirectToActionResult("Index", "Login", new { error = "access_denied_wrong_domain" });
+            }
+
+            logger.LogInformation("Domain authentication validated successfully for user '{Username}'", httpContext.User.Identity?.Name);
+            return null; // Validation passed
+        }
+
+        /// <summary>
+        /// Resolves domain to root code mapping using database lookup
+        /// </summary>
+        private async Task<int?> ResolveDomainRootCode(string host, CenterContext dbContext, ILogger logger)
+        {
+            // Use database lookup for domain mapping
+            var root = await dbContext.Roots
+                .FirstOrDefaultAsync(r => r.RootDomain != null && r.RootDomain.ToLower() == host.ToLower() && r.IsActive);
+
+            if (root != null)
+            {
+                logger.LogInformation("Domain '{Host}' resolved to RootCode: {RootCode}", host, root.RootCode);
+                return root.RootCode;
+            }
+
+            // Fallback for development environments
+            if (host == "localhost" || host == "127.0.0.1")
+            {
+                var devRoot = await dbContext.Roots.FirstOrDefaultAsync(r => r.IsActive);
+                if (devRoot != null)
+                {
+                    logger.LogInformation("Development domain '{Host}' using RootCode: {RootCode}", host, devRoot.RootCode);
+                    return devRoot.RootCode;
+                }
+            }
+
+            logger.LogError("No active root found for domain: {Host}", host);
+            return null;
+        }
+
         private async Task<bool> CheckPageAccessPrecise(CenterContext context, int groupCode, string pagePath, string permission, ILogger logger)
         {
             logger.LogInformation("=== PRECISE PAGE LOOKUP ===");
@@ -89,11 +197,10 @@ namespace centrny.Attributes
             else
             {
                 // STEP 2: Try partial matches ONLY if exact match fails
-                // But be more restrictive - only match if the pagePath is a SUBSTRING of existing paths
                 page = await context.Pages
                     .FirstOrDefaultAsync(p =>
-                        p.PagePath.ToLower().StartsWith(pagePath.ToLower() + "/") ||  // e.g., "Exam/Create" matches "Exam"
-                        p.PagePath.ToLower().EndsWith("/" + pagePath.ToLower()));     // e.g., "Admin/Exam" matches "Exam"
+                        p.PagePath.ToLower().StartsWith(pagePath.ToLower() + "/") ||
+                        p.PagePath.ToLower().EndsWith("/" + pagePath.ToLower()));
 
                 if (page != null)
                 {
@@ -111,7 +218,7 @@ namespace centrny.Attributes
                     .ToListAsync();
 
                 logger.LogError("Page NOT FOUND for path: '{PagePath}'. Available pages:", pagePath);
-                foreach (var p in allPages.Take(20)) // Log first 20 for debugging
+                foreach (var p in allPages.Take(20))
                 {
                     logger.LogError("  - PageCode={PageCode}, Name='{PageName}', Path='{PagePath}'",
                         p.PageCode, p.PageName, p.PagePath);
