@@ -21,47 +21,27 @@ namespace centrny.Controllers
 
         // --- SESSION HELPERS ---
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
-        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
         private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
         {
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-                GetSessionInt("RootCode")
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
             );
         }
-
-        // --- Authority Check via Session ---
-        private bool UserHasSubscriptionPermission()
-        {
-            var groupCode = GetSessionInt("GroupCode");
-            if (groupCode == null) return false;
-
-            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Subscription/Index");
-            if (page == null) return false;
-
-            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
-        }
-
+      
         public IActionResult Index()
         {
-            if (!UserHasSubscriptionPermission())
-            {
-                return View("~/Views/Login/AccessDenied.cshtml");
-            }
+         
             return View();
         }
 
         [HttpGet]
         public async Task<IActionResult> GetSubscriptions()
         {
-            if (!UserHasSubscriptionPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+            
             var (userCode, groupCode, rootCode) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
-
+         
             var subs = await _context.SubscriptionPlans
                 .Where(e => e.RootCode == rootCode.Value && e.IsActive)
                 .OrderByDescending(e => e.InsertTime)
@@ -93,10 +73,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubscription(int id)
         {
-            if (!UserHasSubscriptionPermission())
-                return Json(new { success = false, message = "Access denied." });
+            var (userCode, groupCode, rootCode) = GetSessionContext();
 
-            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(sp => sp.SubPlanCode == id);
+            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(sp => sp.SubPlanCode == id && sp.RootCode == rootCode);
             if (plan == null)
                 return NotFound();
 
@@ -125,15 +104,10 @@ namespace centrny.Controllers
         public async Task<IActionResult> GetYears()
         {
             var (userCode, groupCode, rootCode) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
-
+          
             var years = await (
-                from year in _context.Years
-                join eduYear in _context.EduYears
-                    on year.EduYearCode equals eduYear.EduCode
-                where eduYear.RootCode == rootCode.Value
-                      && eduYear.IsActive
+                from year in _context.Years               
+                where year.RootCode == rootCode.Value
                 select new
                 {
                     year.YearCode,
@@ -150,8 +124,7 @@ namespace centrny.Controllers
         public async Task<IActionResult> GetSubjects(int yearCode)
         {
             var (userCode, groupCode, rootCode) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
+            
 
             var subjects = await (
                 from s in _context.Subjects
@@ -169,22 +142,18 @@ namespace centrny.Controllers
         public async Task<IActionResult> SearchStudentsByPhone(string phone)
         {
             var (userCode, groupCode, rootCode) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Json(new { success = false, message = "Unauthorized" });
-
+          
             var students = await (
                 from s in _context.Students
                 join y in _context.Years on s.YearCode equals y.YearCode
-                where s.StudentPhone == phone && s.IsActive && y.EduYearCode != null
-                join edu in _context.EduYears on y.EduYearCode equals edu.EduCode
-                where edu.RootCode == rootCode.Value
+                where s.StudentPhone == phone && s.IsActive
+                where y.RootCode == rootCode.Value
                 select new
                 {
                     studentCode = s.StudentCode,
                     name = s.StudentName,
                     yearName = y.YearName,
-                    yearCode = y.YearCode,
-                    eduYearCode = y.EduYearCode
+                    yearCode = y.YearCode
                 }
             ).ToListAsync();
 
@@ -194,29 +163,27 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> BuyStudentPlan([FromBody] BuyStudentPlanDto dto)
         {
-            if (!UserHasSubscriptionPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+           
             if (dto == null || dto.SubscriptionPlanCode == 0 || dto.StudentCode == 0)
                 return BadRequest("Invalid data.");
 
             var (userCode, groupCode, rootCode) = GetSessionContext();
-            if (!userCode.HasValue)
-                return Json(new { success = false, message = "Unauthorized" });
 
-            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.SubPlanCode == dto.SubscriptionPlanCode && p.IsActive);
+            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.SubPlanCode == dto.SubscriptionPlanCode && p.IsActive && p.RootCode==rootCode);
             if (plan == null)
                 return Json(new { success = false, message = "Plan not found." });
 
-            var student = await _context.Students.FirstOrDefaultAsync(s => s.StudentCode == dto.StudentCode && s.IsActive);
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.StudentCode == dto.StudentCode && s.IsActive && s.IsActive && s.RootCode == rootCode);
             if (student == null)
                 return Json(new { success = false, message = "Student not found." });
 
-            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == student.YearCode);
+            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == student.YearCode && y.RootCode == rootCode);
             if (year == null)
                 return Json(new { success = false, message = "Student year not found." });
 
-            var eduYearCode = year.EduYearCode;
+            var eduYearCode = await _context.EduYears.Where(ey => ey.RootCode == rootCode && ey.IsActive)
+                .Select(ey => ey.EduCode)
+                .FirstOrDefaultAsync();
 
             DateOnly subDate = DateOnly.FromDateTime(DateTime.Today);
             DateOnly expiryDate = subDate.AddMonths((int)plan.ExpiryMonths);
@@ -246,16 +213,12 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateSubscriptionDto dto)
         {
-            if (!UserHasSubscriptionPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+           
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubPlanName) || dto.Subjects == null || dto.Subjects.Count == 0)
                 return BadRequest("Invalid data.");
 
             var (userCode, groupCode, rootCode) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
-
+          
             int totalCount = dto.Subjects.Sum(s => s.Count);
 
             var plan = new SubscriptionPlan
@@ -296,9 +259,7 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] EditSubscriptionDto dto)
         {
-            if (!UserHasSubscriptionPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+          
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubPlanName) || dto.Subjects == null || dto.Subjects.Count == 0)
                 return BadRequest("Invalid data.");
 
@@ -349,9 +310,7 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete([FromBody] DeleteSubscriptionDto dto)
         {
-            if (!UserHasSubscriptionPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+          
             if (dto == null || dto.SubPlanCode == 0)
                 return BadRequest("Invalid data.");
 

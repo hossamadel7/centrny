@@ -175,7 +175,7 @@ namespace centrny.Controllers
             int? eduYearCode = eduYear?.EduCode;
 
             var years = await _context.Years
-                .Where(y => y.EduYearCode == eduYearCode)
+                .Where(y => y.RootCode == rootCode)
                 .OrderBy(y => y.YearName)
                 .Select(y => new { y.YearCode, y.YearName })
                 .ToListAsync();

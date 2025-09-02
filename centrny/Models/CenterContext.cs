@@ -121,6 +121,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.AnswerContent)
                 .HasMaxLength(500)
                 .HasColumnName("Answer_Content");
+            entity.Property(e => e.AnswerImage)
+                .HasMaxLength(500)
+                .HasColumnName("Answer_Image");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -434,7 +437,20 @@ public partial class CenterContext : DbContext
             entity.ToTable("Content");
 
             entity.Property(e => e.ContentCode).HasColumnName("Content_Code");
+            entity.Property(e => e.AboutAr).HasColumnName("About_Ar");
+            entity.Property(e => e.AppLayoutFAr).HasColumnName("AppLayoutF_Ar");
+            entity.Property(e => e.AppLayoutHAr).HasColumnName("AppLayoutH-Ar");
+            entity.Property(e => e.ApplyAr).HasColumnName("Apply_Ar");
+            entity.Property(e => e.ContactAr).HasColumnName("Contact_Ar");
+            entity.Property(e => e.CoursesAr).HasColumnName("Courses_Ar");
+            entity.Property(e => e.GallerAr).HasColumnName("Galler_Ar");
+            entity.Property(e => e.HomaAr).HasColumnName("Homa_Ar");
+            entity.Property(e => e.LoginAr).HasColumnName("Login_Ar");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+            entity.Property(e => e.TeacherAr).HasColumnName("Teacher_Ar");
+            entity.Property(e => e.TitleAr).HasColumnName("Title_Ar");
+            entity.Property(e => e.WebLayoutFAr).HasColumnName("WebLayoutF_Ar");
+            entity.Property(e => e.WebLayoutHAr).HasColumnName("WebLayoutH_Ar");
 
             entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Contents)
                 .HasForeignKey(d => d.RootCode)
@@ -1006,9 +1022,7 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Updat_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
-            entity.Property(e => e.LessonExpireDays)
-                .HasDefaultValue(2)
-                .HasColumnName("Lesson_Expire_Days");
+            entity.Property(e => e.LessonExpireDays).HasColumnName("Lesson_Expire_Days");
             entity.Property(e => e.LessonName)
                 .HasMaxLength(100)
                 .HasColumnName("Lesson_Name");
@@ -1370,6 +1384,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.QuestionContent)
                 .HasMaxLength(500)
                 .HasColumnName("Question_Content");
+            entity.Property(e => e.QuestionImage)
+                .HasMaxLength(500)
+                .HasColumnName("Question_Image");
 
             entity.HasOne(d => d.ExamCodeNavigation).WithMany(p => p.Questions)
                 .HasForeignKey(d => d.ExamCode)
@@ -1452,6 +1469,24 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.RootAddress)
                 .HasMaxLength(100)
                 .HasColumnName("Root_Address");
+            entity.Property(e => e.RootBackgroundColor)
+                .HasMaxLength(7)
+                .HasColumnName("Root_Background_Color");
+            entity.Property(e => e.RootBodyColor)
+                .HasMaxLength(7)
+                .HasColumnName("Root_Body_Color");
+            entity.Property(e => e.RootBodyFont)
+                .HasMaxLength(7)
+                .HasColumnName("Root_Body_Font");
+            entity.Property(e => e.RootButtonColor)
+                .HasMaxLength(7)
+                .HasColumnName("Root_Button_Color");
+            entity.Property(e => e.RootButtonFontColor)
+                .HasMaxLength(7)
+                .HasColumnName("Root_Button_Font_Color");
+            entity.Property(e => e.RootButtonFontColor2)
+                .HasMaxLength(7)
+                .HasColumnName("Root_Button_Font_Color2");
             entity.Property(e => e.RootDomain).HasColumnName("Root_Domain");
             entity.Property(e => e.RootEmail)
                 .HasMaxLength(50)
@@ -2099,7 +2134,6 @@ public partial class CenterContext : DbContext
             entity.ToTable("Year");
 
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
-            entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -2110,14 +2144,11 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.LevelCode).HasColumnName("Level_Code");
+            entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.YearName)
                 .HasMaxLength(100)
                 .HasColumnName("Year_Name");
             entity.Property(e => e.YearSort).HasColumnName("Year_Sort");
-
-            entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Years)
-                .HasForeignKey(d => d.EduYearCode)
-                .HasConstraintName("FK_Year_Edu_Year");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.YearInsertUserNavigations)
                 .HasForeignKey(d => d.InsertUser)
@@ -2132,6 +2163,10 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.LevelCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Year_Level");
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Years)
+                .HasForeignKey(d => d.RootCode)
+                .HasConstraintName("FK_Year_Edu_Year");
         });
 
         OnModelCreatingPartial(modelBuilder);

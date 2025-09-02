@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using SubjectRes = centrny.Resources.Subject;
+using centrny.Attributes;
 
 namespace centrny.Controllers
 {
+    [RequirePageAccess("Question")]
     [Authorize]
     public class SubjectController : Controller
     {
@@ -25,8 +27,8 @@ namespace centrny.Controllers
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-                GetSessionInt("RootCode"),
-                GetSessionString("Username")
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode ,
+    GetSessionString("Username")
             );
         }
 
@@ -48,8 +50,7 @@ namespace centrny.Controllers
             }
 
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
+           
 
             ViewBag.UserRootCode = rootCode.Value;
             ViewBag.UserGroupCode = groupCode.Value;
@@ -64,9 +65,7 @@ namespace centrny.Controllers
             if (!UserHasSubjectPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
+            var (userCode, groupCode, rootCode,username) = GetSessionContext();
 
             var subjects = await (from s in _context.Subjects
                                   where s.RootCode == rootCode.Value
@@ -82,7 +81,7 @@ namespace centrny.Controllers
                                       RootName = r != null ? r.RootName : null,
                                       YearName = y != null ? y.YearName : null,
                                       s.YearCode,
-                                      EduYearCode = y != null ? y.EduYearCode : null
+                                      EduYearCode = y != null 
                                   })
                                   .ToListAsync();
 
@@ -115,6 +114,7 @@ namespace centrny.Controllers
             return Json(teachJoin);
         }
 
+        [RequirePageAccess("Question","Update")]
         [HttpPost]
         public async Task<IActionResult> EditTeachCenter([FromBody] EditTeachCenterDto dto)
         {
@@ -144,24 +144,28 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetActiveYears()
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+            // Get session context (adjust if your GetSessionContext returns a different tuple)
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
 
-            var activeEduYearCodes = await _context.EduYears
-                .Where(e => e.IsActive && e.RootCode == rootCode.Value)
-                .Select(e => e.EduCode)
+            if (!rootCode.HasValue)
+                return Json(new { success = false, message = "Root not resolved (no rootCode in session)." });
+
+            // Query all years that belong to this root
+            var query = _context.Years
+                .AsNoTracking()
+                .Where(y => y.RootCode == rootCode.Value);
+
+         
+            var yearList = await query
+                .OrderBy(y => y.YearSort)          // If YearSort exists
+                                                   // .OrderBy(y => y.YearName)       // Use this instead if you do NOT have YearSort
+                .Select(y => new {
+                    yearCode = y.YearCode,
+                    yearName = y.YearName
+                })
                 .ToListAsync();
 
-            var yearList = await _context.Years
-                .Where(y => activeEduYearCodes.Contains((int)y.EduYearCode))
-                .Select(y => new { y.YearCode, y.YearName })
-                .ToListAsync();
-
-            return Json(yearList);
+            return Json(new { success = true, data = yearList });
         }
 
         [HttpGet]
@@ -171,8 +175,7 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Access denied." });
 
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
+           
 
             var teachers = await _context.Teachers
                 .Where(t => t.RootCode == rootCode.Value && t.IsActive)
@@ -185,12 +188,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBranchesByRoot()
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+           
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
+           
 
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode.Value)
@@ -199,20 +199,17 @@ namespace centrny.Controllers
 
             return Json(branches);
         }
+        [RequirePageAccess("Question", "insert")]
 
         [HttpPost]
         public async Task<IActionResult> AddTeacherToSubject([FromBody] AddTeacherToSubjectDto dto)
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+          
             if (dto == null || dto.TeacherCode == 0 || dto.SubjectCode == 0 || dto.BranchCode == 0 || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
-                return Unauthorized();
-
+         
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherCode == dto.TeacherCode && t.RootCode == rootCode.Value);
             if (teacher == null) return BadRequest(SubjectRes.Subject_TeacherNotFound);
 
@@ -220,14 +217,13 @@ namespace centrny.Controllers
             if (branch == null) return BadRequest(SubjectRes.Subject_BranchNotFound);
 
             var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
-            if (year == null || year.EduYearCode == null)
-                return BadRequest(SubjectRes.Subject_CouldNotDetermineEduYear);
+          
 
             var teach = new Teach
             {
                 TeacherCode = dto.TeacherCode,
                 SubjectCode = dto.SubjectCode,
-                EduYearCode = year.EduYearCode.Value,
+                EduYearCode = dto.EduYearCode,
                 BranchCode = dto.BranchCode,
                 RootCode = rootCode.Value,
                 YearCode = dto.YearCode,
@@ -242,13 +238,11 @@ namespace centrny.Controllers
 
             return Ok(new { success = true, message = SubjectRes.Subject_SuccessTeacherAssigned });
         }
-
+        [RequirePageAccess("Question", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddSubject([FromBody] AddSubjectDto dto)
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+           
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
@@ -280,9 +274,10 @@ namespace centrny.Controllers
                 RootName = root?.RootName,
                 YearName = year?.YearName,
                 subject.YearCode,
-                EduYearCode = year?.EduYearCode
+               
             });
         }
+        [RequirePageAccess("Question", "update")]
 
         [HttpPost]
         public async Task<IActionResult> EditSubject([FromBody] EditSubjectDto dto)
@@ -315,16 +310,14 @@ namespace centrny.Controllers
                 RootName = root?.RootName,
                 YearName = year?.YearName,
                 subject.YearCode,
-                EduYearCode = year?.EduYearCode
+               
             });
         }
-
+        [RequirePageAccess("Question", "delete")]
         [HttpPost]
         public async Task<IActionResult> DeleteSubject([FromBody] DeleteSubjectDto dto)
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+           
             if (dto == null || dto.SubjectCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 

@@ -13,7 +13,7 @@ public partial class Year
 
     public int LevelCode { get; set; }
 
-    public int? EduYearCode { get; set; }
+    public int? RootCode { get; set; }
 
     public int InsertUser { get; set; }
 
@@ -24,8 +24,6 @@ public partial class Year
     public DateTime? LastUpdateTime { get; set; }
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
-
-    public virtual EduYear? EduYearCodeNavigation { get; set; }
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 
@@ -40,6 +38,8 @@ public partial class Year
     public virtual Level LevelCodeNavigation { get; set; } = null!;
 
     public virtual ICollection<PlanSubject> PlanSubjects { get; set; } = new List<PlanSubject>();
+
+    public virtual Root? RootCodeNavigation { get; set; }
 
     public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 

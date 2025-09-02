@@ -9,6 +9,8 @@ public partial class Question
 
     public string QuestionContent { get; set; } = null!;
 
+    public string? QuestionImage { get; set; }
+
     public int? ExamCode { get; set; }
 
     public int? LessonCode { get; set; }

@@ -30,6 +30,4 @@ public partial class EduYear
     public virtual ICollection<StudentSubjectPlan> StudentSubjectPlans { get; set; } = new List<StudentSubjectPlan>();
 
     public virtual ICollection<Teach> Teaches { get; set; } = new List<Teach>();
-
-    public virtual ICollection<Year> Years { get; set; } = new List<Year>();
 }

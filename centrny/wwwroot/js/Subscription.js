@@ -1,7 +1,15 @@
 ﻿// Subscription.js
 // Handles UI interactions for Subscription plans and purchase workflow.
+// Localized using window.SubLoc (injected from server). Fallbacks are provided if a key is missing.
 
 (function ($) {
+
+    const L = (typeof window !== 'undefined' && window.SubLoc) ? window.SubLoc : {};
+
+    function t(key, fallback) {
+        return (L && L[key]) ? L[key] : (fallback || key);
+    }
+
     const endpoints = {
         list: '/Subscription/GetSubscriptions',
         get: id => `/Subscription/GetSubscription/${id}`,
@@ -28,7 +36,7 @@
         const id = 'alert-' + Date.now();
         const html = `<div id="${id}" class="alert alert-${type} alert-dismissible fade show" role="alert">
             ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="${t('Close', 'Close')}"></button>
         </div>`;
         $('#alertHost').append(html);
         if (timeout) {
@@ -38,20 +46,21 @@
         }
     }
 
-    function formatSubjectsCell(subjects) {
-        if (!subjects || !subjects.length) return '<span class="text-muted">None</span>';
-        return subjects.map(s =>
-            `<span class="badge bg-info text-dark table-subjects-badge" title="Count: ${s.count}">
-                ${escapeHtml(s.subjectName)} <small>(${s.count})</small>
-             </span>`
-        ).join('');
-    }
-
     function escapeHtml(str) {
         return (str ?? '').toString()
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function formatSubjectsCell(subjects) {
+        if (!subjects || !subjects.length)
+            return `<span class="text-muted">${t('None', 'None')}</span>`;
+        return subjects.map(s =>
+            `<span class="badge bg-info text-dark table-subjects-badge" title="${t('Count', 'Count')}: ${s.count}">
+                ${escapeHtml(s.subjectName)} <small>(${s.count})</small>
+             </span>`
+        ).join('');
     }
 
     // DataTable initialization
@@ -61,13 +70,13 @@
                 url: endpoints.list,
                 dataSrc: function (json) {
                     if (json && json.success === false) {
-                        notify('danger', json.message || 'Failed to load plans.');
+                        notify('danger', escapeHtml(json.message || t('ErrorLoadingPlans', 'Error fetching subscription plans.')));
                         return [];
                     }
                     return json;
                 },
-                error: function (xhr) {
-                    notify('danger', 'Error fetching subscription plans.');
+                error: function () {
+                    notify('danger', t('ErrorLoadingPlans', 'Error fetching subscription plans.'));
                 }
             },
             responsive: true,
@@ -101,13 +110,13 @@
                     render: function (data, type, row) {
                         return `
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary btn-edit" data-id="${row.subPlanCode}" title="Edit">
+                                <button class="btn btn-outline-primary btn-edit" data-id="${row.subPlanCode}" title="${t('EditSubscriptionPlan', 'Edit Subscription Plan')}">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
-                                <button class="btn btn-outline-danger btn-delete" data-id="${row.subPlanCode}" title="Delete">
+                                <button class="btn btn-outline-danger btn-delete" data-id="${row.subPlanCode}" title="${t('DeleteSubscriptionPlan', 'Delete Subscription Plan')}">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                                <button class="btn btn-outline-success btn-buy" data-id="${row.subPlanCode}" data-name="${escapeHtml(row.subPlanName)}" title="Buy for student">
+                                <button class="btn btn-outline-success btn-buy" data-id="${row.subPlanCode}" data-name="${escapeHtml(row.subPlanName)}" title="${t('BuyPlanForStudent', 'Buy Plan for Student')}">
                                     <i class="bi bi-cart-plus"></i>
                                 </button>
                             </div>`;
@@ -116,14 +125,14 @@
             ],
             order: [[0, 'asc']],
             language: {
-                emptyTable: 'No subscription plans found.',
-                loadingRecords: 'Loading plans...'
+                emptyTable: t('NoPlans', 'No subscription plans found.'),
+                loadingRecords: t('LoadingPlans', 'Loading plans...')
             }
         });
     }
 
     function reloadPlans() {
-        plansTable.ajax.reload(null, false);
+        if (plansTable) plansTable.ajax.reload(null, false);
     }
 
     // Years & Subjects
@@ -135,16 +144,16 @@
                 return data;
             })
             .catch(() => {
-                notify('danger', 'Failed to load years.');
+                notify('danger', t('FailedToLoadYears', 'Failed to load years.'));
                 return [];
             });
     }
 
     function loadSubjects(yearCode, $subjectSelect, preselect) {
-        $subjectSelect.prop('disabled', true).html('<option value="">Loading...</option>');
+        $subjectSelect.prop('disabled', true).html(`<option value="">${t('Loading', 'Loading...')}</option>`);
         $.getJSON(endpoints.subjects(yearCode))
             .done(list => {
-                $subjectSelect.empty().append('<option value="">-- Select Subject --</option>');
+                $subjectSelect.empty().append(`<option value="">${t('SelectSubject', '-- Select Subject --')}</option>`);
                 list.forEach(s => {
                     $subjectSelect.append(`<option value="${s.subjectCode}">${escapeHtml(s.subjectName)}</option>`);
                 });
@@ -154,8 +163,8 @@
                 $subjectSelect.prop('disabled', false);
             })
             .fail(() => {
-                $subjectSelect.html('<option value="">Error loading subjects</option>');
-                notify('danger', 'Failed to load subjects for selected year.');
+                $subjectSelect.html(`<option value="">${t('FailedToLoadSubjects', 'Error loading subjects')}</option>`);
+                notify('danger', t('FailedToLoadSubjects', 'Failed to load subjects for selected year.'));
             });
     }
 
@@ -166,19 +175,19 @@
             <tr class="subject-row" id="${rowId}">
                 <td>
                     <select class="form-select year-select" required>
-                        <option value="">-- Select Year --</option>
+                        <option value="">${t('SelectYear', '-- Select Year --')}</option>
                     </select>
                 </td>
                 <td>
                     <select class="form-select subject-select" required disabled>
-                        <option value="">-- Select Subject --</option>
+                        <option value="">${t('SelectSubject', '-- Select Subject --')}</option>
                     </select>
                 </td>
                 <td>
                     <input type="number" class="form-control count-input" min="1" value="${data?.Count ?? 1}" required />
                 </td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="${t('Remove', 'Remove')}">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </td>
@@ -213,7 +222,7 @@
     // Plan Modal
     function openCreateModal() {
         isEditMode = false;
-        $('#planModalTitle').text('Create Subscription Plan');
+        $('#planModalTitle').text(t('CreateSubscriptionPlan', 'Create Subscription Plan'));
         $('#SubPlanCode').val('');
         $('#SubPlanName').val('');
         $('#Price').val('');
@@ -222,15 +231,15 @@
         $('#subjectsTbody').empty();
         addSubjectRow();
         recalcTotalCount();
-        $('#btnSavePlan .save-text').text('Create');
+        $('#btnSavePlan .save-text').text(t('SavePlan', 'Save Plan'));
         planModal.show();
     }
 
     function openEditModal(id) {
         isEditMode = true;
-        $('#planModalTitle').text('Edit Subscription Plan');
+        $('#planModalTitle').text(t('EditSubscriptionPlan', 'Edit Subscription Plan'));
         $('#subjectsTbody').empty();
-        $('#btnSavePlan .save-text').text('Update');
+        $('#btnSavePlan .save-text').text(t('UpdatePlan', 'Update Plan'));
 
         $.getJSON(endpoints.get(id))
             .done(res => {
@@ -254,8 +263,8 @@
                 recalcTotalCount();
                 planModal.show();
             })
-            .fail(xhr => {
-                notify('danger', 'Failed to load subscription plan.');
+            .fail(() => {
+                notify('danger', t('FailedToLoadPlan', 'Failed to load subscription plan.'));
             });
     }
 
@@ -280,7 +289,7 @@
         });
 
         if (!valid || subjects.length === 0) {
-            notify('warning', 'Please complete all subject rows.');
+            notify('warning', t('InvalidSubjectsWarning', 'Please complete all subject rows.'));
             return null;
         }
 
@@ -318,11 +327,11 @@
         if (!data) return;
 
         if (!data.SubPlanName) {
-            notify('warning', 'Plan name is required.');
+            notify('warning', t('PlanNameRequired', 'Plan name is required.'));
             return;
         }
         if (data.Subjects.length === 0) {
-            notify('warning', 'At least one subject row is required.');
+            notify('warning', t('AtLeastOneSubjectRequired', 'At least one subject row is required.'));
             return;
         }
 
@@ -342,15 +351,15 @@
         })
             .done(res => {
                 if (res.success) {
-                    notify('success', `Plan ${isEditMode ? 'updated' : 'created'} successfully.`);
+                    notify('success', isEditMode ? t('PlanUpdated', 'Plan updated successfully.') : t('PlanCreated', 'Plan created successfully.'));
                     planModal.hide();
                     reloadPlans();
                 } else {
-                    notify('danger', res.message || 'Operation failed.');
+                    notify('danger', escapeHtml(res.message || t('OperationFailed', 'Operation failed.')));
                 }
             })
-            .fail(xhr => {
-                notify('danger', 'Error saving subscription plan.');
+            .fail(() => {
+                notify('danger', t('ErrorSavingPlan', 'Error saving subscription plan.'));
             })
             .always(() => setSavingState(false));
     }
@@ -376,21 +385,22 @@
         })
             .done(res => {
                 if (res.success) {
-                    notify('success', 'Plan deleted successfully.');
+                    notify('success', t('PlanDeleted', 'Plan deleted successfully.'));
                     deleteModal.hide();
                     reloadPlans();
                 } else {
-                    notify('danger', res.message || 'Delete failed.');
+                    notify('danger', escapeHtml(res.message || t('PlanDeleteFailed', 'Delete failed.')));
                 }
             })
-            .fail(() => notify('danger', 'Error deleting plan.'))
+            .fail(() => notify('danger', t('ErrorDeletingPlan', 'Error deleting plan.')))
             .always(() => setDeletingState(false));
     }
 
     // Buy Plan
     function openBuyModal(subPlanCode, planName) {
         $('#buy_SubPlanCode').val(subPlanCode);
-        $('#buyPlanInfo').text(`Plan: ${planName} (Code: ${subPlanCode})`);
+        // Pattern text - keep English tokens if localization for pattern not provided
+        $('#buyPlanInfo').text(`${t('Title', 'Plan')}: ${planName} (Code: ${subPlanCode})`);
         $('#studentsResultTable tbody').empty();
         $('#studentPhone').val('');
         $('#selectedStudentCode').val('');
@@ -401,23 +411,23 @@
     function searchStudents() {
         const phone = $('#studentPhone').val().trim();
         if (!phone) {
-            notify('warning', 'Enter a phone number to search.');
+            notify('warning', t('EnterPhoneWarning', 'Enter a phone number to search.'));
             return;
         }
         const $btn = $('#btnSearchStudent');
         const original = $btn.html();
-        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Searching');
+        $btn.prop('disabled', true).html(`<span class="spinner-border spinner-border-sm"></span> ${t('SearchStudent', 'Searching')}`);
 
         $.getJSON(endpoints.searchStudents(phone))
             .done(res => {
                 if (!res.success) {
-                    notify('danger', res.message || 'Search failed.');
+                    notify('danger', escapeHtml(res.message || t('SearchFailed', 'Search failed.')));
                     return;
                 }
                 const students = res.students || [];
                 const $tbody = $('#studentsResultTable tbody').empty();
                 if (!students.length) {
-                    $tbody.append('<tr><td colspan="3" class="text-center text-muted">No students found.</td></tr>');
+                    $tbody.append(`<tr><td colspan="3" class="text-center text-muted">${t('NoStudentsFound', 'No students found.')}</td></tr>`);
                 } else {
                     students.forEach(st => {
                         $tbody.append(`
@@ -431,7 +441,7 @@
                 }
             })
             .fail(() => {
-                notify('danger', 'Error searching students.');
+                notify('danger', t('ErrorSearchingStudents', 'Error searching students.'));
             })
             .always(() => {
                 $btn.prop('disabled', false).html(original);
@@ -448,7 +458,7 @@
         const planCode = parseInt($('#buy_SubPlanCode').val(), 10);
         const studentCode = parseInt($('#selectedStudentCode').val(), 10);
         if (!planCode || !studentCode) {
-            notify('warning', 'Select a student.');
+            notify('warning', t('SelectStudent', 'Select a student.'));
             return;
         }
         setBuyingState(true);
@@ -466,13 +476,13 @@
         })
             .done(res => {
                 if (res.success) {
-                    notify('success', 'Plan purchased successfully.');
+                    notify('success', t('PlanPurchased', 'Plan purchased successfully.'));
                     buyModal.hide();
                 } else {
-                    notify('danger', res.message || 'Purchase failed.');
+                    notify('danger', escapeHtml(res.message || t('PurchaseFailed', 'Purchase failed.')));
                 }
             })
-            .fail(() => notify('danger', 'Error purchasing plan.'))
+            .fail(() => notify('danger', t('ErrorPurchasingPlan', 'Error purchasing plan.')))
             .always(() => setBuyingState(false));
     }
 
@@ -492,15 +502,14 @@
                 const yearCode = $(this).val();
                 const $row = $(this).closest('tr');
                 const $subjectSelect = $row.find('.subject-select');
-                $subjectSelect.html('<option value="">-- Select Subject --</option>');
+                $subjectSelect.html(`<option value="">${t('SelectSubject', '-- Select Subject --')}</option>`);
                 if (yearCode) {
                     loadSubjects(yearCode, $subjectSelect);
                 } else {
                     $subjectSelect.prop('disabled', true);
                 }
             })
-            .on('change', '.subject-select, .year-select, .count-input', recalcTotalCount)
-            .on('input', '.count-input', recalcTotalCount)
+            .on('change input', '.subject-select, .year-select, .count-input', recalcTotalCount)
             .on('click', '.btn-remove-row', function () {
                 $(this).closest('tr').remove();
                 recalcTotalCount();

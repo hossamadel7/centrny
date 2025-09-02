@@ -68,7 +68,7 @@ namespace centrny.Controllers
                               title = c.Title,
                               web_header = c.WebLayoutH,
                               web_footer = c.WebLayoutF,
-                              coaches = c.Coches
+                              coaches = c.Teacher
                           }).ToList();
 
             if (Ruselt.Count == 0 || Ruselt[0].coaches is null || Ruselt[0].coaches == "") return RedirectToAction("Index", "Home");
@@ -148,7 +148,7 @@ namespace centrny.Controllers
             var Ruselt = DB.Schedules
                 .Where(x => x.BranchCode == Convert.ToInt32(table_data.branch_code)
                     && (x.BranchCodeNavigation.RootCodeNavigation.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "") ||
-                        x.BranchCodeNavigation.RootCodeNavigation.RootName + ".gymsofto.com" == HttpContext.Request.Host.ToString()))
+                        x.BranchCodeNavigation.RootCodeNavigation.RootName + ".clasrio.com" == HttpContext.Request.Host.ToString()))
                 .OrderBy(x => x.BranchCode)
                 .ToList();
 

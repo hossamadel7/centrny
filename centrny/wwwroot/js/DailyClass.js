@@ -316,7 +316,7 @@ function loadYearsByEduYear(eduYearCode) {
      
         return;
     }
-    fetch(`/DailyClass/GetYearsForEduYear?eduYearCode=${eduYearCode}`)
+    fetch(`/DailyClass/GetYearsForEduYear`)
         .then(res => res.json())
         .then(data => {
             populateSelectAsync('yearCode', Array.isArray(data.years) ? data.years : []);
