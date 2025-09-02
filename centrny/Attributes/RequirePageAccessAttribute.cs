@@ -102,29 +102,20 @@ namespace centrny.Attributes
         {
             logger.LogInformation("=== DOMAIN-SPECIFIC AUTH CHECK ===");
 
-            // Get domain root code from session (set during login)
-            var domainRootCode = httpContext.Session.GetInt32("DomainRootCode");
             var host = httpContext.Request.Host.Host;
 
-            // If no domain root code in session, try to resolve it
-            if (!domainRootCode.HasValue)
-            {
-                domainRootCode = await ResolveDomainRootCode(host, dbContext, logger);
-                if (domainRootCode.HasValue)
-                {
-                    httpContext.Session.SetInt32("DomainRootCode", domainRootCode.Value);
-                }
-            }
+            // ALWAYS resolve current domain's RootCode (don't trust session)
+            var currentDomainRootCode = await ResolveDomainRootCode(host, dbContext, logger);
 
-            if (!domainRootCode.HasValue)
+            if (!currentDomainRootCode.HasValue)
             {
                 logger.LogError("Could not resolve domain root code for host: {Host}", host);
                 return new RedirectToActionResult("Index", "Login", new { error = "domain_not_recognized" });
             }
 
-            logger.LogInformation("Domain '{Host}' mapped to RootCode: {RootCode}", host, domainRootCode.Value);
+            logger.LogInformation("Current domain '{Host}' maps to RootCode: {RootCode}", host, currentDomainRootCode.Value);
 
-            // Get user's root code from claims
+            // Get user's root code from claims (from login)
             var userRootCodeClaim = httpContext.User.FindFirst("RootCode");
             if (userRootCodeClaim == null || !int.TryParse(userRootCodeClaim.Value, out int userRootCode))
             {
@@ -132,18 +123,29 @@ namespace centrny.Attributes
                 return new RedirectToActionResult("Index", "Login", null);
             }
 
-            // Verify user's root code matches domain's root code
-            if (userRootCode != domainRootCode.Value)
+            // Get session root code (from login)
+            var sessionRootCode = httpContext.Session.GetInt32("RootCode");
+            if (!sessionRootCode.HasValue)
             {
-                logger.LogWarning("Domain/User RootCode mismatch - Domain: {DomainRootCode}, User: {UserRootCode}, User: '{Username}'",
-                    domainRootCode.Value, userRootCode, httpContext.User.Identity?.Name);
+                logger.LogError("No RootCode found in session for user '{Username}'", httpContext.User.Identity?.Name);
+                return new RedirectToActionResult("Index", "Login", null);
+            }
 
-                // User is authenticated but for different domain/root - sign them out
+            // SECURITY CHECK: All three must match
+            if (userRootCode != currentDomainRootCode.Value || sessionRootCode.Value != currentDomainRootCode.Value)
+            {
+                logger.LogWarning("SECURITY VIOLATION - Domain mismatch detected! Current domain: {Host}={CurrentDomainRoot}, User claim: {UserRoot}, Session: {SessionRoot}, User: '{Username}'",
+                    host, currentDomainRootCode.Value, userRootCode, sessionRootCode.Value, httpContext.User.Identity?.Name);
+
+                // Clear session and sign out user immediately
                 await httpContext.SignOutAsync();
                 httpContext.Session.Clear();
 
                 return new RedirectToActionResult("Index", "Login", new { error = "access_denied_wrong_domain" });
             }
+
+            // Update session with current domain for consistency (optional)
+            httpContext.Session.SetInt32("DomainRootCode", currentDomainRootCode.Value);
 
             logger.LogInformation("Domain authentication validated successfully for user '{Username}'", httpContext.User.Identity?.Name);
             return null; // Validation passed
