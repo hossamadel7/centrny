@@ -91,13 +91,13 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTeachersForSubject(int subjectCode)
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
 
             var teachJoin = await (from t in _context.Teaches
                                    join teacher in _context.Teachers on t.TeacherCode equals teacher.TeacherCode
                                    join branch in _context.Branches on t.BranchCode equals branch.BranchCode
-                                   where t.SubjectCode == subjectCode
+                                   where t.SubjectCode == subjectCode && t.RootCode==rootCode
                                    select new
                                    {
                                        t.TeacherCode,
@@ -118,8 +118,7 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> EditTeachCenter([FromBody] EditTeachCenterDto dto)
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             if (dto == null)
                 return BadRequest("Invalid data");
@@ -282,8 +281,7 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> EditSubject([FromBody] EditSubjectDto dto)
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
