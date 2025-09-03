@@ -79,6 +79,168 @@ namespace centrny.Controllers
             return (rootCode, rootName, isCenter);
         }
 
+        // Add these new methods to your QuestionController.cs
+[HttpGet]
+public JsonResult GetSubjectYearsByRoot()
+{
+    int? rootCode = GetCurrentUserRootCode();
+    if (!rootCode.HasValue)
+        return Json(new List<object>());
+
+    bool isCenter = IsCurrentUserCenter();
+    
+    try 
+    {
+        if (isCenter)
+        {
+            // For center users, get all subject-year combinations using navigation properties
+            var subjectYears = _context.Teaches
+                .Where(t => t.RootCode == rootCode.Value && t.IsActive)
+                .Select(t => new
+                {
+                    subjectCode = t.SubjectCode,
+                    yearCode = t.YearCode,
+                    subjectName = t.SubjectCodeNavigation.SubjectName,
+                    yearName = t.YearCodeNavigation.YearName,
+                    teacherCode = t.TeacherCode
+                })
+                .Distinct()
+                .ToList();
+
+            return Json(subjectYears.Select(sy => new
+            {
+                subjectCode = sy.subjectCode,
+                yearCode = sy.yearCode,
+                subjectName = sy.subjectName,
+                yearName = sy.yearName,
+                displayName = $"{sy.subjectName} - {sy.yearName}"
+            }).OrderBy(x => x.subjectName).ThenBy(x => x.yearName));
+        }
+        else
+        {
+            // For regular teachers, get their assigned subject-year combinations
+            var teacherCode = _context.Teachers
+                .Where(t => t.RootCode == rootCode.Value)
+                .Select(t => t.TeacherCode)
+                .FirstOrDefault();
+
+            if (teacherCode == 0)
+                return Json(new List<object>());
+
+            var subjectYears = _context.Teaches
+                .Where(t => t.RootCode == rootCode.Value && t.TeacherCode == teacherCode && t.IsActive)
+                .Select(t => new
+                {
+                    subjectCode = t.SubjectCode,
+                    yearCode = t.YearCode,
+                    subjectName = t.SubjectCodeNavigation.SubjectName,
+                    yearName = t.YearCodeNavigation.YearName
+                })
+                .Distinct()
+                .ToList();
+
+            return Json(subjectYears.Select(sy => new
+            {
+                subjectCode = sy.subjectCode,
+                yearCode = sy.yearCode,
+                subjectName = sy.subjectName,
+                yearName = sy.yearName,
+                displayName = $"{sy.subjectName} - {sy.yearName}"
+            }).OrderBy(x => x.subjectName).ThenBy(x => x.yearName));
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting subject-years for root {RootCode}", rootCode);
+        return Json(new List<object>());
+    }
+}
+
+        [HttpGet]
+        public JsonResult GetLessonHierarchy(int subjectCode, int yearCode)
+        {
+            int? rootCode = GetCurrentUserRootCode();
+            if (!rootCode.HasValue)
+                return Json(new { chapters = new List<object>() });
+
+            // Get chapters (lessons with ChapterCode = null)
+            var chapters = _context.Lessons
+                .Where(l => l.ChapterCode == null &&
+                           l.RootCode == rootCode.Value &&
+                           l.SubjectCode == subjectCode &&
+                           l.YearCode == yearCode &&
+                           l.IsActive)
+                .OrderBy(l => l.LessonCode)
+                .Select(chapter => new
+                {
+                    chapterCode = chapter.LessonCode,
+                    chapterName = chapter.LessonName,
+                    lessons = _context.Lessons
+                        .Where(l => l.ChapterCode == chapter.LessonCode && l.IsActive)
+                        .OrderBy(l => l.LessonCode)
+                        .Select(lesson => new
+                        {
+                            lessonCode = lesson.LessonCode,
+                            lessonName = lesson.LessonName,
+                            questionCount = _context.Questions.Count(q => q.LessonCode == lesson.LessonCode)
+                        }).ToList()
+                }).ToList();
+
+            return Json(new { chapters = chapters });
+        }
+
+        [HttpGet]
+        public JsonResult GetQuestionsByLesson(int lessonCode, int page = 1, int pageSize = 10)
+        {
+            var questions = _context.Questions
+                .Where(q => q.LessonCode == lessonCode)
+                .OrderBy(q => q.QuestionCode)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(q => new
+                {
+                    questionCode = q.QuestionCode,
+                    questionContent = q.QuestionContent,
+                    examCode = q.ExamCode,
+                    lessonCode = q.LessonCode,
+                    insertTime = q.InsertTime
+                }).ToList();
+
+            int totalCount = _context.Questions.Count(q => q.LessonCode == lessonCode);
+            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return Json(new
+            {
+                questions = questions,
+                pagination = new
+                {
+                    currentPage = page,
+                    totalPages = totalPages,
+                    totalCount = totalCount,
+                    pageSize = pageSize
+                }
+            });
+        }
+
+        [HttpGet]
+        public JsonResult SearchQuestionsInLesson(string term, int lessonCode)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+                return Json(new List<object>());
+
+            var questions = _context.Questions
+                .Where(q => q.LessonCode == lessonCode && q.QuestionContent.Contains(term))
+                .OrderBy(q => q.QuestionCode)
+                .Select(q => new
+                {
+                    questionCode = q.QuestionCode,
+                    questionContent = q.QuestionContent,
+                    examCode = q.ExamCode,
+                    lessonCode = q.LessonCode
+                }).ToList();
+
+            return Json(questions);
+        }
         // =========================
         // NEW IMPROVED ENDPOINTS FOR BETTER UX
         // =========================
@@ -197,101 +359,152 @@ namespace centrny.Controllers
             }
         }
 
-        [HttpPost]
-        [RequirePageAccess("Question", "insert")]
-        public JsonResult AddQuestionWithAnswers(string questionContent, int chapterCode, List<string> answers, int correctAnswerIndex)
+        // Add these methods to your QuestionController.cs
+
+[HttpPost]
+[RequirePageAccess("Question", "insert")]
+public JsonResult AddQuestionWithAnswers(string questionContent, int chapterCode, List<string> answers, int correctAnswerIndex, int? examCode = null)
+{
+    try
+    {
+        // Validation
+        if (string.IsNullOrWhiteSpace(questionContent))
+            return Json(new { success = false, message = "Question content is required" });
+
+        if (answers == null || answers.Count < 2)
+            return Json(new { success = false, message = "At least 2 answers are required" });
+
+        if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.Count)
+            return Json(new { success = false, message = "Invalid correct answer selection" });
+
+        // Validate that answers are not empty
+        for (int i = 0; i < answers.Count; i++)
         {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(questionContent))
-                    return Json(new { success = false, message = "Question content is required" });
-
-                if (answers == null || answers.Count < 2)
-                    return Json(new { success = false, message = "At least 2 answers are required" });
-
-                if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.Count)
-                    return Json(new { success = false, message = "Invalid correct answer selection" });
-
-                // Validate that answers are not empty
-                for (int i = 0; i < answers.Count; i++)
-                {
-                    if (string.IsNullOrWhiteSpace(answers[i]))
-                        return Json(new { success = false, message = $"Answer {i + 1} cannot be empty" });
-                }
-
-                // Validate that chapter exists and belongs to user
-                var rootCode = GetCurrentUserRootCode();
-                if (!rootCode.HasValue)
-                    return Json(new { success = false, message = "Unable to determine user context" });
-
-                var chapter = _context.Lessons.FirstOrDefault(l => l.LessonCode == chapterCode && l.RootCode == rootCode.Value);
-                if (chapter == null)
-                    return Json(new { success = false, message = "Chapter not found or access denied" });
-
-                // Start transaction
-                using var transaction = _context.Database.BeginTransaction();
-
-                try
-                {
-                    // Create the question
-                    var question = new Question
-                    {
-                        QuestionContent = questionContent.Trim(),
-                        LessonCode = chapterCode,
-                        ExamCode = null,
-                        InsertUser = GetCurrentUserId(),
-                        InsertTime = DateTime.Now
-                    };
-
-                    _context.Questions.Add(question);
-                    _context.SaveChanges();
-
-                    // Create the answers
-                    for (int i = 0; i < answers.Count; i++)
-                    {
-                        var answer = new Answer
-                        {
-                            AnswerContent = answers[i].Trim(),
-                            IsTrue = i == correctAnswerIndex,
-                            QuestionCode = question.QuestionCode,
-                            InsertUser = GetCurrentUserId(),
-                            InsertTime = DateTime.Now,
-                            IsActive = true
-                        };
-                        _context.Answers.Add(answer);
-                    }
-
-                    _context.SaveChanges();
-                    transaction.Commit();
-
-                    _logger.LogInformation("Successfully added question {QuestionCode} with {AnswerCount} answers to chapter {ChapterCode}",
-                        question.QuestionCode, answers.Count, chapterCode);
-
-                    return Json(new { success = true, questionCode = question.QuestionCode });
-                }
-                catch (Exception)
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding question with answers to chapter {ChapterCode}", chapterCode);
-                return Json(new { success = false, message = "Error saving question. Please try again." });
-            }
+            if (string.IsNullOrWhiteSpace(answers[i]))
+                return Json(new { success = false, message = $"Answer {i + 1} cannot be empty" });
         }
+
+        // Check for duplicate answers
+        var duplicates = answers.GroupBy(a => a.Trim().ToLower()).Where(g => g.Count() > 1);
+        if (duplicates.Any())
+            return Json(new { success = false, message = "Duplicate answers are not allowed" });
+
+        // Validate that lesson exists and belongs to user
+        var rootCode = GetCurrentUserRootCode();
+        if (!rootCode.HasValue)
+            return Json(new { success = false, message = "Unable to determine user context" });
+
+        var lesson = _context.Lessons.FirstOrDefault(l => l.LessonCode == chapterCode && l.RootCode == rootCode.Value);
+        if (lesson == null)
+            return Json(new { success = false, message = "Lesson not found or access denied" });
+
+        // Start transaction
+        using var transaction = _context.Database.BeginTransaction();
+
+        try
+        {
+            // Create the question
+            var question = new Question
+            {
+                QuestionContent = questionContent.Trim(),
+                LessonCode = chapterCode,
+                ExamCode = examCode,
+                InsertUser = GetCurrentUserId(),
+                InsertTime = DateTime.Now
+            };
+
+            _context.Questions.Add(question);
+            _context.SaveChanges();
+
+            // Create the answers
+            for (int i = 0; i < answers.Count; i++)
+            {
+                var answer = new Answer
+                {
+                    AnswerContent = answers[i].Trim(),
+                    IsTrue = i == correctAnswerIndex,
+                    QuestionCode = question.QuestionCode,
+                    InsertUser = GetCurrentUserId(),
+                    InsertTime = DateTime.Now,
+                    IsActive = true
+                };
+                _context.Answers.Add(answer);
+            }
+
+            _context.SaveChanges();
+            transaction.Commit();
+
+            _logger.LogInformation("Successfully added question {QuestionCode} with {AnswerCount} answers to lesson {LessonCode}",
+                question.QuestionCode, answers.Count, chapterCode);
+
+            return Json(new { success = true, questionCode = question.QuestionCode });
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error adding question with answers to lesson {LessonCode}", chapterCode);
+        return Json(new { success = false, message = "Error saving question. Please try again." });
+    }
+}
+
+
+[HttpGet]
+public JsonResult GetQuestionWithAnswers(int questionCode)
+{
+    try
+    {
+        var question = _context.Questions
+            .Where(q => q.QuestionCode == questionCode)
+            .Select(q => new
+            {
+                questionCode = q.QuestionCode,
+                questionContent = q.QuestionContent,
+                lessonCode = q.LessonCode,
+                examCode = q.ExamCode,
+                answers = q.Answers
+                    .Where(a => a.IsActive)
+                    .OrderBy(a => a.AnswerCode)
+                    .Select(a => new
+                    {
+                        answerCode = a.AnswerCode,
+                        answerContent = a.AnswerContent,
+                        isTrue = a.IsTrue
+                    }).ToList()
+            })
+            .FirstOrDefault();
+
+        if (question == null)
+            return Json(new { success = false, message = "Question not found" });
+
+        return Json(new { success = true, question = question });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error loading question {QuestionCode} with answers", questionCode);
+        return Json(new { success = false, message = "Error loading question" });
+    }
+}
+
+        // REMOVE the duplicate UpdateQuestionWithAnswers method around line 483
+        // Keep only this version (with examCode parameter):
 
         [HttpPost]
         [RequirePageAccess("Question", "update")]
-        public JsonResult UpdateQuestionWithAnswers(int questionCode, string questionContent, List<string> answers, int correctAnswerIndex)
+        public JsonResult UpdateQuestionWithAnswers(int questionCode, string questionContent, List<string> answers, int correctAnswerIndex, int? examCode = null)
         {
             try
             {
+                // Find the question
                 var question = _context.Questions.FirstOrDefault(q => q.QuestionCode == questionCode);
                 if (question == null)
                     return Json(new { success = false, message = "Question not found" });
 
+                // Validation
                 if (string.IsNullOrWhiteSpace(questionContent))
                     return Json(new { success = false, message = "Question content is required" });
 
@@ -307,6 +520,11 @@ namespace centrny.Controllers
                     if (string.IsNullOrWhiteSpace(answers[i]))
                         return Json(new { success = false, message = $"Answer {i + 1} cannot be empty" });
                 }
+
+                // Check for duplicate answers
+                var duplicates = answers.GroupBy(a => a.Trim().ToLower()).Where(g => g.Count() > 1);
+                if (duplicates.Any())
+                    return Json(new { success = false, message = "Duplicate answers are not allowed" });
 
                 using var transaction = _context.Database.BeginTransaction();
 
@@ -314,6 +532,7 @@ namespace centrny.Controllers
                 {
                     // Update question
                     question.QuestionContent = questionContent.Trim();
+                    question.ExamCode = examCode;
                     question.LastUpdateUser = GetCurrentUserId();
                     question.LastUpdateTime = DateTime.Now;
 
@@ -356,7 +575,6 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "Error updating question. Please try again." });
             }
         }
-
         [HttpGet]
         public JsonResult GetQuestionForEdit(int questionCode)
         {

@@ -12,7 +12,6 @@
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
 <head>
-    <!-- Your existing head content stays the same -->
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
     @if (isArabic)
@@ -26,7 +25,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/Hamody.css" rel="stylesheet" />
     <style>
-        /* Your existing styles stay the same */
         :root {
             --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
             --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
@@ -41,12 +39,13 @@
             --border-radius: 18px;
             --border-radius-lg: 28px;
             --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18);
+            --sidebar-width: 320px;
         }
 
         html[dir="rtl"] body,
         html[dir="rtl"] .container-fluid,
         html[dir="rtl"] .profile-content,
-        html[dir="rtl"] #chapter-lesson-container,
+        html[dir="rtl"] #main-container,
         html[dir="rtl"] .modal-content {
             direction: rtl;
             text-align: right;
@@ -81,154 +80,328 @@
                 text-align: center;
             }
 
-        /* Enhanced Chapter Dropdown */
-        .chapter-selector {
+            .questions-header i {
+                margin-right: 12px;
+                color: #4f8cff;
+            }
+
+        /* Subject-Year Filter */
+        .subject-year-selector {
             background: var(--bg-white);
             border-radius: var(--border-radius);
             padding: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: var(--shadow-lg);
             border: 1px solid rgba(108,92,231,0.11);
         }
 
-            .chapter-selector h3 {
-                color: var(--primary-color);
-                margin-bottom: 1rem;
+            .subject-year-selector label {
                 font-weight: 600;
+                color: var(--primary-color);
+                margin-bottom: 0.5rem;
+                display: block;
             }
 
-        #chapter-dropdown {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: var(--border-radius);
-            background: #fafbff;
-            font-size: 1.1rem;
-            color: #333;
-            transition: all 0.3s ease;
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            gap: 1.5rem;
+            min-height: 600px;
         }
 
-            #chapter-dropdown:focus {
-                border-color: var(--primary-color);
-                outline: none;
-                box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
-            }
-
-        /* Enhanced Add Question Form */
-        .add-question-section {
+        /* Sidebar */
+        .lessons-sidebar {
+            width: var(--sidebar-width);
             background: var(--bg-white);
             border-radius: var(--border-radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem;
             box-shadow: var(--shadow-lg);
             border: 1px solid rgba(108,92,231,0.11);
-            display: none;
-            /* Add smooth animation */
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
-            .add-question-section.show {
-                opacity: 1;
-                transform: translateY(0);
+            .lessons-sidebar h3 {
+                color: var(--primary-color);
+                font-weight: 700;
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
             }
 
-        /* Questions Display */
-        .questions-display {
+        .chapter-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--primary-gradient-light);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+            .chapter-header:hover {
+                background: var(--primary-gradient);
+                color: white;
+                transform: translateX(2px);
+            }
+
+            .chapter-header i {
+                margin-right: 0.5rem;
+                transition: transform 0.2s ease;
+            }
+
+            .chapter-header.expanded i {
+                transform: rotate(90deg);
+            }
+
+        .lessons-list {
+            margin-top: 0.5rem;
+            margin-left: 1rem;
+            display: none;
+        }
+
+        .lesson-item {
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.25rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .lesson-item:hover {
+                background: var(--primary-gradient-light);
+                transform: translateX(2px);
+            }
+
+            .lesson-item.active {
+                background: var(--primary-gradient);
+                color: white;
+            }
+
+        .lesson-question-count {
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .lesson-item.active .lesson-question-count {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
             background: var(--bg-white);
             border-radius: var(--border-radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem;
             box-shadow: var(--shadow-lg);
             border: 1px solid rgba(108,92,231,0.11);
-            display: none;
+        }
+
+        .lesson-header-info {
+            background: var(--primary-gradient-light);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lesson-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Questions List */
+        .questions-container {
+            margin-top: 1.5rem;
         }
 
         .question-item {
             background: #f8f9fa;
             border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid var(--primary-color);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s ease;
         }
 
             .question-item:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 20px rgba(108, 92, 231, 0.15);
+                box-shadow: 0 4px 12px rgba(108, 92, 231, 0.15);
+                transform: translateY(-1px);
             }
 
         .question-content {
             font-size: 1.1rem;
-            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
             color: #333;
-            margin-bottom: 1rem;
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .answers-container {
             margin-top: 1rem;
-        }
-
-        .answer-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            background: white;
+            padding: 1rem;
+            background: #f8f9fa;
             border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            transition: background-color 0.2s ease;
+            border: 1px solid #dee2e6;
         }
 
-            .answer-item.correct {
-                background: #d4edda;
-                border-color: #c3e6cb;
-                color: #155724;
-            }
-
-            .answer-item:hover {
-                background: #f1f3f4;
-            }
-
-            .answer-item.correct:hover {
-                background: #c8e6c9;
-            }
-
-        .question-form-header {
+        .answer-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f0f0f0;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
         }
 
-            .question-form-header h3 {
-                color: var(--primary-color);
-                margin: 0;
-                font-weight: 600;
+            .answer-row.correct {
+                background: #d4edda;
+                border-color: #c3e6cb;
             }
 
-        .form-group {
-            margin-bottom: 1.5rem;
+        .answer-content {
+            flex: 1;
         }
 
-            .form-group label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 600;
-                color: #333;
+        .answer-status {
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+
+            .answer-status.correct {
+                color: #155724;
             }
 
+            .answer-status.incorrect {
+                color: #721c24;
+            }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                color: #dee2e6;
+            }
+
+        /* Modern Buttons */
+        .modern-btn {
+            font-weight: 600 !important;
+            padding: 0.65rem 1.3rem !important;
+            border-radius: var(--border-radius) !important;
+            border: none !important;
+            color: #fff !important;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+            font-size: 1rem !important;
+            cursor: pointer !important;
+            margin-right: 0.4rem !important;
+            transition: transform 0.16s, box-shadow 0.16s !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5em !important;
+        }
+
+            .modern-btn.primary-btn {
+                background: var(--primary-gradient) !important;
+            }
+
+            .modern-btn.success-btn {
+                background: var(--success-gradient) !important;
+            }
+
+            .modern-btn.danger-btn {
+                background: var(--danger-gradient) !important;
+            }
+
+            .modern-btn.secondary-btn {
+                background: var(--primary-gradient-light) !important;
+                color: var(--primary-color) !important;
+            }
+
+            .modern-btn:hover {
+                transform: scale(1.05) !important;
+                box-shadow: var(--shadow-lg) !important;
+            }
+
+        .btn-table {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.875rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+            .btn-table.add {
+                background: var(--success-gradient);
+                color: white;
+            }
+
+            .btn-table.edit {
+                background: var(--primary-gradient);
+                color: white;
+            }
+
+            .btn-table.delete {
+                background: var(--danger-gradient);
+                color: white;
+            }
+
+            .btn-table.stats {
+                background: var(--secondary-gradient);
+                color: white;
+            }
+
+            .btn-table:hover {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+
+        /* Modern Input */
         .modern-input {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: var(--border-radius);
-            background: #fafbff;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
             font-size: 1rem;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s ease;
+            background: #fff;
         }
 
             .modern-input:focus {
@@ -237,190 +410,288 @@
                 box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
             }
 
+        /* Modal Styles */
+        .modal-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 30, 30, 0.45);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.25s;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: var(--shadow-lg);
+            padding: 32px 24px;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            z-index: 10000;
+            animation: modalUpFade 0.35s cubic-bezier(.4,0,.2,1);
+        }
+
+        @@keyframes modalUpFade {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+            .form-group label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                color: var(--primary-color);
+            }
+
         textarea.modern-input {
             min-height: 100px;
             resize: vertical;
         }
 
-        /* Dynamic Answers Section */
-        .answers-section {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 2px solid #f0f0f0;
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
         }
 
-            .answers-section h4 {
-                color: var(--primary-color);
-                margin-bottom: 1.5rem;
-                font-weight: 600;
-            }
-
-        .answer-group {
+        /* Enhanced Modal Styles */
+        .answer-field {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding: 1rem;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
             background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
         }
+
+            .answer-field.correct-answer {
+                background: #d4edda;
+                border-color: #28a745;
+            }
+
+            .answer-field:hover {
+                background: #e9ecef;
+            }
+
+            .answer-field.correct-answer:hover {
+                background: #c3e6cb;
+            }
 
         .answer-input {
             flex: 1;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ddd;
+            border: none;
+            background: transparent;
+            padding: 0.5rem;
+            font-size: 1rem;
             border-radius: 6px;
-            font-size: 0.95rem;
+            transition: background-color 0.2s ease;
         }
 
-        .correct-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            white-space: nowrap;
-        }
-
-            .correct-checkbox input[type="radio"] {
-                width: 18px;
-                height: 18px;
-                accent-color: var(--primary-color);
+            .answer-input:focus {
+                background: white;
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
             }
 
+        .correct-radio {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #28a745;
+        }
+
         .remove-answer-btn {
-            background: var(--danger-gradient);
+            background: #dc3545;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s ease;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+            opacity: 0.8;
         }
 
             .remove-answer-btn:hover {
-                transform: scale(1.1);
+                opacity: 1;
+                transform: scale(1.05);
             }
 
-        .add-answer-btn {
-            background: var(--success-gradient);
+        .answer-number {
+            background: #6c5ce7;
             color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s ease;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-            .add-answer-btn:hover {
-                transform: translateY(-2px);
-            }
-
-        .modern-btn {
+            justify-content: center;
             font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            border: none;
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10);
-            font-size: 1rem;
-            cursor: pointer;
-            margin-right: 0.5rem;
-            transition: transform 0.16s, box-shadow 0.16s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5em;
+            font-size: 0.875rem;
+            flex-shrink: 0;
         }
 
-            .modern-btn.primary-btn {
-                background: var(--primary-gradient);
-            }
-
-            .modern-btn.secondary-btn {
-                background: var(--primary-gradient-light);
-                color: var(--primary-color);
-            }
-
-            .modern-btn.success-btn {
-                background: var(--success-gradient);
-            }
-
-            .modern-btn.danger-btn {
-                background: var(--danger-gradient);
-            }
-
-            .modern-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-lg);
-            }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 2px solid #f0f0f0;
+        .correct-answer .answer-number {
+            background: #28a745;
         }
 
-        /* Loading and Empty States */
-        .loading-state {
-            text-align: center;
-            padding: 3rem;
-            color: #666;
+        /* Validation styles */
+        .answer-field.error {
+            border-color: #dc3545;
+            background: #f8d7da;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #999;
+        /* Loading states */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-            .empty-state i {
-                font-size: 3rem;
-                color: #ddd;
-                margin-bottom: 1rem;
-            }
+        @@keyframes spin {
+            0%
+
+        {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+
+        }
 
         /* Responsive Design */
         @@media (max-width: 768px) {
-            .questions-header h2
+            .main-layout
 
         {
+            flex-direction: column;
+        }
+
+        .lessons-sidebar {
+            width: 100%;
+            max-height: 300px;
+        }
+
+        .questions-header h2 {
             font-size: 1.8rem;
         }
 
-        .chapter-selector,
-        .questions-display,
-        .add-question-section {
-            padding: 1rem;
+        .modern-btn {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9rem !important;
         }
 
-        .answer-group {
+        .btn-table {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+        }
+
+        .modal-content {
+            max-width: 95vw !important;
+            padding: 1rem !important;
+        }
+
+        .answer-field {
             flex-direction: column;
             align-items: stretch;
             gap: 0.5rem;
         }
 
-        .correct-checkbox {
+            .answer-field .answer-number {
+                align-self: flex-start;
+            }
+
+        .modal-actions {
+            flex-direction: column;
+            gap: 0.5rem !important;
+        }
+
+            .modal-actions .modern-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+        .lesson-header-info {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .question-actions {
             justify-content: center;
         }
 
-        .form-actions {
+        }
+
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus indicators */
+        .lesson-item:focus,
+        .chapter-header:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Print styles */
+        @@media print {
+            .modal-background, .lessons-sidebar, .question-actions
+
+        {
+            display: none !important;
+        }
+
+        .main-layout {
             flex-direction: column;
         }
 
-        .modern-btn {
+        .main-content {
             width: 100%;
-            justify-content: center;
+            box-shadow: none;
+            border: 1px solid #ddd;
         }
 
         }
@@ -436,114 +707,154 @@
 
     <div id="js-localization"
          data-search-placeholder="@Localizer["SearchPlaceholder"]"
-         data-chapter-name="@Localizer["ChapterName"]"
-         data-select-chapter="@Localizer["SelectChapter"]"
-         data-no-chapters="@Localizer["NoChapters"]"
-         data-loading="@Localizer["Loading"]"
-         data-add-question="@Localizer["AddQuestion"]"
-         data-question-content="@Localizer["QuestionContent"]"
-         data-answers="@Localizer["Answers"]"
-         data-add-answer="@Localizer["AddAnswer"]"
-         data-remove-answer="@Localizer["RemoveAnswer"]"
-         data-correct-answer="@Localizer["CorrectAnswer"]"
-         data-save="@Localizer["Save"]"
-         data-cancel="@Localizer["Cancel"]"
+         data-search-btn="@Localizer["SearchBtn"]"
+         data-clear-btn="@Localizer["ClearBtn"]"
+         data-select-subject-year="@Localizer["SelectSubjectYear"]"
+         data-no-lessons="@Localizer["NoLessons"]"
+         data-no-questions="@Localizer["NoQuestions"]"
+         data-add-question-btn="@Localizer["AddQuestionBtn"]"
+         data-edit-btn="@Localizer["EditBtn"]"
+         data-delete-btn="@Localizer["DeleteBtn"]"
+         data-show-answers-btn="@Localizer["ShowAnswersBtn"]"
+         data-add-answers-btn="@Localizer["AddAnswersBtn"]"
          data-processing="@Localizer["Processing"]"
          data-saved="@Localizer["Saved"]"
+         data-failed="@Localizer["Failed"]"
          data-error-occurred="@Localizer["ErrorOccurred"]"
          data-please-fill-all-fields="@Localizer["PleaseFillAllFields"]"
-         data-select-correct-answer="@Localizer["SelectCorrectAnswer"]"
-         data-add-at-least-one-answer="@Localizer["AddAtLeastOneAnswer"]"
-         data-no-questions="@Localizer["NoQuestions"]"
-         data-edit="@Localizer["Edit"]"
-         data-delete="@Localizer["Delete"]"
-         data-enter-question-content="@Localizer["EnterQuestionContent"]"
-         data-answer-content="@Localizer["AnswerContent"]"
-         data-correct="@Localizer["Correct"]" />
+         data-delete-question-confirm="@Localizer["DeleteQuestionConfirm"]"
+         data-delete-answer-confirm="@Localizer["DeleteAnswerConfirm"]"
+         data-lesson-selected="@Localizer["LessonSelected"]"
+         data-questions-for-lesson="@Localizer["QuestionsForLesson"]" />
 
-    <div class="container-fluid">
-        <!-- Chapter Selector -->
-        <div class="chapter-selector">
-            <h3><i class="fas fa-book"></i> @Localizer["SelectChapter"]</h3>
-            <select id="chapter-dropdown" class="form-select">
-                <option value="">@Localizer["SelectChapter"]...</option>
-            </select>
+    <div id="user-root-info-box" style="display: none;"></div>
+
+    <!-- Subject-Year Selector -->
+    <div class="subject-year-selector">
+        <label for="subjectYearSelect">
+            <i class="fas fa-filter"></i>
+            Select Subject & Year
+        </label>
+        <select id="subjectYearSelect" class="modern-input">
+            <option value="">-- Select Subject & Year --</option>
+        </select>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout" id="mainLayout" style="display: none;">
+        <!-- Lessons Sidebar -->
+        <div class="lessons-sidebar">
+            <h3>
+                <i class="fas fa-list-ul"></i>
+                Lessons Hierarchy
+            </h3>
+            <div id="lessonsHierarchy">
+                <div class="empty-state">
+                    <i class="fas fa-book-open"></i>
+                    <div>Select a subject and year to view lessons</div>
+                </div>
+            </div>
         </div>
 
-        <!-- MOVED: Add Question Form - Now appears right after chapter selector -->
-        <div id="add-question-section" class="add-question-section">
-            <div class="question-form-header">
-                <h3><i class="fas fa-plus-circle"></i> @Localizer["AddQuestion"]</h3>
-                <button id="close-question-form" class="modern-btn secondary-btn">
-                    <i class="fas fa-times"></i>
-                </button>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="noLessonSelected" class="empty-state">
+                <i class="fas fa-arrow-left"></i>
+                <div>Select a lesson from the sidebar to manage questions</div>
             </div>
 
-            <form id="question-form">
-                <div class="form-group">
-                    <label for="question-content-input">
-                        @Localizer["QuestionContent"] <span style="color: red;">*</span>
-                    </label>
-                    <textarea id="question-content-input" class="modern-input" rows="4"
-                              placeholder="@Localizer["EnterQuestionContent"]"></textarea>
+            <div id="lessonContent" style="display: none;">
+                <!-- Lesson Header -->
+                <div class="lesson-header-info">
+                    <div class="lesson-title">
+                        <i class="fas fa-book"></i>
+                        <span id="selectedLessonName">Lesson Name</span>
+                    </div>
+                    <button class="modern-btn primary-btn" id="addQuestionBtn">
+                        <i class="fas fa-plus"></i>
+                        Add Question
+                    </button>
                 </div>
 
-                <div class="answers-section">
-                    <h4><i class="fas fa-list"></i> @Localizer["Answers"]</h4>
-                    <div id="answers-container">
-                        <!-- Initial answer fields -->
-                        <div class="answer-group" data-answer-index="0">
-                            <input type="text" class="answer-input" placeholder="@Localizer["AnswerContent"]" required>
-                            <div class="correct-checkbox">
-                                <input type="radio" name="correct-answer" value="0" id="correct-0">
-                                <label for="correct-0">@Localizer["Correct"]</label>
-                            </div>
-                            <button type="button" class="remove-answer-btn" onclick="removeAnswer(0)" style="display: none;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                <!-- Search Bar for Questions -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="questionSearchInput" class="modern-input" placeholder="Search questions in this lesson..." style="flex: 1;">
+                        <button id="questionSearchBtn" class="modern-btn secondary-btn">
+                            <i class="fas fa-search"></i>
+                            Search
+                        </button>
+                        <button id="questionSearchClearBtn" class="modern-btn secondary-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
 
-                        <div class="answer-group" data-answer-index="1">
-                            <input type="text" class="answer-input" placeholder="@Localizer["AnswerContent"]" required>
-                            <div class="correct-checkbox">
-                                <input type="radio" name="correct-answer" value="1" id="correct-1">
-                                <label for="correct-1">@Localizer["Correct"]</label>
-                            </div>
-                            <button type="button" class="remove-answer-btn" onclick="removeAnswer(1)" style="display: none;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                <!-- Questions Container -->
+                <div class="questions-container" id="questionsContainer">
+                    <!-- Questions will be loaded here -->
+                </div>
+
+                <!-- Pagination -->
+                <div id="paginationContainer" style="text-align: center; margin-top: 1.5rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Question Modal with Answers -->
+    <div id="question-modal" class="modal-background">
+        <div class="modal-content" style="max-width: 650px;">
+            <h3 id="question-modal-title">Add Question with Answers</h3>
+            <form id="question-form">
+                <input type="hidden" id="question-id" name="QuestionCode" />
+                <input type="hidden" id="question-lessoncode" name="LessonCode" />
+
+                <!-- Question Content -->
+                <div class="form-group">
+                    <label for="question-content">Question Content <span style="color:red;">*</span></label>
+                    <textarea id="question-content" name="QuestionContent" required class="modern-input"
+                              placeholder="Enter your question here..." style="min-height: 80px;"></textarea>
+                </div>
+
+                <!-- Exam Code (Optional) -->
+                <div class="form-group">
+                    <label for="question-examcode">Exam Code</label>
+                    <input type="number" id="question-examcode" name="ExamCode" class="modern-input"
+                           placeholder="Optional exam reference" />
+                </div>
+
+                <!-- Answers Section -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <i class="fas fa-list-ol"></i>
+                        Answer Options <span style="color:red;">*</span>
+                        <small style="color: #666; font-weight: normal;">(Select one correct answer)</small>
+                    </label>
+
+                    <div id="answers-container">
+                        <!-- Answer fields will be added dynamically -->
                     </div>
 
-                    <button type="button" id="add-answer-btn" class="add-answer-btn">
-                        <i class="fas fa-plus"></i> @Localizer["AddAnswer"]
-                    </button>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="button" id="add-answer-btn" class="modern-btn secondary-btn">
+                            <i class="fas fa-plus"></i> Add Answer
+                        </button>
+                        <small style="color: #666;">Minimum 2 answers required</small>
+                    </div>
                 </div>
 
-                <div class="form-actions">
+                <div class="modal-actions" style="margin-top: 1.5rem;">
+                    <button type="submit" class="modern-btn success-btn" id="save-question-btn">
+                        <i class="fas fa-save"></i> Save Question & Answers
+                    </button>
                     <button type="button" id="cancel-question-btn" class="modern-btn secondary-btn">
-                        <i class="fas fa-times"></i> @Localizer["Cancel"]
-                    </button>
-                    <button type="submit" id="save-question-btn" class="modern-btn primary-btn">
-                        <i class="fas fa-save"></i> @Localizer["Save"]
+                        <i class="fas fa-times"></i> Cancel
                     </button>
                 </div>
 
-                <div id="question-message" class="mt-3"></div>
+                <div id="question-message" style="margin-top: 1rem; padding: 0.75rem; border-radius: 8px; display: none;"></div>
             </form>
-        </div>
-
-        <!-- Questions Display -->
-        <div id="questions-display" class="questions-display">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 id="selected-chapter-title"><i class="fas fa-question-circle"></i> @Localizer["Questions"]</h3>
-                <button id="add-question-btn" class="modern-btn primary-btn">
-                    <i class="fas fa-plus"></i> @Localizer["AddQuestion"]
-                </button>
-            </div>
-            <div id="questions-container">
-                <!-- Questions will be loaded here -->
-            </div>
         </div>
     </div>
 
