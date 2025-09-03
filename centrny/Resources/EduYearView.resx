@@ -21,7 +21,7 @@
 	<data name="Submit" xml:space="preserve"><value>Submit</value></data>
 	<data name="EduYearCode" xml:space="preserve"><value>Edu Year Code</value></data>
 	<data name="Actions" xml:space="preserve"><value>Actions</value></data>
-	<data name="YearsForActiveEduYear" xml:space="preserve"><value>Years for Active Edu Year</value></data>
+	<data name="YearsForActiveEduYear" xml:space="preserve"><value>Years</value></data>
 	<data name="AddYear" xml:space="preserve"><value>Add Year</value></data>
 	<data name="YearName" xml:space="preserve"><value>Year Name</value></data>
 	<data name="YearSort" xml:space="preserve"><value>Sort Order</value></data>

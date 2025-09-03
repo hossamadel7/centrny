@@ -234,7 +234,7 @@ namespace centrny.Controllers
 
             var Years = _db.Years
                 .Where(e => e.RootCode == rootCode)
-                .Select(e => e.YearCode)
+                .Select(e => new { e.YearCode, e.YearName })
                 .ToList();
 
           

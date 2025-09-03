@@ -27,7 +27,7 @@ namespace centrny.Controllers
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode ,
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode ,
     GetSessionString("Username")
             );
         }
@@ -187,30 +187,44 @@ namespace centrny.Controllers
             return Json(branches);
         }
         [RequirePageAccess("Question", "insert")]
-
+        [RequirePageAccess("Question", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddTeacherToSubject([FromBody] AddTeacherToSubjectDto dto)
         {
-          
             if (dto == null || dto.TeacherCode == 0 || dto.SubjectCode == 0 || dto.BranchCode == 0 || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-         
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherCode == dto.TeacherCode && t.RootCode == rootCode.Value);
+
+            if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
+                return Unauthorized();
+
+            // Validate Teacher belongs to current root and is active
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherCode == dto.TeacherCode && t.RootCode == rootCode.Value && t.IsActive);
             if (teacher == null) return BadRequest(SubjectRes.Subject_TeacherNotFound);
 
+            // Validate Branch belongs to current root
             var branch = await _context.Branches.FirstOrDefaultAsync(b => b.BranchCode == dto.BranchCode && b.RootCode == rootCode.Value);
             if (branch == null) return BadRequest(SubjectRes.Subject_BranchNotFound);
 
-            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
-          
+            // Validate Year belongs to current root
+            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode && y.RootCode == rootCode.Value);
+            if (year == null) return BadRequest("Selected year does not belong to your root or does not exist.");
+
+            // Validate Subject belongs to current root
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode && s.RootCode == rootCode.Value);
+            if (subject == null) return BadRequest("Selected subject does not belong to your root or does not exist.");
+
+            // Get the only active EduYear for this root
+            var activeEduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.RootCode == rootCode.Value && e.IsActive);
+            if (activeEduYear == null)
+                return BadRequest("No active EduYear found for your root.");
 
             var teach = new Teach
             {
                 TeacherCode = dto.TeacherCode,
                 SubjectCode = dto.SubjectCode,
-                EduYearCode = dto.EduYearCode,
+                EduYearCode = activeEduYear.EduCode, // set to the only active EduYear code for this root
                 BranchCode = dto.BranchCode,
                 RootCode = rootCode.Value,
                 YearCode = dto.YearCode,
@@ -220,6 +234,7 @@ namespace centrny.Controllers
                 InsertTime = DateTime.Now,
                 IsActive = true
             };
+
             _context.Teaches.Add(teach);
             await _context.SaveChangesAsync();
 

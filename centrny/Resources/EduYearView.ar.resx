@@ -21,7 +21,7 @@
 	<data name="Submit" xml:space="preserve"><value>حفظ</value></data>
 	<data name="EduYearCode" xml:space="preserve"><value>كود السنة التعليمية</value></data>
 	<data name="Actions" xml:space="preserve"><value>إجراءات</value></data>
-	<data name="YearsForActiveEduYear" xml:space="preserve"><value>السنوات للسنة التعليمية النشطة</value></data>
+	<data name="YearsForActiveEduYear" xml:space="preserve"><value>السنوات </value></data>
 	<data name="AddYear" xml:space="preserve"><value>إضافة سنة</value></data>
 	<data name="YearName" xml:space="preserve"><value>اسم السنة</value></data>
 	<data name="YearSort" xml:space="preserve"><value>ترتيب السنة</value></data>

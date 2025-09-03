@@ -24,17 +24,23 @@ namespace centrny.Controllers
             _context = context;
             _logger = logger;
         }
-
-        // --- SESSION HELPERS ---
-        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
-        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        private (int userCode, int groupCode, int rootCode, string username) GetSessionContext()
         {
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
+    GetSessionString("Username")
             );
+        }
+
+        private int GetRootCode()
+        {
+            return 
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+            ;
         }
         // ==================== REGISTRATION METHODS ====================
 
@@ -121,12 +127,11 @@ namespace centrny.Controllers
             }
         }
         [HttpGet]
-        [Route("Student/GetYearsForEduYear/{eduYearCode}")]
-        public async Task<IActionResult> GetYearsForEduYear(int eduYearCode)
+        [Route("Student/GetYearsForEduYear")]
+        public async Task<IActionResult> GetYearsForEduYear()
 
         {
-            var (userCode, groupCode, rootCode) = GetSessionContext();
-
+            var rootCode = GetRootCode();
             try
             {
                 var years = await _context.Years
@@ -138,7 +143,7 @@ namespace centrny.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading years for EduYear code {EduYearCode}", eduYearCode);
+                _logger.LogError(ex, "Error loading years");
                 return Json(new { error = "Failed to load years." });
             }
         }
@@ -735,7 +740,7 @@ namespace centrny.Controllers
         [Route("Register/{root_code:int}")]
         public async Task<IActionResult> PublicRegister(int root_code)
         {
-            var (userCode, groupCode, rootCode) = GetSessionContext();
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             try
             {
                 // Validate that the root exists and is active
@@ -1714,6 +1719,8 @@ namespace centrny.Controllers
         [Route("Student/MarkAttendance")]
         public async Task<IActionResult> MarkAttendance([FromBody] MarkAttendanceRequest request)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
             try
             {
                 if (request == null || string.IsNullOrEmpty(request.ItemKey))

@@ -6,9 +6,12 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
+using centrny.Attributes;
 
 namespace centrny.Controllers
 {
+    [RequirePageAccess("Branch")]
+
     [Authorize]
     public class BranchController : Controller
     {
@@ -18,10 +21,19 @@ namespace centrny.Controllers
         {
             _context = context;
         }
-
-        // Helper to get session values
-        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+        private (int userCode, int groupCode, int rootCode, string username) GetSessionContext()
+        {
+            return (
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
+    GetSessionString("Username")
+            );
+        }
+        // Helper to get session values
+     
 
         public async Task<IActionResult> Index()
         {
@@ -32,17 +44,15 @@ namespace centrny.Controllers
             var isCenterStr = GetSessionString("RootIsCenter");
             var centerName = GetSessionString("CenterName");
 
-            if (userCode == null || groupCode == null || rootCode == null)
-                return Unauthorized();
 
             bool isCenter = isCenterStr == "True";
 
-            ViewBag.UserRootCode = rootCode.Value;
-            ViewBag.UserGroupCode = groupCode.Value;
+            ViewBag.UserRootCode = rootCode;
+            ViewBag.UserGroupCode = groupCode;
             ViewBag.CurrentUserName = username;
             ViewBag.CenterName = centerName ?? "Unknown Center";
             ViewBag.IsCenter = isCenter;
-            ViewBag.UserCode = userCode.Value;
+            ViewBag.UserCode = userCode;
 
             return View();
         }
@@ -51,7 +61,7 @@ namespace centrny.Controllers
         public async Task<IActionResult> GetRootsIsCenterTrue()
         {
             var roots = await _context.Roots
-                .Where(r => r.IsCenter)
+                .Where(r => r.IsCenter && r.RootCode!=1)
                 .Select(r => new { r.RootCode, r.RootName, r.RootOwner })
                 .ToListAsync();
 
@@ -73,8 +83,7 @@ namespace centrny.Controllers
             // Use session rootCode if not provided
             if (rootCode == null)
                 rootCode = GetSessionInt("RootCode");
-            if (rootCode == null)
-                return Unauthorized();
+          ;
 
             var centers = await _context.Centers
                 .Where(c => c.RootCode == rootCode.Value)
@@ -89,8 +98,7 @@ namespace centrny.Controllers
         {
             if (rootCode == null)
                 rootCode = GetSessionInt("RootCode");
-            if (rootCode == null)
-                return Unauthorized();
+           
 
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode.Value)
@@ -110,11 +118,13 @@ namespace centrny.Controllers
 
             return Json(halls);
         }
-
+        [RequirePageAccess("Branch","insert")]
         // --- Add Center ---
         [HttpPost]
         public async Task<IActionResult> AddCenter([FromBody] CenterCreateDto dto)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
             if (dto == null) return BadRequest();
 
             if (string.IsNullOrWhiteSpace(dto.CenterName))
@@ -125,11 +135,8 @@ namespace centrny.Controllers
                 return BadRequest("Center Phone is required.");
 
             // Get OwnerName from root
-            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == dto.RootCode);
+            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == dto.RootCode && (( rootCode == dto.RootCode && rootCode != 1) || (rootCode != dto.RootCode && rootCode == 1)));
             if (root == null) return BadRequest("Root not found.");
-
-            dto.InsertUser = GetSessionInt("UserCode") ?? 0;
-            dto.InsertTime = DateTime.Now;
 
             var center = new Center
             {
@@ -138,8 +145,8 @@ namespace centrny.Controllers
                 CenterPhone = dto.CenterPhone,
                 OwnerName = root.RootOwner,
                 RootCode = dto.RootCode,
-                InsertUser = dto.InsertUser,
-                InsertTime = dto.InsertTime,
+                InsertUser = GetSessionInt("UserCode"),
+                InsertTime = DateTime.Now,
                 IsActive = true
             };
 
@@ -149,11 +156,15 @@ namespace centrny.Controllers
         }
 
         // --- Edit Center ---
+        [RequirePageAccess("Branch","update")]
         [HttpPut]
+
         public async Task<IActionResult> EditCenter([FromBody] CenterEditDto dto)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
             if (dto == null) return BadRequest();
-            var center = await _context.Centers.FindAsync(dto.CenterCode);
+            var center = await _context.Centers.FirstOrDefaultAsync(c=> c.CenterCode == dto.CenterCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
             if (center == null) return NotFound();
 
             center.CenterName = dto.CenterName;
@@ -162,7 +173,7 @@ namespace centrny.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-
+        [RequirePageAccess("Branch", "insert")]
         // --- Add Branch ---
         [HttpPost]
         public async Task<IActionResult> AddBranch([FromBody] BranchCreateDto dto)
@@ -176,9 +187,13 @@ namespace centrny.Controllers
             if (string.IsNullOrWhiteSpace(dto.Phone))
                 return BadRequest("Phone is required.");
 
-            dto.InsertUser = GetSessionInt("UserCode") ?? 0;
-            dto.InsertTime = DateTime.Now;
-            dto.RootCode = GetSessionInt("RootCode") ?? dto.RootCode;
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
+            if (dto == null) return BadRequest();
+            var center = await _context.Centers.FirstOrDefaultAsync(c => c.CenterCode == dto.CenterCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
+            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == dto.RootCode && ((rootCode == dto.RootCode && rootCode != 1) || (rootCode != dto.RootCode && rootCode == 1)));
+
+            if (center == null) return NotFound();
 
             var branch = new Branch
             {
@@ -188,8 +203,8 @@ namespace centrny.Controllers
                 StartTime = dto.StartTime,
                 CenterCode = dto.CenterCode,
                 RootCode = dto.RootCode,
-                InsertUser = dto.InsertUser,
-                InsertTime = dto.InsertTime,
+                InsertUser = GetSessionInt("UserCode"),
+                InsertTime = DateTime.Now,
                 IsActive = true
             };
 
@@ -197,13 +212,14 @@ namespace centrny.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-
+        [RequirePageAccess("Branch", "update")]
         // --- Edit Branch ---
         [HttpPut]
         public async Task<IActionResult> EditBranch([FromBody] BranchEditDto dto)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (dto == null) return BadRequest();
-            var branch = await _context.Branches.FindAsync(dto.BranchCode);
+            var branch = await _context.Branches.FirstOrDefaultAsync(c => c.BranchCode == dto.BranchCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
             if (branch == null) return NotFound();
 
             branch.BranchName = dto.BranchName;
@@ -214,41 +230,51 @@ namespace centrny.Controllers
             return Ok();
         }
 
+        [RequirePageAccess("Branch", "delete")]
         [HttpDelete]
         public async Task<IActionResult> DeleteCenter(int centerCode)
         {
-            var center = await _context.Centers.FindAsync(centerCode);
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
+            var center = await _context.Centers.FirstOrDefaultAsync(c => c.CenterCode == centerCode && c.RootCodeNavigation.IsCenter==false && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
             if (center == null) return NotFound();
 
             _context.Centers.Remove(center);
             await _context.SaveChangesAsync();
             return Ok();
         }
-
+        [RequirePageAccess("Branch", "delete")]
         [HttpDelete]
         public async Task<IActionResult> DeleteBranch(int branchCode)
         {
-            var branch = await _context.Branches.FindAsync(branchCode);
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
+            var branch = await _context.Branches.FirstOrDefaultAsync(c => c.BranchCode == branchCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
             if (branch == null) return NotFound();
 
             _context.Branches.Remove(branch);
             await _context.SaveChangesAsync();
             return Ok();
         }
-
+        [RequirePageAccess("Branch", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddHall([FromBody] HallCreateDto dto)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (dto == null)
                 return BadRequest();
+
+            var branch = await _context.Branches.FirstOrDefaultAsync(c => c.BranchCode == dto.BranchCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
+            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == dto.RootCode && ((rootCode == dto.RootCode && rootCode != 1) || (rootCode != dto.RootCode && rootCode == 1)));
+
 
             var hall = new Hall
             {
                 HallName = dto.HallName,
                 HallCapacity = dto.HallCapacity,
-                RootCode = GetSessionInt("RootCode") ?? dto.RootCode,
+                RootCode =  dto.RootCode,
                 BranchCode = dto.BranchCode,
-                InsertUser = GetSessionInt("UserCode") ?? 0,
+                InsertUser = GetSessionInt("UserCode"),
                 InsertTime = DateTime.Now
             };
 
@@ -257,14 +283,16 @@ namespace centrny.Controllers
 
             return Ok();
         }
-
+        [RequirePageAccess("Branch", "update")]
         [HttpPut]
         public async Task<IActionResult> EditHall([FromBody] EditHallDto dto)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
             if (dto == null)
                 return BadRequest();
 
-            var hall = await _context.Halls.FindAsync(dto.HallCode);
+            var hall = await _context.Halls.FirstOrDefaultAsync(c => c.HallCode == dto.HallCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
             if (hall == null) return NotFound();
 
             hall.HallName = dto.HallName;
@@ -276,7 +304,9 @@ namespace centrny.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteHall(int hallCode)
         {
-            var hall = await _context.Halls.FindAsync(hallCode);
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
+            var hall = await _context.Halls.FirstOrDefaultAsync(c => c.HallCode == hallCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
             if (hall == null) return NotFound();
 
             _context.Halls.Remove(hall);

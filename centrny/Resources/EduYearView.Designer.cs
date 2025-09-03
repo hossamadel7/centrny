@@ -241,7 +241,7 @@ namespace Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Years for Active Edu Year.
+        ///   Looks up a localized string similar to Years.
         /// </summary>
         public static string YearsForActiveEduYear {
             get {

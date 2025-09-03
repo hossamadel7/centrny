@@ -102,7 +102,7 @@ namespace centrny.Attributes
         {
             logger.LogInformation("=== DOMAIN-SPECIFIC AUTH CHECK ===");
 
-            var host = httpContext.Request.Host.Host;
+           var host = httpContext.Request.Host.Host;
 
             // ALWAYS resolve current domain's RootCode (don't trust session)
             var currentDomainRootCode = await ResolveDomainRootCode(host, dbContext, logger);

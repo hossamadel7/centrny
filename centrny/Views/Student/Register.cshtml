@@ -307,6 +307,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateStepButtons();
             setupEventListeners();
+               
 
             // EduYear change: dynamically update Years dropdown
             document.getElementById('eduYearCode').addEventListener('change', async function() {
@@ -315,7 +316,7 @@
                 yearSelect.innerHTML = '<option value="">@Localizer["Dropdown_AcademicYearDefault"]</option>';
                 if (!eduYearCode) return;
                 try {
-                    const response = await fetch(`/Student/GetYearsForEduYear/${eduYearCode}`);
+                    const response = await fetch(`/Student/GetYearsForEduYear`);
                     const years = await response.json();
                     if (years.error) {
                         showAlert(years.error, 'danger');
@@ -331,6 +332,8 @@
                     showAlert('@Localizer["Alert_FailedToLoadYears"]', 'danger');
                 }
             });
+
+            document.getElementById('eduYearCode').dispatchEvent(new Event("change"));
         });
 
         // Event listeners

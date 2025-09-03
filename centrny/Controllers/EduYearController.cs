@@ -6,9 +6,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using centrny.Attributes;
 
 namespace centrny.Controllers
 {
+    [RequirePageAccess("EduYear")]
     [Authorize]
     public class EduYearController : Controller
     {
@@ -20,19 +22,18 @@ namespace centrny.Controllers
         }
 
         // --- SESSION HELPERS ---
-        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
-        private bool IsCenterUser() => GetSessionString("RootIsCenter") == "True";
-        private (int? rootCode, int? groupCode, int? userCode, string username) GetSessionContext()
+        private (int userCode, int groupCode, int rootCode, string username) GetSessionContext()
         {
             return (
-                   _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
-                GetSessionInt("GroupCode"),
                 GetSessionInt("UserCode"),
-                GetSessionString("Username")
+                GetSessionInt("GroupCode"),
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
+    GetSessionString("Username")
             );
         }
-      
+
         // --- Authority Check via Session ---
         private bool UserHasEduYearPermission()
         {
@@ -40,10 +41,10 @@ namespace centrny.Controllers
             if (groupCode == null) return false;
             var page = _context.Pages.FirstOrDefault(p => p.PagePath == "EduYear/Index");
             if (page == null) return false;
-            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
+            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode && gp.PageCode == page.PageCode);
         }
 
-        private int GetCurrentUserId() => GetSessionInt("UserCode") ?? 0;
+        private int GetCurrentUserId() => GetSessionInt("UserCode");
 
         public IActionResult Index()
         {
@@ -55,15 +56,14 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEduYears()
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (!UserHasEduYearPermission())
                 return Json(new { success = false, message = "Access denied." });
 
-            var (rootCode, groupCode, userCode, username) = GetSessionContext();
-            if (rootCode == null)
-                return Unauthorized();
+           
 
             var eduYears = await _context.EduYears
-                .Where(e => e.RootCode == rootCode.Value)
+                .Where(e => e.RootCode == rootCode)
                 .Select(e => new
                 {
                     eduCode = e.EduCode,
@@ -78,22 +78,17 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLevelsAndYearsForActiveEduYear()
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
-
-            var (rootCode, groupCode, userCode, username) = GetSessionContext();
-            if (rootCode == null)
-                return Unauthorized();
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             var activeEduYear = await _context.EduYears
-                .Where(e => e.RootCode == rootCode.Value && e.IsActive)
+                .Where(e => e.RootCode == rootCode && e.IsActive)
                 .FirstOrDefaultAsync();
 
             if (activeEduYear == null)
                 return Json(new { activeEduYear = (object)null, levels = new List<object>() });
 
             var levels = await _context.Levels
-                .Where(l => l.RootCode == rootCode.Value)
+                .Where(l => l.RootCode == rootCode)
                 .OrderBy(l => l.LevelCode)
                 .Select(l => new
                 {
@@ -103,7 +98,7 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             var years = await _context.Years
-                .Where(y => y.RootCode == activeEduYear.EduCode)
+                .Where(y => y.RootCode == activeEduYear.RootCode)
                 .Select(y => new
                 {
                     yearCode = y.YearCode,
@@ -133,31 +128,21 @@ namespace centrny.Controllers
                 levels = levelsWithYears
             });
         }
-
+        [RequirePageAccess("EduYear", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddEduYear([FromBody] AddEduYearDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.EduName))
                 return Json(new { success = false, message = "Invalid data." });
 
-            var (rootCode, groupCode, userCode, username) = GetSessionContext();
-            if (rootCode == null) return Json(new { success = false, message = "Unauthorized." });
-
-            if (dto.IsActive)
-            {
-                var activeExists = await _context.EduYears.AnyAsync(e => e.RootCode == rootCode.Value && e.IsActive);
-                if (activeExists)
-                    return Json(new { success = false, message = "There is already an active Edu Year for this root. Only one can be active." });
-            }
-
+         
             var eduYear = new EduYear
             {
                 EduName = dto.EduName,
-                IsActive = dto.IsActive,
-                RootCode = rootCode.Value
+                IsActive = false,
+                RootCode = rootCode
             };
 
             _context.EduYears.Add(eduYear);
@@ -165,12 +150,13 @@ namespace centrny.Controllers
 
             return Json(new { success = true, eduCode = eduYear.EduCode, eduName = eduYear.EduName, isActive = eduYear.IsActive });
         }
+        [RequirePageAccess("EduYear", "update")]
+
 
         [HttpPost]
         public async Task<IActionResult> EditEduYear([FromBody] EditEduYearDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.EduName))
                 return Json(new { success = false, message = "Invalid data." });
@@ -194,16 +180,16 @@ namespace centrny.Controllers
             return Json(new { success = true, eduCode = eduYear.EduCode, eduName = eduYear.EduName, isActive = eduYear.IsActive });
         }
 
+        [RequirePageAccess("EduYear", "delete")]
+
         [HttpPost]
         public async Task<IActionResult> DeleteEduYear([FromBody] DeleteEduYearDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (dto == null || dto.EduCode == 0)
                 return Json(new { success = false, message = "Invalid data." });
 
-            var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.EduCode == dto.EduCode);
+            var eduYear = await _context.EduYears.FirstOrDefaultAsync(e => e.EduCode == dto.EduCode && e.RootCode==rootCode);
             if (eduYear == null)
                 return Json(new { success = false, message = "EduYear not found." });
 
@@ -214,30 +200,25 @@ namespace centrny.Controllers
         }
 
         [HttpPost]
+        [RequirePageAccess("EduYear", "insert")]
+
         public async Task<IActionResult> AddYear([FromBody] AddYearDto dto)
         {
-            
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
                 return Json(new { success = false, message = "Invalid data." });
 
-            var (rootCode, groupCode, userCode, username) = GetSessionContext();
-            if (rootCode == null) return Json(new { success = false, message = "Unauthorized." });
-
-            var activeEduYear = await _context.EduYears
-                .Where(e => e.RootCode == rootCode.Value && e.IsActive)
-                .FirstOrDefaultAsync();
-
-            if (activeEduYear == null)
-                return Json(new { success = false, message = "No active Edu Year for this root." });
-
+         
+           
+           
             var year = new Year
             {
                 YearName = dto.YearName,
                 YearSort = dto.YearSort,
                 LevelCode = dto.LevelCode,
                 RootCode = rootCode,
-                InsertUser = userCode ?? 0,
+                InsertUser = userCode ,
                 InsertTime = DateTime.Now
             };
 
@@ -246,16 +227,15 @@ namespace centrny.Controllers
 
             return Json(new { success = true, yearCode = year.YearCode, yearName = year.YearName, yearSort = year.YearSort, levelCode = year.LevelCode });
         }
+        [RequirePageAccess("EduYear", "update")]
 
         [HttpPost]
         public async Task<IActionResult> EditYear([FromBody] EditYearDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (dto == null || string.IsNullOrWhiteSpace(dto.YearName) || dto.LevelCode == 0)
                 return Json(new { success = false, message = "Invalid data." });
-            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
+            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode && y.RootCode==rootCode);
             if (year == null)
                 return Json(new { success = false, message = "Year not found." });
 
@@ -267,16 +247,18 @@ namespace centrny.Controllers
 
             return Json(new { success = true, yearCode = year.YearCode, yearName = year.YearName, yearSort = year.YearSort, levelCode = year.LevelCode });
         }
+        [RequirePageAccess("EduYear", "delete")]
 
         [HttpPost]
         public async Task<IActionResult> DeleteYear([FromBody] DeleteYearDto dto)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             try
             {
                 if (dto == null || dto.YearCode == 0)
                     return Json(new { success = false, message = "Invalid data." });
 
-                var year = await _context.Years.FindAsync(dto.YearCode);
+                var year = await _context.Years.FirstOrDefaultAsync(y=>y.YearCode== dto.YearCode && y.RootCode==rootCode);
                 if (year == null)
                     return Json(new { success = false, message = "Year not found." });
 
@@ -293,28 +275,25 @@ namespace centrny.Controllers
                 return Json(new { success = false, message = "An unexpected error occurred." });
             }
         }
+        [RequirePageAccess("EduYear", "insert")]
 
         [HttpPost]
         public async Task<IActionResult> AddLevel([FromBody] AddLevelDto dto)
         {
-            if (!UserHasEduYearPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (dto == null || string.IsNullOrWhiteSpace(dto.LevelName))
                 return Json(new { success = false, message = "Invalid data." });
 
-            var (rootCode, groupCode, userCode, username) = GetSessionContext();
-            if (rootCode == null) return Json(new { success = false, message = "Unauthorized." });
-
-            var exists = await _context.Levels.AnyAsync(l => l.RootCode == rootCode.Value && l.LevelName == dto.LevelName);
+          
+            var exists = await _context.Levels.AnyAsync(l => l.RootCode == rootCode && l.LevelName == dto.LevelName);
             if (exists)
                 return Json(new { success = false, message = "Level name already exists for this root." });
 
             var level = new Level
             {
                 LevelName = dto.LevelName,
-                RootCode = rootCode.Value,
-                InsertUser = userCode ?? 0,
+                RootCode = rootCode,
+                InsertUser = userCode ,
                 InsertTime = DateTime.Now
             };
 
