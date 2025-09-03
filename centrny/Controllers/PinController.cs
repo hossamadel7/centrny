@@ -14,8 +14,8 @@ using Microsoft.Extensions.Logging;
 
 namespace centrny.Controllers
 {
-    [Authorize]
-    [RequirePageAccess("Pin")]
+    
+    [RequirePageAccess("Codes generator")]
     public class PinController : Controller
     {
         private readonly CenterContext _context;
