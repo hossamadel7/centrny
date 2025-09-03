@@ -33,22 +33,11 @@ namespace centrny.Controllers
         }
 
         // --- Authority Check via Session ---
-        private bool UserHasSubjectPermission()
-        {
-            var groupCode = GetSessionInt("GroupCode");
-            if (groupCode == null) return false;
-            var page = _context.Pages.FirstOrDefault(p => p.PagePath == "Subject/Index");
-            if (page == null) return false;
-            return _context.GroupPages.Any(gp => gp.GroupCode == groupCode.Value && gp.PageCode == page.PageCode);
-        }
+      
 
         public async Task<IActionResult> Index()
         {
-            if (!UserHasSubjectPermission())
-            {
-                return View("~/Views/Login/AccessDenied.cshtml");
-            }
-
+          
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
            
 
@@ -62,9 +51,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubjects()
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+          
             var (userCode, groupCode, rootCode,username) = GetSessionContext();
 
             var subjects = await (from s in _context.Subjects
@@ -114,7 +101,7 @@ namespace centrny.Controllers
             return Json(teachJoin);
         }
 
-        [RequirePageAccess("Question","Update")]
+        [RequirePageAccess("Question", "Update")]
         [HttpPost]
         public async Task<IActionResult> EditTeachCenter([FromBody] EditTeachCenterDto dto)
         {
@@ -122,16 +109,19 @@ namespace centrny.Controllers
 
             if (dto == null)
                 return BadRequest("Invalid data");
+            if (!rootCode.HasValue)
+                return Unauthorized();
 
             var teach = await _context.Teaches.FirstOrDefaultAsync(t =>
                 t.TeacherCode == dto.TeacherCode &&
                 t.SubjectCode == dto.SubjectCode &&
                 t.BranchCode == dto.BranchCode &&
-                t.RootCode == dto.RootCode &&
-                t.EduYearCode == dto.EduYearCode);
+                t.EduYearCode == dto.EduYearCode &&
+                t.RootCode == rootCode.Value // <--- session rootCode only!
+            );
 
             if (teach == null)
-                return NotFound("Teach record not found.");
+                return NotFound("Teach record not found or you do not have access.");
 
             teach.CenterPercentage = dto.CenterPercentage;
             teach.CenterAmount = dto.CenterAmount;
@@ -170,9 +160,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTeachersByRoot()
         {
-            if (!UserHasSubjectPermission())
-                return Json(new { success = false, message = "Access denied." });
-
+         
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
            
 
@@ -241,13 +229,17 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> AddSubject([FromBody] AddSubjectDto dto)
         {
-           
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
             if (!userCode.HasValue || !groupCode.HasValue || !rootCode.HasValue)
                 return Unauthorized();
+
+            // Check the year belongs to root
+            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode && y.RootCode == rootCode.Value);
+            if (year == null)
+                return BadRequest("Selected year does not belong to your root or does not exist.");
 
             var subject = new Subject
             {
@@ -262,7 +254,6 @@ namespace centrny.Controllers
             _context.Subjects.Add(subject);
             await _context.SaveChangesAsync();
 
-            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == dto.YearCode);
             var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == rootCode.Value);
 
             return Json(new
@@ -273,11 +264,10 @@ namespace centrny.Controllers
                 RootName = root?.RootName,
                 YearName = year?.YearName,
                 subject.YearCode,
-               
             });
         }
-        [RequirePageAccess("Question", "update")]
 
+        [RequirePageAccess("Question", "update")]
         [HttpPost]
         public async Task<IActionResult> EditSubject([FromBody] EditSubjectDto dto)
         {
@@ -286,9 +276,15 @@ namespace centrny.Controllers
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
-            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode);
+          
+
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode && s.RootCode==rootCode);
+
             if (subject == null)
                 return NotFound(SubjectRes.Subject_SubjectNotFound);
+
+            // Root isolation check
+           
 
             subject.SubjectName = dto.SubjectName;
             subject.IsPrimary = dto.IsPrimary;
@@ -308,20 +304,25 @@ namespace centrny.Controllers
                 RootName = root?.RootName,
                 YearName = year?.YearName,
                 subject.YearCode,
-               
             });
         }
+
         [RequirePageAccess("Question", "delete")]
         [HttpPost]
         public async Task<IActionResult> DeleteSubject([FromBody] DeleteSubjectDto dto)
         {
-           
             if (dto == null || dto.SubjectCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
-            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode);
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+      
+
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode && s.RootCode == rootCode);
+
             if (subject == null)
                 return NotFound(SubjectRes.Subject_SubjectNotFound);
+
+           
 
             _context.Subjects.Remove(subject);
             await _context.SaveChangesAsync();
