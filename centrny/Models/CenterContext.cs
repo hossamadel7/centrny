@@ -934,37 +934,38 @@ public partial class CenterContext : DbContext
 
         modelBuilder.Entity<Learn>(entity =>
         {
-            entity.HasKey(e => new { e.StudentCode, e.SubjectCode, e.TeacherCode, e.ScheduleCode, e.EduYearCode, e.BranchCode, e.RootCode }).HasName("PK_Learn_1");
+            entity.HasKey(e => new { e.StudentCode, e.SubjectCode, e.TeacherCode, e.EduYearCode, e.RootCode });
 
             entity.ToTable("Learn");
 
             entity.Property(e => e.StudentCode).HasColumnName("Student_Code");
             entity.Property(e => e.SubjectCode).HasColumnName("Subject_Code");
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
-            entity.Property(e => e.ScheduleCode)
-                .HasDefaultValue(22)
-                .HasColumnName("Schedule_code");
             entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
-            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("Insert_Time");
             entity.Property(e => e.InsertUser).HasColumnName("Insert_User");
             entity.Property(e => e.IsActive).HasColumnName("isActive");
+            entity.Property(e => e.IsOffline).HasColumnName("isOffline");
             entity.Property(e => e.IsOnline).HasColumnName("isOnline");
             entity.Property(e => e.LastUpdateTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
+            entity.Property(e => e.ScheduleCode)
+                .HasDefaultValue(22)
+                .HasColumnName("Schedule_code");
+            entity.Property(e => e.Status).HasDefaultValue(true);
             entity.Property(e => e.StudentFee).HasColumnName("Student_Fee");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Learns)
                 .HasForeignKey(d => d.BranchCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Learn_Branch");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Learns)
@@ -979,7 +980,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.ScheduleCodeNavigation).WithMany(p => p.Learns)
                 .HasForeignKey(d => d.ScheduleCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Learn_Schedule");
 
             entity.HasOne(d => d.StudentCodeNavigation).WithMany(p => p.Learns)
@@ -1622,6 +1622,7 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Insert_Time");
             entity.Property(e => e.InsertUser).HasColumnName("Insert_user");
             entity.Property(e => e.IsActive).HasColumnName("isActive");
+            entity.Property(e => e.IsConfirmed).HasColumnName("isConfirmed");
             entity.Property(e => e.LastInsertTime)
                 .HasColumnType("datetime")
                 .HasColumnName("Last_insert_Time");
@@ -1949,16 +1950,16 @@ public partial class CenterContext : DbContext
 
         modelBuilder.Entity<Teach>(entity =>
         {
-            entity.HasKey(e => new { e.TeacherCode, e.SubjectCode, e.EduYearCode, e.BranchCode, e.RootCode, e.YearCode });
+            entity.HasKey(e => new { e.TeacherCode, e.SubjectCode, e.EduYearCode, e.RootCode, e.YearCode }).HasName("PK_Teach_1");
 
             entity.ToTable("Teach", tb => tb.HasTrigger("Trigger_After_Insert_Update_Center_Values"));
 
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
             entity.Property(e => e.SubjectCode).HasColumnName("Subject_Code");
             entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
-            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.CenterAmount).HasColumnName("Center_Amount");
             entity.Property(e => e.CenterPercentage).HasColumnName("Center_Percentage");
             entity.Property(e => e.InsertTime)
