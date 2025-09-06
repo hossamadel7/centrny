@@ -196,6 +196,168 @@ namespace centrny.Controllers
                 return Json(new { error = ex.Message, stackTrace = ex.StackTrace, innerException = ex.InnerException?.Message });
             }
         }
+
+
+        // Add these methods to your existing ReportsController.cs class
+
+        [HttpGet]
+        public async Task<IActionResult> StudentDetails(int id)
+        {
+            try
+            {
+                var context = await GetUserContextAsync();
+
+                // Get student basic information
+                var student = await _context.Students
+                    .Include(s => s.BranchCodeNavigation)
+                    .Include(s => s.YearCodeNavigation)
+                    .Where(s => s.StudentCode == id && s.RootCode == context.rootCode)
+                    .FirstOrDefaultAsync();
+
+                if (student == null)
+                {
+                    return Json(new { success = false, error = "Student not found" });
+                }
+
+                // Get current enrollments (Learn records)
+                var enrollments = await _context.Learns
+                    .Include(l => l.SubjectCodeNavigation)
+                    .Include(l => l.TeacherCodeNavigation)
+                    .Include(l => l.ScheduleCodeNavigation)
+                    .Include(l => l.BranchCodeNavigation)
+                    .Where(l => l.StudentCode == id && l.IsActive && l.RootCode == context.rootCode)
+                    .Select(l => new StudentEnrollmentDetailDto
+                    {
+                        SubjectCode = l.SubjectCode,
+                        SubjectName = l.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
+                        TeacherCode = l.TeacherCode,
+                        TeacherName = l.TeacherCodeNavigation.TeacherName ?? "Unknown Teacher",
+                        ScheduleCode = l.ScheduleCode,
+                        ScheduleName = l.ScheduleCodeNavigation.ScheduleName ?? "Unknown Schedule",
+                        BranchName = l.BranchCodeNavigation.BranchName ?? "Unknown Branch",
+                        EduYearCode = l.EduYearCode,
+                        IsOnline = l.IsOnline
+                    })
+                    .ToListAsync();
+
+                // Get physical attendance records with linked lesson information
+                var physicalAttendance = await _context.Attends
+                    .Include(a => a.Class)
+                        .ThenInclude(c => c.SubjectCodeNavigation)
+                    .Include(a => a.Class)
+                        .ThenInclude(c => c.TeacherCodeNavigation)
+                    .Include(a => a.Class)
+                        .ThenInclude(c => c.ClassLessonCodeNavigation) // Include linked lesson
+                    .Include(a => a.TypeNavigation)
+                    .Where(a => a.StudentId == id && a.RootCode == context.rootCode)
+                    .Select(a => new StudentAttendanceRecordDto
+                    {
+                        Type = "Physical",
+                        Date = a.AttendDate,
+                        SubjectName = a.Class.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
+                        TeacherName = a.Class.TeacherCodeNavigation.TeacherName ?? "Unknown Teacher",
+                        ClassName = a.Class.ClassName ?? "Unknown Class",
+                        LessonName = a.Class.ClassLessonCodeNavigation != null ? a.Class.ClassLessonCodeNavigation.LessonName : null, // Add lesson name
+                        AttendanceType = a.TypeNavigation.PaymentName ?? "Unknown Type",
+                        SessionPrice = a.SessionPrice,
+                        ClassCode = a.ClassId,
+                        Views = null,
+                        Status = null
+                    })
+                    .ToListAsync();
+
+                // Get online attendance records
+                var onlineAttendance = await _context.OnlineAttends
+                    .Include(oa => oa.LessonCodeNavigation)
+                        .ThenInclude(l => l.SubjectCodeNavigation)
+                    .Include(oa => oa.LessonCodeNavigation)
+                        .ThenInclude(l => l.TeacherCodeNavigation)
+                    .Where(oa => oa.StudentCode == id && oa.RootCode == context.rootCode)
+                    .Select(oa => new StudentAttendanceRecordDto
+                    {
+                        Type = "Online",
+                        Date = oa.InsertTime,
+                        SubjectName = oa.LessonCodeNavigation.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
+                        TeacherName = oa.LessonCodeNavigation.TeacherCodeNavigation.TeacherName ?? "Unknown Teacher",
+                        LessonName = oa.LessonCodeNavigation.LessonName ?? "Unknown Lesson",
+                        Views = oa.Views,
+                        Status = oa.Status ? "Completed" : "In Progress",
+                        ClassName = null,
+                        AttendanceType = null,
+                        SessionPrice = null,
+                        ClassCode = null
+                    })
+                    .ToListAsync();
+
+                // Combine and sort all attendance records by date descending
+                var allAttendance = physicalAttendance
+                    .Concat(onlineAttendance)
+                    .OrderByDescending(a => a.Date)
+                    .ToList();
+
+                return Json(new
+                {
+                    success = true,
+                    student = new
+                    {
+                        StudentCode = student.StudentCode,
+                        StudentName = student.StudentName ?? "Unknown Student",
+                        StudentPhone = student.StudentPhone ?? "",
+                        StudentParentPhone = student.StudentFatherPhone ?? "", // Map father phone to parent phone
+                        StudentMotherPhone = student.StudentMotherPhone ?? "",
+                        BranchName = student.BranchCodeNavigation?.BranchName ?? "Unknown Branch",
+                        YearName = student.YearCodeNavigation?.YearName ?? "Not Assigned",
+                        SubscriptionTime = student.SubscribtionTime.ToDateTime(TimeOnly.MinValue).ToString("MMM dd, yyyy"),
+                        IsActive = student.IsActive
+                    },
+                    enrollments = enrollments,
+                    attendanceRecords = allAttendance.Take(50).ToList(), // Limit initial records
+                    totalAttendanceCount = allAttendance.Count,
+                    isTeacher = context.isTeacher
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveStudentFromSchedule(int studentCode, int subjectCode, int teacherCode, int scheduleCode)
+        {
+            try
+            {
+                var context = await GetUserContextAsync();
+
+               
+                var learnRecord = await _context.Learns
+                    .Where(l => l.StudentCode == studentCode &&
+                               l.SubjectCode == subjectCode &&
+                               l.TeacherCode == teacherCode &&
+                               l.ScheduleCode == scheduleCode &&
+                               l.RootCode == context.rootCode)
+                    .FirstOrDefaultAsync();
+
+                if (learnRecord == null)
+                {
+                    return Json(new { success = false, error = "Enrollment record not found" });
+                }
+
+                // Deactivate the Learn record instead of deleting it
+                learnRecord.Status = false;
+                learnRecord.LastUpdateUser = context.user.UserCode;
+                learnRecord.LastUpdateTime = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Student removed from schedule successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> StudentEnrollmentReport(int? branchCode, int? subjectCode, int? yearCode, int page = 1, int pageSize = 20)
         {
@@ -1455,7 +1617,7 @@ namespace centrny.Controllers
                     .Where(l => l.TeacherCode == classDetails.TeacherCode &&
                               l.SubjectCode == classDetails.SubjectCode &&
                               l.ScheduleCode == classDetails.ScheduleCode &&
-                              l.IsActive)
+                              l.IsActive && l.Status.HasValue)
                     .Select(l => new
                     {
                         StudentCode = l.StudentCode,

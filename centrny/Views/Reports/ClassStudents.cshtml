@@ -262,6 +262,52 @@
     </div>
 </div>
 
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-graduate me-2"></i>
+                    <span id="modalStudentName">Student Details</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetailsContent">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p class="mt-2">Loading student details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Enrollment Confirmation Modal -->
+<div class="modal fade" id="removeEnrollmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Removal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Are you sure you want to remove <strong id="removeSubjectName"></strong> from this student's enrollment?
+                </div>
+                <p class="text-muted">This action will deactivate the enrollment record. The student will no longer attend classes for this subject.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRemoveBtn">
+                    <i class="fas fa-trash me-2"></i>Remove Enrollment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Attendance Type Modal -->
 <div class="modal fade" id="attendanceTypeModal" tabindex="-1">
     <div class="modal-dialog">
@@ -311,6 +357,506 @@
 </div>
 
 <style>
+    /* Student Details Modal CSS */
+/* Add this to your ClassStudents.cshtml view or include as a separate CSS file */
+
+/* Student Details Modal Styles */
+.student-details-modal-content {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.student-header-modal {
+    padding: 20px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gray-200);
+}
+
+.student-title-modal {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 12px;
+}
+
+.student-meta-modal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.meta-item-modal {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--white);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+}
+
+.meta-item-modal i {
+    color: var(--gray-500);
+    font-size: 11px;
+}
+
+.contact-info-modal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.contact-link-modal {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    transition: all 0.2s;
+}
+
+.contact-link-modal:hover {
+    background: var(--gray-50);
+    border-color: var(--primary);
+    text-decoration: none;
+}
+
+.modal-tabs {
+    margin-bottom: 20px;
+}
+
+.modal-tabs-nav {
+    display: flex;
+    background: var(--gray-100);
+    border-radius: 6px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.modal-tab-button {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.modal-tab-button:hover {
+    color: var(--primary);
+}
+
+.modal-tab-button.active {
+    color: var(--primary);
+    background: var(--white);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.modal-tab-content {
+    display: none;
+}
+
+.modal-tab-content.active {
+    display: block;
+}
+
+/* Enrollments in Modal */
+.enrollments-grid-modal {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.enrollment-card-modal {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.enrollment-card-modal:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.card-header-modal {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.subject-name-modal {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+}
+
+.schedule-name-modal {
+    font-size: 11px;
+    color: var(--gray-600);
+}
+
+.type-badge-modal {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.type-badge-modal.online {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--online);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.type-badge-modal.physical {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--physical);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.card-body-modal {
+    padding: 12px;
+}
+
+.teacher-info-modal, .branch-info-modal {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--gray-700);
+}
+
+.teacher-info-modal i, .branch-info-modal i {
+    color: var(--gray-500);
+    width: 14px;
+}
+
+.card-actions-modal {
+    padding: 8px 12px;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+}
+
+.btn-remove-modal {
+    width: 100%;
+    padding: 6px 12px;
+    border: 1px solid var(--danger);
+    border-radius: 4px;
+    background: var(--white);
+    color: var(--danger);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.btn-remove-modal:hover {
+    background: var(--danger);
+    color: var(--white);
+}
+
+/* Attendance Timeline in Modal */
+.attendance-filters-modal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+}
+
+.filter-group-modal {
+    display: flex;
+    gap: 12px;
+}
+
+.filter-group-modal label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.filter-group-modal input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+.records-count-modal {
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.attendance-timeline-modal {
+    position: relative;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.attendance-timeline-modal::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gray-200);
+}
+
+.timeline-item-modal {
+    position: relative;
+    margin-bottom: 16px;
+    margin-left: 40px;
+}
+
+.timeline-marker-modal {
+    position: absolute;
+    left: -40px;
+    top: 6px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 12px;
+    z-index: 1;
+}
+
+.timeline-item-modal.physical .timeline-marker-modal {
+    background: var(--physical);
+}
+
+.timeline-item-modal.online .timeline-marker-modal {
+    background: var(--online);
+}
+
+.timeline-content-modal {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.record-header-modal {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.record-title-modal h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+.record-date-modal {
+    text-align: right;
+    font-size: 12px;
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.record-time-modal {
+    display: block;
+    font-size: 10px;
+    color: var(--gray-500);
+    font-weight: 400;
+}
+
+.record-details-modal {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.detail-item-modal {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--gray-700);
+}
+
+.detail-item-modal i {
+    color: var(--gray-500);
+    width: 14px;
+}
+
+.empty-state-modal {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.empty-state-modal i {
+    font-size: 36px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.empty-state-modal h4 {
+    margin-bottom: 6px;
+    color: var(--gray-700);
+    font-size: 16px;
+}
+
+.empty-state-modal p {
+    font-size: 14px;
+}
+
+/* Status indicators */
+.status-active-modal {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.status-inactive-modal {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+/* Modal notifications */
+.modal-notification {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: 4px;
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 1060;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    animation: modalSlideDown 0.3s ease-out;
+}
+
+.modal-notification-success {
+    background: var(--success);
+}
+
+.modal-notification-error {
+    background: var(--danger);
+}
+
+@@keyframes modalSlideDown {
+    from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Make modal larger for better content display */
+.modal-xl {
+    max-width: 1200px;
+}
+
+/* Responsive for modal */
+@@media (max-width: 1200px) {
+    .modal-xl {
+        max-width: 95%;
+    }
+}
+
+@@media (max-width: 768px) {
+    .modal-dialog.modal-xl {
+        max-width: 95%;
+        margin: 10px auto;
+    }
+
+    .student-meta-modal {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .contact-info-modal {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .enrollments-grid-modal {
+        grid-template-columns: 1fr;
+    }
+
+    .timeline-item-modal {
+        margin-left: 25px;
+    }
+
+    .timeline-marker-modal {
+        left: -25px;
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .attendance-timeline-modal::before {
+        left: 10px;
+    }
+
+    .record-header-modal {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .record-details-modal {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .attendance-filters-modal {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}
     :root {
         --primary: #6366f1;
         --success: #10b981;
@@ -881,248 +1427,703 @@
 </style>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
-    // Global variables
-    const classCode = @Model.ClassCode;
-    let currentAttendanceData = {};
-    let attendanceTypes = [];
+    // Complete ClassStudents.cshtml JavaScript
+// Replace your existing script section with this complete version
 
-    // Initialize page
-    $(document).ready(function() {
-        loadAttendanceTypes();
+// Global variables
+const classCode = @Model.ClassCode;
+let currentAttendanceData = {};
+let attendanceTypes = [];
+
+// Student Details Modal variables
+let currentStudentCode = null;
+let removeEnrollmentData = {};
+
+// Initialize page
+$(document).ready(function() {
+    loadAttendanceTypes();
+});
+
+// Load attendance types from server
+function loadAttendanceTypes() {
+    $.ajax({
+        url: '/Reports/GetAttendanceTypes',
+        type: 'GET',
+        success: function(data) {
+            attendanceTypes = data;
+            populateAttendanceTypeDropdown();
+        },
+        error: function() {
+            console.log('Failed to load attendance types from server, using defaults');
+            // Use the actual types from your Lockup table
+            attendanceTypes = [
+                { paymentCode: 1, paymentName: 'Regular' },
+                { paymentCode: 2, paymentName: 'Free' },
+                { paymentCode: 3, paymentName: 'Discount' },
+                { paymentCode: 4, paymentName: 'Subscribed' }
+            ];
+            populateAttendanceTypeDropdown();
+        }
     });
+}
 
-    // Load attendance types from server
-    function loadAttendanceTypes() {
-        $.ajax({
-            url: '/Reports/GetAttendanceTypes',
-            type: 'GET',
-            success: function(data) {
-                attendanceTypes = data;
-                populateAttendanceTypeDropdown();
-            },
-            error: function() {
-                console.log('Failed to load attendance types from server, using defaults');
-                // Use the actual types from your Lockup table
-                attendanceTypes = [
-                    { paymentCode: 1, paymentName: 'Regular' },
-                    { paymentCode: 2, paymentName: 'Free' },
-                    { paymentCode: 3, paymentName: 'Discount' },
-                    { paymentCode: 4, paymentName: 'Subscribed' }
-                ];
-                populateAttendanceTypeDropdown();
-            }
-        });
-    }
+// Populate attendance type dropdown with icons and colors
+function populateAttendanceTypeDropdown() {
+    const dropdown = $('#attendanceType');
+    dropdown.empty();
+    dropdown.append('<option value="">Select attendance type...</option>');
 
-    // Populate attendance type dropdown with icons and colors
-    function populateAttendanceTypeDropdown() {
-        const dropdown = $('#attendanceType');
-        dropdown.empty();
-        dropdown.append('<option value="">Select attendance type...</option>');
-
-        attendanceTypes.forEach(type => {
-            let icon = '';
-            switch(type.paymentCode) {
-                case 1: icon = '💰'; break; // Regular
-                case 2: icon = '🆓'; break; // Free
-                case 3: icon = '🎯'; break; // Discount
-                case 4: icon = '📋'; break; // Subscribed
-                default: icon = '✅'; break;
-            }
-            dropdown.append(`<option value="${type.paymentCode}">${icon} ${type.paymentName}</option>`);
-        });
-    }
-
-    // Handle attendance type change to show/hide price input
-    function handleAttendanceTypeChange() {
-        const selectedType = $('#attendanceType').val();
-        const sessionPriceSection = $('#sessionPriceSection');
-
-        if (selectedType == '3') { // Discount type
-            sessionPriceSection.show();
-            $('#sessionPrice').attr('required', true);
-        } else {
-            sessionPriceSection.hide();
-            $('#sessionPrice').attr('required', false);
-            $('#sessionPrice').val(''); // Clear the value
+    attendanceTypes.forEach(type => {
+        let icon = '';
+        switch(type.paymentCode) {
+            case 1: icon = '💰'; break; // Regular
+            case 2: icon = '🆓'; break; // Free
+            case 3: icon = '🎯'; break; // Discount
+            case 4: icon = '📋'; break; // Subscribed
+            default: icon = '✅'; break;
         }
+        dropdown.append(`<option value="${type.paymentCode}">${icon} ${type.paymentName}</option>`);
+    });
+}
+
+// Handle attendance type change to show/hide price input
+function handleAttendanceTypeChange() {
+    const selectedType = $('#attendanceType').val();
+    const sessionPriceSection = $('#sessionPriceSection');
+
+    if (selectedType == '3') { // Discount type
+        sessionPriceSection.show();
+        $('#sessionPrice').attr('required', true);
+    } else {
+        sessionPriceSection.hide();
+        $('#sessionPrice').attr('required', false);
+        $('#sessionPrice').val(''); // Clear the value
+    }
+}
+
+// Show attendance type modal
+function showAttendanceTypeModal(classCode, studentCode, studentName, isCurrentlyPresent) {
+    currentAttendanceData = {
+        classCode: classCode,
+        studentCode: studentCode,
+        studentName: studentName,
+        isCurrentlyPresent: isCurrentlyPresent === 'true'
+    };
+
+    // Set modal title and student name
+    $('#attendanceStudentName').text(studentName);
+
+    if (currentAttendanceData.isCurrentlyPresent) {
+        // Student is currently present, asking to mark absent
+        $('#attendanceModalTitle').text('Mark Student Absent');
+        $('#attendanceAction').text('This student is currently marked as present.');
+        $('#attendanceTypeSection').hide();
+        $('#confirmAbsentSection').show();
+        $('#confirmAttendanceBtn').html('<i class="fas fa-times me-2"></i>Mark Absent');
+        $('#confirmAttendanceBtn').removeClass('btn-primary').addClass('btn-danger');
+    } else {
+        // Student is currently absent, asking to mark present
+        $('#attendanceModalTitle').text('Mark Student Present');
+        $('#attendanceTypeSection').show();
+        $('#confirmAbsentSection').hide();
+        $('#attendanceType').val(''); // Reset dropdown
+        $('#sessionPriceSection').hide(); // Hide price section initially
+        $('#sessionPrice').val(''); // Clear price input
+        $('#confirmAttendanceBtn').html('<i class="fas fa-check me-2"></i>Mark Present');
+        $('#confirmAttendanceBtn').removeClass('btn-danger').addClass('btn-primary');
     }
 
-    // Show attendance type modal
-    function showAttendanceTypeModal(classCode, studentCode, studentName, isCurrentlyPresent) {
-        currentAttendanceData = {
-            classCode: classCode,
-            studentCode: studentCode,
-            studentName: studentName,
-            isCurrentlyPresent: isCurrentlyPresent === 'true'
-        };
+    $('#attendanceTypeModal').modal('show');
+}
 
-        // Set modal title and student name
-        $('#attendanceStudentName').text(studentName);
-
-        if (currentAttendanceData.isCurrentlyPresent) {
-            // Student is currently present, asking to mark absent
-            $('#attendanceModalTitle').text('Mark Student Absent');
-            $('#attendanceAction').text('This student is currently marked as present.');
-            $('#attendanceTypeSection').hide();
-            $('#confirmAbsentSection').show();
-            $('#confirmAttendanceBtn').html('<i class="fas fa-times me-2"></i>Mark Absent');
-            $('#confirmAttendanceBtn').removeClass('btn-primary').addClass('btn-danger');
-        } else {
-            // Student is currently absent, asking to mark present
-            $('#attendanceModalTitle').text('Mark Student Present');
-            $('#attendanceTypeSection').show();
-            $('#confirmAbsentSection').hide();
-            $('#attendanceType').val(''); // Reset dropdown
-            $('#sessionPriceSection').hide(); // Hide price section initially
-            $('#sessionPrice').val(''); // Clear price input
-            $('#confirmAttendanceBtn').html('<i class="fas fa-check me-2"></i>Mark Present');
-            $('#confirmAttendanceBtn').removeClass('btn-danger').addClass('btn-primary');
+// Confirm attendance change
+$('#confirmAttendanceBtn').on('click', function() {
+    if (currentAttendanceData.isCurrentlyPresent) {
+        // Mark as absent - no type needed
+        submitAttendanceChange(false, null, null);
+    } else {
+        // Mark as present - require type selection
+         const selectedType = parseInt($('#attendanceType').val());
+        if (!selectedType) {
+            alert('Please select an attendance type.');
+            return;
         }
 
-        $('#attendanceTypeModal').modal('show');
-    }
+        let sessionPrice = null;
 
-    // Confirm attendance change
-    $('#confirmAttendanceBtn').on('click', function() {
-        if (currentAttendanceData.isCurrentlyPresent) {
-            // Mark as absent - no type needed
-            submitAttendanceChange(false, null, null);
-        } else {
-            // Mark as present - require type selection
-             const selectedType = parseInt($('#attendanceType').val());
-            if (!selectedType) {
-                alert('Please select an attendance type.');
+        // If discount type is selected, require session price
+        if (selectedType == '3') { // Discount
+            sessionPrice = $('#sessionPrice').val();
+            if (!sessionPrice || sessionPrice <= 0) {
+                alert('Please enter a valid session price for discount attendance.');
                 return;
             }
+            sessionPrice = parseFloat(sessionPrice);
+        }
 
-            let sessionPrice = null;
+        submitAttendanceChange(true, selectedType, sessionPrice);
+    }
+});
 
-            // If discount type is selected, require session price
-            if (selectedType == '3') { // Discount
-                sessionPrice = $('#sessionPrice').val();
-                if (!sessionPrice || sessionPrice <= 0) {
-                    alert('Please enter a valid session price for discount attendance.');
-                    return;
-                }
-                sessionPrice = parseFloat(sessionPrice);
+// Submit attendance change
+function submitAttendanceChange(isPresent, attendanceType, sessionPrice) {
+    const data = {
+        classCode: currentAttendanceData.classCode,
+        studentCode: currentAttendanceData.studentCode,
+        isPresent: isPresent,
+        attendanceType: attendanceType
+    };
+
+    // Add session price for discount type
+    if (sessionPrice !== null) {
+        data.sessionPrice = sessionPrice;
+    }
+
+    $.ajax({
+        url: '/Reports/MarkAttendanceWithType',
+        type: 'POST',
+        data: data,
+        success: function(data) {
+            $('#attendanceTypeModal').modal('hide');
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating attendance: ' + data.error);
             }
-
-            submitAttendanceChange(true, selectedType, sessionPrice);
+        },
+        error: function() {
+            $('#attendanceTypeModal').modal('hide');
+            alert('Failed to update attendance. Please try again.');
         }
     });
+}
 
-    // Submit attendance change
-    function submitAttendanceChange(isPresent, attendanceType, sessionPrice) {
-        const data = {
-            classCode: currentAttendanceData.classCode,
-            studentCode: currentAttendanceData.studentCode,
-            isPresent: isPresent,
-            attendanceType: attendanceType
-        };
-
-        // Add session price for discount type
-        if (sessionPrice !== null) {
-            data.sessionPrice = sessionPrice;
+// Legacy function for bulk operations (without type selection)
+function toggleStudentAttendance(classCode, studentCode, isPresent) {
+    $.ajax({
+        url: '/Reports/MarkAttendance',
+        type: 'POST',
+        data: {
+            classCode: classCode,
+            studentCode: studentCode,
+            isPresent: isPresent
+        },
+        success: function(data) {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating attendance: ' + data.error);
+            }
+        },
+        error: function() {
+            alert('Failed to update attendance. Please try again.');
         }
-
-        $.ajax({
-            url: '/Reports/MarkAttendanceWithType',
-            type: 'POST',
-            data: data,
-            success: function(data) {
-                $('#attendanceTypeModal').modal('hide');
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error updating attendance: ' + data.error);
-                }
-            },
-            error: function() {
-                $('#attendanceTypeModal').modal('hide');
-                alert('Failed to update attendance. Please try again.');
-            }
-        });
-    }
-
-    // Legacy function for bulk operations (without type selection)
-    function toggleStudentAttendance(classCode, studentCode, isPresent) {
-        $.ajax({
-            url: '/Reports/MarkAttendance',
-            type: 'POST',
-            data: {
-                classCode: classCode,
-                studentCode: studentCode,
-                isPresent: isPresent
-            },
-            success: function(data) {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error updating attendance: ' + data.error);
-                }
-            },
-            error: function() {
-                alert('Failed to update attendance. Please try again.');
-            }
-        });
-    }
-
-
-
-
-    // Send SMS
-    $('#sendSmsBtn').on('click', function() {
-        const message = $('#smsMessage').val().trim();
-        if (!message) {
-            alert('Please enter a message.');
-            return;
-        }
-
-        const studentCodes = window.currentAbsentStudents || [];
-
-        $.ajax({
-            url: '/Reports/SendSmsToParents',
-            type: 'POST',
-            data: {
-                studentCodes: studentCodes,
-                message: message
-            },
-            success: function(data) {
-                $('#smsModal').modal('hide');
-                if (data.success) {
-                    alert('SMS sent successfully to ' + data.sentCount + ' parents.');
-                } else {
-                    alert('Error sending SMS: ' + data.error);
-                }
-            },
-            error: function() {
-                alert('Failed to send SMS. Please try again.');
-            }
-        });
     });
+}
 
+// Send SMS
+$('#sendSmsBtn').on('click', function() {
+    const message = $('#smsMessage').val().trim();
+    if (!message) {
+        alert('Please enter a message.');
+        return;
+    }
 
-    // Contact functions
-    function callParent(studentName, parentPhone) {
-        if (!parentPhone) {
-            alert('No parent phone number available for ' + studentName);
-            return;
+    const studentCodes = window.currentAbsentStudents || [];
+
+    $.ajax({
+        url: '/Reports/SendSmsToParents',
+        type: 'POST',
+        data: {
+            studentCodes: studentCodes,
+            message: message
+        },
+        success: function(data) {
+            $('#smsModal').modal('hide');
+            if (data.success) {
+                alert('SMS sent successfully to ' + data.sentCount + ' parents.');
+            } else {
+                alert('Error sending SMS: ' + data.error);
+            }
+        },
+        error: function() {
+            alert('Failed to send SMS. Please try again.');
         }
-        window.location.href = `tel:${parentPhone}`;
-    }
+    });
+});
 
-    function sendSmsToParent(studentName, parentPhone) {
-        if (!parentPhone) {
-            alert('No parent phone number available for ' + studentName);
-            return;
+// Contact functions
+function callParent(studentName, parentPhone) {
+    if (!parentPhone) {
+        alert('No parent phone number available for ' + studentName);
+        return;
+    }
+    window.location.href = `tel:${parentPhone}`;
+}
+
+function sendSmsToParent(studentName, parentPhone) {
+    if (!parentPhone) {
+        alert('No parent phone number available for ' + studentName);
+        return;
+    }
+    const message = encodeURIComponent(`Dear Parent, ${studentName} was absent from today's class. Please contact the school for more information.`);
+    window.location.href = `sms:${parentPhone}?body=${message}`;
+}
+
+// =============================================================================
+// STUDENT DETAILS MODAL FUNCTIONS
+// =============================================================================
+
+// Updated viewStudentDetails function to use modal
+function viewStudentDetails(studentCode) {
+    currentStudentCode = studentCode;
+    $('#studentDetailsModal').modal('show');
+    loadStudentDetails(studentCode);
+}
+
+// FIXED JavaScript functions for proper data rendering
+
+// Load student details via AJAX - WORKING VERSION
+function loadStudentDetails(studentCode) {
+    const content = $('#studentDetailsContent');
+    
+    // Show loading state
+    content.html(`
+        <div class="text-center py-4">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p class="mt-2">Loading student details...</p>
+        </div>
+    `);
+
+    console.log('Loading student details for ID:', studentCode);
+
+    $.ajax({
+        url: `/Reports/StudentDetails/${studentCode}`,
+        type: 'GET',
+        success: function(data) {
+            console.log('Received data:', data);
+            
+            if (data.success) {
+                renderStudentDetails(data);
+            } else {
+                console.error('Server error:', data.error);
+                showError('Failed to load student details: ' + (data.error || 'Unknown error'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX error:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText,
+                error: error
+            });
+            showError('Failed to load student details. Please try again.');
         }
-        const message = encodeURIComponent(`Dear Parent, ${studentName} was absent from today's class. Please contact the school for more information.`);
-        window.location.href = `sms:${parentPhone}?body=${message}`;
+    });
+}
+
+// FIXED: Render student details in modal
+function renderStudentDetails(data) {
+    console.log('Rendering student details:', data);
+    
+    const student = data.student;
+    const enrollments = data.enrollments || [];
+    const attendanceRecords = data.attendanceRecords || [];
+    const totalAttendanceCount = data.totalAttendanceCount || 0;
+    const isTeacher = data.isTeacher;
+    
+    // Update modal title
+    $('#modalStudentName').text(student.studentName);
+
+    // Generate contact links
+    let contactHtml = '';
+    if (student.studentPhone) {
+        contactHtml += `<a href="tel:${student.studentPhone}" class="contact-link-modal">
+            <i class="fas fa-phone"></i> Student: ${student.studentPhone}
+        </a>`;
+    }
+    if (student.studentParentPhone) {
+        contactHtml += `<a href="tel:${student.studentParentPhone}" class="contact-link-modal">
+            <i class="fas fa-phone"></i> Father: ${student.studentParentPhone}
+        </a>`;
+    }
+    if (student.studentMotherPhone) {
+        contactHtml += `<a href="tel:${student.studentMotherPhone}" class="contact-link-modal">
+            <i class="fas fa-phone"></i> Mother: ${student.studentMotherPhone}
+        </a>`;
     }
 
-    function viewStudentDetails(studentCode) {
-        window.open(`/Students/Details/${studentCode}`, '_blank');
+    const content = `
+        <div class="student-details-modal-content">
+            <!-- Student Header -->
+            <div class="student-header-modal">
+                <div class="student-title-modal">${student.studentName}</div>
+                <div class="student-meta-modal">
+                    <span class="meta-item-modal">
+                        <i class="fas fa-id-badge"></i> ID: ${student.studentCode}
+                    </span>
+                    <span class="meta-item-modal">
+                        <i class="fas fa-building"></i> ${student.branchName}
+                    </span>
+                    <span class="meta-item-modal">
+                        <i class="fas fa-graduation-cap"></i> ${student.yearName}
+                    </span>
+                    <span class="meta-item-modal">
+                        <i class="fas fa-calendar-plus"></i> Joined: ${student.subscriptionTime}
+                    </span>
+                    <span class="meta-item-modal status-${student.isActive ? 'active' : 'inactive'}-modal">
+                        <i class="fas fa-circle"></i> ${student.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                </div>
+                ${contactHtml ? `<div class="contact-info-modal">${contactHtml}</div>` : ''}
+            </div>
+
+            <!-- Tabs -->
+            <div class="modal-tabs">
+                <nav class="modal-tabs-nav">
+                    <button class="modal-tab-button active" data-tab="enrollments-modal">
+                        <i class="fas fa-book"></i> Enrollments (${enrollments.length})
+                    </button>
+                    <button class="modal-tab-button" data-tab="attendance-modal">
+                        <i class="fas fa-calendar-check"></i> Attendance (${totalAttendanceCount})
+                    </button>
+                </nav>
+
+                <!-- Enrollments Tab -->
+                <div class="modal-tab-content active" id="enrollments-modal">
+                    ${renderEnrollments(enrollments, isTeacher)}
+                </div>
+
+                <!-- Attendance Tab -->
+                <div class="modal-tab-content" id="attendance-modal">
+                    ${renderAttendance(attendanceRecords, totalAttendanceCount)}
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('#studentDetailsContent').html(content);
+    initializeModalTabs();
+    initializeModalFilters();
+}
+
+// FIXED: Render enrollments section
+function renderEnrollments(enrollments, isTeacher) {
+    console.log('Rendering enrollments:', enrollments);
+    
+    if (!enrollments || enrollments.length === 0) {
+        return `
+            <div class="empty-state-modal">
+                <i class="fas fa-book-open"></i>
+                <h4>No Enrollments</h4>
+                <p>This student is not currently enrolled in any subjects.</p>
+            </div>
+        `;
     }
+
+    let html = '<div class="enrollments-grid-modal">';
+    
+    enrollments.forEach(enrollment => {
+        const typeClass = enrollment.isOnline ? 'online' : 'physical';
+        const typeIcon = enrollment.isOnline ? 'laptop' : 'chalkboard';
+        const typeText = enrollment.isOnline ? 'Online' : 'Physical';
+        
+        // Escape single quotes for onclick function
+        const safeSubjectName = enrollment.subjectName.replace(/'/g, "\\'");
+        
+        html += `
+            <div class="enrollment-card-modal">
+                <div class="card-header-modal">
+                    <div class="subject-info-modal">
+                        <h4 class="subject-name-modal">${enrollment.subjectName}</h4>
+                        <span class="schedule-name-modal">${enrollment.scheduleName}</span>
+                    </div>
+                    <div class="enrollment-type-modal">
+                        <span class="type-badge-modal ${typeClass}">
+                            <i class="fas fa-${typeIcon}"></i> ${typeText}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body-modal">
+                    <div class="teacher-info-modal">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>${enrollment.teacherName}</span>
+                    </div>
+                    <div class="branch-info-modal">
+                        <i class="fas fa-building"></i>
+                        <span>${enrollment.branchName}</span>
+                    </div>
+                </div>
+                <div class="card-actions-modal">
+                    <button class="btn-remove-modal" 
+                            onclick="confirmRemoveEnrollment(${enrollment.subjectCode}, ${enrollment.teacherCode}, ${enrollment.scheduleCode}, '${safeSubjectName}')">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+// FIXED: Render attendance section
+function renderAttendance(attendanceRecords, totalCount) {
+    console.log('Rendering attendance:', attendanceRecords);
+    
+    let html = `
+        <div class="attendance-filters-modal">
+            <div class="filter-group-modal">
+                <label>
+                    <input type="checkbox" id="showPhysicalModal" checked> 
+                    <span class="type-badge-modal physical"><i class="fas fa-chalkboard"></i> Physical</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="showOnlineModal" checked> 
+                    <span class="type-badge-modal online"><i class="fas fa-laptop"></i> Online</span>
+                </label>
+            </div>
+            <div class="records-count-modal">
+                Showing <span id="visibleCountModal">${attendanceRecords.length}</span> of ${totalCount} records
+            </div>
+        </div>
+    `;
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+        html += `
+            <div class="empty-state-modal">
+                <i class="fas fa-calendar-times"></i>
+                <h4>No Attendance Records</h4>
+                <p>This student has no recorded attendance yet.</p>
+            </div>
+        `;
+    } else {
+        html += '<div class="attendance-timeline-modal">';
+        
+        attendanceRecords.forEach(record => {
+            const typeClass = record.type ? record.type.toLowerCase() : 'unknown';
+            const typeIcon = record.type === 'Physical' ? 'chalkboard' : 'laptop';
+            
+            let date;
+            try {
+                date = new Date(record.date);
+                if (isNaN(date.getTime())) {
+                    date = new Date();
+                }
+            } catch (e) {
+                date = new Date();
+            }
+            
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            
+            html += `
+                <div class="timeline-item-modal ${typeClass}" data-type="${typeClass}">
+                    <div class="timeline-marker-modal">
+                        <i class="fas fa-${typeIcon}"></i>
+                    </div>
+                    <div class="timeline-content-modal">
+                        <div class="record-header-modal">
+                            <div class="record-title-modal">
+                                <h4>${record.type === 'Physical' ? (record.className || 'Unknown Class') : (record.lessonName || 'Unknown Lesson')}</h4>
+                            </div>
+                            <div class="record-date-modal">
+                                ${dateStr}
+                                <span class="record-time-modal">${timeStr}</span>
+                            </div>
+                        </div>
+                        <div class="record-details-modal">
+                            <div class="detail-item-modal">
+                                <i class="fas fa-book"></i>
+                                <span>${record.subjectName || 'Unknown Subject'}</span>
+                            </div>
+                            <div class="detail-item-modal">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>${record.teacherName || 'Unknown Teacher'}</span>
+                            </div>`;
+            
+            if (record.type === 'Physical') {
+                if (record.lessonName) {
+                    html += `
+                            <div class="detail-item-modal">
+                                <i class="fas fa-bookmark"></i>
+                                <span>Lesson: ${record.lessonName}</span>
+                            </div>`;
+                }
+                if (record.attendanceType) {
+                    html += `
+                            <div class="detail-item-modal">
+                                <i class="fas fa-tag"></i>
+                                <span>${record.attendanceType}</span>
+                            </div>`;
+                }
+                if (record.sessionPrice && record.sessionPrice > 0) {
+                    html += `
+                            <div class="detail-item-modal">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>$${record.sessionPrice.toFixed(2)}</span>
+                            </div>`;
+                }
+            } else {
+                html += `
+                            <div class="detail-item-modal">
+                                <i class="fas fa-eye"></i>
+                                <span>${record.views || 0} views</span>
+                            </div>
+                            <div class="detail-item-modal">
+                                <i class="fas fa-${record.status === 'Completed' ? 'check-circle' : 'clock'}"></i>
+                                <span>${record.status || 'Unknown'}</span>
+                            </div>`;
+            }
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+    }
+
+    return html;
+}
+
+// Initialize modal tabs
+function initializeModalTabs() {
+    $('.modal-tab-button').off('click').on('click', function() {
+        const targetTab = $(this).data('tab');
+        
+        // Update active states
+        $('.modal-tab-button').removeClass('active');
+        $(this).addClass('active');
+        
+        $('.modal-tab-content').removeClass('active');
+        $(`#${targetTab}`).addClass('active');
+    });
+}
+
+// Initialize modal filters
+function initializeModalFilters() {
+    $('#showPhysicalModal, #showOnlineModal').off('change').on('change', function() {
+        filterAttendanceRecordsModal();
+    });
+}
+
+// Filter attendance records in modal
+function filterAttendanceRecordsModal() {
+    const showPhysical = $('#showPhysicalModal').is(':checked');
+    const showOnline = $('#showOnlineModal').is(':checked');
+    
+    let visibleCount = 0;
+    
+    $('.timeline-item-modal').each(function() {
+        const type = $(this).data('type');
+        let shouldShow = false;
+        
+        if (type === 'physical' && showPhysical) shouldShow = true;
+        if (type === 'online' && showOnline) shouldShow = true;
+        
+        if (shouldShow) {
+            $(this).show();
+            visibleCount++;
+        } else {
+            $(this).hide();
+        }
+    });
+    
+    $('#visibleCountModal').text(visibleCount);
+}
+
+// Show error in modal
+function showError(message) {
+    $('#studentDetailsContent').html(`
+        <div class="text-center py-4">
+            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+            <h5 class="mt-3 text-danger">Error</h5>
+            <p class="text-muted">${message}</p>
+            <button class="btn btn-primary" onclick="loadStudentDetails(${currentStudentCode})">
+                <i class="fas fa-redo me-2"></i>Try Again
+            </button>
+        </div>
+    `);
+}
+
+// Enrollment removal functions
+function confirmRemoveEnrollment(subjectCode, teacherCode, scheduleCode, subjectName) {
+    removeEnrollmentData = {
+        subjectCode: subjectCode,
+        teacherCode: teacherCode,
+        scheduleCode: scheduleCode,
+        subjectName: subjectName
+    };
+    
+    $('#removeSubjectName').text(subjectName);
+    $('#removeEnrollmentModal').modal('show');
+}
+
+// Handle enrollment removal confirmation - Update the existing event handler
+$(document).off('click', '#confirmRemoveBtn').on('click', '#confirmRemoveBtn', function() {
+    const btn = $(this);
+    const originalText = btn.html();
+    
+    // Show loading state
+    btn.prop('disabled', true);
+    btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Removing...');
+    
+    $.ajax({
+        url: '/Reports/RemoveStudentFromSchedule',
+        type: 'POST',
+        data: {
+            studentCode: currentStudentCode,
+            subjectCode: removeEnrollmentData.subjectCode,
+            teacherCode: removeEnrollmentData.teacherCode,
+            scheduleCode: removeEnrollmentData.scheduleCode
+        },
+        success: function(data) {
+            btn.prop('disabled', false);
+            btn.html(originalText);
+            $('#removeEnrollmentModal').modal('hide');
+            
+            if (data.success) {
+                // Show success notification
+                showModalNotification('success', 'Enrollment removed successfully');
+                
+                // Reload student details after a short delay
+                setTimeout(() => {
+                    loadStudentDetails(currentStudentCode);
+                }, 1500);
+            } else {
+                showModalNotification('error', 'Error: ' + (data.error || 'Unknown error'));
+            }
+        },
+        error: function(xhr, status, error) {
+            btn.prop('disabled', false);
+            btn.html(originalText);
+            $('#removeEnrollmentModal').modal('hide');
+            showModalNotification('error', 'Failed to remove enrollment. Please try again.');
+            console.error('Error removing enrollment:', error);
+        }
+    });
+});
+
+// Modal notification system
+function showModalNotification(type, message) {
+    const notification = $(`
+        <div class="modal-notification modal-notification-${type}">
+            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}"></i>
+            <span>${message}</span>
+        </div>
+    `);
+    
+    $('.modal-content').prepend(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.fadeOut(300, () => notification.remove());
+    }, 3000);
+}
 </script>

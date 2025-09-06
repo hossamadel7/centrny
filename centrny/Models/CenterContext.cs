@@ -959,6 +959,7 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
+            entity.Property(e => e.Status).HasDefaultValue(true);
             entity.Property(e => e.StudentFee).HasColumnName("Student_Fee");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
 
@@ -1622,6 +1623,7 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Insert_Time");
             entity.Property(e => e.InsertUser).HasColumnName("Insert_user");
             entity.Property(e => e.IsActive).HasColumnName("isActive");
+            entity.Property(e => e.IsConfirmed).HasColumnName("isConfirmed");
             entity.Property(e => e.LastInsertTime)
                 .HasColumnType("datetime")
                 .HasColumnName("Last_insert_Time");

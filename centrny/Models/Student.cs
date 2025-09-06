@@ -11,6 +11,10 @@ public partial class Student
 
     public string StudentPhone { get; set; } = null!;
 
+    public string? StudentUsername { get; set; }
+
+    public string? StudentPassword { get; set; }
+
     public string StudentFatherPhone { get; set; } = null!;
 
     public string? StudentMotherPhone { get; set; }
@@ -18,6 +22,8 @@ public partial class Student
     public string? StudentFatherJob { get; set; }
 
     public string? StudentMotherJob { get; set; }
+
+    public bool? IsConfirmed { get; set; }
 
     public int RootCode { get; set; }
 
@@ -40,10 +46,6 @@ public partial class Student
     public int? LastInsertUser { get; set; }
 
     public DateTime? LastInsertTime { get; set; }
-
-    public string? StudentUsername { get; set; }
-
-    public string? StudentPassword { get; set; }
 
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 

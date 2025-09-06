@@ -35,6 +35,8 @@ public partial class Learn
 
     public int? StudentFee { get; set; }
 
+    public bool? Status { get; set; }
+
     public virtual Branch BranchCodeNavigation { get; set; } = null!;
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
