@@ -336,6 +336,7 @@
 	<data name="infoPrefix" xml:space="preserve">
     <value>ℹ️ </value>
   </data>
+	<data name="Label_Center" xml:space="preserve"><value>المركز</value></data>
 	<data name="Label_Type" xml:space="preserve"><value>النوع</value></data>
 	<data name="Label_CenterBranch" xml:space="preserve"><value>المركز / الفرع</value></data>
 	<data name="Label_TeacherSubject" xml:space="preserve"><value>المعلم / المادة</value></data>

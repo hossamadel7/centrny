@@ -236,8 +236,8 @@ function addEduYearActionListeners(tr, eduYear) {
                         .catch(err => {
                             Swal.fire({
                                 icon: 'error',
-                                title: resxDelete,
-                                text: err.message || resxLoading,
+                                title: '',
+                                text: "this educational year is related to some data in your system",
                             });
                         });
                 }

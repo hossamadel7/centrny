@@ -11,17 +11,19 @@ public partial class Learn
 
     public int TeacherCode { get; set; }
 
-    public int ScheduleCode { get; set; }
+    public int? ScheduleCode { get; set; }
 
     public int EduYearCode { get; set; }
 
-    public int BranchCode { get; set; }
+    public int? BranchCode { get; set; }
 
     public int RootCode { get; set; }
 
     public int? YearCode { get; set; }
 
     public bool IsOnline { get; set; }
+
+    public bool? IsOffline { get; set; }
 
     public bool IsActive { get; set; }
 
@@ -35,15 +37,15 @@ public partial class Learn
 
     public int? StudentFee { get; set; }
 
-    public bool? Status { get; set; }
+    public bool Status { get; set; }
 
-    public virtual Branch BranchCodeNavigation { get; set; } = null!;
+    public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
 
-    public virtual Schedule ScheduleCodeNavigation { get; set; } = null!;
+    public virtual Schedule? ScheduleCodeNavigation { get; set; }
 
     public virtual Student StudentCodeNavigation { get; set; } = null!;
 

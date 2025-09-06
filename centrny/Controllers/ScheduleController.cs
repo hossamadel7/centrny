@@ -36,6 +36,7 @@ namespace centrny.Controllers
                 .FirstOrDefaultAsync(e => e.RootCode == rootCode && e.IsActive);
         }
 
+
         private int? GetCurrentUserRootCode()
         {
             if (HttpContext.Items.ContainsKey("CurrentUserRootCode"))
@@ -49,18 +50,17 @@ namespace centrny.Controllers
             }
             return null;
         }
-        // --- SESSION HELPERS ---
-        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
-        private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
+        private (int userCode, int groupCode, int rootCode, string username) GetSessionContext()
         {
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
+    GetSessionString("Username")
             );
         }
-
         private bool IsCurrentUserTeacher()
         {
             var isCenterClaim = User.FindFirst("IsCenter");
@@ -1555,7 +1555,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetYearsByEduYear(int eduYearCode)
         {
-            var (userCode, groupCode, rootCode) = GetSessionContext();
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             try
             {
                 var userRootCode = GetCurrentUserRootCode();
@@ -1588,6 +1588,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubjectsForTeacherByYearAndBranch(int teacherCode, int yearCode, int? branchCode = null)
         {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
             try
             {
                 var userRootCode = GetCurrentUserRootCode();

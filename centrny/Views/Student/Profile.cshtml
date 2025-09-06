@@ -1,8 +1,8 @@
 ﻿@using Microsoft.Extensions.Localization
 @using System.Globalization
 @inject IStringLocalizerFactory LocalizerFactory
-@model centrny.Controllers.StudentProfileViewModel
-
+@using centrny.Controllers
+@model StudentProfileViewModel
 @{
     var Localizer = LocalizerFactory.Create("Student", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
     ViewData["Title"] = Localizer["StudentProfile"];

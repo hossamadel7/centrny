@@ -336,6 +336,7 @@
 	<data name="infoPrefix" xml:space="preserve">
     <value>ℹ️ </value>
   </data>
+	<data name="Label_Center" xml:space="preserve"><value>Center</value></data>
 	<data name="Label_Type" xml:space="preserve"><value>Type</value></data>
 	<data name="Label_CenterBranch" xml:space="preserve"><value>Center / Branch</value></data>
 	<data name="Label_TeacherSubject" xml:space="preserve"><value>Teacher / Subject</value></data>

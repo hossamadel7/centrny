@@ -6,9 +6,9 @@
 @{
     var Localizer = LocalizerFactory.Create("Register", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
     ViewData["Title"] = Localizer["Title_StudentRegistration"];
-    Layout = null; // No layout for clean registration experience
+    Layout = null;
     var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-
+    var activeEduYear = Model.AvailableEduYears.FirstOrDefault();
 }
 
 <!DOCTYPE html>
@@ -19,6 +19,7 @@
     <title>@ViewData["Title"] - @Model.RootName</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/student-registration.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png">
     <style>
         body {
@@ -40,7 +41,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
         }
 
@@ -86,7 +87,7 @@
                 box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
             }
 
-        .btn-primary {
+        .btn-primary, .btn-success, .btn-secondary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             border-radius: 10px;
@@ -97,7 +98,7 @@
             width: 100%;
         }
 
-            .btn-primary:hover {
+            .btn-primary:hover, .btn-success:hover, .btn-secondary:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
             }
@@ -143,9 +144,50 @@
                 margin-bottom: 8px;
                 color: #6c757d;
             }
+
+        /* Step indicator styles */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            border-radius: 50%;
+            background: #e1e5e9;
+            color: #667eea;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid #e1e5e9;
+            transition: background 0.2s;
+        }
+
+            .step.active, .step.completed {
+                background: #667eea;
+                color: white;
+                border: 2px solid #764ba2;
+            }
+
+        .form-step {
+            display: none;
+        }
+
+            .form-step.active {
+                display: block;
+            }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
     </style>
 </head>
-
 <body>
     <div class="registration-container">
         <div class="registration-card">
@@ -156,7 +198,6 @@
                 <p>@Localizer["Header_Journey"]</p>
             </div>
 
-            <!-- Body -->
             <div class="registration-body">
                 <!-- Instructions -->
                 <div class="instructions">
@@ -167,6 +208,15 @@
                         <li>@Localizer["Instruction_3"]</li>
                         <li>@Localizer["Instruction_4"]</li>
                     </ul>
+                </div>
+
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1">1</div>
+                    <div class="step" id="step2">2</div>
+                    <div class="step" id="step3">3</div>
+                    <div class="step" id="step4">4</div>
+                    <div class="step" id="step5">5</div>
                 </div>
 
                 <!-- Validation Errors -->
@@ -183,118 +233,231 @@
                     </div>
                 }
 
-                <!-- Registration Form -->
-                <form method="post" asp-action="PublicRegister" asp-route-root_code="@Model.RootCode">
-
-                    <!-- Student Name -->
-                    <div class="mb-3">
-                        <label class="form-label" for="studentName">
-                            @Localizer["Label_FullName"] <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" class="form-control" id="studentName" name="StudentName"
-                               value="@ViewBag.StudentName" required maxlength="100"
-                               placeholder="@Localizer["Placeholder_FullName"]">
-                        @Html.ValidationMessage("StudentName", "", new { @class = "text-danger" })
-                    </div>
-
-                    <!-- Contact Information -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label" for="studentPhone">
-                                    @Localizer["Label_StudentPhone"] <span class="text-danger">*</span>
-                                </label>
-                                <input type="tel" class="form-control" id="studentPhone" name="StudentPhone"
-                                       value="@ViewBag.StudentPhone" required maxlength="20"
-                                       placeholder="@Localizer["Placeholder_Phone"]">
-                                @Html.ValidationMessage("StudentPhone", "", new { @class = "text-danger" })
+                <!-- Registration Form Multi-Step -->
+                <form id="registrationForm" method="post" asp-action="PublicRegister" asp-route-root_code="@Model.RootCode">
+                    <!-- Step 1: Personal Information -->
+                    <div class="form-step active" id="step1Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-user text-primary me-2"></i>
+                            @Localizer["Label_PersonalInformation"]
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="studentName">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="studentName" name="StudentName" required maxlength="100" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="birthDate">Birthdate <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="birthDate" name="BirthDate" required />
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label" for="parentPhone">
-                                    @Localizer["Label_ParentPhone"] <span class="text-danger">*</span>
-                                </label>
-                                <input type="tel" class="form-control" id="parentPhone" name="StudentParentPhone"
-                                       value="@ViewBag.StudentParentPhone" required maxlength="20"
-                                       placeholder="@Localizer["Placeholder_ParentPhone"]">
-                                @Html.ValidationMessage("StudentParentPhone", "", new { @class = "text-danger" })
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="studentPhone">Student Phone <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" required maxlength="20" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="parentPhone">Father Phone <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="parentPhone" name="StudentFatherPhone" required maxlength="20" />
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Birth Date and Gender -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label" for="birthDate">
-                                    @Localizer["Label_Birthdate"] <span class="text-danger">*</span>
-                                </label>
-                                <input type="date" class="form-control" id="birthDate" name="BirthDate"
-                                       value="@ViewBag.BirthDate" required>
-                                @Html.ValidationMessage("BirthDate", "", new { @class = "text-danger" })
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="motherPhone">Mother Phone <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="motherPhone" name="StudentMotherPhone" required maxlength="20" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="fatherJob">Father Job <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="fatherJob" name="StudentFatherJob" required maxlength="50" />
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">@Localizer["Label_Gender"]</label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="motherJob">Mother Job <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="motherJob" name="StudentMotherJob" required maxlength="50" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
                                 <div class="d-flex gap-3 mt-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="Gender" id="genderMale" value="true"
-                                        @(ViewBag.Gender?.ToString() == "True" ? "checked" : "")>
-                                        <label class="form-check-label" for="genderMale">@Localizer["Label_Male"]</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="Gender" id="genderFemale" value="false"
-                                        @(ViewBag.Gender?.ToString() == "False" ? "checked" : "")>
-                                        <label class="form-check-label" for="genderFemale">@Localizer["Label_Female"]</label>
-                                    </div>
+                                    <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
+                                    <label class="form-check-label" for="genderMale">Male</label>
+                                    <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
+                                    <label class="form-check-label" for="genderFemale">Female</label>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Academic Information -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label class="form-label" for="yearCode">
-                                    @Localizer["Label_AcademicYear"] <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select" id="yearCode" name="YearCode" required>
-                                    <option value="">@Localizer["Dropdown_AcademicYearDefault"]</option>
-                                    @foreach (var year in Model.AvailableYears)
+                    <!-- Step 2: Mode Selection and Academic Information -->
+                    <div class="form-step" id="step2Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-school text-primary me-2"></i>
+                            Academic Information
+                        </h3>
+                        <div class="mb-4">
+                            <label class="form-label">How do you want to study? <span class="text-danger">*</span></label>
+                            <div>
+                                <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
+                                <label class="form-check-label me-4" for="modeOffline">Offline (in center)</label>
+                                <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
+                                <label class="form-check-label" for="modeOnline">Online</label>
+                            </div>
+                        </div>
+                        <div class="row" id="branchRow">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="branchCode">Branch <span class="text-danger">*</span></label>
+                                <select class="form-select" id="branchCode" name="BranchCode" required>
+                                    <option value="">Select Branch</option>
+                                    @foreach (var branch in Model.AvailableBranches)
                                     {
-                                        <option value="@year.Value" selected="@(ViewBag.YearCode?.ToString() == year.Value ? "selected" : null)">
-                                            @year.Text
-                                        </option>
+                                        <option value="@branch.Value">@branch.Text</option>
                                     }
                                 </select>
-                                @Html.ValidationMessage("YearCode", "", new { @class = "text-danger" })
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="yearCode">Academic Year <span class="text-danger">*</span></label>
+                                <select class="form-select" id="yearCode" name="YearCode" required>
+                                    <option value="">Select Academic Year</option>
+                                    @foreach (var year in Model.AvailableYears)
+                                    {
+                                        <option value="@year.Value">@year.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" id="yearOnlyRow" style="display:none;">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="yearCodeOnline">Academic Year <span class="text-danger">*</span></label>
+                                <select class="form-select" id="yearCodeOnline" name="YearCodeOnline">
+                                    <option value="">Select Academic Year</option>
+                                    @foreach (var year in Model.AvailableYears)
+                                    {
+                                        <option value="@year.Value">@year.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- EduYear: Disabled, hidden input always posted -->
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" for="eduYearCodeDisplay">Education Year</label>
+                            <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                            <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-user-plus me-2"></i>@Localizer["Btn_CompleteRegistration"]
-                        </button>
+                    <!-- Step 3: Subject Selection -->
+                    <div class="form-step" id="step3Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-books text-primary me-2"></i>
+                            Subject Selection
+                        </h3>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Please select your subjects.
+                        </div>
+                        <div id="availableSubjects"></div>
+                        <div id="selectedSubjectsSummary" class="mt-4" style="display: none;">
+                            <h5>Selected Subjects</h5>
+                            <div id="selectedSubjectsList"></div>
+                        </div>
                     </div>
 
-                    <!-- Additional Information -->
+                    <!-- Step 4: Schedule OR PIN -->
+                    <div class="form-step" id="step4Content">
+                        <div id="offlineScheduleSection">
+                            <h3 class="mb-4">
+                                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                Schedule Selection
+                            </h3>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Please select a schedule for each subject.
+                            </div>
+                            <div id="scheduleSelection"></div>
+                        </div>
+                        <div id="onlinePinSection" style="display:none;">
+                            <h3 class="mb-4">
+                                <i class="fas fa-key text-primary me-2"></i>
+                                Online Registration PIN
+                            </h3>
+                            <div class="mb-3">
+                                <label for="pinCode" class="form-label">Enter PIN Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="pinCode" maxlength="20" required autocomplete="off" />
+                                <div id="pinError" class="text-danger mt-2"></div>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="validatePinBtn">Validate PIN</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Confirmation OR Username/Password -->
+                    <div class="form-step" id="step5Content">
+                        <div id="offlineSummarySection">
+                            <h3 class="mb-4">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Confirmation
+                            </h3>
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Review your information before submitting.
+                            </div>
+                            <div id="registrationSummary"></div>
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="termsAccepted" required>
+                                <label class="form-check-label" for="termsAccepted">
+                                    I agree to the terms and conditions
+                                </label>
+                            </div>
+                        </div>
+                        <div id="onlineUserSection" style="display:none;">
+                            <h3 class="mb-4">
+                                <i class="fas fa-user-lock text-primary me-2"></i>
+                                Create Online Account
+                            </h3>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" maxlength="40" required autocomplete="off" />
+                                <div id="userError" class="text-danger mt-2"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" maxlength="40" required />
+                            </div>
+                            <button type="button" class="btn btn-success" id="completeOnlineBtn">Register Online</button>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="navigation-buttons">
+                        <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                            <i class="fas fa-arrow-left me-2"></i>Prev
+                        </button>
+                        <div></div>
+                        <button type="button" class="btn btn-primary" id="nextBtn">
+                            Next <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                        <button type="button" class="btn btn-success" id="submitBtn" style="display: none;">
+                            <i class="fas fa-check me-2"></i>Complete Registration
+                        </button>
+                    </div>
                     <div class="text-center mt-4">
                         <small class="text-muted">
                             <i class="fas fa-lock me-1"></i>
-                            @Localizer["Info_Secure"]
+                            Your data is secure.
                         </small>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-3 mb-0">Processing your registration...</p>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/StudentRegistration.js"></script>
 </body>
 </html>
