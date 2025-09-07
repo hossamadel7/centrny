@@ -57,6 +57,7 @@ namespace centrny1.Controllers
             {
                 return View("~/Views/Login/AccessDenied.cshtml");
             }
+
             return View();
         }
 
@@ -75,18 +76,20 @@ namespace centrny1.Controllers
             if (!rootCode.HasValue || rootCode.Value <= 0)
                 rootCode = sessionRootCode.Value;
 
+            // Join Items with Roots to get the root domain
             var query = (from i in _context.Items
-                         where i.IsActive
+                         join r in _context.Roots on i.RootCode equals r.RootCode
+                         where i.IsActive && i.RootCode == rootCode.Value
                          join s in _context.Students on i.StudentCode equals s.StudentCode into studentJoin
                          from s in studentJoin.DefaultIfEmpty()
-                         where i.RootCode == rootCode.Value
                          select new
                          {
                              itemCode = i.ItemCode,
                              studentName = s != null ? s.StudentName : "",
                              itemTypeKey = i.ItemTypeKey,
                              itemKey = i.ItemKey,
-                             rootCodeVal = i.RootCode
+                             rootCodeVal = i.RootCode,
+                             rootDomain = r.RootDomain // <-- Include domain!
                          });
 
             var totalCount = query.Count();
@@ -186,13 +189,11 @@ namespace centrny1.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var sessionRootCode = GetSessionInt("RootCode");
             var sessionUserCode = GetSessionInt("UserCode");
-            if (sessionRootCode == null || sessionUserCode == null)
+            if (sessionUserCode == null)
                 return Unauthorized();
 
-            // Always use session values for security
-            request.RootCode = sessionRootCode.Value;
+            // Use the root code sent from the frontend, not the session!
             request.InsertUserCode = sessionUserCode.Value;
 
             try
@@ -207,15 +208,20 @@ namespace centrny1.Controllers
                     new SqlParameter("@ItemTypeCode", request.ItemTypeCode)
                 );
 
-                var lastInsertedItems = _context.Items
-                    .Where(i => i.RootCode == request.RootCode
-                             && i.ItemTypeKey == request.ItemTypeCode
-                             && i.IsActive)
-                    .OrderByDescending(i => i.ItemCode)
-                    .Take(request.RecordCount)
-                    .Select(i => new { itemCode = i.ItemCode, itemKey = i.ItemKey })
-                    .ToList();
-
+                var lastInsertedItems = (from i in _context.Items
+                                         join r in _context.Roots on i.RootCode equals r.RootCode
+                                         where i.RootCode == request.RootCode
+                                               && i.ItemTypeKey == request.ItemTypeCode
+                                               && i.IsActive
+                                         orderby i.ItemCode descending
+                                         select new
+                                         {
+                                             itemCode = i.ItemCode,
+                                             itemKey = i.ItemKey,
+                                             rootDomain = r.RootDomain
+                                         })
+                              .Take(request.RecordCount)
+                              .ToList();
                 lastInsertedItems.Reverse();
 
                 return Ok(new
@@ -250,4 +256,5 @@ namespace centrny1.Controllers
             return Ok(new { message = "Item deleted successfully." });
         }
     }
+
 }

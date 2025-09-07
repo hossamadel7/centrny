@@ -441,12 +441,14 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.AppLayoutFAr).HasColumnName("AppLayoutF_Ar");
             entity.Property(e => e.AppLayoutHAr).HasColumnName("AppLayoutH-Ar");
             entity.Property(e => e.ApplyAr).HasColumnName("Apply_Ar");
+            entity.Property(e => e.CenterAr).HasColumnName("Center_Ar");
             entity.Property(e => e.ContactAr).HasColumnName("Contact_Ar");
             entity.Property(e => e.CoursesAr).HasColumnName("Courses_Ar");
             entity.Property(e => e.GallerAr).HasColumnName("Galler_Ar");
             entity.Property(e => e.HomaAr).HasColumnName("Homa_Ar");
             entity.Property(e => e.LoginAr).HasColumnName("Login_Ar");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+            entity.Property(e => e.SignUpAr).HasColumnName("SignUp_Ar");
             entity.Property(e => e.TeacherAr).HasColumnName("Teacher_Ar");
             entity.Property(e => e.TitleAr).HasColumnName("Title_Ar");
             entity.Property(e => e.WebLayoutFAr).HasColumnName("WebLayoutF_Ar");
@@ -957,9 +959,7 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
-            entity.Property(e => e.ScheduleCode)
-                .HasDefaultValue(22)
-                .HasColumnName("Schedule_code");
+            entity.Property(e => e.ScheduleCode).HasColumnName("Schedule_code");
             entity.Property(e => e.Status).HasDefaultValue(true);
             entity.Property(e => e.StudentFee).HasColumnName("Student_Fee");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
@@ -1661,7 +1661,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Students)
                 .HasForeignKey(d => d.BranchCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Student_Branch");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.StudentInsertUserNavigations)
@@ -1978,7 +1977,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Teaches)
                 .HasForeignKey(d => d.BranchCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Teach_Branch");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Teaches)

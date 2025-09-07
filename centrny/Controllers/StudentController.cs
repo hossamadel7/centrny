@@ -666,7 +666,7 @@ namespace centrny.Controllers
                 return RedirectToAction("SearchStudent", new { item_key });
 
             var student = item.StudentCodeNavigation;
-            var canMarkAttendance = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
+            var canMarkAttendance = await IsCurrentUserAdmin(student.RootCode, (int)student.BranchCode);
 
             var viewModel = new StudentProfileViewModel
             {
@@ -730,7 +730,7 @@ namespace centrny.Controllers
                 RootCode = student.RootCode,
                 YearCode = student.YearCode,
                 Age = CalculateAge(student.StudentBirthdate),
-                CanMarkAttendance = await IsCurrentUserAdmin(student.RootCode, student.BranchCode)
+                CanMarkAttendance = await IsCurrentUserAdmin(student.RootCode,(int) student.BranchCode)
             };
 
             return View("StudentData", viewModel);
@@ -905,7 +905,7 @@ namespace centrny.Controllers
                 .OrderBy(c => c.ClassStartTime)
                 .ToList();
 
-            var isAdmin = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
+            var isAdmin = await IsCurrentUserAdmin(student.RootCode, (int)student.BranchCode);
 
             var learns = await _context.Learns
                 .Where(l => l.StudentCode == student.StudentCode && l.IsActive)
@@ -989,7 +989,7 @@ namespace centrny.Controllers
                 .ThenBy(c => c.ClassStartTime)
                 .ToListAsync();
 
-            var isAdmin = await IsCurrentUserAdmin(student.RootCode, student.BranchCode);
+            var isAdmin = await IsCurrentUserAdmin(student.RootCode, (int)student.BranchCode);
 
             var classResults = new List<object>();
             foreach (var c in weeklyClasses)

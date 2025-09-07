@@ -260,6 +260,13 @@
          data-delete-exam-btn="@Localizer["DeleteExamBtn"]"
          data-save-exam-btn="@Localizer["SaveExamBtn"]"
          data-cancel-btn="@Localizer["CancelBtn"]"
+         data-select-center-option="@Localizer["SelectCenterOption"]"
+         data-select-edu-year-option="@Localizer["SelectEduYearOption"]"
+         data-select-option="@Localizer["SelectOption"]"
+         data-select-subject-option="@Localizer["SelectSubjectOption"]"
+         data-select-year-option="@Localizer["SelectYearOption"]"
+         data-select-teacher-option="@Localizer["SelectTeacherOption"]"
+         data-select-branch-option="@Localizer["SelectBranchOption"]"
          data-exam-name-label="@Localizer["ExamNameLabel"]"
          data-exam-timer-label="@Localizer["ExamTimerLabel"]"
          data-edu-year-label="@Localizer["EduYearLabel"]"
@@ -600,7 +607,7 @@
     <div class="modal fade" id="questionsModal" tabindex="-1" aria-labelledby="questionsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <form id="questionsForm" class="modal-content modern-questions-form">
-                <div class="modal-header gradient-table" style="border-radius: 18px 18px 0 0;">
+                <div class="modal-header gradient-table" style="width:100%;margin:0;border-radius:18px 18px 0 0;padding:1.5rem 2rem;">
                     <h5 class="modal-title" id="questionsModalLabel">
                         <i class="fas fa-list-check me-2"></i>@Localizer["ManageQuestions"]
                     </h5>
@@ -631,7 +638,7 @@
                                     </h6>
                                     <span id="availableInfo" class="badge user fs-6"></span>
                                 </div>
-                                <div class="questions-container flex-grow-1 d-flex flex-column overflow-auto" style="min-height:350px;max-height:55vh; background: #eef5fa; border-radius: 8px; box-shadow: 0 1px 6px rgba(120,160,200,0.06); padding: 0.5rem;">
+                                <div class="questions-container" style="flex:1 1 auto;min-height:0;max-height:55vh;overflow-y:auto;">
                                     <ul id="availableQuestions" class="list-group question-list flex-grow-1"></ul>
                                 </div>
                                 <div id="availablePagination" class="mt-2"></div>

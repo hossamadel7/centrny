@@ -135,4 +135,20 @@
 	<data name="StudentsPending" xml:space="preserve"><value>الطلاب بانتظار الإكمال</value></data>
 	<data name="ErrorLoadingStatistics" xml:space="preserve"><value>حدث خطأ أثناء تحميل الإحصائيات</value></data>
 	<data name="FailedToLoadExamStatistics" xml:space="preserve"><value>فشل في تحميل إحصائيات الامتحان.</value></data>
+	<!-- Add these lines to ExamManagementController.cs (Arabic) -->
+	<data name="SelectLesson" xml:space="preserve"><value>اختر الدرس</value></data>
+	<data name="FormLesson" xml:space="preserve"><value>الدرس</value></data>
+	<data name="ShowDetails" xml:space="preserve"><value>عرض التفاصيل</value></data>
+	<data name="HideDetails" xml:space="preserve"><value>إخفاء التفاصيل</value></data>
+	<data name="All" xml:space="preserve"><value>الكل</value></data>
+	<!-- Arabic resource entries (add to your ExamManagementController.cs or ExamManagement.ar.resx) -->
+	<data name="CenterLabel" xml:space="preserve"><value>المركز</value></data>
+	<data name="SelectEduYearOption" xml:space="preserve"><value>-- اختر السنة الدراسية --</value></data>
+	<data name="SelectCenterOption" xml:space="preserve"><value>-- اختر المركز --</value></data>
+	<data name="SelectOption" xml:space="preserve"><value>-- اختر --</value></data>
+	<data name="FormLesson" xml:space="preserve"><value>الدرس</value></data>
+	<data name="SelectLesson" xml:space="preserve"><value>اختر الدرس</value></data>
+	<data name="ShowDetails" xml:space="preserve"><value>عرض التفاصيل</value></data>
+	<data name="HideDetails" xml:space="preserve"><value>إخفاء التفاصيل</value></data>
+	<data name="All" xml:space="preserve"><value>الكل</value></data>
 </root>

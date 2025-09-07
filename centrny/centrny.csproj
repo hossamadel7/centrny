@@ -8,10 +8,20 @@
 
   <ItemGroup>
     <Content Remove="Views\Reports\MyClassesReport.cshtml" />
+    <Content Remove="wwwroot\css\main.css" />
+    <Content Remove="wwwroot\css\vendors.css" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Views\Reports\MyClassesReport.cshtml" />
+    <None Include="wwwroot\AWS\css\bw-theme.css" />
+    <None Include="wwwroot\AWS\js\auth-layout-fix.js" />
+    <None Include="wwwroot\AWS\js\enhanced-hover-effects.js" />
+    <None Include="wwwroot\AWS\js\language-switcher.js" />
+    <None Include="wwwroot\css\main.css" />
+    <None Include="wwwroot\css\vendors.css" />
+    <None Include="wwwroot\js\main.js" />
+    <None Include="wwwroot\js\vendors.js" />
     <None Include="wwwroot\Image\clasrio-high-resolution-logo-transparent %282%29.png" />
   </ItemGroup>
 

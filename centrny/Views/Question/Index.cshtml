@@ -410,20 +410,7 @@
                 box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
             }
 
-        /* Modal Styles */
-        .modal-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(30, 30, 30, 0.45);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.25s;
-        }
+
 
         .modal-content {
             background: #fff;
@@ -438,18 +425,15 @@
         }
 
         @@keyframes modalUpFade {
-            from
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
 
-        {
-            opacity: 0;
-            transform: translateY(30px) scale(0.98);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .form-group {
@@ -580,80 +564,74 @@
         }
 
         @@keyframes spin {
-            0%
+            0% {
+                transform: rotate(0deg);
+            }
 
-        {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Responsive Design */
         @@media (max-width: 768px) {
-            .main-layout
-
-        {
-            flex-direction: column;
-        }
-
-        .lessons-sidebar {
-            width: 100%;
-            max-height: 300px;
-        }
-
-        .questions-header h2 {
-            font-size: 1.8rem;
-        }
-
-        .modern-btn {
-            padding: 0.5rem 1rem !important;
-            font-size: 0.9rem !important;
-        }
-
-        .btn-table {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.8rem;
-        }
-
-        .modal-content {
-            max-width: 95vw !important;
-            padding: 1rem !important;
-        }
-
-        .answer-field {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.5rem;
-        }
-
-            .answer-field .answer-number {
-                align-self: flex-start;
+            .main-layout {
+                flex-direction: column;
             }
 
-        .modal-actions {
-            flex-direction: column;
-            gap: 0.5rem !important;
-        }
-
-            .modal-actions .modern-btn {
+            .lessons-sidebar {
                 width: 100%;
+                max-height: 300px;
+            }
+
+            .questions-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .modern-btn {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            .btn-table {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            .modal-content {
+                max-width: 95vw !important;
+                padding: 1rem !important;
+            }
+
+            .answer-field {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+                .answer-field .answer-number {
+                    align-self: flex-start;
+                }
+
+            .modal-actions {
+                flex-direction: column;
+                gap: 0.5rem !important;
+            }
+
+                .modal-actions .modern-btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+            .lesson-header-info {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .question-actions {
                 justify-content: center;
             }
-
-        .lesson-header-info {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-        }
-
-        .question-actions {
-            justify-content: center;
-        }
-
         }
 
         /* Accessibility improvements */
@@ -678,23 +656,21 @@
 
         /* Print styles */
         @@media print {
-            .modal-background, .lessons-sidebar, .question-actions
+            .modal-background, .lessons-sidebar, .question-actions {
+                display: none !important;
+            }
 
-        {
-            display: none !important;
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .main-content {
+                width: 100%;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
         }
 
-        .main-layout {
-            flex-direction: column;
-        }
-
-        .main-content {
-            width: 100%;
-            box-shadow: none;
-            border: 1px solid #ddd;
-        }
-
-        }
     </style>
 </head>
 <body>
@@ -725,7 +701,23 @@
          data-delete-question-confirm="@Localizer["DeleteQuestionConfirm"]"
          data-delete-answer-confirm="@Localizer["DeleteAnswerConfirm"]"
          data-lesson-selected="@Localizer["LessonSelected"]"
-         data-questions-for-lesson="@Localizer["QuestionsForLesson"]" />
+         data-questions-for-lesson="@Localizer["QuestionsForLesson"]"
+         data-enter-answer-option="@Localizer["EnterAnswerOption"]"
+         data-at-least-two-answers-required="@Localizer["AtLeastTwoAnswersRequired"]"
+         data-all-answer-fields-required="@Localizer["AllAnswerFieldsRequired"]"
+         data-duplicate-answers-not-allowed="@Localizer["DuplicateAnswersNotAllowed"]"
+         data-select-correct-answer="@Localizer["SelectCorrectAnswer"]"
+         data-question-content-required="@Localizer["QuestionContentRequired"]"
+         data-saving-question-and-answers="@Localizer["SavingQuestionAndAnswers"]"
+         data-question-answers-saved="@Localizer["QuestionAnswersSaved"]"
+         data-failed-to-save-question="@Localizer["FailedToSaveQuestion"]"
+         data-error-saving-question="@Localizer["ErrorSavingQuestion"]"
+         data-could-not-load-existing-answers="@Localizer["CouldNotLoadExistingAnswers"]"
+         data-no-answers-found="@Localizer["NoAnswersFound"]"
+         data-loading-answers="@Localizer["LoadingAnswers"]"
+         data-loading-lessons="@Localizer["LoadingLessons"]"
+         data-error-loading-questions="@Localizer["ErrorLoadingQuestions"]"
+         data-error-loading-lessons-hierarchy="@Localizer["ErrorLoadingLessonsHierarchy"]" />
 
     <div id="user-root-info-box" style="display: none;"></div>
 
@@ -733,10 +725,10 @@
     <div class="subject-year-selector">
         <label for="subjectYearSelect">
             <i class="fas fa-filter"></i>
-            Select Subject & Year
+            @Localizer["SelectSubjectYear"]
         </label>
         <select id="subjectYearSelect" class="modern-input">
-            <option value="">-- Select Subject & Year --</option>
+            <option value="">@Localizer["SelectOption"]</option>
         </select>
     </div>
 
@@ -746,12 +738,12 @@
         <div class="lessons-sidebar">
             <h3>
                 <i class="fas fa-list-ul"></i>
-                Lessons Hierarchy
+                @Localizer["LessonsHierarchy"]
             </h3>
             <div id="lessonsHierarchy">
                 <div class="empty-state">
                     <i class="fas fa-book-open"></i>
-                    <div>Select a subject and year to view lessons</div>
+                    <div>@Localizer["SelectSubjectYear"]</div>
                 </div>
             </div>
         </div>
@@ -760,7 +752,7 @@
         <div class="main-content">
             <div id="noLessonSelected" class="empty-state">
                 <i class="fas fa-arrow-left"></i>
-                <div>Select a lesson from the sidebar to manage questions</div>
+                <div>@Localizer["LessonSelected"]</div>
             </div>
 
             <div id="lessonContent" style="display: none;">
@@ -768,25 +760,25 @@
                 <div class="lesson-header-info">
                     <div class="lesson-title">
                         <i class="fas fa-book"></i>
-                        <span id="selectedLessonName">Lesson Name</span>
+                        <span id="selectedLessonName">@Localizer["LessonName"]</span>
                     </div>
                     <button class="modern-btn primary-btn" id="addQuestionBtn">
                         <i class="fas fa-plus"></i>
-                        Add Question
+                        @Localizer["AddQuestionBtn"]
                     </button>
                 </div>
 
                 <!-- Search Bar for Questions -->
                 <div style="margin-bottom: 1rem;">
                     <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="questionSearchInput" class="modern-input" placeholder="Search questions in this lesson..." style="flex: 1;">
+                        <input type="text" id="questionSearchInput" class="modern-input" placeholder="@Localizer["SearchPlaceholder"]" style="flex: 1;">
                         <button id="questionSearchBtn" class="modern-btn secondary-btn">
                             <i class="fas fa-search"></i>
-                            Search
+                            @Localizer["SearchBtn"]
                         </button>
                         <button id="questionSearchClearBtn" class="modern-btn secondary-btn" style="display: none;">
                             <i class="fas fa-times"></i>
-                            Clear
+                            @Localizer["ClearBtn"]
                         </button>
                     </div>
                 </div>
@@ -805,31 +797,31 @@
     <!-- Enhanced Question Modal with Answers -->
     <div id="question-modal" class="modal-background">
         <div class="modal-content" style="max-width: 650px;">
-            <h3 id="question-modal-title">Add Question with Answers</h3>
+            <h3 id="question-modal-title">@Localizer["AddQuestionBtn"] @Localizer["ShowAnswersBtn"]</h3>
             <form id="question-form">
                 <input type="hidden" id="question-id" name="QuestionCode" />
                 <input type="hidden" id="question-lessoncode" name="LessonCode" />
 
                 <!-- Question Content -->
                 <div class="form-group">
-                    <label for="question-content">Question Content <span style="color:red;">*</span></label>
+                    <label for="question-content">@Localizer["QuestionContent"] <span style="color:red;">*</span></label>
                     <textarea id="question-content" name="QuestionContent" required class="modern-input"
-                              placeholder="Enter your question here..." style="min-height: 80px;"></textarea>
+                              placeholder="@Localizer["QuestionContent"]" style="min-height: 80px;"></textarea>
                 </div>
 
                 <!-- Exam Code (Optional) -->
                 <div class="form-group">
-                    <label for="question-examcode">Exam Code</label>
+                    <label for="question-examcode">@Localizer["ExamCode"]</label>
                     <input type="number" id="question-examcode" name="ExamCode" class="modern-input"
-                           placeholder="Optional exam reference" />
+                           placeholder="@Localizer["ExamCode"]" />
                 </div>
 
                 <!-- Answers Section -->
                 <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
                         <i class="fas fa-list-ol"></i>
-                        Answer Options <span style="color:red;">*</span>
-                        <small style="color: #666; font-weight: normal;">(Select one correct answer)</small>
+                        @Localizer["AddAnswersBtn"] <span style="color:red;">*</span>
+                        <small style="color: #666; font-weight: normal;">(@Localizer["IsCorrectAnswer"])</small>
                     </label>
 
                     <div id="answers-container">
@@ -838,22 +830,81 @@
 
                     <div style="margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center;">
                         <button type="button" id="add-answer-btn" class="modern-btn secondary-btn">
-                            <i class="fas fa-plus"></i> Add Answer
+                            <i class="fas fa-plus"></i> @Localizer["AddAnotherAnswer"]
                         </button>
-                        <small style="color: #666;">Minimum 2 answers required</small>
+                        <small style="color: #666;">@Localizer["AtLeastTwoAnswersRequired"]</small>
                     </div>
                 </div>
 
                 <div class="modal-actions" style="margin-top: 1.5rem;">
                     <button type="submit" class="modern-btn success-btn" id="save-question-btn">
-                        <i class="fas fa-save"></i> Save Question & Answers
+                        <i class="fas fa-save"></i> @Localizer["Saved"] @Localizer["AddAnswersBtn"]
                     </button>
                     <button type="button" id="cancel-question-btn" class="modern-btn secondary-btn">
-                        <i class="fas fa-times"></i> Cancel
+                        <i class="fas fa-times"></i> @Localizer["CancelBtn"]
                     </button>
                 </div>
 
                 <div id="question-message" style="margin-top: 1rem; padding: 0.75rem; border-radius: 8px; display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Chapter Modal -->
+    <div id="addChapterModal" class="modal-background" style="display:none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3><i class="fas fa-plus"></i> @Localizer["addChapterBtn"]</h3>
+            <form id="addChapterForm">
+                <div class="form-group">
+                    <label>@Localizer["ChapterName"] <span style="color:red">*</span></label>
+                    <input type="text" name="LessonName" class="modern-input" required placeholder="@Localizer["ChapterName"]" />
+                </div>
+                <div class="form-group">
+                    <label>@Localizer["EducationYear"] <span style="color:red">*</span></label>
+                    <select name="EduYearCode" class="modern-input" required></select>
+                </div>
+                <div class="form-group">
+                    <label>@Localizer["Teacher"] <span style="color:red">*</span></label>
+                    <select name="TeacherCode" class="modern-input" required></select>
+                </div>
+                <div class="form-group">
+                    <label>@Localizer["Subject"] <span style="color:red">*</span></label>
+                    <select name="SubjectCode" class="modern-input" required></select>
+                </div>
+                <div class="form-group">
+                    <label>@Localizer["Year"] <span style="color:red">*</span></label>
+                    <select name="YearCode" class="modern-input" required></select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn success-btn"><i class="fas fa-save"></i> @Localizer["Saved"]</button>
+                    <button type="button" class="modern-btn secondary-btn" onclick="$('#addChapterModal').hide();">@Localizer["CancelBtn"]</button>
+                </div>
+                <div id="addChapterMsg" style="display:none; margin-top:10px;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Lesson Modal -->
+    <div id="addLessonModal" class="modal-background" style="display:none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3><i class="fas fa-plus"></i> @Localizer["addLessonBtn"]</h3>
+            <form id="addLessonForm">
+                <div class="form-group">
+                    <label>@Localizer["LessonName"] <span style="color:red">*</span></label>
+                    <input type="text" name="LessonName" class="modern-input" required placeholder="@Localizer["LessonName"]" />
+                </div>
+                <!-- Hidden fields for context -->
+                <input type="hidden" name="RootCode" />
+                <input type="hidden" name="TeacherCode" />
+                <input type="hidden" name="SubjectCode" />
+                <input type="hidden" name="EduYearCode" />
+                <input type="hidden" name="YearCode" />
+                <input type="hidden" name="ChapterCode" />
+                <div class="modal-actions">
+                    <button type="submit" class="modern-btn success-btn"><i class="fas fa-save"></i> @Localizer["Saved"]</button>
+                    <button type="button" class="modern-btn secondary-btn" onclick="$('#addLessonModal').hide();">@Localizer["CancelBtn"]</button>
+                </div>
+                <div id="addLessonMsg" style="display:none; margin-top:10px;"></div>
             </form>
         </div>
     </div>

@@ -73,7 +73,7 @@ namespace centrny.Controllers
                 {
                     return RedirectToAction("ForceChangePassword");
                 }
-                return RedirectToAction("Index", "Root");
+                return RedirectToAction("Index", "Reports");
             }
             return View();
         }
@@ -270,7 +270,7 @@ namespace centrny.Controllers
                     return Redirect(returnUrl);
                 }
 
-                return RedirectToAction("Index", "Root");
+                return RedirectToAction("Index", "Reports");
             }
             catch (Exception ex)
             {
@@ -339,7 +339,7 @@ namespace centrny.Controllers
         {
             if (!IsDefaultPassword(User))
             {
-                return RedirectToAction("Index", "Root");
+                return RedirectToAction("Index", "Reports");
             }
             return View("ChangePassword");
         }
@@ -351,7 +351,7 @@ namespace centrny.Controllers
         {
             if (!IsDefaultPassword(User))
             {
-                return RedirectToAction("Index", "Root");
+                return RedirectToAction("Index", "Reports");
             }
 
             if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
@@ -375,7 +375,7 @@ namespace centrny.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
             {
-                return RedirectToAction("Index", "Root");
+                return RedirectToAction("Index", "Reports");
             }
 
             var dbUser = await _context.Users.FindAsync(int.Parse(userId));

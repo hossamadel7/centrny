@@ -87,4 +87,10 @@
 	<data name="Locale" xml:space="preserve"><value>en-US</value></data>
   <data name="FormClassPrice" xml:space="preserve"><value>Class Price</value>
   </data>
+	<data name="FormLesson" xml:space="preserve">
+  <value>Lesson</value>
+</data>
+<data name="SelectLesson" xml:space="preserve">
+  <value>Select Lesson</value>
+</data>
 </root>
