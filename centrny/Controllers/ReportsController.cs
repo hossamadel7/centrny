@@ -232,7 +232,7 @@ namespace centrny.Controllers
                         SubjectName = l.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
                         TeacherCode = l.TeacherCode,
                         TeacherName = l.TeacherCodeNavigation.TeacherName ?? "Unknown Teacher",
-                        ScheduleCode = l.ScheduleCode,
+                        ScheduleCode = (int)l.ScheduleCode,
                         ScheduleName = l.ScheduleCodeNavigation.ScheduleName ?? "Unknown Schedule",
                         BranchName = l.BranchCodeNavigation.BranchName ?? "Unknown Branch",
                         EduYearCode = l.EduYearCode,
@@ -1617,7 +1617,7 @@ namespace centrny.Controllers
                     .Where(l => l.TeacherCode == classDetails.TeacherCode &&
                               l.SubjectCode == classDetails.SubjectCode &&
                               l.ScheduleCode == classDetails.ScheduleCode &&
-                              l.IsActive && l.Status.HasValue)
+                              l.IsActive && l.Status)
                     .Select(l => new
                     {
                         StudentCode = l.StudentCode,

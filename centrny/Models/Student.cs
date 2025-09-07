@@ -37,7 +37,7 @@ public partial class Student
 
     public bool? StudentGender { get; set; }
 
-    public int BranchCode { get; set; }
+    public int? BranchCode { get; set; }
 
     public int InsertUser { get; set; }
 
@@ -49,7 +49,7 @@ public partial class Student
 
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
-    public virtual Branch BranchCodeNavigation { get; set; } = null!;
+    public virtual Branch? BranchCodeNavigation { get; set; }
 
     public virtual User InsertUserNavigation { get; set; } = null!;
 
