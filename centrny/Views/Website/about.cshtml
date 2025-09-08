@@ -1,0 +1,797 @@
+@{
+    Layout = null;
+    // Converted from about.html
+}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Arabic fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+          integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin="" />
+
+    <!-- Cursive font for brand logo -->
+    <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap"
+          rel="stylesheet" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/vendors.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/bw-theme.css" />
+    <!-- removed missing helper css files -->
+    <!-- GLightbox CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+
+    <title>Mr. Ahmed Fadl</title>
+</head>
+
+<body class="preloader-visible lang-en" data-barba="wrapper">
+    <!-- preloader start -->
+    <div class="preloader js-preloader">
+        <div class="preloader__bg"></div>
+    </div>
+    <!-- preloader end -->
+
+    <main class="main-content">
+        <header data-anim="fade"
+                data-add-bg=""
+                class="header -type-4 -shadow bg-white border-bottom-light js-header">
+            <div class="header__container py-10">
+                <div class="row justify-between items-center">
+                    <div class="col-auto">
+                        <div class="header-left d-flex items-center">
+                            <a href="home.cshtml" class="brand-logo" aria-label="Ahmed Fadl">
+                                <span class="brand-logo__letter">A</span><span class="brand-logo__sep">|</span><span class="brand-logo__letter">F</span>
+                            </a>
+                            <div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
+                                <div class="header-menu__content">
+                                    <div class="mobile-bg js-mobile-bg"></div>
+
+                                    <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
+                                        <a href="login.cshtml" class="text-dark-1">Log in</a>
+                                        <a href="signup.cshtml" class="text-dark-1 ml-30">Sign Up</a>
+                                    </div>
+
+                                    <div class="menu js-navList">
+                                        <ul class="menu__nav -is-active">
+                                            <a data-barba href="home.cshtml">Home</a>
+
+                                            <a data-barba href="about.cshtml">About</a>
+
+                                            <a data-barba href="courses.cshtml">Courses</a>
+
+                                            <a data-barba href="centres.cshtml">Centres</a>
+
+                                            <a data-barba href="outstanding-students.cshtml">Outstanding Students</a>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mobile-footer px-20 py-20 border-top-light js-mobile-footer">
+                                        <div class="mobile-footer__number">
+                                            <div class="text-17 fw-500 text-dark-1">Call us</div>
+                                            <div class="text-17 fw-500 text-dark-1">
+                                                800 388 80 90
+                                            </div>
+                                        </div>
+
+                                        <div class="lh-2 mt-10">
+                                            <div>
+                                                329 Queensberry Street,<br />
+                                                North Melbourne VIC 3051, Australia.
+                                            </div>
+                                            <div>hi@@educrat.com</div>
+                                        </div>
+
+                                        <div class="mobile-socials mt-10">
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-facebook"></i>
+                                            </a>
+
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-twitter"></i>
+                                            </a>
+
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-instagram"></i>
+                                            </a>
+
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-linkedin"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="header-menu-close"
+                                     data-el-toggle=".js-mobile-menu-toggle">
+                                    <div class="size-40 d-flex items-center justify-center rounded-full bg-white">
+                                        <div class="icon-close text-dark-1 text-16"></div>
+                                    </div>
+                                </div>
+
+                                <div class="header-menu-bg"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-auto">
+                        <div class="header-right d-flex items-center">
+                            <div class="header-right__icons text-white d-flex items-center">
+                                <!-- Language Switcher -->
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <button id="language-toggle" class="language-switcher d-flex items-center text-dark-1 hover:text-purple-1 transition-colors">
+                                        <i class="fas fa-globe text-16 mr-8"></i>
+                                        <span id="current-language" class="text-14 fw-500">English</span>
+                                    </button>
+                                </div>
+
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <div class="toggle-element js-cart-toggle">
+                                        <div class="header-cart bg-white -dark-bg-dark-1 rounded-8">
+                                            <div class="px-30 pt-30 pb-10">
+                                                <div class="row justify-between x-gap-40 pb-20">
+                                                    <div class="col">
+                                                        <div class="row x-gap-10 y-gap-10">
+                                                            <div class="col-auto">
+                                                                <img src="/img/menus/cart/1.png" alt="image" />
+                                                            </div>
+
+                                                            <div class="col">
+                                                                <div class="text-dark-1 lh-15">
+                                                                    Logic Essentials — Weekly Class
+                                                                </div>
+
+                                                                <div class="d-flex items-center mt-10 text-14">
+                                                                    Enroll
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-auto">
+                                                        <button>
+                                                            <img src="/img/menus/close.svg" alt="icon" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row justify-between x-gap-40 pb-20">
+                                                    <div class="col">
+                                                        <div class="row x-gap-10 y-gap-10">
+                                                            <div class="col-auto">
+                                                                <img src="/img/menus/cart/2.png" alt="image" />
+                                                            </div>
+
+                                                            <div class="col">
+                                                                <div class="text-dark-1 lh-15">
+                                                                    Psychology Fundamentals — Weekly Class
+                                                                </div>
+
+                                                                <div class="d-flex items-center mt-10 text-14">
+                                                                    Enroll
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-auto">
+                                                        <button>
+                                                            <img src="/img/menus/close.svg" alt="icon" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="px-30 pt-20 pb-30 border-top-light">
+                                                <div class="d-flex justify-between">
+                                                    <div class="text-18 lh-12 text-dark-1 fw-500">
+                                                        Total:
+                                                    </div>
+                                                    <div class="text-18 lh-12 text-dark-1 fw-500">
+                                                        —
+                                                    </div>
+                                                </div>
+
+                                                <div class="row x-gap-20 y-gap-10 pt-30">
+                                                    <div class="col-sm-6">
+                                                        <button class="button py-20 -dark-1 text-white -dark-button-white col-12">
+                                                            View Classes
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button class="button py-20 -dark-1 text-white col-12">
+                                                            Enroll Now
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-none xl:d-block -before-border pl-20 sm:pl-15">
+                                    <button class="text-dark-1 items-center"
+                                            data-el-toggle=".js-mobile-menu-toggle">
+                                        <i class="text-11 icon icon-mobile-menu"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="header-right__buttons d-flex items-center lg:d-none">
+                                <a href="login.cshtml"
+                                   class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">Log in</a>
+                                <a href="signup.cshtml"
+                                   class="button h-50 px-25 -outline-dark-1 -rounded text-dark-1 ml-20">Sign up</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-wrapper js-content-wrapper about-page">
+            <!-- Hero Section with Background Video -->
+            <section data-anim-wrap
+                     class="masthead -type-3 position-relative js-mouse-move-container">
+                <!-- Background Video -->
+                <div class="hero-video-background">
+                    <video autoplay muted loop playsinline class="hero-video">
+                        <source src="/videos/big-revision.mp4" type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="hero-video-overlay"></div>
+                </div>
+
+                <div class="container position-relative">
+                    <div class="row justify-center text-center">
+                        <div class="col-xl-8 col-lg-10">
+                            <div class="masthead__content text-center">
+                                <h1 data-anim-child="slide-up delay-1"
+                                    class="masthead__title text-white mb-25">
+                                    About Mr. Ahmed Fadl
+                                </h1>
+
+                                <p data-anim-child="slide-up delay-2"
+                                   class="masthead__text text-18 text-white mt-25 mb-40 opacity-90">
+                                    Specializing in Philosophy, Logic, Psychology & Sociology,
+                                    Mr. Fadl transforms complex concepts into clear, exam-ready
+                                    understanding. With over 15 years of teaching experience, he
+                                    has helped thousands of students achieve academic
+                                    excellence.
+                                </p>
+
+                                <div data-anim-child="slide-up delay-3"
+                                     class="masthead-stats d-flex flex-wrap justify-center mt-40">
+                                    <div class="masthead-stat mx-30 mb-30 text-center">
+                                        <div class="text-32 fw-700 text-white">1,500+</div>
+                                        <div class="text-16 text-white opacity-80">
+                                            Students Taught
+                                        </div>
+                                    </div>
+                                    <div class="masthead-stat mx-30 mb-30 text-center">
+                                        <div class="text-32 fw-700 text-white">95%</div>
+                                        <div class="text-16 text-white opacity-80">
+                                            A/A* Achieved
+                                        </div>
+                                    </div>
+                                    <div class="masthead-stat mx-30 mb-30 text-center">
+                                        <div class="text-32 fw-700 text-white">4</div>
+                                        <div class="text-16 text-white opacity-80">
+                                            Subjects Mastered
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <section class="layout-pt-md layout-pb-md bg-dark-5" style="margin-top: 60px;">
+                <div data-anim-wrap class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle -light">
+                                <h2 class="sectionTitle__title" style="padding-top: 60px;">
+                                    Teaching Specializations
+                                </h2>
+                                <p class="sectionTitle__text">
+                                    Two complementary fields of academic excellence
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subjects-showcase pt-40 lg:pt-30">
+                        <!-- Philosophy & Logic Subject -->
+                        <div class="subject-panel subject-panel--left" data-anim-child="slide-right delay-1">
+                            <div class="subject-panel__content">
+                                <div class="subject-panel__header">
+                                    <div class="subject-panel__icon-container">
+                                        <div class="subject-panel__icon philosophy-icon">
+                                            <i class="fas fa-lightbulb"></i>
+                                        </div>
+                                    </div>
+                                    <div class="subject-panel__meta">
+                                        <h3 class="subject-panel__title">
+                                            Philosophy & Logic
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="subject-panel__body">
+                                    <p class="subject-panel__description">
+                                        Develop analytical skills through systematic reasoning, ethical frameworks, and logical problem-solving methodologies.
+                                    </p>
+
+                                </div>
+                            </div>
+                            <div class="subject-panel__visual">
+                                <div class="visual-element philosophy-visual"></div>
+                            </div>
+                        </div>
+
+                        <!-- Psychology & Sociology Subject -->
+                        <div class="subject-panel subject-panel--right" data-anim-child="slide-left delay-2">
+                            <div class="subject-panel__visual">
+                                <div class="visual-element psychology-visual"></div>
+                            </div>
+                            <div class="subject-panel__content">
+                                <div class="subject-panel__header">
+                                    <div class="subject-panel__icon-container">
+                                        <div class="subject-panel__icon psychology-icon">
+                                            <i class="fas fa-users-cog"></i>
+                                        </div>
+                                    </div>
+                                    <div class="subject-panel__meta">
+                                        <h3 class="subject-panel__title">
+                                            Psychology & Sociology
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="subject-panel__body">
+                                    <p class="subject-panel__description">
+                                        Explore the complexities of human behavior, social structures, and psychological principles through evidence-based learning.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Teaching Centers Section -->
+            <section class="layout-pt-lg layout-pb-lg bg-dark-5">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle -light">
+                                <h2 class="sectionTitle__title">
+                                    Teaching Centers
+                                </h2>
+                                <p class="sectionTitle__text">
+                                    Where you can find my classes across the city
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="row y-gap-30 pt-60 lg:pt-50">
+                        <!-- Maadi Centre -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Maadi Learning Centre"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Maadi Learning Centre
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">
+                                                Maadi, Cairo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i>Fri &amp; Sat •
+                                        5:00–7:00 PM
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i>Philosophy & Logic
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nasr City Centre -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Nasr City Hub"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Nasr City Hub
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">
+                                                Nasr City, Cairo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i>Thu • 6:00–8:00 PM
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i>Psychology &
+                                        Sociology
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heliopolis Centre -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Heliopolis Academy"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Heliopolis Academy
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">
+                                                Heliopolis, Cairo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i>Tue • 6:00–8:00 PM
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i>All Subjects
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row justify-center pt-60 lg:pt-50">
+                        <div class="col-auto">
+                            <a href="centres.cshtml"
+                               class="button -icon -outline-dark-1 text-dark-1">
+                                <span>View All Centres</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Featured Videos Section -->
+            <section class="layout-pt-lg layout-pb-lg">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle">
+                                <h2 class="sectionTitle__title">
+                                    Featured Video Lessons
+                                </h2>
+                                <p class="sectionTitle__text">
+                                    Sample my teaching style with these free lessons
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row y-gap-30 pt-60 lg:pt-50">
+
+                        <!-- Course Cards Grid -->
+                        <div class="row y-gap-30" style="margin: auto;">
+
+                            <!-- Video Card 1 -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="course-card bg-white rounded-16 shadow-4 overflow-hidden">
+                                    <div class="course-card__image">
+                                        <img src="https://img.youtube.com/vi/PMG-0bUpJ5g/maxresdefault.jpg" alt="Sociology Review" class="w-1/1" loading="lazy">
+                                        <div class="course-card__overlay">
+                                            <div class="play-button" onclick="playVideo('PMG-0bUpJ5g', this)">
+                                                <i class="fas fa-play text-white text-20"></i>
+                                            </div>
+                                        </div>
+                                        <div class="course-duration">
+                                            <span class="bg-green-1 text-white px-10 py-5 rounded-4 text-12">Free</span>
+                                        </div>
+                                    </div>
+                                    <div class="course-card__content p-30">
+                                        <div class="course-category mb-15">
+                                            <span class="badge bg-purple-1 text-white px-15 py-8 rounded-6 text-13 fw-500">Sociology</span>
+                                        </div>
+                                        <h4 class="course-title text-20 fw-600 text-dark-1 mb-15">Second Year Secondary Sociology Review - October</h4>
+                                        <p class="course-description text-15 text-light-1 mb-20">Comprehensive review of the sociology curriculum for the second year of secondary school - General Secondary 2025 with Mr. Ahmed Fadl.</p>
+                                        <div class="course-footer d-flex items-center justify-between">
+                                            <div class="free-badge">
+                                                <span class="text-18 fw-700 text-green-1">Free</span>
+                                            </div>
+                                            <button class="button -sm -purple-1 text-white px-25 py-12" onclick="playVideo('PMG-0bUpJ5g', this)">Watch Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Video Card 2 -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="course-card bg-white rounded-16 shadow-4 overflow-hidden">
+                                    <div class="course-card__image">
+                                        <img src="https://img.youtube.com/vi/2wwn9p8yF6E/maxresdefault.jpg" alt="First Psychology Lesson" class="w-1/1" loading="lazy">
+                                        <div class="course-card__overlay">
+                                            <div class="play-button" onclick="playVideo('2wwn9p8yF6E', this)">
+                                                <i class="fas fa-play text-white text-20"></i>
+                                            </div>
+                                        </div>
+                                        <div class="course-duration">
+                                            <span class="bg-green-1 text-white px-10 py-5 rounded-4 text-12">Free</span>
+                                        </div>
+                                    </div>
+                                    <div class="course-card__content p-30">
+                                        <div class="course-category mb-15">
+                                            <span class="badge bg-blue-1 text-white px-15 py-8 rounded-6 text-13 fw-500">Psychology</span>
+                                        </div>
+                                        <h4 class="course-title text-20 fw-600 text-dark-1 mb-15">First Psychology Lesson for Second Secondary - Simplified Explanation</h4>
+                                        <p class="course-description text-15 text-light-1 mb-20">Detailed and simplified explanation of the first lesson in psychology for the second year of secondary school with Mr. Ahmed Fadl.</p>
+                                        <div class="course-footer d-flex items-center justify-between">
+                                            <div class="free-badge">
+                                                <span class="text-18 fw-700 text-green-1">Free</span>
+                                            </div>
+                                            <button class="button -sm -blue-1 text-white px-25 py-12" onclick="playVideo('2wwn9p8yF6E', this)">Watch Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Video Card 3 -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="course-card bg-white rounded-16 shadow-4 overflow-hidden">
+                                    <div class="course-card__image">
+                                        <img src="https://img.youtube.com/vi/kha31jFKTlc/maxresdefault.jpg" alt="First Philosophy Lesson" class="w-1/1" loading="lazy">
+                                        <div class="course-card__overlay">
+                                            <div class="play-button" onclick="playVideo('kha31jFKTlc', this)">
+                                                <i class="fas fa-play text-white text-20"></i>
+                                            </div>
+                                        </div>
+                                        <div class="course-duration">
+                                            <span class="bg-green-1 text-white px-10 py-5 rounded-4 text-12">Free</span>
+                                        </div>
+                                    </div>
+                                    <div class="course-card__content p-30">
+                                        <div class="course-category mb-15">
+                                            <span class="badge bg-green-1 text-white px-15 py-8 rounded-6 text-13 fw-500">Philosophy</span>
+                                        </div>
+                                        <h4 class="course-title text-20 fw-600 text-dark-1 mb-15">First Philosophy Lesson for First Secondary - Simplified Explanation</h4>
+                                        <p class="course-description text-15 text-light-1 mb-20">Comprehensive introduction to philosophy for the first year of secondary school with a simple and understandable explanation with Mr. Ahmed Fadl.</p>
+                                        <div class="course-footer d-flex items-center justify-between">
+                                            <div class="free-badge">
+                                                <span class="text-18 fw-700 text-green-1">Free</span>
+                                            </div>
+                                            <button class="button -sm -green-1 text-white px-25 py-12" onclick="playVideo('kha31jFKTlc', this)">Watch Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row justify-center pt-60 lg:pt-50">
+                            <div class="col-auto">
+                                <a href="courses.cshtml"
+                                   class="button -icon -outline-dark-1 text-dark-1">
+                                    <span>View All Courses</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+            </section>
+
+            <!-- Student Results Section -->
+            <section class="layout-pt-lg layout-pb-lg">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle">
+                                <h2 class="sectionTitle__title">
+                                    Student Results
+                                </h2>
+                                <p class="sectionTitle__text">
+                                    Consistent excellence across all subjects
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row y-gap-30 pt-60 lg:pt-50">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="resultCard text-center">
+                                <div class="resultCard__percent text-40 fw-600 text-dark-1">
+                                    96%
+                                </div>
+                                <h4 class="resultCard__title text-18 fw-500 mt-10">
+                                    Philosophy A/A*
+                                </h4>
+                                <p class="resultCard__text text-14 mt-5">
+                                    Average grade improvement
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="resultCard text-center">
+                                <div class="resultCard__percent text-40 fw-600 text-dark-1">
+                                    94%
+                                </div>
+                                <h4 class="resultCard__title text-18 fw-500 mt-10">
+                                    Logic A/A*
+                                </h4>
+                                <p class="resultCard__text text-14 mt-5">
+                                    Average grade improvement
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="resultCard text-center">
+                                <div class="resultCard__percent text-40 fw-600 text-dark-1">
+                                    92%
+                                </div>
+                                <h4 class="resultCard__title text-18 fw-500 mt-10">
+                                    Psychology A/A*
+                                </h4>
+                                <p class="resultCard__text text-14 mt-5">
+                                    Average grade improvement
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="resultCard text-center">
+                                <div class="resultCard__percent text-40 fw-600 text-dark-1">
+                                    93%
+                                </div>
+                                <h4 class="resultCard__title text-18 fw-500 mt-10">
+                                    Sociology A/A*
+                                </h4>
+                                <p class="resultCard__text text-14 mt-5">
+                                    Average grade improvement
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row justify-center pt-60 lg:pt-50">
+                        <div class="col-auto">
+                            <a href="outstanding-students.cshtml"
+                               class="button -icon -outline-dark-1 text-dark-1">
+                                <span>
+                                    View Outstanding Students
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="layout-pt-lg layout-pb-lg bg-dark-5">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-xl-6 col-lg-8">
+                            <div class="sectionTitle -light">
+                                <h2 class="sectionTitle__title">
+                                    Ready to Excel?
+                                </h2>
+                                <p class="sectionTitle__text">
+                                    Join hundreds of students who have achieved academic
+                                    excellence with personalized guidance in Philosophy, Logic,
+                                    Psychology, and Sociology.
+                                </p>
+                            </div>
+
+                            <div class="d-flex justify-center x-gap-15 y-gap-15 pt-30 flex-wrap">
+                                <div>
+                                    <a href="login.cshtml"
+                                       class="button -md -outline-dark-1 text-white">
+                                        Join Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="footer -type-1 -dark bg-light-9">
+                <div class="container">
+                    <div class="footer-header border-bottom-dark">
+                        <div class="row y-gap-20 justify-between items-center">
+                            <div class="col-auto"></div>
+                            <div class="col-auto">
+                                <div class="footer-header-socials">
+                                    <div class="footer-header-socials__title text-dark-1">
+                                        Follow us on social media
+                                    </div>
+                                    <div class="footer-header-socials__list">
+                                        <a href="#"><i class="text-14 fa fa-facebook"></i></a>
+
+                                        <a href="#"><i class="text-14 fa fa-twitter"></i></a>
+
+                                        <a href="#"><i class="text-14 fa fa-instagram"></i></a>
+
+                                        <a href="#"><i class="text-14 fa fa-linkedin"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer-footer border-top-dark">
+                        <div class="row justify-between y-gap-20">
+                            <div class="col-md-6">
+                                <div class="footer-footer__copyright">
+                                    © 2025 Ahmed Fadl. All Rights Reserved.
+                                </div>
+                            </div>
+
+                            <div class="col-auto">
+                                <div class="footer-footer__right">
+                                    <!-- Language switcher moved to header -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <script src="/js/vendors.js"></script>
+    <!-- GLightbox JS -->
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,625 @@
+@{
+    Layout = null;
+    // Converted from centres.html
+}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
+          rel="stylesheet" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+          integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin="" />
+
+    <!-- Cursive font for brand logo -->
+    <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap"
+          rel="stylesheet" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/vendors.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/bw-theme.css" />
+    <!-- removed missing helper css files -->
+    <!-- Custom Centre Card Styles -->
+    <style>
+        .centre-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #f1f1f1;
+        }
+
+            .centre-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+            }
+
+        .centre-card__image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+            .centre-card__image img {
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.3s ease;
+            }
+
+        .centre-card:hover .centre-card__image img {
+            transform: scale(1.05);
+        }
+
+        .centre-card__overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient( 180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100% );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .centre-card:hover .centre-card__overlay {
+            opacity: 1;
+        }
+
+        /* Increase card content padding */
+        .centre-card .card-content {
+            padding: 40px !important;
+        }
+
+        /* Increase centre card inner wrapper padding */
+        .centre-card > .p-40 {
+            padding: 20px !important;
+        }
+
+        /* Fix map z-index issue */
+        #centres-map {
+            z-index: 1 !important;
+        }
+
+        .leaflet-control-container {
+            z-index: 2 !important;
+        }
+
+        /* Ensure header stays on top */
+        .header {
+            z-index: 999 !important;
+        }
+
+        /* Map container styling */
+        .map-container {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+
+    <title>Mr. Ahmed Fadl</title>
+</head>
+
+<body class="preloader-visible" data-barba="wrapper">
+    <!-- preloader start -->
+    <div class="preloader js-preloader">
+        <div class="preloader__bg"></div>
+    </div>
+    <!-- preloader end -->
+
+    <main class="main-content">
+        <header data-anim="fade"
+                data-add-bg=""
+                class="header -type-4 -shadow bg-white border-bottom-light js-header">
+            <div class="header__container py-10">
+                <div class="row justify-between items-center">
+                    <div class="col-auto">
+                        <div class="header-left d-flex items-center">
+                            <a href="home.cshtml" class="brand-logo" aria-label="Ahmed Fadl">
+                                <span class="brand-logo__letter">A</span><span class="brand-logo__sep">|</span><span class="brand-logo__letter">F</span>
+                            </a>
+                            <div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
+                                <div class="header-menu__content">
+                                    <div class="mobile-bg js-mobile-bg"></div>
+
+                                    <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
+                                        <a href="login.cshtml" class="text-dark-1">Log in</a>
+                                        <a href="signup.cshtml" class="text-dark-1 ml-30">Sign Up</a>
+                                    </div>
+
+                                    <div class="menu js-navList">
+                                        <ul class="menu__nav text-dark-1 -is-active">
+                                            <a data-barba href="home.cshtml">Home</a>
+
+                                            <a data-barba href="about.cshtml">About</a>
+
+                                            <a data-barba href="courses.cshtml">Courses</a>
+
+                                            <a data-barba href="centres.cshtml">Centres</a>
+
+                                            <a data-barba href="outstanding-students.cshtml">Outstanding Students</a>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mobile-footer px-20 py-20 border-top-light js-mobile-footer">
+                                        <div class="mobile-footer__number">
+                                            <div class="text-17 fw-500 text-dark-1">Call us</div>
+                                            <div class="text-17 fw-500 text-dark-1">
+                                                800 388 80 90
+                                            </div>
+                                        </div>
+
+                                        <div class="lh-2 mt-10">
+                                            <div>
+                                                329 Queensberry Street,<br />North Melbourne VIC 3051,
+                                                Australia.
+                                            </div>
+                                            <div>hi@@educrat.com</div>
+                                        </div>
+
+                                        <div class="mobile-socials mt-10">
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-facebook"></i>
+                                            </a>
+
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-twitter"></i>
+                                            </a>
+
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-instagram"></i>
+                                            </a>
+
+                                            <a href="#"
+                                               class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-linkedin"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="header-menu-close"
+                                     data-el-toggle=".js-mobile-menu-toggle">
+                                    <div class="size-40 d-flex items-center justify-center rounded-full bg-white">
+                                        <div class="icon-close text-dark-1 text-16"></div>
+                                    </div>
+                                </div>
+
+                                <div class="header-menu-bg"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-auto">
+                        <div class="header-right d-flex items-center">
+                            <div class="header-right__icons text-white d-flex items-center">
+                                <!-- Language Switcher -->
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <button id="language-toggle"
+                                            class="language-switcher d-flex items-center text-dark-1 hover:text-purple-1 transition-colors">
+                                        <i class="fas fa-globe text-16 mr-8"></i>
+                                        <span id="current-language" class="text-14 fw-500">English</span>
+                                    </button>
+                                </div>
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <div class="toggle-element js-cart-toggle">
+                                        <div class="header-cart bg-white -dark-bg-dark-1 rounded-8">
+                                            <div class="px-30 pt-30 pb-10">
+                                                <div class="row justify-between x-gap-40 pb-20">
+                                                    <div class="col">
+                                                        <div class="row x-gap-10 y-gap-10">
+                                                            <div class="col-auto">
+                                                                <img src="/img/menus/cart/1.png" alt="image" />
+                                                            </div>
+
+                                                            <div class="col">
+                                                                <div class="text-dark-1 lh-15">
+                                                                    Philosophy &amp; Logic Weekly Class — Enroll
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-auto">
+                                                        <button>
+                                                            <img src="/img/menus/close.svg" alt="icon" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row justify-between x-gap-40 pb-20">
+                                                    <div class="col">
+                                                        <div class="row x-gap-10 y-gap-10">
+                                                            <div class="col-auto">
+                                                                <img src="/img/menus/cart/2.png" alt="image" />
+                                                            </div>
+
+                                                            <div class="col">
+                                                                <div class="text-dark-1 lh-15">
+                                                                    Psychology &amp; Sociology Weekly Class —
+                                                                    Enroll
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-auto">
+                                                        <button>
+                                                            <img src="/img/menus/close.svg" alt="icon" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="px-30 pt-20 pb-30 border-top-light">
+                                                <div class="d-flex justify-between">
+                                                    <div class="text-18 lh-12 text-dark-1 fw-500">
+                                                        Total:
+                                                    </div>
+                                                    <div class="text-18 lh-12 text-dark-1 fw-500">
+                                                        —
+                                                    </div>
+                                                </div>
+
+                                                <div class="row x-gap-20 y-gap-10 pt-30">
+                                                    <div class="col-sm-6">
+                                                        <button class="button py-20 -dark-1 text-white -dark-button-white col-12">
+                                                            View Classes
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button class="button py-20 -outline-dark-1 text-dark-1 col-12">
+                                                            Enroll Now
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="d-none xl:d-block -before-border pl-20 sm:pl-15">
+                                        <button class="text-dark-1 items-center"
+                                                data-el-toggle=".js-mobile-menu-toggle">
+                                            <i class="text-11 icon icon-mobile-menu"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="header-right__buttons d-flex items-center lg:d-none">
+                                    <a href="login.cshtml"
+                                       class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">Log in</a>
+                                    <a href="signup.cshtml"
+                                       class="button h-50 px-25 -outline-dark-1 -rounded text-dark-1 ml-20">Sign up</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </header>
+
+        <div class="content-wrapper js-content-wrapper">
+            <!-- Centres Grid Section -->
+            <section class="layout-pt-lg layout-pb-lg">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle">
+                                <h2 class="sectionTitle__title">Teaching Locations</h2>
+                                <p class="sectionTitle__text">
+                                    Mr. Ahmed Fadl teaches at these centres across Egypt
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row y-gap-30 pt-60 lg:pt-50">
+                        <!-- Maadi Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Maadi Learning Centre"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Maadi Learning Centre
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">Maadi, Cairo</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>Fri & Sat • 5:00–7:00 PM</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>Philosophy & Logic</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nasr City Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Nasr City Hub"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Nasr City Hub
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">
+                                                Nasr City, Cairo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>Thu • 6:00–8:00 PM</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>Psychology & Sociology</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heliopolis Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Heliopolis Academy"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Heliopolis Academy
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">
+                                                Heliopolis, Cairo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>Tue • 6:00–8:00 PM</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>All Subjects</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zamalek Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Zamalek Study Centre"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Zamalek Study Centre
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">
+                                                Zamalek, Cairo
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>Wed • 5:00–7:00 PM</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>Logic & Critical Thinking</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Cairo Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1560472355-536de3962603?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="New Cairo Education Centre"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                New Cairo Education Centre
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">New Cairo</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>Mon • 6:00–8:00 PM</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>Exam Preparation</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alexandria Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                                         alt="Alexandria Learning Hub"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">
+                                                Alexandria Learning Hub
+                                            </h4>
+                                            <div class="text-14 mt-5 text-dark-2">Alexandria</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>Sat & Sun • 4:00–6:00 PM</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>All Subjects (Monthly Workshops)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Map Section -->
+            <section class="layout-pt-lg layout-pb-lg bg-light-3">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle">
+                                <h2 class="sectionTitle__title">Locations Map</h2>
+                                <p class="sectionTitle__text">
+                                    Find the nearest centre to your location
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row justify-center pt-60 lg:pt-50">
+                        <div class="col-lg-10">
+                            <div class="map-container rounded-8 overflow-hidden shadow-3">
+                                <div id="centres-map" style="height: 400px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="footer -type-1 -dark bg-light-9">
+                <div class="container">
+                    <div class="footer-header border-bottom-dark">
+                        <div class="row y-gap-20 justify-between items-center">
+                            <div class="col-auto"></div>
+                            <div class="col-auto">
+                                <div class="footer-header-socials">
+                                    <div class="footer-header-socials__title text-dark-1">
+                                        Follow us on social media
+                                    </div>
+                                    <div class="footer-header-socials__list">
+                                        <a href="#"><i class="text-14 fa fa-facebook"></i></a>
+
+                                        <a href="#"><i class="text-14 fa fa-twitter"></i></a>
+
+                                        <a href="#"><i class="text-14 fa fa-instagram"></i></a>
+
+                                        <a href="#"><i class="text-14 fa fa-linkedin"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer-footer border-top-dark">
+                        <div class="row justify-between y-gap-20">
+                            <div class="col-md-6">
+                                <div class="footer-footer__copyright">
+                                    © 2025 Ahmed Fadl. All Rights Reserved.
+                                </div>
+                            </div>
+
+                            <div class="col-auto">
+                                <div class="footer-footer__right">
+                                    <!-- English button removed -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <script src="/js/vendors.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        // Initialize map
+        document.addEventListener("DOMContentLoaded", function () {
+          var map = L.map("centres-map", {
+            zoomControl: true,
+            scrollWheelZoom: true,
+            zIndex: 1,
+          }).setView([30.0444, 31.2357], 10); // Cairo coordinates
+
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            zIndex: 1,
+          }).addTo(map);
+
+          // Add markers for each centre (simplified coordinates)
+          var centres = [
+            { name: "Maadi Learning Centre", lat: 29.962, lng: 31.259 },
+            { name: "Nasr City Hub", lat: 30.0626, lng: 31.3497 },
+            { name: "Heliopolis Academy", lat: 30.0887, lng: 31.3257 },
+            { name: "Zamalek Study Centre", lat: 30.0621, lng: 31.2179 },
+            { name: "New Cairo Education Centre", lat: 30.03, lng: 31.47 },
+            { name: "Alexandria Learning Hub", lat: 31.2001, lng: 29.9187 },
+          ];
+
+          centres.forEach(function (centre) {
+            L.marker([centre.lat, centre.lng]).addTo(map).bindPopup(centre.name);
+          });
+
+          // Fix z-index after map loads
+          setTimeout(function () {
+            document.querySelector("#centres-map").style.zIndex = "1";
+            var mapContainer = document.querySelector(".leaflet-container");
+            if (mapContainer) {
+              mapContainer.style.zIndex = "1";
+            }
+          }, 100);
+        });
+    </script>
+</body>
+</html>
