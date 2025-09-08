@@ -1,7 +1,9 @@
 // Language Switcher JavaScript
 class LanguageSwitcher {
 	constructor() {
-		this.currentLang = localStorage.getItem("selectedLanguage") || "ar";
+		// Always default to Arabic on initial load
+		this.currentLang = "ar";
+		localStorage.setItem("selectedLanguage", "ar");
 		this.init();
 	}
 

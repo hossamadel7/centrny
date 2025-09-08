@@ -2014,4 +2014,18 @@
 			// silent fail
 		}
 	}
+	// Global function to play video in lightbox
+	window.playVideo = function (videoId, triggerEl) {
+		const lightbox = GLightbox({
+			elements: [
+				{
+					href: `https://www.youtube.com/watch?v=${videoId}`,
+					type: "video",
+					source: "youtube",
+				},
+			],
+			autoplayVideos: true,
+		});
+		lightbox.open();
+	};
 })();

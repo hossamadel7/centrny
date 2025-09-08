@@ -2140,19 +2140,23 @@ body.modal-open {
 	padding-right: 60px;
 }
 
-.subject-panel--right .subject-panel__content {
-	padding-left: 60px;
-}
-
 .subject-panel__header {
 	display: flex;
 	align-items: center;
 	margin-bottom: 25px;
 }
-
-.subject-panel__icon-container {
-	margin-right: 20px;
+/* RTL: flip icon and meta order in desktop Arabic mode
+[dir="rtl"] .subject-panel__header {
+	flex-direction: row-reverse;
 }
+/* RTL: restore normal order for right panels */
+/* [dir="rtl"] .subject-panel--right .subject-panel__header {
+	flex-direction: row !important;
+}
+[dir="rtl"] .subject-panel__icon-container {
+	margin-left: 20px !important;
+	margin-right: 0 !important;
+} */
 
 .subject-panel__icon {
 	width: 70px;
@@ -2461,7 +2465,6 @@ body.modal-open {
 
 [dir="rtl"] .subject-panel--right .subject-panel__content {
 	padding-left: 0;
-	padding-right: 60px;
 }
 
 [dir="rtl"] .subject-panel__icon-container {
