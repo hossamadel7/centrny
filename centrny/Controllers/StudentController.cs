@@ -26,15 +26,20 @@ namespace centrny.Controllers
         }
 
         // Session/context helpers
-        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
-        private (int userCode, int groupCode, int rootCode, string username) GetSessionContext() =>
-            (
-                GetSessionInt("UserCode"),
-                GetSessionInt("GroupCode"),
-                _context.Roots.FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.Replace("www.", ""))?.RootCode ?? 0,
+        private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
+        {
+            var rootRecord = _context.Roots
+                .FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", ""));
+
+            return (
+                GetSessionInt("UserCode"),      // This should return int?
+                GetSessionInt("GroupCode"),     // This should return int?
+                rootRecord?.RootCode,
                 GetSessionString("Username")
             );
+        }
         private int GetRootCode() =>
             _context.Roots.FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.Replace("www.", ""))?.RootCode ?? 0;
         // ==================== REGISTRATION METHODS ====================
@@ -428,24 +433,22 @@ namespace centrny.Controllers
             var allowedGroups = new[] { "Admins", "Attendance Officers" };
 
             var users = await _context.Users
-                .Join(_context.Groups, u => u.GroupCode, g => g.GroupCode,
-                    (u, g) => new { u, g })
+                .Join(_context.Groups, u => u.GroupCode, g => g.GroupCode, (u, g) => new { u, g })
                 .Where(joined => joined.g.BranchCode == req.BranchCode && allowedGroups.Contains(joined.g.GroupName))
-                .Select(joined => new { joined.u.UserCode, joined.u.Password, joined.u.Username })
+                .Select(joined => new { joined.u.UserCode, joined.u.Password, joined.u.Username, joined.u.GroupCode })
                 .ToListAsync();
 
             foreach (var user in users)
             {
                 if (user.Password == req.Password)
                 {
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, user.Username),
-                        new Claim("UserId", user.UserCode.ToString())
-                    };
-                    var identity = new ClaimsIdentity(claims, "AttendancePassword");
-                    var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync(principal);
+                    // Set session values - make sure these are being set
+                    HttpContext.Session.SetInt32("UserCode", user.UserCode);
+                    HttpContext.Session.SetInt32("GroupCode", user.GroupCode);
+                    HttpContext.Session.SetString("Username", user.Username);
+
+                    // Force session to save immediately
+                    await HttpContext.Session.CommitAsync();
 
                     return Json(new
                     {
@@ -463,14 +466,28 @@ namespace centrny.Controllers
                 error = "Wrong password or not authorized for this branch."
             });
         }
-
         [HttpPost]
         [Route("Student/MarkAttendance")]
         public async Task<IActionResult> MarkAttendance([FromBody] MarkAttendanceRequest request)
         {
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
+            if (!userCode.HasValue || !groupCode.HasValue)
+            {
+                return Json(new { success = false, error = "Session expired. Please authenticate again." });
+            }
+
+            if (!rootCode.HasValue)
+            {
+                return Json(new { success = false, error = "Invalid domain configuration." });
+            }
+
             if (request == null || string.IsNullOrEmpty(request.ItemKey))
                 return Json(new { success = false, error = "Invalid request." });
+
+            // Validate required request fields
+            if (!request.AttendanceType.HasValue)
+                return Json(new { success = false, error = "Attendance type is required." });
 
             var student = await GetStudentByItemKey(request.ItemKey);
             if (student == null)
@@ -485,29 +502,38 @@ namespace centrny.Controllers
             if (classEntity == null)
                 return Json(new { success = false, error = "Class not found." });
 
+           
+
             if (!await IsCurrentUserAdmin(student.RootCode, classEntity.BranchCode))
                 return Json(new { success = false, error = "Only administrators can mark attendance." });
 
             if (await _context.Attends.AnyAsync(a => a.StudentId == student.StudentCode && a.ClassId == request.ClassCode))
                 return Json(new { success = false, error = "Student has already been marked as attended for this class." });
 
+            // Determine session price
             int discountTypeCode = await GetDiscountTypeCode();
             decimal sessionPriceToSave = classEntity.ClassPrice ?? 0;
 
-            if (request.AttendanceType == discountTypeCode && request.SessionPrice.HasValue && request.SessionPrice.Value > 0)
+            // Safe handling of nullable values
+            if (request.AttendanceType.Value == discountTypeCode &&
+                request.SessionPrice.HasValue &&
+                request.SessionPrice.Value > 0)
+            {
                 sessionPriceToSave = request.SessionPrice.Value;
+            }
 
+            // Create attendance record with safe nullable handling
             var attendance = new Attend
             {
                 TeacherCode = classEntity.TeacherCode,
                 ScheduleCode = classEntity.ScheduleCode,
                 ClassId = request.ClassCode,
-                HallId = (int)classEntity.HallCode,
+                HallId = classEntity.HallCode, // Safe because we validated above
                 StudentId = student.StudentCode,
                 AttendDate = DateTime.Now,
                 SessionPrice = sessionPriceToSave,
                 RootCode = student.RootCode,
-                Type = (int)request.AttendanceType
+                Type = request.AttendanceType.Value // Safe because we validated above
             };
 
             _context.Attends.Add(attendance);
@@ -517,10 +543,10 @@ namespace centrny.Controllers
             {
                 success = true,
                 message = "Attendance marked successfully.",
-                attendanceDate = attendance.AttendDate.ToString("yyyy-MM-dd HH:mm")
+                attendanceDate = attendance.AttendDate.ToString("yyyy-MM-dd HH:mm"),
+                markedBy = username
             });
         }
-
         [HttpGet]
         [Route("Student/GetAttendanceTypes")]
         public async Task<IActionResult> GetAttendanceTypes()
@@ -1456,8 +1482,7 @@ namespace centrny.Controllers
                     FileType = f.FileType,
                     FileTypeName = f.FileType == 1 ? "Video" : "File",
                     FileExtension = f.FileExtension,
-                    FileSizeBytes = f.FileSizeBytes,
-                    FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                    FileSizeBytes = f.FileSizeBytes, // Keep as raw bytes
                     Duration = f.Duration,
                     DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
                     VideoProvider = f.VideoProvider,
@@ -1473,11 +1498,57 @@ namespace centrny.Controllers
                 })
                 .ToListAsync();
 
-            return Json(assignmentFiles);
+            // Format file sizes after the query
+            var result = assignmentFiles.Select(f => new
+            {
+                f.FileCode,
+                f.DisplayName,
+                f.FileType,
+                f.FileTypeName,
+                f.FileExtension,
+                f.FileSizeBytes,
+                FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                f.Duration,
+                f.DurationFormatted,
+                f.VideoProvider,
+                f.VideoProviderName,
+                f.SortOrder,
+                f.InsertTime,
+                f.IsActive,
+                f.LessonCode,
+                f.LessonName,
+                f.SubjectName,
+                f.TeacherName
+            }).ToList();
+
+            return Json(result);
         }
 
-        // Helper method for file size formatting
-        private string FormatFileSize(long bytes)
+        [HttpGet]
+        [Route("Student/GetUpcomingExams/{item_key}")]
+        public async Task<IActionResult> GetUpcomingExams(string item_key)
+        {
+            // Redirect to existing method or implement specific logic for upcoming exams
+            return await GetStudentExams(item_key);
+        }
+
+        [HttpGet]
+        [Route("Student/GetAttendedExams/{item_key}")]
+        public async Task<IActionResult> GetAttendedExams(string item_key)
+        {
+            // Redirect to existing method or implement specific logic for attended exams
+            return await GetStudentExams(item_key);
+        }
+
+        [HttpGet]
+        [Route("Student/GetAssignments/{item_key}")]
+        public async Task<IActionResult> GetAssignments(string item_key)
+        {
+            // Redirect to existing method
+            return await GetStudentAssignments(item_key);
+        }
+
+        private static string FormatFileSize(long bytes)
         {
             string[] sizes = { "B", "KB", "MB", "GB" };
             double len = bytes;

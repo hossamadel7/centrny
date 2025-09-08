@@ -218,13 +218,7 @@ function createAssignmentCard(assignment) {
                     <span>Added: ${formatDate(assignment.insertTime)}</span>
                 </div>
             </div>
-            
-            <div class="assignment-actions">
-                <button class="btn-action" onclick="accessAssignment(${assignment.fileCode}, '${assignment.fileTypeName}', ${isVideo})">
-                    <i class="fas fa-${isVideo ? 'play' : 'download'}"></i> 
-                    ${isVideo ? 'Watch' : 'Download'}
-                </button>
-            </div>
+           
         </div>
     `;
 }
@@ -752,11 +746,6 @@ function createLessonExamCard(exam) {
                 ` : ''}
             </div>
             
-            <div class="exam-actions">
-                <button class="btn-action" onclick="accessExam(${exam.fileCode}, '${exam.examName}')">
-                    <i class="fas fa-external-link-alt"></i> Access Exam
-                </button>
-            </div>
         </div>
     `;
 }

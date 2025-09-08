@@ -192,7 +192,6 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.Hall).WithMany(p => p.Attends)
                 .HasForeignKey(d => d.HallId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Attend_Hall");
 
             entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Attends)
@@ -741,7 +740,9 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("isActive");
-            entity.Property(e => e.IsOnlineLesson).HasColumnName("isOnlineLesson");
+            entity.Property(e => e.IsOnlineLesson)
+                .HasDefaultValue(false)
+                .HasColumnName("isOnlineLesson");
             entity.Property(e => e.LessonCode).HasColumnName("Lesson_code");
             entity.Property(e => e.RootCode).HasColumnName("Root_code");
             entity.Property(e => e.SortOrder).HasColumnName("Sort_Order");
