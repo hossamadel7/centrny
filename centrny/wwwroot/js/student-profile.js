@@ -4,24 +4,28 @@
  */
 
 // Global variables
+// Update the global variables to include assignments
 let studentProfileData = {
     itemKey: '',
     subjects: [],
     plans: [],
     attendance: [],
     exams: [],
+    assignments: [], // Add this
     stats: {},
     currentAttendancePage: 1,
     attendancePageSize: 10
 };
 
 // Constants
+// Update the API_ENDPOINTS constant
 const API_ENDPOINTS = {
     STATS: '/Student/GetStudentStats/',
     SUBJECTS: '/Student/GetStudentSubjects/',
     PLANS: '/Student/GetStudentPlans/',
     ATTENDANCE: '/Student/GetStudentAttendance/',
-    EXAMS: '/Student/GetStudentExams/'
+    EXAMS: '/Student/GetStudentExams/',
+    ASSIGNMENTS: '/Student/GetStudentAssignments/' // Add this new endpoint
 };
 
 // Initialize the student profile functionality
@@ -57,6 +61,7 @@ function setupEventListeners() {
 }
 
 // Load all student data
+// Update loadAllStudentData to include assignments
 async function loadAllStudentData() {
     try {
         // Show loading states
@@ -68,7 +73,8 @@ async function loadAllStudentData() {
             loadStudentSubjects(),
             loadStudentPlans(),
             loadStudentAttendance(1),
-            loadStudentExams()
+            loadStudentExams(),
+            loadStudentAssignments() // Add this
         ];
 
         await Promise.allSettled(promises);
@@ -84,6 +90,144 @@ async function loadAllStudentData() {
     }
 }
 
+// Load student assignments from attended lesson files
+async function loadStudentAssignments() {
+    try {
+        const response = await fetch(`${API_ENDPOINTS.ASSIGNMENTS}${studentProfileData.itemKey}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        studentProfileData.assignments = data;
+        renderAssignments(data);
+
+    } catch (error) {
+        console.error('Error loading assignments:', error);
+        showError('assignmentsContent', 'Failed to load assignments: ' + error.message);
+    }
+}
+
+// Render lesson-based assignment files
+function renderAssignments(assignments) {
+    const container = document.getElementById('assignmentsContent');
+
+    if (!container) return;
+
+    if (assignments.length === 0) {
+        container.innerHTML = createEmptyState('fa-file-alt', 'No Assignments Available', 'No assignment files are available from your attended lessons.');
+        return;
+    }
+
+    // Sort assignments by insert time (newest first)
+    const sortedAssignments = [...assignments].sort((a, b) => new Date(b.insertTime) - new Date(a.insertTime));
+
+    // Group by file type for better organization
+    const videos = sortedAssignments.filter(a => a.fileType === 1);
+    const files = sortedAssignments.filter(a => a.fileType === 0);
+
+    container.innerHTML = `
+        <div class="assignments-summary">
+            <div class="summary-item">
+                <span class="summary-value">${assignments.length}</span>
+                <span class="summary-label">Total Files</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value">${videos.length}</span>
+                <span class="summary-label">Videos</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value">${files.length}</span>
+                <span class="summary-label">Documents</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value">${[...new Set(assignments.map(a => a.lessonName))].length}</span>
+                <span class="summary-label">Lessons</span>
+            </div>
+        </div>
+        
+        <div class="assignments-grid">
+            ${sortedAssignments.map(assignment => createAssignmentCard(assignment)).join('')}
+        </div>
+    `;
+
+    // Add entrance animations
+    animateCards(container.querySelectorAll('.assignment-card'));
+}
+
+// Create assignment card
+function createAssignmentCard(assignment) {
+    const isVideo = assignment.fileType === 1;
+
+    return `
+        <div class="assignment-card ${isVideo ? 'video-assignment' : 'file-assignment'}">
+            <div class="assignment-header">
+                <div class="assignment-icon ${isVideo ? 'video' : 'file'}">
+                    <i class="fas fa-${isVideo ? 'video' : 'file-alt'}"></i>
+                </div>
+                <div class="assignment-info">
+                    <h3 class="assignment-name">${assignment.displayName}</h3>
+                    <div class="assignment-badges">
+                        <span class="badge-custom ${isVideo ? 'badge-danger' : 'badge-primary'}">
+                            ${assignment.fileTypeName}
+                        </span>
+                        <span class="badge-custom badge-secondary">Offline</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="assignment-details">
+                <div class="assignment-detail">
+                    <i class="fas fa-book"></i>
+                    <span>${assignment.subjectName}</span>
+                </div>
+                <div class="assignment-detail">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>${assignment.teacherName}</span>
+                </div>
+                <div class="assignment-detail">
+                    <i class="fas fa-bookmark"></i>
+                    <span>${assignment.lessonName}</span>
+                </div>
+                ${assignment.fileSizeFormatted ? `
+                    <div class="assignment-detail">
+                        <i class="fas fa-weight-hanging"></i>
+                        <span>Size: ${assignment.fileSizeFormatted}</span>
+                    </div>
+                ` : ''}
+                ${assignment.durationFormatted ? `
+                    <div class="assignment-detail">
+                        <i class="fas fa-clock"></i>
+                        <span>Duration: ${assignment.durationFormatted}</span>
+                    </div>
+                ` : ''}
+                ${isVideo && assignment.videoProviderName ? `
+                    <div class="assignment-detail">
+                        <i class="fas fa-play-circle"></i>
+                        <span>Provider: ${assignment.videoProviderName}</span>
+                    </div>
+                ` : ''}
+                <div class="assignment-detail">
+                    <i class="fas fa-calendar"></i>
+                    <span>Added: ${formatDate(assignment.insertTime)}</span>
+                </div>
+            </div>
+            
+            <div class="assignment-actions">
+                <button class="btn-action" onclick="accessAssignment(${assignment.fileCode}, '${assignment.fileTypeName}', ${isVideo})">
+                    <i class="fas fa-${isVideo ? 'play' : 'download'}"></i> 
+                    ${isVideo ? 'Watch' : 'Download'}
+                </button>
+            </div>
+        </div>
+    `;
+}
 // Load student statistics
 async function loadStudentStats() {
     try {
@@ -527,47 +671,38 @@ async function loadStudentExams() {
     }
 }
 
-// Render exam results with enhanced cards
+// Render lesson-based exam files
 function renderExamResults(exams) {
     const container = document.getElementById('examsContent');
 
     if (!container) return;
 
     if (exams.length === 0) {
-        container.innerHTML = createEmptyState('fa-file-alt', 'No Exam Results', 'This student has not taken any exams yet.');
+        container.innerHTML = createEmptyState('fa-clipboard-check', 'No Exams Available', 'No exams are available from your attended lessons.');
         return;
     }
 
-    // Sort exams by date (newest first)
-    const sortedExams = [...exams].sort((a, b) => new Date(b.examDate) - new Date(a.examDate));
-
-    // Calculate summary statistics
-    const totalExams = exams.length;
-    const passedExams = exams.filter(e => e.passed).length;
-    const averageScore = exams.reduce((sum, e) => sum + (e.studentPercentage || 0), 0) / totalExams;
+    // Sort exams by insert time (newest first)
+    const sortedExams = [...exams].sort((a, b) => new Date(b.insertTime) - new Date(a.insertTime));
 
     container.innerHTML = `
         <div class="exams-summary">
             <div class="summary-item">
-                <span class="summary-value">${totalExams}</span>
-                <span class="summary-label">Total Exams</span>
+                <span class="summary-value">${exams.length}</span>
+                <span class="summary-label">Available Exams</span>
             </div>
             <div class="summary-item">
-                <span class="summary-value">${passedExams}</span>
-                <span class="summary-label">Passed</span>
+                <span class="summary-value">${[...new Set(exams.map(e => e.subjectName))].length}</span>
+                <span class="summary-label">Subjects</span>
             </div>
             <div class="summary-item">
-                <span class="summary-value">${Math.round(averageScore)}%</span>
-                <span class="summary-label">Average Score</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-value">${Math.round((passedExams / totalExams) * 100)}%</span>
-                <span class="summary-label">Pass Rate</span>
+                <span class="summary-value">${[...new Set(exams.map(e => e.lessonName))].length}</span>
+                <span class="summary-label">Lessons</span>
             </div>
         </div>
         
         <div class="exams-grid">
-            ${sortedExams.map(exam => createExamCard(exam)).join('')}
+            ${sortedExams.map(exam => createLessonExamCard(exam)).join('')}
         </div>
     `;
 
@@ -575,26 +710,19 @@ function renderExamResults(exams) {
     animateCards(container.querySelectorAll('.exam-card'));
 }
 
-// Create exam result card
-function createExamCard(exam) {
-    const passed = exam.passed;
-    const percentage = Math.round(exam.studentPercentage || 0);
-    const isHighScore = percentage >= 90;
-
+// Create lesson-based exam card
+function createLessonExamCard(exam) {
     return `
-        <div class="exam-card ${passed ? 'passed' : 'failed'} ${isHighScore ? 'high-score' : ''}">
+        <div class="exam-card lesson-exam">
             <div class="exam-header">
-                <div class="exam-icon ${passed ? 'success' : 'danger'}">
-                    <i class="fas fa-${exam.examType === 'Exam' ? 'file-alt' : 'question-circle'}"></i>
+                <div class="exam-icon">
+                    <i class="fas fa-clipboard-check"></i>
                 </div>
                 <div class="exam-info">
                     <h3 class="exam-name">${exam.examName}</h3>
                     <div class="exam-badges">
-                        <span class="badge-custom ${passed ? 'badge-success' : 'badge-danger'}">
-                            ${passed ? 'Passed' : 'Failed'}
-                        </span>
-                        <span class="badge-custom badge-info">${exam.examType}</span>
-                        ${exam.isOnline ? '<span class="badge-custom badge-warning">Online</span>' : ''}
+                        <span class="badge-custom badge-info">Lesson Exam</span>
+                        <span class="badge-custom badge-secondary">Offline</span>
                     </div>
                 </div>
             </div>
@@ -609,47 +737,29 @@ function createExamCard(exam) {
                     <span>${exam.teacherName}</span>
                 </div>
                 <div class="exam-detail">
-                    <i class="fas fa-calendar"></i>
-                    <span>${formatDate(exam.examDate)}</span>
+                    <i class="fas fa-bookmark"></i>
+                    <span>${exam.lessonName}</span>
                 </div>
                 <div class="exam-detail">
-                    <i class="fas fa-clock"></i>
-                    <span>${exam.examTime}</span>
+                    <i class="fas fa-calendar"></i>
+                    <span>Available since: ${formatDate(exam.insertTime)}</span>
                 </div>
-                ${exam.lessonName !== 'N/A' ? `
+                ${exam.durationFormatted ? `
                     <div class="exam-detail">
-                        <i class="fas fa-bookmark"></i>
-                        <span>${exam.lessonName}</span>
+                        <i class="fas fa-clock"></i>
+                        <span>Duration: ${exam.durationFormatted}</span>
                     </div>
                 ` : ''}
             </div>
             
-            <div class="exam-scores">
-                <div class="score-item">
-                    <div class="score-value">${exam.studentResult || 0}</div>
-                    <div class="score-label">Score</div>
-                </div>
-                <div class="score-item">
-                    <div class="score-value">${percentage}%</div>
-                    <div class="score-label">Percentage</div>
-                </div>
-                <div class="score-item">
-                    <div class="score-value">${exam.grade}</div>
-                    <div class="score-label">Grade</div>
-                </div>
-            </div>
-            
-            <div class="exam-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill ${passed ? 'success' : 'danger'}" 
-                         style="width: ${percentage}%"></div>
-                </div>
-                <div class="progress-text">${percentage}% of 100%</div>
+            <div class="exam-actions">
+                <button class="btn-action" onclick="accessExam(${exam.fileCode}, '${exam.examName}')">
+                    <i class="fas fa-external-link-alt"></i> Access Exam
+                </button>
             </div>
         </div>
     `;
 }
-
 // Utility Functions
 
 // Create empty state HTML

@@ -65,5 +65,9 @@ public partial class Content
 
     public string? SignUpAr { get; set; }
 
+    public string? Center { get; set; }
+
+    public string? CenterAr { get; set; }
+
     public virtual Root RootCodeNavigation { get; set; } = null!;
 }

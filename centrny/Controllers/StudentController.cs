@@ -1355,26 +1355,59 @@ namespace centrny.Controllers
             if (student == null)
                 return Json(new { error = "Student not found." });
 
-            // Join StudentExam with Exam, return only exams (ISExam == true)
-            var exams = await _context.StudentExams
-                .Where(se => se.StudentCode == student.StudentCode)
-                .Join(_context.Exams,
-                      se => se.ExamCode,
-                      e => e.ExamCode,
-                      (se, e) => new { StudentExam = se, Exam = e })
-                .Where(joined => joined.Exam.IsExam == true)
-                .OrderByDescending(joined => joined.StudentExam.InsertTime)
-                .Select(joined => new
+            // Get all classes the student has actually attended
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>()); // No attended classes, return empty
+
+            // Get lessons linked to attended classes
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>()); // No lessons linked to attended classes
+
+            // Get exam files (FileType 3, IsOnlineLesson = false)
+            var examFiles = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                           f.IsActive &&
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
+                           f.FileType == 3) // Exams only
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new
                 {
-                    joined.Exam.ExamCode,
-                    ExamName = joined.Exam.ExamName,
-                    joined.StudentExam.InsertTime,
-                    joined.StudentExam.ExamDegree,
-                    joined.StudentExam.StudentResult
+                    ExamCode = f.FileCode, // Using FileCode as ExamCode for consistency
+                    ExamName = f.DisplayName ?? "Unknown Exam",
+                    FileCode = f.FileCode,
+                    DisplayName = f.DisplayName,
+                    FileType = f.FileType,
+                    FileTypeName = "Exam",
+                    SortOrder = f.SortOrder,
+                    InsertTime = f.InsertTime,
+                    IsActive = f.IsActive,
+                    LessonCode = f.LessonCode,
+                    LessonName = f.LessonCodeNavigation.LessonName,
+                    SubjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    TeacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
+                    // Additional exam-specific fields that might be useful
+                    Duration = f.Duration,
+                    DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null
                 })
                 .ToListAsync();
 
-            return Json(exams);
+            return Json(examFiles);
         }
 
         [HttpGet]
@@ -1385,30 +1418,78 @@ namespace centrny.Controllers
             if (student == null)
                 return Json(new { error = "Student not found." });
 
-            // Join StudentExam with Exam, return only assignments (ISExam == false)
-            var assignments = await _context.StudentExams
-                .Where(se => se.StudentCode == student.StudentCode)
-                .Join(_context.Exams,
-                      se => se.ExamCode,
-                      e => e.ExamCode,
-                      (se, e) => new { StudentExam = se, Exam = e })
-                .Where(joined => joined.Exam.IsExam == false)
-                .OrderByDescending(joined => joined.StudentExam.InsertTime)
-                .Select(joined => new
+            // Get all classes the student has actually attended
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>()); // No attended classes, return empty
+
+            // Get lessons linked to attended classes
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>()); // No lessons linked to attended classes
+
+            // Get assignment files (FileType 0 or 1, IsOnlineLesson = false)
+            var assignmentFiles = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                           f.IsActive &&
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
+                           (f.FileType == 0 || f.FileType == 1)) // Files or Videos
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new
                 {
-                    joined.Exam.ExamCode,
-                    AssignName = joined.Exam.ExamName,
-
-
-                    joined.StudentExam.ExamDegree,
-                    joined.StudentExam.StudentResult,
-                    joined.StudentExam.IsActive,
-
+                    FileCode = f.FileCode,
+                    DisplayName = f.DisplayName ?? "Unknown File",
+                    FileType = f.FileType,
+                    FileTypeName = f.FileType == 1 ? "Video" : "File",
+                    FileExtension = f.FileExtension,
+                    FileSizeBytes = f.FileSizeBytes,
+                    FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                    Duration = f.Duration,
+                    DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
+                    VideoProvider = f.VideoProvider,
+                    VideoProviderName = f.VideoProvider == 0 ? "YouTube" :
+                                      f.VideoProvider == 1 ? "Bunny CDN" : "Unknown",
+                    SortOrder = f.SortOrder,
+                    InsertTime = f.InsertTime,
+                    IsActive = f.IsActive,
+                    LessonCode = f.LessonCode,
+                    LessonName = f.LessonCodeNavigation.LessonName,
+                    SubjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    TeacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
                 })
                 .ToListAsync();
 
-            return Json(assignments);
+            return Json(assignmentFiles);
         }
+
+        // Helper method for file size formatting
+        private string FormatFileSize(long bytes)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len /= 1024;
+            }
+            return $"{len:0.##} {sizes[order]}";
+        }
+
         [HttpPost]
         [Route("Student/ValidatePin")]
         public async Task<IActionResult> ValidatePin([FromBody] PinValidationRequest request)
