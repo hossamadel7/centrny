@@ -286,6 +286,15 @@ namespace Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Lesson.
+        /// </summary>
+        public static string FormLesson {
+            get {
+                return ResourceManager.GetString("FormLesson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Number of Students.
         /// </summary>
         public static string FormNoOfStudents {
@@ -552,6 +561,15 @@ namespace Resources {
         public static string Saving {
             get {
                 return ResourceManager.GetString("Saving", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select Lesson.
+        /// </summary>
+        public static string SelectLesson {
+            get {
+                return ResourceManager.GetString("SelectLesson", resourceCulture);
             }
         }
         

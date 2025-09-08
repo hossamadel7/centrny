@@ -1314,7 +1314,7 @@
         var $available = $('#availableQuestions').empty();
         availablePaginated.forEach(function (item) {
             if (item.type === 'chapter') {
-                var expanded = chapterExpanded['available-' + item.chapterCode] !== false;
+                var expanded = chapterExpanded['available-' + item.chapterCode] === true;
                 $available.append(`
                     <li class="list-group-item bg-primary text-white fw-bold chapter-header"
                         data-chapter="${item.chapterCode}" data-list="available" style="cursor: pointer;">
@@ -1323,7 +1323,7 @@
                     </li>
                 `);
             } else if (item.type === 'lesson') {
-                var expanded = lessonExpanded['available-' + item.lessonCode] !== false;
+                var expanded = lessonExpanded['available-' + item.lessonCode] === true;
                 $available.append(`
                     <li class="list-group-item bg-light fw-semibold ps-4 lesson-header"
                         data-lesson="${item.lessonCode}" data-chapter="${item.chapterCode}"
@@ -1333,8 +1333,8 @@
                     </li>
                 `);
             } else if (item.type === 'question') {
-                var show = (chapterExpanded['available-' + item.chapterCode] !== false) &&
-                    (lessonExpanded['available-' + item.lessonCode] !== false);
+                var show = (chapterExpanded['available-' + item.chapterCode] === true) &&
+                    (lessonExpanded['available-' + item.lessonCode] === true);
                 $available.append(`
                     <li class="list-group-item ps-5 question-item"
                         data-id="${item.questionCode}" data-chapter="${item.chapterCode}"
@@ -1348,7 +1348,7 @@
         var $chosen = $('#chosenQuestions').empty();
         chosenPaginated.forEach(function (item) {
             if (item.type === 'chapter') {
-                var expanded = chapterExpanded['chosen-' + item.chapterCode] !== false;
+                var expanded = chapterExpanded['chosen-' + item.chapterCode] === true;
                 $chosen.append(`
                     <li class="list-group-item bg-success text-white fw-bold chapter-header"
                         data-chapter="${item.chapterCode}" data-list="chosen" style="cursor: pointer;">
@@ -1357,7 +1357,7 @@
                     </li>
                 `);
             } else if (item.type === 'lesson') {
-                var expanded = lessonExpanded['chosen-' + item.lessonCode] !== false;
+                var expanded = lessonExpanded['chosen-' + item.lessonCode] === true;
                 $chosen.append(`
         <li class="list-group-item bg-light fw-semibold ps-4 lesson-header"
             data-lesson="${item.lessonCode}" data-chapter="${item.chapterCode}"
@@ -1367,8 +1367,8 @@
         </li>
     `);
             } else if (item.type === 'question') {
-                var show = (chapterExpanded['chosen-' + item.chapterCode] !== false) &&
-                    (lessonExpanded['chosen-' + item.lessonCode] !== false);
+                var show = (chapterExpanded['chosen-' + item.chapterCode] === true) &&
+                    (lessonExpanded['chosen-' + item.lessonCode] === true);
                 $chosen.append(`
                 <li class="list-group-item ps-5 d-flex align-items-center question-item"
                     data-id="${item.questionCode}" data-chapter="${item.chapterCode}"

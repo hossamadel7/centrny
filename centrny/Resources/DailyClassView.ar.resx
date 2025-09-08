@@ -88,4 +88,11 @@
 	<data name="FormClassPrice" xml:space="preserve">
     <value>سعر الحصة</value>
   </data>
+	<!-- For DailyClassView.ar.resx (Arabic) -->
+	<data name="FormLesson" xml:space="preserve">
+  <value>الدرس</value>
+</data>
+	<data name="SelectLesson" xml:space="preserve">
+  <value>اختر الدرس</value>
+</data>
 </root>

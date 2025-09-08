@@ -1,4 +1,4 @@
-﻿// LOCALIZED CALENDAR DAY VIEW JAVASCRIPT
+﻿// LOCALIZED CALENDAR DAY VIEW JAVASCRIPT with SweetAlert2 integration
 
 let currentDate = new Date();
 let dailyClasses = [];
@@ -16,7 +16,44 @@ const userContext = {
     teacherCode: null // for teacher user scenario
 };
 
-// Use localized strings from window.DailyClassResx
+// --- SweetAlert2 Alert Helpers ---
+function showSuccessAlert(message) {
+    return Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: message,
+        confirmButtonColor: '#3085d6'
+    });
+}
+function showErrorAlert(message) {
+    return Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: message,
+        confirmButtonColor: '#d33'
+    });
+}
+function showInfoAlert(message) {
+    return Swal.fire({
+        icon: 'info',
+        title: 'Info',
+        text: message
+    });
+}
+function showConfirmAlert(message) {
+    return Swal.fire({
+        icon: 'warning',
+        title: 'Are you sure?',
+        text: message,
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No'
+    }).then((result) => result.isConfirmed);
+}
+
+// --- Localization ---
 function L(key, fallback = "") {
     return (window.DailyClassResx && window.DailyClassResx[key]) ? window.DailyClassResx[key] : fallback;
 }
@@ -79,36 +116,32 @@ function setupEventListeners() {
     document.getElementById('addClassModal')?.addEventListener('hidden.bs.modal', resetModalForCreate);
     document.getElementById('saveClassBtn')?.addEventListener('click', saveClass);
 
+    // Lesson dropdown: reload on teacher/year/subject change
+    document.getElementById('teacherCode')?.addEventListener('change', loadLessonsForDropdown);
+    document.getElementById('yearCode')?.addEventListener('change', loadLessonsForDropdown);
+    document.getElementById('subjectCode')?.addEventListener('change', loadLessonsForDropdown);
+
     // --- CENTER USER FLOW (custom cycle as requested) ---
     document.getElementById('teacherCode')?.addEventListener('change', function () {
         if (!userContext.isCenter) return;
-
-        // Disable and clear all dependent fields
         disable('hallCode');
         populateSelectAsync('hallCode', []);
         disable('subjectCode');
         populateSelectAsync('subjectCode', []);
-       
         populateSelectAsync('yearCode', []);
-
         const teacherId = this.value;
         const eduYearCode = document.getElementById('eduYearCode').value;
         if (teacherId && userContext.groupBranchCode && eduYearCode) {
-            // Enable and populate halls for this branch (group branch)
             enable('hallCode');
             loadHallsForBranch(userContext.groupBranchCode);
-
-            // Enable and populate subjects (Teach table filtered by teacher, branch, eduYear)
             enable('subjectCode');
-            fetchSubjectsForTeacherEduYearBranch(teacherId, eduYearCode, userContext.groupBranchCode, true); // true = center user
+            fetchSubjectsForTeacherEduYearBranch(teacherId, eduYearCode, userContext.groupBranchCode, true);
         }
     });
 
     document.getElementById('subjectCode')?.addEventListener('change', function () {
-        // Center user flow - don't change
         if (userContext.isCenter) {
             populateSelectAsync('yearCode', []);
-
             const subjectId = this.value;
             const teacherId = document.getElementById('teacherCode').value;
             const eduYearCode = document.getElementById('eduYearCode').value;
@@ -119,23 +152,20 @@ function setupEventListeners() {
                 populateSelectAsync('yearCode', []);
             }
         } else {
-            // Teacher flow: reload year dropdown
             const eduYearCode = document.getElementById('eduYearCode').value;
             loadYearsByEduYear(eduYearCode);
         }
     });
-    // --- TEACHER FLOW (legacy, not changed) ---
+
     document.getElementById('centerCode')?.addEventListener('change', function () {
         let centerId = this.value;
         if (centerId) {
             enable('branchCode');
             loadBranchesByCenter(centerId);
-            // Do not disable yearCode here! Only clear it
             populateSelectAsync('yearCode', []);
         } else {
             populateSelectAsync('branchCode', []);
             disable('branchCode');
-           
             populateSelectAsync('yearCode', []);
         }
         disable('subjectCode');
@@ -146,7 +176,6 @@ function setupEventListeners() {
         disable('subjectCode');
         populateSelectAsync('subjectCode', []);
         populateSelectAsync('yearCode', []);
-
         let branchId = this.value;
         let centerId = document.getElementById('centerCode').value;
         let eduYearCode = document.getElementById('eduYearCode').value;
@@ -154,8 +183,6 @@ function setupEventListeners() {
             enable('subjectCode');
             fetchSubjectsForTeacherEduYearBranch(userContext.teacherCode, eduYearCode, branchId);
         }
-
-        // Teacher flow: reload year dropdown
         if (!userContext.isCenter) {
             const eduYearCode = document.getElementById('eduYearCode').value;
             loadYearsByEduYear(eduYearCode);
@@ -163,24 +190,17 @@ function setupEventListeners() {
     });
 
     document.getElementById('eduYearCode')?.addEventListener('change', function () {
-        // --- Custom: always reset all dependents for both center and teacher ---
-        // Do not disable teacherCode here!
         populateSelectAsync('teacherCode', []);
         disable('hallCode');
         populateSelectAsync('hallCode', []);
         disable('subjectCode');
         populateSelectAsync('subjectCode', []);
-    
         populateSelectAsync('yearCode', []);
-
         if (userContext.isCenter) {
-            // Reload teachers for group branch, only staff
             if (userContext.groupBranchCode) {
                 loadStaffTeachersForBranch(userContext.groupBranchCode);
             }
-            // Set eduYear as disabled if only one (handled below)
         } else {
-            // legacy: teacher flow
             let eduYearCode = this.value;
             let branchId = document.getElementById('branchCode').value;
             let centerId = document.getElementById('centerCode').value;
@@ -192,7 +212,6 @@ function setupEventListeners() {
         }
     });
 
-    // Center scenario: branch change (for halls/teachers)
     document.getElementById('branchCode')?.addEventListener('change', function () {
         if (!userContext.isCenter) {
             loadHallsForBranch(this.value);
@@ -200,10 +219,6 @@ function setupEventListeners() {
         }
     });
 
-    document.getElementById('hallCode')?.addEventListener('change', function () { /* optional */ });
-    document.getElementById('yearCode')?.addEventListener('change', function () { /* optional */ });
-
-    // Class details modal edit/delete
     document.getElementById('editClassBtn')?.addEventListener('click', function () {
         if (editingClassId) {
             showEditClassModal(editingClassId);
@@ -223,22 +238,20 @@ function disable(id) {
         document.getElementById(id).disabled = true;
     }
 }
-// --- Center User: Only staff teachers for this branch (groupBranchCode) ---
+// --- AJAX helper functions and dropdown population (unchanged) ---
 async function loadStaffTeachersForBranch(branchCode) {
     try {
         const res = await fetch(`/DailyClass/GetTeachersForBranch?branchCode=${branchCode}`);
         const data = await res.json();
         let teachers = Array.isArray(data.teachers) ? data.teachers : [];
-        // Don't filter by isStaff; show all teachers as requested
         populateSelectAsync('teacherCode', teachers);
         enable('teacherCode');
     } catch {
         populateSelectAsync('teacherCode', []);
-        enable('teacherCode'); // Don't leave it disabled
+        enable('teacherCode');
     }
 }
 
-// --- Center/Teacher: Subjects for teacher/branch/eduYear (Teach table logic) ---
 async function fetchSubjectsForTeacherEduYearBranch(teacherCode, eduYearCode, branchCode, isCenter = false) {
     if (!teacherCode || !eduYearCode || !branchCode) {
         populateSelectAsync('subjectCode', []);
@@ -254,20 +267,18 @@ async function fetchSubjectsForTeacherEduYearBranch(teacherCode, eduYearCode, br
         } else {
             populateSelectAsync('subjectCode', []);
             disable('subjectCode');
-            showErrorToast("No subjects available for the selected options");
+            await showErrorAlert("No subjects available for the selected options");
         }
     } catch {
         populateSelectAsync('subjectCode', []);
         disable('subjectCode');
-        showErrorToast("No subjects available for the selected options");
+        await showErrorAlert("No subjects available for the selected options");
     }
 }
 
-// --- Center/Teacher: Years for subject/teacher/branch/eduYear (Teach table logic) ---
 async function loadYearsForTeach(branchCode, teacherCode, subjectCode, eduYearCode = null, isCenter = false) {
     if (!branchCode || !teacherCode || !subjectCode) {
         populateSelectAsync('yearCode', []);
-     
         return;
     }
     let url = `/DailyClass/GetYearsForTeach?branchCode=${branchCode}&teacherCode=${teacherCode}&subjectCode=${subjectCode}`;
@@ -280,11 +291,9 @@ async function loadYearsForTeach(branchCode, teacherCode, subjectCode, eduYearCo
         enable('yearCode');
     } catch {
         populateSelectAsync('yearCode', []);
-        
     }
 }
 
-// --- EduYear: Only active one for this root, set and disable if only one ---
 async function loadEduYearsForRoot() {
     try {
         const res = await fetch('/DailyClass/GetEduYearsForRoot');
@@ -308,12 +317,9 @@ async function loadEduYearsForRoot() {
         document.getElementById('eduYearCode').disabled = true;
     }
 }
-
-// --- Teacher Flow (legacy) ---
 function loadYearsByEduYear(eduYearCode) {
     if (!eduYearCode) {
         populateSelectAsync('yearCode', []);
-     
         return;
     }
     fetch(`/DailyClass/GetYearsForEduYear`)
@@ -324,7 +330,6 @@ function loadYearsByEduYear(eduYearCode) {
         })
         .catch(() => {
             populateSelectAsync('yearCode', []);
-      
         });
 }
 
@@ -344,13 +349,12 @@ function generateWeeklyClasses() {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                showSuccessToast(data.message || "Weekly classes generated!");
-                loadDayContent();
+                showSuccessAlert(data.message || "Weekly classes generated!").then(() => location.reload());
             } else {
-                showErrorToast(data.error || "Failed to generate weekly classes.");
+                showErrorAlert(data.error || "Failed to generate weekly classes.");
             }
         })
-        .catch(e => showErrorToast("Network error: " + e.message));
+        .catch(e => showErrorAlert("Network error: " + e.message));
 }
 
 function navigateDate(days) {
@@ -376,7 +380,6 @@ function updateDateDisplay() {
     document.getElementById('formSelectedDate').textContent = formattedDate;
     document.getElementById('classDate').value = selectedDateStr;
 }
-
 function hideInitialLoader() {
     const loader = document.getElementById('initialLoader');
     if (loader) {
@@ -390,7 +393,6 @@ function hideInitialLoader() {
 }
 
 function loadDayContent() {
-    // Use selectedDateStr for all API calls!
     const selectedDate = selectedDateStr;
     const container = document.getElementById('dayContent');
     container.innerHTML = `<div class="text-center py-3"><div class="spinner"></div> ${L("Loading") || "Loading..."}</div>`;
@@ -404,7 +406,7 @@ function loadDayContent() {
             dailyReservations = reservations;
             renderDayContent(classes, reservations);
             hideInitialLoader();
-            enableScreen(); // <-- Re-enable the UI after loading content
+            enableScreen();
         })
         .catch((e) => {
             container.innerHTML = `<div class="alert alert-danger">${L("LoadError") || "Error loading data"}: ${e.message}</div>`;
@@ -417,11 +419,9 @@ function renderDayContent(classes, reservations) {
     const container = document.getElementById('dayContent');
     container.innerHTML = '';
     const selectedDate = selectedDateStr;
-
     function extractDate(str) { return str?.slice(0, 10) || ''; }
     classes = Array.isArray(classes) ? classes.filter(cls => extractDate(cls.classDate) === selectedDate) : [];
     reservations = Array.isArray(reservations) ? reservations.filter(r => extractDate(r.rTime) === selectedDate) : [];
-
     let html = `<div class="classes-grid">`;
     if (classes.length === 0 && reservations.length === 0) {
         html += `<div class="empty-day-state"><i class="fas fa-calendar-times"></i><h4>${L("NoClassesScheduled")}</h4><p>${L("NoClassesSubText")}</p></div>`;
@@ -431,8 +431,6 @@ function renderDayContent(classes, reservations) {
     }
     html += `</div>`;
     container.innerHTML = html;
-
-    // Attach details click handler
     setTimeout(() => {
         document.querySelectorAll('.class-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -466,7 +464,6 @@ function renderClassCard(cls) {
         </div>
     `;
 }
-
 function renderReservationCard(r) {
     return `
         <div class="class-card reservation-card position-relative">
@@ -496,7 +493,6 @@ function resetModalForCreate() {
     editingClassId = null;
     setupModalFields();
     resetFormFields();
-
     if (!userContext.isCenter) {
         fetch('/DailyClass/GetCurrentTeacherCode')
             .then(res => res.json())
@@ -507,13 +503,10 @@ function resetModalForCreate() {
                 userContext.teacherCode = null;
             });
     }
-
     document.querySelector('#addClassModal .modal-title').innerHTML =
         `<i class="fas fa-plus-circle me-2"></i>${L("AddClassBtn")}` +
         (userContext.userRootName ? `<small class="text-muted">${L("ForUser") || "for"} ${userContext.userRootName}</small>` : '');
-
     if (userContext.isCenter) {
-        // FIX: Ensure branch is loaded before edu years so groupBranchCode is set before teacher list load
         loadUserBranch().then(() => {
             if (userContext.groupBranchCode) {
                 loadEduYearsForRoot();
@@ -527,7 +520,6 @@ function resetModalForCreate() {
         disable('yearCode');
     }
 }
-
 function resetFormFields() {
     const fieldIds = ['className', 'startTime', 'endTime', 'subjectCode', 'branchCode', 'hallCode', 'eduYearCode', 'yearCode', 'classPrice'];
     if (userContext.isCenter) {
@@ -560,7 +552,6 @@ function setupModalFields() {
         document.getElementById('hallField').style.display = 'none';
     }
 }
-
 async function loadUserBranch() {
     try {
         const res = await fetch('/DailyClass/GetUserBranch');
@@ -573,7 +564,6 @@ async function loadUserBranch() {
         userContext.groupBranchCode = null;
     }
 }
-
 async function loadCentersForUserRoot() {
     try {
         const res = await fetch('/DailyClass/GetCentersForUserRoot');
@@ -587,7 +577,6 @@ async function loadCentersForUserRoot() {
         populateSelectAsync('centerCode', []);
     }
 }
-
 async function loadBranchesByCenter(centerId) {
     if (!centerId) { populateSelectAsync('branchCode', []); return; }
     try {
@@ -598,7 +587,6 @@ async function loadBranchesByCenter(centerId) {
         populateSelectAsync('branchCode', []);
     }
 }
-
 async function loadHallsForBranch(branchCode) {
     if (!branchCode) {
         populateSelectAsync('hallCode', []);
@@ -612,7 +600,6 @@ async function loadHallsForBranch(branchCode) {
         populateSelectAsync('hallCode', []);
     }
 }
-
 async function loadTeachersForBranch(branchCode) {
     if (!branchCode) {
         populateSelectAsync('teacherCode', []);
@@ -628,7 +615,6 @@ async function loadTeachersForBranch(branchCode) {
         enable('teacherCode');
     }
 }
-
 async function loadSubjectsForTeacherAndBranch(teacherCode, branchCode) {
     if (!teacherCode || !branchCode) {
         populateSelectAsync('subjectCode', []);
@@ -642,7 +628,6 @@ async function loadSubjectsForTeacherAndBranch(teacherCode, branchCode) {
         populateSelectAsync('subjectCode', []);
     }
 }
-
 function populateSelectAsync(selectId, options) {
     const select = document.getElementById(selectId);
     if (!select) return;
@@ -658,10 +643,39 @@ function populateSelectAsync(selectId, options) {
     });
 }
 
-// --- Save Logic (with conflict check) ---
+async function loadLessonsForDropdown() {
+    const teacherCode = userContext.isCenter ? document.getElementById('teacherCode').value : userContext.teacherCode;
+    const yearCode = document.getElementById('yearCode').value;
+    const subjectCode = document.getElementById('subjectCode').value;
+    const lessonSelect = document.getElementById('lessonCode');
+    lessonSelect.innerHTML = `<option value="">${L("SelectLesson", "Select Lesson")}</option>`;
+
+    if (!teacherCode || !yearCode || !subjectCode) return;
+
+    try {
+        const res = await fetch(`/DailyClass/GetLessonsForDropdown?teacherCode=${teacherCode}&yearCode=${yearCode}&subjectCode=${subjectCode}`);
+        const chapters = await res.json();
+        chapters.forEach(chapter => {
+            if (!chapter.lessons || chapter.lessons.length === 0) return;
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = chapter.chapterName;
+            chapter.lessons.forEach(lesson => {
+                const option = document.createElement('option');
+                option.value = lesson.lessonCode;
+                option.textContent = lesson.lessonName;
+                optgroup.appendChild(option);
+            });
+            lessonSelect.appendChild(optgroup);
+        });
+    } catch {
+        lessonSelect.innerHTML = `<option value="">No lessons found</option>`;
+    }
+}
+
+// --- Save Logic (with SweetAlert2) ---
 async function saveClass() {
     if (userContext.hasError) {
-        showErrorToast(L("SaveError"));
+        await showErrorAlert(L("SaveError"));
         return;
     }
     const submitBtn = document.getElementById('saveClassBtn');
@@ -669,7 +683,6 @@ async function saveClass() {
     submitBtn.innerHTML = `<div class="spinner-border spinner-border-sm me-2"></div>${isEditMode ? L("Updating") : L("Saving")}`;
     submitBtn.disabled = true;
 
-    // Disable the UI while saving
     disableScreen();
 
     const requiredFields = [
@@ -687,7 +700,7 @@ async function saveClass() {
     for (const field of requiredFields) {
         const element = document.getElementById(field.id);
         if (!element || !element.value || element.value.trim() === '') {
-            showErrorToast(`${field.name} ${L("IsRequired")}`);
+            await showErrorAlert(`${field.name} ${L("IsRequired")}`);
             if (element) element.focus();
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
@@ -698,14 +711,13 @@ async function saveClass() {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     if (startTime >= endTime) {
-        showErrorToast(L("EndTimeError"));
+        await showErrorAlert(L("EndTimeError"));
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
         enableScreen();
         return;
     }
 
-    // Always use selectedDateStr for classDate!
     const formData = {
         className: document.getElementById('className').value,
         startTime: startTime,
@@ -715,7 +727,7 @@ async function saveClass() {
         yearCode: parseInt(document.getElementById('yearCode').value) || null,
         classPrice: parseFloat(document.getElementById('classPrice').value) || null,
         rootCode: userContext.currentUserRootCode,
-        classDate: selectedDateStr // FIXED: always send the selected date string!
+        classDate: selectedDateStr
     };
     if (userContext.isCenter) {
         formData.teacherCode = parseInt(document.getElementById('teacherCode').value);
@@ -727,7 +739,16 @@ async function saveClass() {
         formData.teacherCode = userContext.teacherCode;
     }
 
-    // ---- Conflict check before actual save ----
+    // Add lessonCode only if selected (nullable!)
+    const lessonCode = document.getElementById('lessonCode')?.value;
+    if (lessonCode) {
+        formData.lessonCode = parseInt(lessonCode);
+    }
+    // --------- PATCH: Always send classCode when editing ---------
+    if (isEditMode && editingClassId) {
+        formData.classCode = editingClassId;
+    }
+
     try {
         const checkResponse = await fetch('/DailyClass/CheckClassConflicts', {
             method: 'POST',
@@ -737,38 +758,35 @@ async function saveClass() {
         const check = await checkResponse.json();
 
         if (!check.success) {
-            showErrorToast(check.error || "Error checking conflicts");
+            await showErrorAlert(check.error || "Error checking conflicts");
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
             enableScreen();
             return;
         }
 
-        // 1. Hall Conflict: prevent for center users, just alert for teachers
         if (check.hallConflict) {
-            showErrorToast("This hall is already occupied during this time. Please select another hall or time.");
+            await showErrorAlert("This hall is already occupied during this time. Please select another hall or time.");
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
             enableScreen();
             if (userContext.isCenter) return;
         }
 
-        // 2. Teacher Conflict: prevent for center users, just alert for teachers
         if (check.teacherConflict) {
-            showErrorToast("This teacher already has a class during this time. Please select another teacher or time.");
+            await showErrorAlert("This teacher already has a class during this time. Please select another teacher or time.");
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
             enableScreen();
             if (userContext.isCenter) return;
         }
 
-        // 3. Year Conflict: allow proceed with confirmation
         if (check.sameYearConflict) {
             let msg = "A class for this year already exists in this branch at this time.";
             if (check.conflictingTeacherName)
                 msg += `\nConflicting teacher(s): ${check.conflictingTeacherName}`;
             msg += "\nDo you want to proceed?";
-            if (!confirm(msg)) {
+            if (!(await showConfirmAlert(msg))) {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
                 enableScreen();
@@ -776,9 +794,8 @@ async function saveClass() {
             }
         }
 
-        // 4. Free class confirmation
         if (!formData.classPrice || formData.classPrice === 0) {
-            if (!confirm("Are you sure you want to make this class for free?")) {
+            if (!(await showConfirmAlert("Are you sure you want to make this class for free?"))) {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
                 enableScreen();
@@ -786,7 +803,6 @@ async function saveClass() {
             }
         }
 
-        // --- If we reach here, proceed with actual saving ---
         const url = isEditMode ? `/DailyClass/EditClass/${editingClassId}` : '/DailyClass/CreateClass';
         const response = await fetch(url, {
             method: 'POST',
@@ -795,17 +811,17 @@ async function saveClass() {
         });
         const data = await response.json();
         if (data.success) {
-            showSuccessToast(isEditMode ? L("UpdateSuccess") : L("SaveSuccess"));
+            await showSuccessAlert(isEditMode ? L("UpdateSuccess") : L("SaveSuccess"));
             bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
             resetFormFields();
             resetModalForCreate();
-            loadDayContent();
+            setTimeout(() => location.reload(), 700); // reload after 0.7s
         } else {
-            showErrorToast((isEditMode ? L("UpdateError") : L("CreateError")) + (data.error || L("UnknownError")));
+            await showErrorAlert((isEditMode ? L("UpdateError") : L("CreateError")) + (data.error || L("UnknownError")));
             enableScreen();
         }
     } catch (error) {
-        showErrorToast(L("NetworkError") + error.message);
+        await showErrorAlert(L("NetworkError") + error.message);
         enableScreen();
     } finally {
         submitBtn.innerHTML = originalText;
@@ -818,7 +834,6 @@ function disableScreen() {
     document.body.classList.add('screen-disabled');
     document.querySelectorAll('button, input, select')
         .forEach(el => {
-            // Don't disable toasts or their children!
             if (!el.closest('.toast-container')) {
                 el.disabled = true;
             }
@@ -828,24 +843,21 @@ function enableScreen() {
     document.body.classList.remove('screen-disabled');
     document.querySelectorAll('button, input, select')
         .forEach(el => {
-            // Don't enable toasts or their children, let Bootstrap manage them
             if (!el.closest('.toast-container')) {
                 el.disabled = false;
             }
         });
 }
-
 // --- Edit Logic ---
-function showEditClassModal(classId) {
+async function showEditClassModal(classId) {
     isEditMode = true;
     editingClassId = classId;
     const cls = dailyClasses.find(c => String(c.classCode) === String(classId));
     if (!cls) {
-        showErrorToast(L("ClassNotFound"));
+        showErrorAlert(L("ClassNotFound"));
         return;
     }
     setupModalFields();
-    // Populate fields with class data
     document.getElementById('className').value = cls.className || '';
     document.getElementById('startTime').value = cls.startTime || '';
     document.getElementById('endTime').value = cls.endTime || '';
@@ -861,30 +873,32 @@ function showEditClassModal(classId) {
         document.getElementById('centerCode').value = cls.centerCode || '';
         document.getElementById('branchCode').value = cls.branchCode || '';
     }
-    // Open modal
+    // Load lessons and select the correct one (if any)
+    await loadLessonsForDropdown();
+    document.getElementById('lessonCode').value = cls.lessonCode || '';
     const modal = new bootstrap.Modal(document.getElementById('addClassModal'));
     modal.show();
 }
 
 // --- Delete Logic ---
-function deleteClass(classId) {
-    if (!confirm(L("DeleteConfirm") || "Are you sure you want to delete this class?")) return;
+async function deleteClass(classId) {
+    if (!(await showConfirmAlert(L("DeleteConfirm") || "Are you sure you want to delete this class?"))) return;
     fetch(`/DailyClass/DeleteClass?id=${classId}`, {
         method: 'POST'
     })
         .then(res => res.json())
-        .then(data => {
+        .then(async data => {
             if (data.success) {
-                showSuccessToast(L("DeleteSuccess"));
+                await showSuccessAlert(L("DeleteSuccess"));
                 loadDayContent();
                 const modal = bootstrap.Modal.getInstance(document.getElementById('classDetailsModal'));
                 if (modal) modal.hide();
             } else {
-                showErrorToast(data.error || L("DeleteError"));
+                await showErrorAlert(data.error || L("DeleteError"));
                 enableScreen();
             }
-        }).catch(err => {
-            showErrorToast(L("NetworkError") + err.message);
+        }).catch(async err => {
+            await showErrorAlert(L("NetworkError") + err.message);
             enableScreen();
         });
 }
@@ -894,11 +908,11 @@ function showClassDetailsModal(classId) {
     editingClassId = classId;
     const cls = dailyClasses.find(c => String(c.classCode) === String(classId));
     if (!cls) {
-        showErrorToast(L("ClassNotFound"));
+        showErrorAlert(L("ClassNotFound"));
         return;
     }
     let html = `<div class="class-details-list">`;
-    html += `<div><strong>${L("FormClassName")}</strong>: ${cls.className}</div>`;
+  
     html += `<div><strong>${L("FormStartTime")}</strong>: ${to12Hr(cls.startTime)}</div>`;
     html += `<div><strong>${L("FormEndTime")}</strong>: ${to12Hr(cls.endTime)}</div>`;
     html += `<div><strong>${L("FormSubject")}</strong>: ${cls.subjectName}</div>`;
@@ -911,32 +925,9 @@ function showClassDetailsModal(classId) {
     html += `<div><strong>${L("FormNoOfStudents")}</strong>: ${cls.noOfStudents}</div>`;
     html += `<div><strong>${L("FormClassPrice")}</strong>: ${cls.classPrice}</div>`;
     html += `</div>`;
-
     document.getElementById('classDetailsContent').innerHTML = html;
     const modal = new bootstrap.Modal(document.getElementById('classDetailsModal'));
     modal.show();
-}
-
-// --- Toasts ---
-function showSuccessToast(message) { showToast(message, 'bg-success'); }
-function showErrorToast(message) { showToast(message, 'bg-danger'); }
-function showToast(message, bgClass) {
-    const toastContainer = document.querySelector('.toast-container');
-    const toastId = 'toast-' + Date.now();
-    const toastHtml = `
-        <div class="toast ${bgClass} text-white" role="alert" id="${toastId}">
-            <div class="toast-body d-flex align-items-center">
-                <i class="fas ${bgClass === 'bg-success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-                <span class="flex-grow-1">${message}</span>
-                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    `;
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-    const toastElement = document.getElementById(toastId);
-    const toast = new bootstrap.Toast(toastElement);
-    toast.show();
-    toastElement.addEventListener('hidden.bs.toast', () => { toastElement.remove(); });
 }
 
 // --- Utility ---
@@ -947,7 +938,7 @@ function to12Hr(timeStr) {
     const ampm = h >= 12 ? L("PM") : L("AM");
     h = h % 12;
     if (h === 0) h = 12;
-    return `${h}:${m} ${ampm}`;
+    return `${h}:${m} ${ampm}`; class-details - list
 }
 function formatDate(dateStr) {
     if (!dateStr) return '';

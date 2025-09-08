@@ -135,4 +135,20 @@
 	<data name="StudentsPending" xml:space="preserve"><value>Students Pending</value></data>
 	<data name="ErrorLoadingStatistics" xml:space="preserve"><value>Error loading statistics</value></data>
 	<data name="FailedToLoadExamStatistics" xml:space="preserve"><value>Failed to load exam statistics.</value></data>
+	<!-- Add these lines to ExamManagement.cs (English) -->
+	<data name="SelectLesson" xml:space="preserve"><value>Select Lesson</value></data>
+	<data name="FormLesson" xml:space="preserve"><value>Lesson</value></data>
+	<data name="ShowDetails" xml:space="preserve"><value>Show Details</value></data>
+	<data name="HideDetails" xml:space="preserve"><value>Hide Details</value></data>
+	<data name="All" xml:space="preserve"><value>All</value></data>
+	<!-- English resource entries (add to your ExamManagement.cs or ExamManagement.resx) -->
+<data name="CenterLabel" xml:space="preserve"><value>Center</value></data>
+<data name="SelectEduYearOption" xml:space="preserve"><value>-- Select Educational Year --</value></data>
+<data name="SelectCenterOption" xml:space="preserve"><value>-- Select Center --</value></data>
+<data name="SelectOption" xml:space="preserve"><value>-- Select --</value></data>
+<data name="FormLesson" xml:space="preserve"><value>Lesson</value></data>
+<data name="SelectLesson" xml:space="preserve"><value>Select Lesson</value></data>
+<data name="ShowDetails" xml:space="preserve"><value>Show Details</value></data>
+<data name="HideDetails" xml:space="preserve"><value>Hide Details</value></data>
+<data name="All" xml:space="preserve"><value>All</value></data>
 </root>

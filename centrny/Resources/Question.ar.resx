@@ -33,8 +33,8 @@
 	<data name="SearchBtn" xml:space="preserve"><value>بحث</value></data>
 	<data name="ClearBtn" xml:space="preserve"><value>مسح</value></data>
 	<data name="TeachingLabel" xml:space="preserve"><value>التدريس:</value></data>
-	<data name="AddChapterBtn" xml:space="preserve"><value>إضافة فصل</value></data>
-	<data name="AddLessonBtn" xml:space="preserve"><value>إضافة درس</value></data>
+	
+
 	<data name="AddQuestionBtn" xml:space="preserve"><value>إضافة سؤال</value></data>
 	<data name="AddAnswersBtn" xml:space="preserve"><value>إضافة إجابات</value></data>
 	<data name="ShowAnswersBtn" xml:space="preserve"><value>عرض الإجابات</value></data>
@@ -78,4 +78,71 @@
 	<data name="NoQuestionsFound" xml:space="preserve"><value>لا توجد أسئلة لـ</value></data>
 	<data name="FoundQuestions" xml:space="preserve"><value>تم العثور على {0} سؤال:</value></data>
 	<data name="Lesson" xml:space="preserve"><value>الدرس</value></data>
+	<data name="EnterAnswerOption" xml:space="preserve">
+    <value>أدخل خيار الإجابة {0}...</value>
+  </data>
+	<data name="AtLeastTwoAnswersRequired" xml:space="preserve">
+    <value>يجب إدخال خيارين على الأقل للإجابة.</value>
+  </data>
+	<data name="AllAnswerFieldsRequired" xml:space="preserve">
+    <value>يجب تعبئة جميع خيارات الإجابة بمحتوى مناسب.</value>
+  </data>
+	<data name="DuplicateAnswersNotAllowed" xml:space="preserve">
+    <value>لا يُسمح بتكرار الإجابات.</value>
+  </data>
+	<data name="SelectCorrectAnswer" xml:space="preserve">
+    <value>يرجى تحديد الإجابة الصحيحة بالنقر على زر الاختيار.</value>
+  </data>
+	<data name="QuestionContentRequired" xml:space="preserve">
+    <value>محتوى السؤال مطلوب.</value>
+  </data>
+	<data name="SavingQuestionAndAnswers" xml:space="preserve">
+    <value>جاري حفظ السؤال والإجابات...</value>
+  </data>
+	<data name="QuestionAnswersSaved" xml:space="preserve">
+    <value>تم حفظ السؤال والإجابات بنجاح!</value>
+  </data>
+	<data name="FailedToSaveQuestion" xml:space="preserve">
+    <value>فشل حفظ السؤال.</value>
+  </data>
+	<data name="ErrorSavingQuestion" xml:space="preserve">
+    <value>حدث خطأ أثناء الحفظ. يرجى المحاولة مرة أخرى.</value>
+  </data>
+	<data name="CouldNotLoadExistingAnswers" xml:space="preserve">
+    <value>تعذر تحميل الإجابات الحالية. يمكنك إضافة إجابات جديدة.</value>
+  </data>
+	<data name="NoAnswersFound" xml:space="preserve">
+    <value>لم يتم العثور على إجابات.</value>
+  </data>
+	<data name="LoadingAnswers" xml:space="preserve">
+    <value>جاري تحميل الإجابات...</value>
+  </data>
+	<data name="LoadingLessons" xml:space="preserve">
+    <value>جاري تحميل الدروس...</value>
+  </data>
+	<data name="ErrorLoadingQuestions" xml:space="preserve">
+    <value>حدث خطأ أثناء تحميل الأسئلة.</value>
+  </data>
+	<data name="ErrorLoadingLessonsHierarchy" xml:space="preserve">
+    <value>حدث خطأ أثناء تحميل هيكل الدروس.</value>
+  </data>
+	<data name="SelectSubjectYear" xml:space="preserve">
+  <value>اختر المادة والسنة</value>
+</data>
+	<data name="selectOption" xml:space="preserve">
+  <value>اختر...</value>
+</data>
+	<data name="LessonsHierarchy" xml:space="preserve">
+  <value>هيكل الدروس</value>
+</data>
+	<data name="addLessonBtn" xml:space="preserve">
+  <value>إضافة درس</value>
+</data>
+	<data name="isCorrect" xml:space="preserve">
+  <value>صحيح</value>
+</data>
+	<data name="addChapterBtn" xml:space="preserve">
+  <value>إضافة فصل</value>
+</data>
+
 </root>

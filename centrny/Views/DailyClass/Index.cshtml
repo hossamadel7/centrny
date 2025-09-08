@@ -17,6 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="~/css/dailyclass.css" rel="stylesheet" />
 
     <style>
@@ -145,8 +146,8 @@
 <body>
     <input type="hidden" id="resxSelectOption" value="@DailyClassView.SelectOption" />
     <input type="hidden" id="rootCode" value="@ViewBag.CurrentUserRootCode">
-    <input type="hidden" id="isCenter" value="@(ViewBag.IsCenter ? "True" : "False")">
-    <span id="formSelectedDate" data-username="@ViewBag.UserRootName" class="visually-hidden"></span>
+<input type="hidden" id="isCenter" value="@( (ViewBag.IsCenter as bool?) ?? false ? "True" : "False")">
+<span id="formSelectedDate" data-username="@ViewBag.UserRootName" class="visually-hidden"></span>
 
     <div class="container-fluid daily-classes-page">
         <div class="daily-container">
@@ -393,6 +394,14 @@
                                             <label class="form-label">@DailyClassView.FormYear</label>
                                             <select class="form-select" id="yearCode" >
                                                 <option value="">@DailyClassView.SelectOption</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">@DailyClassView.FormLesson *</label>
+                                            <select class="form-select" id="lessonCode" >
+                                                <option value="">Select Lesson</option>
                                             </select>
                                         </div>
                                     </div>
