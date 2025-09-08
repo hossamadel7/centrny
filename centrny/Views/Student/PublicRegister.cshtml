@@ -186,6 +186,70 @@
             justify-content: space-between;
             margin-top: 40px;
         }
+
+        /* Teacher and Subject Selection Styles */
+        .subject-selection {
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .subject-selection:hover {
+                border-color: #667eea;
+                box-shadow: 0 2px 10px rgba(102, 126, 234, 0.1);
+            }
+
+            .subject-selection.selected {
+                border-color: #667eea;
+                background-color: #f8f9ff;
+            }
+
+        .teacher-option {
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .teacher-option:hover {
+                background-color: #f8f9ff;
+                border-color: #667eea;
+            }
+
+            .teacher-option.selected {
+                background-color: #f0f4ff;
+                border-color: #667eea;
+            }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: #667eea;
+        }
+
+        .spinner-border {
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -194,19 +258,20 @@
             <!-- Header -->
             <div class="registration-header">
                 <i class="fas fa-user-plus fa-3x mb-3"></i>
-                <h1>@Localizer["Header_Join"] @Model.RootName</h1>
-                <p>@Localizer["Header_Journey"]</p>
+                <h1>Join @Model.RootName</h1>
+                <p>Start your learning journey with us</p>
             </div>
 
             <div class="registration-body">
                 <!-- Instructions -->
                 <div class="instructions">
-                    <h5><i class="fas fa-info-circle me-2"></i>@Localizer["Instructions_Title"]</h5>
+                    <h5><i class="fas fa-info-circle me-2"></i>Registration Steps</h5>
                     <ul>
-                        <li>@Localizer["Instruction_1"]</li>
-                        <li>@Localizer["Instruction_2"]</li>
-                        <li>@Localizer["Instruction_3"]</li>
-                        <li>@Localizer["Instruction_4"]</li>
+                        <li>Fill in your personal information</li>
+                        <li>Select your preferred teacher for each subject</li>
+                        <li>Choose subjects you want to study</li>
+                        <li>Select online or offline learning mode</li>
+                        <li>Complete your registration</li>
                     </ul>
                 </div>
 
@@ -223,7 +288,7 @@
                 @if (!ViewData.ModelState.IsValid)
                 {
                     <div class="alert alert-danger">
-                        <h6><i class="fas fa-exclamation-triangle me-2"></i>@Localizer["Error_Header"]</h6>
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
                         <ul class="mb-0">
                             @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                             {
@@ -239,158 +304,230 @@
                     <div class="form-step active" id="step1Content">
                         <h3 class="mb-4">
                             <i class="fas fa-user text-primary me-2"></i>
-                            @Localizer["Label_PersonalInformation"]
+                            Personal Information
                         </h3>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="studentName">Full Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="studentName" name="StudentName" required maxlength="100" />
+                                <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="birthDate">Birthdate <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="birthDate" name="BirthDate" required />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="studentPhone">Student Phone <span class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" required maxlength="20" />
+                                <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="parentPhone">Father Phone <span class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="parentPhone" name="StudentFatherPhone" required maxlength="20" />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="motherPhone">Mother Phone <span class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="motherPhone" name="StudentMotherPhone" required maxlength="20" />
+                                <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="fatherJob">Father Job <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="fatherJob" name="StudentFatherJob" required maxlength="50" />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="motherJob">Mother Job <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="motherJob" name="StudentMotherJob" required maxlength="50" />
+                                <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Gender <span class="text-danger">*</span></label>
                                 <div class="d-flex gap-3 mt-2">
-                                    <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
-                                    <label class="form-check-label" for="genderMale">Male</label>
-                                    <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
-                                    <label class="form-check-label" for="genderFemale">Female</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
+                                        <label class="form-check-label" for="genderMale">Male</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
+                                        <label class="form-check-label" for="genderFemale">Female</label>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Mode Selection & Branch -->
+                    <div class="form-step" id="step2Content">
+                        <h3 class="mb-4">
+                            <i class="fas fa-laptop text-primary me-2"></i>
+                            Learning Mode & Location
+                        </h3>
+
+                        <!-- Mode Selection -->
+                        <div class="mb-4">
+                            <label class="form-label">How do you want to study? <span class="text-danger">*</span></label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
+                                        <label class="form-check-label" for="modeOffline">
+                                            <i class="fas fa-building me-2"></i>Offline (in center)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
+                                        <label class="form-check-label" for="modeOnline">
+                                            <i class="fas fa-laptop me-2"></i>Online
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Offline: Branch & Year Selection -->
+                        <div id="branchSection" class="mb-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="branchCode">Branch <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="branchCode" name="BranchCode">
+                                        <option value="">Select Branch</option>
+                                        @foreach (var branch in Model.AvailableBranches)
+                                        {
+                                            <option value="@branch.Value">@branch.Text</option>
+                                        }
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="yearCode">Academic Year <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="yearCode" name="YearCode">
+                                        <option value="">Select Academic Year</option>
+                                        @foreach (var year in Model.AvailableYears)
+                                        {
+                                            <option value="@year.Value">@year.Text</option>
+                                        }
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="eduYearCodeDisplay">Education Year</label>
+                                    <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                                    <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Online: PIN Section -->
+                        <div id="onlinePinSection" style="display:none;">
+                            <h4 class="mb-3">
+                                <i class="fas fa-key text-primary me-2"></i>
+                                Online Registration PIN
+                            </h4>
+                            <div class="mb-3">
+                                <label for="pinCode" class="form-label">Enter PIN Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="pinCode" maxlength="20" autocomplete="off" />
+                                <div id="pinError" class="text-danger mt-2"></div>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="validatePinBtn">Validate PIN</button>
+
+                            <!-- Year Selection for Online (shown after PIN validation) -->
+                            <div id="onlineYearSection" style="display:none;" class="mt-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-graduation-cap text-primary me-2"></i>
+                                    Select Academic Year
+                                </h5>
+                                <div class="mb-3">
+                                    <label class="form-label" for="onlineYearCode">Academic Year <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="onlineYearCode" name="OnlineYearCode">
+                                        <option value="">Select Academic Year</option>
+                                        @foreach (var year in Model.AvailableYears)
+                                        {
+                                            <option value="@year.Value">@year.Text</option>
+                                        }
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="onlineEduYearCodeDisplay">Education Year</label>
+                                    <input type="text" class="form-control" id="onlineEduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                                    <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" value="@activeEduYear?.Value" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 2: Mode Selection and Academic Information -->
-                    <div class="form-step" id="step2Content">
-                        <h3 class="mb-4">
-                            <i class="fas fa-school text-primary me-2"></i>
-                            Academic Information
-                        </h3>
-                        <div class="mb-4">
-                            <label class="form-label">How do you want to study? <span class="text-danger">*</span></label>
-                            <div>
-                                <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
-                                <label class="form-check-label me-4" for="modeOffline">Offline (in center)</label>
-                                <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
-                                <label class="form-check-label" for="modeOnline">Online</label>
-                            </div>
-                        </div>
-                        <div class="row" id="branchRow">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="branchCode">Branch <span class="text-danger">*</span></label>
-                                <select class="form-select" id="branchCode" name="BranchCode" required>
-                                    <option value="">Select Branch</option>
-                                    @foreach (var branch in Model.AvailableBranches)
-                                    {
-                                        <option value="@branch.Value">@branch.Text</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="yearCode">Academic Year <span class="text-danger">*</span></label>
-                                <select class="form-select" id="yearCode" name="YearCode" required>
-                                    <option value="">Select Academic Year</option>
-                                    @foreach (var year in Model.AvailableYears)
-                                    {
-                                        <option value="@year.Value">@year.Text</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row" id="yearOnlyRow" style="display:none;">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="yearCodeOnline">Academic Year <span class="text-danger">*</span></label>
-                                <select class="form-select" id="yearCodeOnline" name="YearCodeOnline">
-                                    <option value="">Select Academic Year</option>
-                                    @foreach (var year in Model.AvailableYears)
-                                    {
-                                        <option value="@year.Value">@year.Text</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- EduYear: Disabled, hidden input always posted -->
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label" for="eduYearCodeDisplay">Education Year</label>
-                            <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                            <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Subject Selection -->
+                    <!-- Step 3: Subject & Teacher Selection -->
                     <div class="form-step" id="step3Content">
                         <h3 class="mb-4">
-                            <i class="fas fa-books text-primary me-2"></i>
-                            Subject Selection
+                            <i class="fas fa-school text-primary me-2"></i>
+                            Subject & Teacher Selection
                         </h3>
+
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            Please select your subjects.
+                            Please select your subjects and choose a teacher for each one.
                         </div>
-                        <div id="availableSubjects"></div>
+
+                        <div id="availableSubjects">
+                            <!-- Subjects and teachers will be loaded here -->
+                        </div>
+
                         <div id="selectedSubjectsSummary" class="mt-4" style="display: none;">
                             <h5>Selected Subjects</h5>
                             <div id="selectedSubjectsList"></div>
                         </div>
                     </div>
 
-                    <!-- Step 4: Schedule OR PIN -->
+                    <!-- Step 4: Schedule Selection -->
                     <div class="form-step" id="step4Content">
-                        <div id="offlineScheduleSection">
-                            <h3 class="mb-4">
-                                <i class="fas fa-calendar-alt text-primary me-2"></i>
-                                Schedule Selection
-                            </h3>
+                        <h3 class="mb-4">
+                            <i class="fas fa-calendar text-primary me-2"></i>
+                            Schedule Selection
+                        </h3>
+
+                        <!-- Offline: Schedule Selection -->
+                        <div id="scheduleSection">
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
                                 Please select a schedule for each subject.
                             </div>
-                            <div id="scheduleSelection"></div>
-                        </div>
-                        <div id="onlinePinSection" style="display:none;">
-                            <h3 class="mb-4">
-                                <i class="fas fa-key text-primary me-2"></i>
-                                Online Registration PIN
-                            </h3>
-                            <div class="mb-3">
-                                <label for="pinCode" class="form-label">Enter PIN Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="pinCode" maxlength="20" required autocomplete="off" />
-                                <div id="pinError" class="text-danger mt-2"></div>
+                            <div id="scheduleSelection">
+                                <!-- Schedules will be loaded here -->
                             </div>
-                            <button type="button" class="btn btn-primary" id="validatePinBtn">Validate PIN</button>
+                        </div>
+
+                        <!-- Online: Username/Password Section -->
+                        <div id="onlineUserSection" style="display:none;">
+                            <h4 class="mb-3">
+                                <i class="fas fa-user-lock text-primary me-2"></i>
+                                Create Online Account
+                            </h4>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" maxlength="40" autocomplete="off" />
+                                <div id="userError" class="text-danger mt-2"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" maxlength="40" />
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Step 5: Confirmation OR Username/Password -->
+                    <!-- Step 5: Confirmation -->
                     <div class="form-step" id="step5Content">
                         <div id="offlineSummarySection">
                             <h3 class="mb-4">
@@ -409,28 +546,24 @@
                                 </label>
                             </div>
                         </div>
-                        <div id="onlineUserSection" style="display:none;">
+
+                        <div id="onlineRegistrationSection" style="display:none;">
                             <h3 class="mb-4">
-                                <i class="fas fa-user-lock text-primary me-2"></i>
-                                Create Online Account
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Complete Online Registration
                             </h3>
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="username" maxlength="40" required autocomplete="off" />
-                                <div id="userError" class="text-danger mt-2"></div>
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Ready to complete your online registration.
                             </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="password" maxlength="40" required />
-                            </div>
-                            <button type="button" class="btn btn-success" id="completeOnlineBtn">Register Online</button>
+                            <button type="button" class="btn btn-success" id="completeOnlineBtn">Complete Online Registration</button>
                         </div>
                     </div>
 
                     <!-- Navigation Buttons -->
                     <div class="navigation-buttons">
                         <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
-                            <i class="fas fa-arrow-left me-2"></i>Prev
+                            <i class="fas fa-arrow-left me-2"></i>Previous
                         </button>
                         <div></div>
                         <button type="button" class="btn btn-primary" id="nextBtn">
@@ -440,16 +573,18 @@
                             <i class="fas fa-check me-2"></i>Complete Registration
                         </button>
                     </div>
+
                     <div class="text-center mt-4">
                         <small class="text-muted">
                             <i class="fas fa-lock me-1"></i>
-                            Your data is secure.
+                            Your data is secure and protected.
                         </small>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay" style="display: none;">
         <div class="loading-spinner">
@@ -457,7 +592,9 @@
             <p class="mt-3 mb-0">Processing your registration...</p>
         </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/StudentRegistration.js"></script>
 </body>
 </html>

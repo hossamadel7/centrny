@@ -46,7 +46,7 @@ namespace centrny.Attributes
             {
                 logger.LogWarning("User not authenticated - redirecting to login");
                 var returnUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
-                context.Result = new RedirectToActionResult("Index", "Login", new { returnUrl = returnUrl });
+                context.Result = new RedirectToActionResult("AccessDenied", "Login", new { returnUrl = returnUrl });
                 return;
             }
 
@@ -167,15 +167,15 @@ namespace centrny.Attributes
             }
 
             // Fallback for development environments
-            if (host == "localhost" || host == "127.0.0.1")
-            {
-                var devRoot = await dbContext.Roots.FirstOrDefaultAsync(r => r.IsActive);
-                if (devRoot != null)
-                {
-                    logger.LogInformation("Development domain '{Host}' using RootCode: {RootCode}", host, devRoot.RootCode);
-                    return devRoot.RootCode;
-                }
-            }
+            //if (host == "localhost" || host == "127.0.0.1")
+            //{
+            //    var devRoot = await dbContext.Roots.FirstOrDefaultAsync(r => r.IsActive);
+            //    if (devRoot != null)
+            //    {
+            //        logger.LogInformation("Development domain '{Host}' using RootCode: {RootCode}", host, devRoot.RootCode);
+            //        return devRoot.RootCode;
+            //    }
+            //}
 
             logger.LogError("No active root found for domain: {Host}", host);
             return null;

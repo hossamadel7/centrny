@@ -75,6 +75,60 @@ namespace centrny.Models
 
     #region Student Reports
 
+
+    // Add these classes to your existing ReportModels.cs file
+
+    #region Student Details Models
+
+    public class StudentDetailViewModel
+    {
+        public int StudentCode { get; set; }
+        public string StudentName { get; set; }
+        public string StudentPhone { get; set; }
+        public string StudentParentPhone { get; set; }
+        public string StudentMotherPhone { get; set; }
+        public string BranchName { get; set; }
+        public string YearName { get; set; }
+        public DateTime SubscriptionTime { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsTeacher { get; set; }
+        public List<StudentEnrollmentDetailDto> Enrollments { get; set; } = new List<StudentEnrollmentDetailDto>();
+        public List<StudentAttendanceRecordDto> AttendanceRecords { get; set; } = new List<StudentAttendanceRecordDto>();
+    }
+
+    public class StudentEnrollmentDetailDto
+    {
+        public int SubjectCode { get; set; }
+        public string SubjectName { get; set; }
+        public int TeacherCode { get; set; }
+        public string TeacherName { get; set; }
+        public int ScheduleCode { get; set; }
+        public string ScheduleName { get; set; }
+        public string BranchName { get; set; }
+        public int EduYearCode { get; set; }
+        public bool IsOnline { get; set; }
+    }
+
+    public class StudentAttendanceRecordDto
+    {
+        public string Type { get; set; } // "Physical" or "Online"
+        public DateTime Date { get; set; }
+        public string SubjectName { get; set; }
+        public string TeacherName { get; set; }
+
+        // Physical attendance properties
+        public string ClassName { get; set; }
+        public string LessonName { get; set; } // Linked lesson name for physical classes
+        public string AttendanceType { get; set; }
+        public decimal? SessionPrice { get; set; }
+        public int? ClassCode { get; set; }
+
+        // Online attendance properties
+        public int? Views { get; set; }
+        public string Status { get; set; }
+    }
+
+    #endregion
     public class StudentEnrollmentReport
     {
         public List<StudentEnrollmentDto> Students { get; set; } = new List<StudentEnrollmentDto>();
@@ -130,6 +184,7 @@ namespace centrny.Models
     }
 
     #endregion
+
 
     #region Teacher Reports
 

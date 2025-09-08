@@ -125,70 +125,139 @@ namespace centrny.Controllers
 
         [HttpPost]
         [Route("Register/{root_code:int}")]
-        public async Task<IActionResult> PublicRegister(int root_code, [FromBody] StudentRegistrationRequest request)
+        public async Task<IActionResult> PublicRegister(int root_code, [FromBody] PublicRegistrationRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Optionally set RootCode if needed
-                // request.RootCode = root_code;
+                _logger.LogInformation($"=== STARTING REGISTRATION FOR ROOT {root_code} ===");
 
-                if (!ModelState.IsValid)
-                    return View(await BuildPublicRegistrationViewModel(root_code));
+                // Manual validation for required fields
+                var validationErrors = new List<string>();
 
+                if (string.IsNullOrWhiteSpace(request.StudentName))
+                    validationErrors.Add("Student name is required.");
+                if (string.IsNullOrWhiteSpace(request.StudentPhone))
+                    validationErrors.Add("Student phone is required.");
+                if (string.IsNullOrWhiteSpace(request.StudentFatherPhone))
+                    validationErrors.Add("Father phone is required.");
+                if (string.IsNullOrWhiteSpace(request.StudentMotherPhone))
+                    validationErrors.Add("Mother phone is required.");
+                if (string.IsNullOrWhiteSpace(request.StudentFatherJob))
+                    validationErrors.Add("Father job is required.");
+                if (string.IsNullOrWhiteSpace(request.StudentMotherJob))
+                    validationErrors.Add("Mother job is required.");
+                if (string.IsNullOrWhiteSpace(request.Mode))
+                    validationErrors.Add("Mode is required.");
+
+                // Custom validation based on registration mode
+                if (request.Mode == "Online")
+                {
+                    if (string.IsNullOrWhiteSpace(request.PinCode))
+                        validationErrors.Add("PIN code is required for online registration.");
+                    if (string.IsNullOrWhiteSpace(request.Username))
+                        validationErrors.Add("Username is required for online registration.");
+                    if (string.IsNullOrWhiteSpace(request.Password))
+                        validationErrors.Add("Password is required for online registration.");
+
+                    // Validate PIN code
+                    if (!string.IsNullOrWhiteSpace(request.PinCode))
+                    {
+                        var pinEntity = await _context.Pins
+                            .FirstOrDefaultAsync(p => p.Watermark == request.PinCode && p.IsActive == 1);
+                        if (pinEntity == null)
+                            validationErrors.Add("Invalid or expired PIN code.");
+                    }
+                }
+                else // Offline mode
+                {
+                    if (!request.BranchCode.HasValue)
+                        validationErrors.Add("Branch is required for offline registration.");
+                    if (!request.YearCode.HasValue)
+                        validationErrors.Add("Academic year is required for offline registration.");
+                }
+
+                // Return validation errors if any
+                if (validationErrors.Any())
+                {
+                    _logger.LogWarning($"Validation failed: {string.Join(", ", validationErrors)}");
+                    return Json(new { success = false, errors = validationErrors });
+                }
+
+                // Rest of your existing logic...
                 var rootEntity = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == root_code && r.IsActive);
                 if (rootEntity == null)
-                    return View(await BuildPublicRegistrationViewModel(root_code));
+                {
+                    _logger.LogWarning($"Root entity {root_code} not found or inactive");
+                    return Json(new { success = false, error = "Registration center not found or inactive." });
+                }
 
-                if (!await _context.Branches.AnyAsync(b => b.BranchCode == request.BranchCode && b.RootCode == root_code && b.IsActive))
-                    return View(await BuildPublicRegistrationViewModel(root_code));
-
-                if (request.YearCode.HasValue && !await _context.Years.AnyAsync(y => y.YearCode == request.YearCode.Value))
-                    return View(await BuildPublicRegistrationViewModel(root_code));
-
+                // Continue with the rest of your existing code...
+                _logger.LogInformation("Creating student entity");
                 var student = CreateStudentFromRequest(request, root_code);
                 _context.Students.Add(student);
+
+                _logger.LogInformation("About to save Student entity");
                 await _context.SaveChangesAsync();
+                _logger.LogInformation($"Student saved successfully with ID: {student.StudentCode}");
+
+                if (request.SelectedSubjects?.Any() == true)
+                {
+                    _logger.LogInformation("About to create Learn records");
+                    await CreateLearnRecords(request, student);
+
+                    _logger.LogInformation("About to save Learn records");
+
+                    // Check what's in the context before saving
+                    var pendingLearns = _context.ChangeTracker.Entries<Learn>()
+                        .Where(e => e.State == Microsoft.EntityFrameworkCore.EntityState.Added)
+                        .ToList();
+
+                    _logger.LogInformation($"Number of Learn entities to save: {pendingLearns.Count}");
+
+                    foreach (var entry in pendingLearns)
+                    {
+                        var learn = entry.Entity;
+                        _logger.LogInformation($"Pending Learn: StudentCode={learn.StudentCode}, SubjectCode={learn.SubjectCode}, TeacherCode={learn.TeacherCode}, ScheduleCode={learn.ScheduleCode?.ToString() ?? "NULL"}, BranchCode={learn.BranchCode?.ToString() ?? "NULL"}");
+                    }
+
+                    _logger.LogInformation("Executing SaveChangesAsync for Learn records...");
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Learn records saved successfully");
+                }
+
                 await transaction.CommitAsync();
+                _logger.LogInformation("Transaction committed successfully");
 
-                TempData["SuccessMessage"] = $"Registration successful! Welcome {student.StudentName}.";
-                TempData["StudentCode"] = student.StudentCode;
-                TempData["RootName"] = rootEntity.RootName;
+                string successMessage = request.Mode == "Online"
+                    ? $"Online registration successful! Welcome {student.StudentName}."
+                    : $"Registration successful! Welcome {student.StudentName}.";
 
-                return RedirectToAction("PublicRegisterSuccess", new { root_code });
+                _logger.LogInformation($"Registration completed for student ID {student.StudentCode}");
+
+                return Json(new
+                {
+                    success = true,
+                    message = successMessage,
+                    redirectUrl = $"/Register/{root_code}/Success",
+                    studentCode = student.StudentCode
+                });
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                ModelState.AddModelError("", "Registration failed. Please try again or contact support.");
-                return View(await BuildPublicRegistrationViewModel(root_code));
+                _logger.LogError(ex, "Registration failed with exception: {Message}", ex.Message);
+                _logger.LogError("Inner exception: {InnerMessage}", ex.InnerException?.Message);
+
+                return Json(new
+                {
+                    success = false,
+                    error = $"Registration failed: {ex.Message}",
+                    details = ex.InnerException?.Message
+                });
             }
         }
-
-        // This function creates a Student from the request (for both public and internal registration)
-        private Student CreateStudentFromRequest(StudentRegistrationRequest request, int rootCode)
-        {
-            return new Student
-            {
-                StudentName = request.StudentName?.Trim(),
-                StudentPhone = request.StudentPhone?.Trim(),
-                StudentFatherPhone = request.StudentFatherPhone?.Trim(),
-                StudentMotherPhone = request.StudentMotherPhone?.Trim(),
-                StudentFatherJob = request.StudentFatherJob?.Trim(),
-                StudentMotherJob = request.StudentMotherJob?.Trim(),
-                StudentBirthdate = request.BirthDate,
-                StudentGender = request.Gender,
-                BranchCode = request.BranchCode ?? 0,
-                YearCode = request.YearCode,
-                RootCode = rootCode,
-                IsActive = true,
-                InsertUser = 1,
-                InsertTime = DateTime.Now,
-                SubscribtionTime = DateOnly.FromDateTime(DateTime.Today)
-
-            };
-        }
-
         [HttpGet]
         [Route("Register/{root_code:int}/Success")]
         public IActionResult PublicRegisterSuccess(int root_code)
@@ -303,7 +372,6 @@ namespace centrny.Controllers
             };
         }
 
-
         private Student CreateStudentFromRequest(PublicRegistrationRequest request, int rootCode)
         {
             return new Student
@@ -316,17 +384,23 @@ namespace centrny.Controllers
                 StudentMotherJob = request.StudentMotherJob?.Trim(),
                 StudentBirthdate = request.BirthDate,
                 StudentGender = request.Gender,
-                BranchCode = request.BranchCode ?? 0,
+
+                // Set BranchCode to null for online students
+                BranchCode = request.Mode == "Online" ? null : request.BranchCode,
+
                 YearCode = request.YearCode,
                 RootCode = rootCode,
                 IsActive = true,
                 InsertUser = 1,
                 InsertTime = DateTime.Now,
                 SubscribtionTime = DateOnly.FromDateTime(DateTime.Today),
-               
+
+                // Add credentials for online students
+                StudentUsername = request.Mode == "Online" ? request.Username?.Trim() : null,
+                StudentPassword = request.Mode == "Online" ? request.Password : null,
+                IsConfirmed = request.Mode == "Online" ? false : (bool?)null
             };
         }
-
 
         private void UpdateStudentWithRequest(Student student, StudentRegistrationRequest request)
         {
@@ -749,31 +823,45 @@ namespace centrny.Controllers
             return Json(years);
         }
 
+
         [HttpGet]
         [Route("Student/GetAvailableSubjects")]
         public async Task<IActionResult> GetAvailableSubjects(int branchCode, int? yearCode = null)
         {
-            int rootCode = GetRootCode(); // Use the method you already have
+            int rootCode = GetRootCode();
 
             if (rootCode == 0)
-                return Json(new { error = "Unable to determine root code from domain.", debugRootCode = rootCode });
+                return Json(new { error = "Unable to determine root code from domain." });
 
-            IQueryable<Teach> query = _context.Teaches
-      .Where(t => t.RootCode == rootCode && t.IsActive);
+            // Get current active education year
+            var currentEduYear = await _context.EduYears
+                .Where(e => e.IsActive && e.RootCode == rootCode)
+                .OrderByDescending(e => e.EduCode)
+                .FirstOrDefaultAsync();
 
-            if (branchCode > 0) // Only filter by branch if branchCode is positive/non-null/non-empty
-                query = query.Where(t => t.BranchCode == branchCode);
+            if (currentEduYear == null)
+                return Json(new { error = "No active education year found." });
 
+            // Build the query step by step
+            IQueryable<Teach> subjectsQuery = _context.Teaches
+                .Where(t => t.RootCode == rootCode
+                           && t.EduYearCode == currentEduYear.EduCode
+                           && t.IsActive);
+
+            // For offline mode, filter by branch
+            if (branchCode > 0)
+                subjectsQuery = subjectsQuery.Where(t => t.BranchCode == branchCode);
+
+            // Filter by year if provided
             if (yearCode.HasValue)
-                query = query.Where(t => t.YearCode == yearCode.Value);
+                subjectsQuery = subjectsQuery.Where(t => t.YearCode == yearCode.Value);
 
-            query = query.Include(t => t.SubjectCodeNavigation);
-            var subjects = await query
+            var subjects = await subjectsQuery
+                .Include(t => t.SubjectCodeNavigation)
                 .Select(t => new
                 {
                     SubjectCode = t.SubjectCode,
-                    SubjectName = t.SubjectCodeNavigation.SubjectName,
-                    YearCode = t.YearCode
+                    SubjectName = t.SubjectCodeNavigation.SubjectName
                 })
                 .Distinct()
                 .OrderBy(s => s.SubjectName)
@@ -781,7 +869,150 @@ namespace centrny.Controllers
 
             return Json(subjects);
         }
+        [HttpGet]
+        [Route("Student/GetSchedulesForSubjectTeacher")]
+        public async Task<IActionResult> GetSchedulesForSubjectTeacher(int subjectCode, int teacherCode, int branchCode, int? yearCode = null)
+        {
+            int rootCode = GetRootCode();
 
+            // Get current active education year
+            var currentEduYear = await _context.EduYears
+                .Where(e => e.IsActive && e.RootCode == rootCode)
+                .OrderByDescending(e => e.EduCode)
+                .FirstOrDefaultAsync();
+
+            if (currentEduYear == null)
+                return Json(new { error = "No active education year found." });
+
+            var schedulesQuery = _context.Schedules
+                .Where(s => s.RootCode == rootCode
+                           && s.BranchCode == branchCode
+                           && s.SubjectCode == subjectCode
+                           && s.TeacherCode == teacherCode
+                           && s.EduYearCode == currentEduYear.EduCode);
+
+            if (yearCode.HasValue)
+                schedulesQuery = schedulesQuery.Where(s => s.YearCode == yearCode.Value);
+
+            // First get the data from database, then format it
+            var schedules = await schedulesQuery
+                .OrderBy(s => s.DayOfWeek)
+                .ThenBy(s => s.StartTime)
+                .ToListAsync();
+
+            // Format the data after retrieving from database
+            var formattedSchedules = schedules.Select(s => new {
+                ScheduleCode = s.ScheduleCode,
+                ScheduleName = s.ScheduleName,
+                DayOfWeek = s.DayOfWeek ?? "N/A",
+                StartTime = s.StartTime.HasValue ? s.StartTime.Value.ToString("HH:mm") : "N/A",
+                EndTime = s.EndTime.HasValue ? s.EndTime.Value.ToString("HH:mm") : "N/A",
+                HallName = s.HallCodeNavigation != null ? s.HallCodeNavigation.HallName : "N/A",
+                ScheduleAmount = s.ScheduleAmount,
+                SubjectCode = s.SubjectCode,
+                TeacherCode = s.TeacherCode,
+                YearCode = s.YearCode,
+                EduYearCode = s.EduYearCode
+            }).ToList();
+
+            return Json(formattedSchedules);
+        }
+
+
+        [HttpGet]
+        [Route("Student/GetTeachersForSubjects")]
+        public async Task<IActionResult> GetTeachersForSubjects(string subjectCodes, int branchCode, int? yearCode = null)
+        {
+            int rootCode = GetRootCode();
+
+            if (string.IsNullOrEmpty(subjectCodes))
+                return Json(new { error = "No subjects selected." });
+
+            var subjectCodeList = subjectCodes.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)).Select(int.Parse).ToList();
+
+            if (!subjectCodeList.Any())
+                return Json(new { error = "Invalid subject codes." });
+
+            // Get current active education year
+            var currentEduYear = await _context.EduYears
+                .Where(e => e.IsActive && e.RootCode == rootCode)
+                .OrderByDescending(e => e.EduCode)
+                .FirstOrDefaultAsync();
+
+            if (currentEduYear == null)
+                return Json(new { error = "No active education year found." });
+
+            // Build the query - different logic for online vs offline
+            IQueryable<Teach> teachersQuery;
+
+            if (branchCode == 0) // Online mode
+            {
+                // For online: filter by RootCode, SubjectCodes, and YearCode (no branch filtering)
+                teachersQuery = _context.Teaches
+                    .Where(t => t.RootCode == rootCode
+                               && t.EduYearCode == currentEduYear.EduCode
+                               && subjectCodeList.Contains(t.SubjectCode)
+                               && t.IsActive);
+
+                // Include year filtering for online mode
+                if (yearCode.HasValue)
+                    teachersQuery = teachersQuery.Where(t => t.YearCode == yearCode.Value);
+            }
+            else // Offline mode
+            {
+                // For offline: filter by RootCode, BranchCode, EduYearCode, YearCode, and SubjectCodes
+                teachersQuery = _context.Teaches
+                    .Where(t => t.RootCode == rootCode
+                               && t.BranchCode == branchCode
+                               && t.EduYearCode == currentEduYear.EduCode
+                               && subjectCodeList.Contains(t.SubjectCode)
+                               && t.IsActive);
+
+                if (yearCode.HasValue)
+                    teachersQuery = teachersQuery.Where(t => t.YearCode == yearCode.Value);
+            }
+
+            var teachers = await teachersQuery
+                .Include(t => t.TeacherCodeNavigation)
+                .Include(t => t.SubjectCodeNavigation)
+                .Select(t => new
+                {
+                    TeachId = $"{t.TeacherCode}_{t.SubjectCode}_{t.YearCode}_{t.EduYearCode}",
+                    TeacherCode = t.TeacherCode,
+                    TeacherName = t.TeacherCodeNavigation.TeacherName,
+                    TeacherPhone = t.TeacherCodeNavigation.TeacherPhone,
+                    SubjectCode = t.SubjectCode,
+                    SubjectName = t.SubjectCodeNavigation.SubjectName,
+                    YearCode = t.YearCode,
+                    EduYearCode = t.EduYearCode
+                })
+                .OrderBy(t => t.SubjectName)
+                .ThenBy(t => t.TeacherName)
+                .ToListAsync();
+
+            return Json(teachers);
+        }
+
+
+        [HttpGet]
+        [Route("Student/CheckUsername")]
+        public async Task<IActionResult> CheckUsername(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return Json(new { available = false, error = "Username is required." });
+
+            try
+            {
+                var existingStudent = await _context.Students
+                    .FirstOrDefaultAsync(s => s.StudentUsername.ToLower() == username.ToLower());
+
+                return Json(new { available = existingStudent == null });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { available = false, error = "Error checking username availability." });
+            }
+        }
         [HttpGet]
         [Route("Student/GetAvailableTeachers")]
         public async Task<IActionResult> GetAvailableTeachers(string subjectCodes, int branchCode, int? yearCode, int? eduYearCode)
@@ -1238,38 +1469,125 @@ namespace centrny.Controllers
                 throw new Exception("Invalid year code.");
         }
 
-        private async Task<bool> IsCurrentUserAdmin(int rootCode, int branchCode)
+        private async Task<bool> IsCurrentUserAdmin(int rootCode, int? branchCode)
         {
             var username = GetSessionString("Username");
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
             if (user == null) return false;
 
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode && g.BranchCode == branchCode);
-            return group != null && (group.GroupName == "Admins" || group.GroupName == "Attendance Officers");
-        }
-
-        private async Task CreateLearnRecords(StudentRegistrationRequest request, Student student)
-        {
-            for (int i = 0; i < request.SelectedSubjects.Count; i++)
+            if (branchCode.HasValue)
             {
-                var learn = new Learn
-                {
-                    StudentCode = student.StudentCode,
-                    SubjectCode = request.SelectedSubjects[i],
-                    YearCode = request.YearCode,
-                    EduYearCode = (int)request.EduYearCode, 
-                    TeacherCode = request.SelectedTeachers?[i] ?? default,  // Only if you collect teacher per subject
-                    ScheduleCode = request.SelectedSchedules?[i] ?? default, // Only for offline
-                    BranchCode = request.BranchCode ?? 0,
-                    RootCode = student.RootCode,
-                    IsActive = true,
-                    InsertUser = 1,
-                    InsertTime = DateTime.Now
-                };
-                _context.Learns.Add(learn);
+                // Normal branch-specific check
+                var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode && g.BranchCode == branchCode);
+                return group != null && (group.GroupName == "Admins" || group.GroupName == "Attendance Officers");
+            }
+            else
+            {
+                // For online students, check if user is admin of ANY branch in this root
+                var group = await _context.Groups
+                    .Where(g => g.GroupCode == user.GroupCode && g.RootCode == rootCode)
+                    .FirstOrDefaultAsync(g => g.GroupName == "Admins" || g.GroupName == "Attendance Officers");
+                return group != null;
             }
         }
 
+        private async Task CreateLearnRecords(PublicRegistrationRequest request, Student student)
+        {
+            // Get current active education year
+            var currentEduYear = await _context.EduYears
+                .Where(e => e.IsActive && e.RootCode == student.RootCode)
+                .OrderByDescending(e => e.EduCode)
+                .FirstOrDefaultAsync();
+
+            if (currentEduYear == null)
+                throw new Exception("No active education year found.");
+
+            _logger.LogInformation("=== CreateLearnRecords START ===");
+            _logger.LogInformation($"Mode: {request.Mode}");
+            _logger.LogInformation($"Student RootCode: {student.RootCode}");
+            _logger.LogInformation($"Current EduYear: {currentEduYear.EduCode}");
+
+            if (request.SelectedSubjects?.Any() == true)
+            {
+                for (int i = 0; i < request.SelectedSubjects.Count; i++)
+                {
+                    var subjectCode = request.SelectedSubjects[i];
+                    var teacherCode = i < request.SelectedTeachers.Count ? request.SelectedTeachers[i] : 0;
+
+                    _logger.LogInformation($"--- Processing Learn Record {i} ---");
+                    _logger.LogInformation($"Raw SubjectCode: {subjectCode}");
+                    _logger.LogInformation($"Raw TeacherCode: {teacherCode}");
+
+                    // Validate that the foreign key references exist
+                    var subjectExists = await _context.Subjects.AnyAsync(s => s.SubjectCode == subjectCode);
+                    var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherCode == teacherCode);
+
+                    _logger.LogInformation($"Subject {subjectCode} exists: {subjectExists}");
+                    _logger.LogInformation($"Teacher {teacherCode} exists: {teacherExists}");
+
+                    if (!subjectExists)
+                        throw new Exception($"Subject with code {subjectCode} does not exist");
+                    if (!teacherExists)
+                        throw new Exception($"Teacher with code {teacherCode} does not exist");
+
+                    // Handle schedule codes properly for online vs offline
+                    int? scheduleCodeToUse = null;
+                    if (request.Mode == "Offline")
+                    {
+                        if (request.SelectedSchedules != null && i < request.SelectedSchedules.Count)
+                        {
+                            var scheduleValue = request.SelectedSchedules[i];
+                            scheduleCodeToUse = scheduleValue > 0 ? scheduleValue : null;
+
+                            // Validate schedule exists if not null
+                            if (scheduleCodeToUse.HasValue)
+                            {
+                                var scheduleExists = await _context.Schedules.AnyAsync(s => s.ScheduleCode == scheduleCodeToUse.Value);
+                                _logger.LogInformation($"Schedule {scheduleCodeToUse} exists: {scheduleExists}");
+                                if (!scheduleExists)
+                                    throw new Exception($"Schedule with code {scheduleCodeToUse} does not exist");
+                            }
+                        }
+                    }
+
+                    _logger.LogInformation($"Final ScheduleCode to use: {scheduleCodeToUse?.ToString() ?? "NULL"}");
+
+                    var learn = new Learn
+                    {
+                        StudentCode = student.StudentCode,
+                        SubjectCode = subjectCode,
+                        TeacherCode = teacherCode,
+                        YearCode = request.YearCode,
+                        EduYearCode = request.EduYearCode ?? currentEduYear.EduCode,
+                        ScheduleCode = request.Mode == "Online" ? null :scheduleCodeToUse ,
+                        BranchCode = request.Mode == "Online" ? null : request.BranchCode,
+                        RootCode = student.RootCode,
+                        IsOnline = request.Mode == "Online",
+                        IsActive = true,
+                        InsertUser = 1,
+                        InsertTime = DateTime.Now,
+                        LastUpdateUser = 1,
+                        LastUpdateTime = DateTime.Now
+                    };
+
+                    _logger.LogInformation($"Learn entity details:");
+                    _logger.LogInformation($"  StudentCode: {learn.StudentCode}");
+                    _logger.LogInformation($"  SubjectCode: {learn.SubjectCode}");
+                    _logger.LogInformation($"  TeacherCode: {learn.TeacherCode}");
+                    _logger.LogInformation($"  ScheduleCode: {learn.ScheduleCode?.ToString() ?? "NULL"}");
+                    _logger.LogInformation($"  BranchCode: {learn.BranchCode?.ToString() ?? "NULL"}");
+                    _logger.LogInformation($"  YearCode: {learn.YearCode?.ToString() ?? "NULL"}");
+                    _logger.LogInformation($"  EduYearCode: {learn.EduYearCode}");
+                    _logger.LogInformation($"  RootCode: {learn.RootCode}");
+                    _logger.LogInformation($"  IsOnline: {learn.IsOnline}");
+
+                    _context.Learns.Add(learn);
+                    _logger.LogInformation($"Added Learn entity to context");
+                }
+            }
+
+            _logger.LogInformation("=== CreateLearnRecords END ===");
+        }
         private int CalculateAge(DateOnly birthdate)
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
@@ -1329,15 +1647,21 @@ public class StudentRegistrationRequest
     public string Mode { get; set; }
     public int? BranchCode { get; set; }
     public int? YearCode { get; set; }
-    public int? EduYearCode { get; set; } // <-- ADD THIS
-    public List<int> SelectedSubjects { get; set; }
-    public List<int> SelectedSchedules { get; set; }
-    public List<int> SelectedTeachers { get; set; }
+    public int? EduYearCode { get; set; }
+    public List<SelectedSubjectData> SelectedSubjects { get; set; } = new List<SelectedSubjectData>();
+
     public string PinCode { get; set; }
     public string Username { get; set; }
     public string Password { get; set; }
 }
-
+public class SelectedSubjectData
+{
+    public int SubjectCode { get; set; }
+    public int TeacherCode { get; set; }
+    public int YearCode { get; set; }
+    public int EduYearCode { get; set; }
+    public int? ScheduleCode { get; set; }
+}
 public class PublicRegistrationViewModel
 {
     public int RootCode { get; set; }
@@ -1347,37 +1671,31 @@ public class PublicRegistrationViewModel
     public List<SelectListItem> AvailableEduYears { get; set; } // <-- Add this
 }
 
-
 public class PublicRegistrationRequest
 {
-    [Required]
     public int RootCode { get; set; }
-    [Required]
     public string StudentName { get; set; }
-    [Required]
     public string StudentPhone { get; set; }
-    [Required]
     public string StudentFatherPhone { get; set; }
-    [Required]
     public string StudentMotherPhone { get; set; }
-    [Required]
     public string StudentFatherJob { get; set; }
-    [Required]
     public string StudentMotherJob { get; set; }
     public DateOnly BirthDate { get; set; }
     public bool? Gender { get; set; }
-    [Required]
     public string Mode { get; set; }
     public int? BranchCode { get; set; }
     public int? YearCode { get; set; }
-    public int? EduYearCode { get; set; } // <-- ADD THIS
-    public List<int> SelectedSubjects { get; set; }
-    public List<int> SelectedSchedules { get; set; }
-    public List<int> SelectedTeachers { get; set; }
+    public int? EduYearCode { get; set; }
+    public List<int> SelectedSubjects { get; set; } = new List<int>();
+    public List<int> SelectedSchedules { get; set; } = new List<int>();
+    public List<int> SelectedTeachers { get; set; } = new List<int>();
+
+    // NO validation attributes on these fields
     public string PinCode { get; set; }
     public string Username { get; set; }
     public string Password { get; set; }
 }
+
 public class StudentSearchViewModel
 {
     public string ItemKey { get; set; }
