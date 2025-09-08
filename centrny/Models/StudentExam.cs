@@ -9,6 +9,8 @@ public partial class StudentExam
 
     public int ExamCode { get; set; }
 
+    public int? PinCode { get; set; }
+
     public int? ExamDegree { get; set; }
 
     public double? StudentResult { get; set; }

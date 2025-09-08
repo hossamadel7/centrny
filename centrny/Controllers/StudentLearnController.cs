@@ -498,12 +498,30 @@ namespace centrny.Controllers
 
                 if (learn != null)
                 {
-                    learn.ScheduleCode = scheduleCode;
+                    // Store the current values
+                    var newLearn = new Learn
+                    {
+                        StudentCode = learn.StudentCode,
+                        SubjectCode = learn.SubjectCode,
+                        TeacherCode = learn.TeacherCode,
+                        ScheduleCode = scheduleCode, // New schedule
+                        EduYearCode = learn.EduYearCode,
+                        BranchCode = learn.BranchCode,
+                        RootCode = learn.RootCode,
+                        YearCode = learn.YearCode,
+                        IsOnline = learn.IsOnline,
+                        IsActive = learn.IsActive,
+                        InsertUser = userId,
+                        InsertTime = DateTime.Now
+                    };
+
+                    // Remove old and add new
+                    _context.Learns.Remove(learn);
+                    _context.Learns.Add(newLearn);
                 }
             }
 
             await _context.SaveChangesAsync();
-
             return Json(new { success = true });
         }
 

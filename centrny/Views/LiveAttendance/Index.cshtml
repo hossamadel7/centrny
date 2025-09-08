@@ -1,0 +1,224 @@
+﻿@model List<centrny.Controllers.RunningClassViewModel>
+@{
+    ViewData["Title"] = "Live Attendance - Running Classes";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Live Attendance - Running Classes</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                        <li class="breadcrumb-item active">Live Attendance</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="mdi mdi-alert-circle-outline me-2"></i>
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">
+                            <i class="mdi mdi-account-clock me-2"></i>
+                            Currently Running Classes
+                        </h4>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary me-2">
+                                <i class="mdi mdi-clock-outline me-1"></i>
+                                Last Updated: <span id="lastUpdated">@DateTime.Now.ToString("HH:mm:ss")</span>
+                            </span>
+                            <button class="btn btn-outline-primary btn-sm" id="refreshClasses">
+                                <i class="mdi mdi-refresh"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="mdi mdi-clock-outline text-muted" style="font-size: 4rem;"></i>
+                            <h5 class="text-muted mt-3">No Classes Running Currently</h5>
+                            <p class="text-muted">Classes appear here when they are within 1 hour of start time or currently ongoing.</p>
+                            <button class="btn btn-primary" onclick="window.location.reload();">
+                                <i class="mdi mdi-refresh me-1"></i> Check for Classes
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row" id="classesContainer">
+                            @foreach (var classItem in Model)
+                            {
+                                <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                                    <div class="card border-left-primary shadow-sm h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <h5 class="card-title text-primary mb-1">@classItem.ClassName</h5>
+                                                <span class="badge bg-success">
+                                                    <i class="mdi mdi-clock-check me-1"></i>Running
+                                                </span>
+                                            </div>
+
+                                            <div class="class-info mb-3">
+                                                <div class="row g-2">
+                                                    <div class="col-12">
+                                                        <small class="text-muted">
+                                                            <i class="mdi mdi-book-open me-1"></i>Subject:
+                                                        </small>
+                                                        <div class="fw-medium">@classItem.SubjectName</div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <small class="text-muted">
+                                                            <i class="mdi mdi-account-tie me-1"></i>Teacher:
+                                                        </small>
+                                                        <div class="fw-medium">@classItem.TeacherName</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">
+                                                            <i class="mdi mdi-door me-1"></i>Hall:
+                                                        </small>
+                                                        <div class="fw-medium">@classItem.HallName</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">
+                                                            <i class="mdi mdi-office-building me-1"></i>Branch:
+                                                        </small>
+                                                        <div class="fw-medium">@classItem.BranchName</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">
+                                                            <i class="mdi mdi-clock-start me-1"></i>Start:
+                                                        </small>
+                                                        <div class="fw-medium text-info">@classItem.StartTime</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">
+                                                            <i class="mdi mdi-clock-end me-1"></i>End:
+                                                        </small>
+                                                        <div class="fw-medium text-warning">@classItem.EndTime</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="attendance-stats mb-3">
+                                                <div class="row text-center">
+                                                    <div class="col-6">
+                                                        <div class="border-end">
+                                                            <h4 class="text-primary mb-1">@classItem.EnrolledStudentsCount</h4>
+                                                            <small class="text-muted">Enrolled</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <h4 class="text-success mb-1">@classItem.AttendedStudentsCount</h4>
+                                                        <small class="text-muted">Attended</small>
+                                                    </div>
+                                                </div>
+                                                <div class="progress mt-2" style="height: 5px;">
+                                                    @{
+                                                        var attendancePercentage = classItem.EnrolledStudentsCount > 0
+                                                        ? (double)classItem.AttendedStudentsCount / classItem.EnrolledStudentsCount * 100
+                                                        : 0;
+                                                    }
+                                                    <div class="progress-bar bg-success"
+                                                         role="progressbar"
+                                                         style="width: @attendancePercentage%"
+                                                         aria-valuenow="@attendancePercentage"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <div class="text-center mt-1">
+                                                    <small class="text-muted">@Math.Round(attendancePercentage, 1)% Attendance</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="text-center">
+                                                <a href="@Url.Action("ClassDetail", new { classCode = classItem.ClassCode })"
+                                                   class="btn btn-primary w-100">
+                                                    <i class="mdi mdi-qrcode-scan me-1"></i>
+                                                    Open Live Attendance
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #007bff !important;
+    }
+
+    .card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12) !important;
+        }
+
+    .class-info {
+        font-size: 0.9rem;
+    }
+
+    .attendance-stats h4 {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .progress {
+        background-color: #f1f1f1;
+    }
+
+    @@media (max-width: 768px) {
+        .col-xl-4 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-refresh every 30 seconds
+        setInterval(function() {
+            window.location.reload();
+        }, 30000);
+
+        // Manual refresh button
+        document.getElementById('refreshClasses').addEventListener('click', function() {
+            window.location.reload();
+        });
+
+        // Update last updated time
+        setInterval(function() {
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+        }, 1000);
+    });
+</script>

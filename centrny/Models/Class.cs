@@ -37,6 +37,8 @@ public partial class Class
 
     public int HallCode { get; set; }
 
+    public int? ClassLessonCode { get; set; }
+
     public TimeOnly? ClassStartTime { get; set; }
 
     public TimeOnly? ClassEndTime { get; set; }
@@ -56,6 +58,8 @@ public partial class Class
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
     public virtual Branch BranchCodeNavigation { get; set; } = null!;
+
+    public virtual Lesson? ClassLessonCodeNavigation { get; set; }
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 
