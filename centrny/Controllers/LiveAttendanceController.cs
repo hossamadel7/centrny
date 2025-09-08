@@ -168,7 +168,7 @@ namespace centrny.Controllers
                             YearName = learn.StudentCodeNavigation.YearCodeNavigation?.YearName ?? "N/A",
                             IsAttended = attendance != null,
                             AttendanceTime = attendance?.AttendDate.ToString("HH:mm"),
-                            ScheduleCode = (int)learn.ScheduleCode,
+                            ScheduleCode =learn.ScheduleCode??0,
                             EnrolledSubjectName = learn.SubjectCodeNavigation?.SubjectName ?? "N/A"
                         });
                     }
