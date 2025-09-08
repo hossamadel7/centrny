@@ -935,10 +935,11 @@ function to12Hr(timeStr) {
     if (!timeStr) return "";
     let [h, m] = timeStr.split(':');
     h = parseInt(h, 10);
+    if (isNaN(h)) return ""; // defensive
     const ampm = h >= 12 ? L("PM") : L("AM");
     h = h % 12;
     if (h === 0) h = 12;
-    return `${h}:${m} ${ampm}`; class-details - list
+    return `${h}:${m} ${ampm}`;
 }
 function formatDate(dateStr) {
     if (!dateStr) return '';

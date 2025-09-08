@@ -1,600 +1,905 @@
-@using centrny.Controllers
-@using Microsoft.Extensions.Localization
-@inject IStringLocalizerFactory LocalizerFactory
+﻿@using Microsoft.Extensions.Localization
 @model PublicRegistrationViewModel
+@inject IStringLocalizerFactory LocalizerFactory
 
 @{
+    // Keep localization logic
     var Localizer = LocalizerFactory.Create("Register", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
     ViewData["Title"] = Localizer["Title_StudentRegistration"];
+
     Layout = null;
+
     var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var isRtl = lang.StartsWith("ar");
+    var dir = isRtl ? "rtl" : "ltr";
     var activeEduYear = Model.AvailableEduYears.FirstOrDefault();
 }
 
+
+
 <!DOCTYPE html>
-<html lang="@lang">
+<html lang="@lang" dir="@dir">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @Model.RootName</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <link href="~/css/student-registration.css" rel="stylesheet" />
-    <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Fonts (Cairo + Allura like signup/login pages) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Allura&display=swap" rel="stylesheet" />
+
+    <!-- Theme / Vendor CSS (mirror signup.html style) -->
+    <link rel="stylesheet" href="~/css/main.css" />
+    <link rel="stylesheet" href="~/css/vendors.css" />
+    <link rel="stylesheet" href="/AWS/css/bw-theme.css" />
+    <link rel="stylesheet" href="/AWS/css/rtl-numbers-fix.css" />
+    <link rel="stylesheet" href="/AWS/css/auth-rtl-fix.css" />
+
+    <!-- Optional custom stylesheet for registration overrides -->
+    <link rel="stylesheet" href="/AWS/css/student-registration.css" />
+
+    <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png" />
+
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .registration-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
+        /* Card container mimicking signup.html panel */
         .registration-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            max-width: 800px;
-            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+            padding: 50px;
+            position: relative;
+        }
+        @@media (max-width: 992px) {
+            .registration-card
+
+        {
+            padding: 28px 24px;
         }
 
-        .registration-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 40px 30px;
         }
 
-            .registration-header h1 {
-                margin: 0;
-                font-size: 2rem;
-                font-weight: 600;
-            }
-
-            .registration-header p {
-                margin: 10px 0 0 0;
-                opacity: 0.9;
-                font-size: 1.1rem;
-            }
-
-        .registration-body {
-            padding: 40px 30px;
+        .registration-title {
+            font-size: 30px;
+            line-height: 1.3;
+            font-weight: 700;
         }
 
-        .form-label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
+        .muted-intro {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
         }
 
-        .form-control, .form-select {
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            padding: 12px 15px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-            .form-control:focus, .form-select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-            }
-
-        .btn-primary, .btn-success, .btn-secondary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-
-            .btn-primary:hover, .btn-success:hover, .btn-secondary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-            }
-
-        .text-danger {
-            color: #dc3545;
-            font-size: 0.875rem;
-            margin-top: 5px;
-        }
-
-        .form-check-input:checked {
-            background-color: #667eea;
-            border-color: #667eea;
-        }
-
-        .alert {
-            border-radius: 10px;
-            border: none;
-        }
-
-        .mb-3 {
-            margin-bottom: 1.5rem;
-        }
-
-        .instructions {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-            .instructions h5 {
-                color: #667eea;
-                margin-bottom: 15px;
-            }
-
-            .instructions ul {
-                margin: 0;
-                padding-left: 20px;
-            }
-
-            .instructions li {
-                margin-bottom: 8px;
-                color: #6c757d;
-            }
-
-        /* Step indicator styles */
-        .step-indicator {
+        /* Step indicator styled to blend with theme pills */
+        .wizard-steps {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 30px;
+            margin: 25px 0 35px;
+            flex-wrap: wrap;
         }
 
-        .step {
-            width: 40px;
-            height: 40px;
-            line-height: 40px;
-            border-radius: 50%;
-            background: #e1e5e9;
-            color: #667eea;
-            font-weight: bold;
-            text-align: center;
-            font-size: 1.2rem;
-            border: 2px solid #e1e5e9;
-            transition: background 0.2s;
-        }
-
-            .step.active, .step.completed {
-                background: #667eea;
-                color: white;
-                border: 2px solid #764ba2;
+            .wizard-steps .step {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: #ece9f6;
+                color: #6e59a4;
+                font-weight: 700;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid #d5cdec;
+                transition: .25s;
+                position: relative;
             }
 
+                .wizard-steps .step.active,
+                .wizard-steps .step.completed {
+                    background: linear-gradient(135deg,#6e59a4,#8e76d9);
+                    color: #fff;
+                    border-color: #6e59a4;
+                    box-shadow: 0 4px 14px rgba(110,89,164,0.35);
+                }
+
+        /* Form layout */
         .form-step {
             display: none;
+            animation: fadeStep .35s ease;
         }
 
             .form-step.active {
                 display: block;
             }
+        @@keyframes fadeStep {
+            from
 
-        .navigation-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 40px;
+        {
+            opacity: 0;
+            transform: translateY(10px);
         }
 
-        /* Teacher and Subject Selection Styles */
-        .subject-selection {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        label.form-label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #2d2d2d;
+            font-size: 14px;
+        }
+
+        .form-control,
+        .form-select {
             border: 2px solid #e1e5e9;
             border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
+            padding: 12px 14px;
+            transition: .25s;
+            font-size: 14px;
+        }
+
+            .form-control:focus,
+            .form-select:focus {
+                border-color: #6e59a4;
+                box-shadow: 0 0 0 .15rem rgba(110,89,164,0.25);
+            }
+
+        .form-check-input:checked {
+            background-color: #6e59a4;
+            border-color: #6e59a4;
+        }
+
+        /* Instruction box */
+        .instructions {
+            background: #f6f7fb;
+            border: 1px solid #e4e6ef;
+            border-radius: 14px;
+            padding: 18px 20px 15px;
+            margin-bottom: 30px;
+        }
+
+            .instructions h5 {
+                margin: 0 0 12px;
+                font-size: 16px;
+                font-weight: 700;
+                color: #6e59a4;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .instructions ul {
+                margin: 0;
+                padding-inline-start: 20px;
+                font-size: 13px;
+            }
+
+            .instructions li {
+                margin-bottom: 6px;
+                color: #555;
+            }
+
+        /* Subject selections */
+        .subject-selection {
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
             cursor: pointer;
+            background: #fff;
+            transition: .25s;
         }
 
             .subject-selection:hover {
-                border-color: #667eea;
-                box-shadow: 0 2px 10px rgba(102, 126, 234, 0.1);
+                border-color: #6e59a4;
+                box-shadow: 0 4px 12px rgba(110,89,164,.15);
             }
 
             .subject-selection.selected {
-                border-color: #667eea;
-                background-color: #f8f9ff;
+                background: #f4f0ff;
+                border-color: #6e59a4;
             }
 
         .teacher-option {
-            border: 1px solid #e1e5e9;
+            border: 1px solid #dcdce3;
             border-radius: 8px;
-            padding: 10px;
+            padding: 10px 12px;
             margin-bottom: 8px;
+            transition: .18s;
             cursor: pointer;
-            transition: all 0.2s ease;
+            background: #fff;
         }
 
             .teacher-option:hover {
-                background-color: #f8f9ff;
-                border-color: #667eea;
+                background: #f3f0fa;
+                border-color: #6e59a4;
             }
 
             .teacher-option.selected {
-                background-color: #f0f4ff;
-                border-color: #667eea;
+                background: #ebe5fa;
+                border-color: #6e59a4;
+                box-shadow: inset 0 0 0 2px #6e59a4;
             }
+
+        /* Schedule placeholder styling if needed */
+        #scheduleSelection > .schedule-item {
+            border: 1px solid #e3e6ee;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background: #fff;
+            transition: .25s;
+            cursor: pointer;
+        }
+
+            #scheduleSelection > .schedule-item:hover {
+                border-color: #6e59a4;
+                background: #f7f4ff;
+            }
+
+            #scheduleSelection > .schedule-item.selected {
+                border-color: #6e59a4;
+                background: #efe9ff;
+                box-shadow: inset 0 0 0 2px #6e59a4;
+            }
+
+        /* Alerts (unify with theme) */
+        .alert {
+            border-radius: 12px;
+            border: 1px solid transparent;
+            padding: 14px 16px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .alert-info {
+            background: #f0f6ff;
+            border-color: #c2defd;
+            color: #2e4a66;
+        }
+
+        .alert-success {
+            background: #e5fff2;
+            border-color: #b9f3d7;
+            color: #14633c;
+        }
+
+        .alert-danger {
+            background: #ffe9ea;
+            border-color: #ffc5ca;
+            color: #892029;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn-theme,
+        .btn-theme-secondary,
+        .btn-theme-success {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 26px;
+            font-size: 15px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: .25s;
+            background: linear-gradient(135deg,#6e59a4,#8e76d9);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .btn-theme:hover {
+                box-shadow: 0 6px 18px rgba(110,89,164,.4);
+                transform: translateY(-2px);
+            }
+
+        .btn-theme-secondary {
+            background: #f1eff7;
+            color: #4b3b7f;
+        }
+
+            .btn-theme-secondary:hover {
+                background: #e4e0f0;
+            }
+
+        .btn-theme-success {
+            background: linear-gradient(135deg,#2fa772,#53d392);
+        }
+
+            .btn-theme-success:hover {
+                box-shadow: 0 6px 16px rgba(47,167,114,.45);
+                transform: translateY(-2px);
+            }
+
+        #registrationSummary {
+            background: #faf9fd;
+            border: 1px solid #e2deee;
+            border-radius: 12px;
+            padding: 18px 20px;
+            font-size: 14px;
+        }
+
+        .security-note {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            opacity: .85;
+        }
 
         .loading-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            inset: 0;
+            background: rgba(17,16,29,.78);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index: 1100;
         }
 
         .loading-spinner {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
+            background: #fff;
+            padding: 34px 36px;
+            border-radius: 18px;
             text-align: center;
-            color: #667eea;
+            min-width: 260px;
+            box-shadow: 0 10px 32px rgba(0,0,0,.25);
         }
 
+            .loading-spinner p {
+                margin-top: 14px;
+                font-size: 14px;
+                color: #4b3b7f;
+                font-weight: 600;
+            }
+
+        /* Hide spinner container (Bootstrap compatibility fallback) */
         .spinner-border {
-            color: #667eea;
+            width: 3rem;
+            height: 3rem;
+            border-width: .35em;
+        }
+
+        /* Minor utility overrides */
+        .flex-grow-1 {
+            flex-grow: 1;
+        }
+
+        .text-purple-1 {
+            color: #6e59a4;
         }
     </style>
 </head>
-<body>
-    <div class="registration-container">
-        <div class="registration-card">
-            <!-- Header -->
-            <div class="registration-header">
-                <i class="fas fa-user-plus fa-3x mb-3"></i>
-                <h1>Join @Model.RootName</h1>
-                <p>Start your learning journey with us</p>
-            </div>
-
-            <div class="registration-body">
-                <!-- Instructions -->
-                <div class="instructions">
-                    <h5><i class="fas fa-info-circle me-2"></i>Registration Steps</h5>
-                    <ul>
-                        <li>Fill in your personal information</li>
-                        <li>Select your preferred teacher for each subject</li>
-                        <li>Choose subjects you want to study</li>
-                        <li>Select online or offline learning mode</li>
-                        <li>Complete your registration</li>
-                    </ul>
-                </div>
-
-                <!-- Step Indicator -->
-                <div class="step-indicator">
-                    <div class="step active" id="step1">1</div>
-                    <div class="step" id="step2">2</div>
-                    <div class="step" id="step3">3</div>
-                    <div class="step" id="step4">4</div>
-                    <div class="step" id="step5">5</div>
-                </div>
-
-                <!-- Validation Errors -->
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div class="alert alert-danger">
-                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
-                        <ul class="mb-0">
-                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                            {
-                                <li>@error.ErrorMessage</li>
-                            }
-                        </ul>
-                    </div>
-                }
-
-                <!-- Registration Form Multi-Step -->
-                <form id="registrationForm" method="post" asp-action="PublicRegister" asp-route-root_code="@Model.RootCode">
-                    <!-- Step 1: Personal Information -->
-                    <div class="form-step active" id="step1Content">
-                        <h3 class="mb-4">
-                            <i class="fas fa-user text-primary me-2"></i>
-                            Personal Information
-                        </h3>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="studentName">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="studentName" name="StudentName" required maxlength="100" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="birthDate">Birthdate <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="birthDate" name="BirthDate" required />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="studentPhone">Student Phone <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" required maxlength="20" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="parentPhone">Father Phone <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="parentPhone" name="StudentFatherPhone" required maxlength="20" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="motherPhone">Mother Phone <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="motherPhone" name="StudentMotherPhone" required maxlength="20" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="fatherJob">Father Job <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="fatherJob" name="StudentFatherJob" required maxlength="50" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label" for="motherJob">Mother Job <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="motherJob" name="StudentMotherJob" required maxlength="50" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Gender <span class="text-danger">*</span></label>
-                                <div class="d-flex gap-3 mt-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
-                                        <label class="form-check-label" for="genderMale">Male</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
-                                        <label class="form-check-label" for="genderFemale">Female</label>
-                                    </div>
-                                </div>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Mode Selection & Branch -->
-                    <div class="form-step" id="step2Content">
-                        <h3 class="mb-4">
-                            <i class="fas fa-laptop text-primary me-2"></i>
-                            Learning Mode & Location
-                        </h3>
-
-                        <!-- Mode Selection -->
-                        <div class="mb-4">
-                            <label class="form-label">How do you want to study? <span class="text-danger">*</span></label>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
-                                        <label class="form-check-label" for="modeOffline">
-                                            <i class="fas fa-building me-2"></i>Offline (in center)
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
-                                        <label class="form-check-label" for="modeOnline">
-                                            <i class="fas fa-laptop me-2"></i>Online
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Offline: Branch & Year Selection -->
-                        <div id="branchSection" class="mb-4">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="branchCode">Branch <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="branchCode" name="BranchCode">
-                                        <option value="">Select Branch</option>
-                                        @foreach (var branch in Model.AvailableBranches)
-                                        {
-                                            <option value="@branch.Value">@branch.Text</option>
-                                        }
-                                    </select>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="yearCode">Academic Year <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="yearCode" name="YearCode">
-                                        <option value="">Select Academic Year</option>
-                                        @foreach (var year in Model.AvailableYears)
-                                        {
-                                            <option value="@year.Value">@year.Text</option>
-                                        }
-                                    </select>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="eduYearCodeDisplay">Education Year</label>
-                                    <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                                    <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Online: PIN Section -->
-                        <div id="onlinePinSection" style="display:none;">
-                            <h4 class="mb-3">
-                                <i class="fas fa-key text-primary me-2"></i>
-                                Online Registration PIN
-                            </h4>
-                            <div class="mb-3">
-                                <label for="pinCode" class="form-label">Enter PIN Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="pinCode" maxlength="20" autocomplete="off" />
-                                <div id="pinError" class="text-danger mt-2"></div>
-                            </div>
-                            <button type="button" class="btn btn-primary" id="validatePinBtn">Validate PIN</button>
-
-                            <!-- Year Selection for Online (shown after PIN validation) -->
-                            <div id="onlineYearSection" style="display:none;" class="mt-4">
-                                <h5 class="mb-3">
-                                    <i class="fas fa-graduation-cap text-primary me-2"></i>
-                                    Select Academic Year
-                                </h5>
-                                <div class="mb-3">
-                                    <label class="form-label" for="onlineYearCode">Academic Year <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="onlineYearCode" name="OnlineYearCode">
-                                        <option value="">Select Academic Year</option>
-                                        @foreach (var year in Model.AvailableYears)
-                                        {
-                                            <option value="@year.Value">@year.Text</option>
-                                        }
-                                    </select>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="onlineEduYearCodeDisplay">Education Year</label>
-                                    <input type="text" class="form-control" id="onlineEduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                                    <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" value="@activeEduYear?.Value" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Subject & Teacher Selection -->
-                    <div class="form-step" id="step3Content">
-                        <h3 class="mb-4">
-                            <i class="fas fa-school text-primary me-2"></i>
-                            Subject & Teacher Selection
-                        </h3>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Please select your subjects and choose a teacher for each one.
-                        </div>
-
-                        <div id="availableSubjects">
-                            <!-- Subjects and teachers will be loaded here -->
-                        </div>
-
-                        <div id="selectedSubjectsSummary" class="mt-4" style="display: none;">
-                            <h5>Selected Subjects</h5>
-                            <div id="selectedSubjectsList"></div>
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Schedule Selection -->
-                    <div class="form-step" id="step4Content">
-                        <h3 class="mb-4">
-                            <i class="fas fa-calendar text-primary me-2"></i>
-                            Schedule Selection
-                        </h3>
-
-                        <!-- Offline: Schedule Selection -->
-                        <div id="scheduleSection">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Please select a schedule for each subject.
-                            </div>
-                            <div id="scheduleSelection">
-                                <!-- Schedules will be loaded here -->
-                            </div>
-                        </div>
-
-                        <!-- Online: Username/Password Section -->
-                        <div id="onlineUserSection" style="display:none;">
-                            <h4 class="mb-3">
-                                <i class="fas fa-user-lock text-primary me-2"></i>
-                                Create Online Account
-                            </h4>
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="username" maxlength="40" autocomplete="off" />
-                                <div id="userError" class="text-danger mt-2"></div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="password" maxlength="40" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 5: Confirmation -->
-                    <div class="form-step" id="step5Content">
-                        <div id="offlineSummarySection">
-                            <h3 class="mb-4">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                Confirmation
-                            </h3>
-                            <div class="alert alert-success">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Review your information before submitting.
-                            </div>
-                            <div id="registrationSummary"></div>
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="termsAccepted" required>
-                                <label class="form-check-label" for="termsAccepted">
-                                    I agree to the terms and conditions
-                                </label>
-                            </div>
-                        </div>
-
-                        <div id="onlineRegistrationSection" style="display:none;">
-                            <h3 class="mb-4">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                Complete Online Registration
-                            </h3>
-                            <div class="alert alert-success">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Ready to complete your online registration.
-                            </div>
-                            <button type="button" class="btn btn-success" id="completeOnlineBtn">Complete Online Registration</button>
-                        </div>
-                    </div>
-
-                    <!-- Navigation Buttons -->
-                    <div class="navigation-buttons">
-                        <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
-                            <i class="fas fa-arrow-left me-2"></i>Previous
-                        </button>
-                        <div></div>
-                        <button type="button" class="btn btn-primary" id="nextBtn">
-                            Next <i class="fas fa-arrow-right ms-2"></i>
-                        </button>
-                        <button type="button" class="btn btn-success" id="submitBtn" style="display: none;">
-                            <i class="fas fa-check me-2"></i>Complete Registration
-                        </button>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <small class="text-muted">
-                            <i class="fas fa-lock me-1"></i>
-                            Your data is secure and protected.
-                        </small>
-                    </div>
-                </form>
-            </div>
-        </div>
+<body class="preloader-visible login-page" data-barba="wrapper">
+    <!-- Preloader -->
+    <div class="preloader js-preloader">
+        <div class="preloader__bg"></div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <main class="main-content bg-beige-1">
+        <!-- Header (mirrors signup/login style) -->
+        <header data-anim="fade" data-add-bg class="header -type-4 -shadow bg-white border-bottom-light js-header">
+            <div class="header__container py-10">
+                <div class="row justify-between items-center">
+                    <div class="col-auto">
+                        <div class="header-left d-flex items-center">
+                            <a href="~/" class="brand-logo" aria-label="@Model.RootName">
+                                <span class="brand-logo__letter">A</span>
+                                <span class="brand-logo__sep">|</span>
+                                <span class="brand-logo__letter">F</span>
+                            </a>
+                            <div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
+                                <div class="header-menu__content">
+                                    <div class="mobile-bg js-mobile-bg"></div>
+                                    <div class="menu js-navList">
+                                        <ul class="menu__nav -is-active">
+                                            <a data-barba href="~/">@(isRtl ? "الرئيسية" : "Home")</a>
+                                            <a data-barba href="~/About">@(isRtl ? "حول الأستاذ" : "About")</a>
+                                            <a data-barba href="~/Courses">@(isRtl ? "الدروس" : "Courses")</a>
+                                            <a data-barba href="~/Centers">@(isRtl ? "المراكز" : "Centres")</a>
+                                            <a data-barba href="~/Students/Outstanding">@(isRtl ? "الطلاب المتميزون" : "Outstanding Students")</a>
+                                        </ul>
+                                    </div>
+                                    <div class="mobile-footer px-20 py-20 border-top-light js-mobile-footer">
+                                        <div class="mobile-footer__number">
+                                            <div class="text-17 fw-500">@(isRtl ? "اتصل بنا" : "Call us")</div>
+                                            <div class="text-17 fw-500">800 000 000</div>
+                                        </div>
+                                        <div class="lh-2 mt-10">
+                                            <div>عنوان ما<br />مدينة / دولة</div>
+                                            <div>support@example.com</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-menu-close" data-el-toggle=".js-mobile-menu-toggle">
+                                    <div class="size-40 d-flex items-center justify-center rounded-full bg-white">
+                                        <div class="icon-close text-dark-1 text-16"></div>
+                                    </div>
+                                </div>
+                                <div class="header-menu-bg"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="header-right d-flex items-center">
+                            <div class="header-right__icons d-flex items-center">
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <button type="button" class="language-switcher d-flex items-center text-dark-1 hover:text-purple-1 transition-colors">
+                                        <i class="fas fa-globe text-16 me-2"></i>
+                                        <span class="text-14 fw-500">@(isRtl ? "العربية" : "English")</span>
+                                    </button>
+                                </div>
+                                <div class="d-none xl:d-block -before-border pl-20 sm:pl-15">
+                                    <button class="text-dark-1 items-center" data-el-toggle=".js-mobile-menu-toggle" type="button">
+                                        <i class="text-11 icon icon-mobile-menu"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="header-right__buttons d-flex items-center lg:d-none">
+                                <a href="~/Auth/Login" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">
+                                    @(isRtl ? "تسجيل الدخول" : "Log in")
+                                </a>
+                                <a href="~/Register/@(Model.RootCode)" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">
+                                    @(isRtl ? "إنشاء حساب" : "Sign up")
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="content-wrapper js-content-wrapper">
+            <section class="form-page js-mouse-move-container">
+                <!-- Decorative side graphics (like signup/login) -->
+                <div class="form-page__img bg-dark-1 d-none d-lg-block">
+                    <div class="form-page-composition">
+                        <div class="-bg">
+                            <img data-move="30" class="js-mouse-move" src="/AWS/img/login/bg.png" alt="bg" />
+                        </div>
+                        <div class="-el-1">
+                            <img data-move="20" class="js-mouse-move" src="/AWS/img/home-9/hero/bg.png" alt="image" />
+                        </div>
+                        <div class="-el-2">
+                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/1.png" alt="icon" />
+                        </div>
+                        <div class="-el-3">
+                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/2.png" alt="icon" />
+                        </div>
+                        <div class="-el-4">
+                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/3.png" alt="icon" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wizard Content -->
+                <div class="form-page__content lg:py-50">
+                    <div class="container">
+                        <div class="row justify-center items-center">
+                            <div class="col-xl-7 col-lg-8">
+                                <div class="registration-card">
+                                    <h3 class="registration-title">
+                                        @(isRtl ? "التسجيل كطالب جديد" : "New Student Registration")
+                                    </h3>
+                                    <p class="muted-intro">
+                                        @(isRtl
+                                            ? $"انضم إلى {Model.RootName} وابدأ رحلتك التعليمية."
+                                            : $"Join {Model.RootName} and start your learning journey.")
+                                    </p>
+
+                                    <!-- Instructions -->
+                                    <div class="instructions">
+                                        <h5><i class="fas fa-info-circle"></i> @(isRtl ? "خطوات التسجيل" : "Registration Steps")</h5>
+                                        <ul>
+                                            <li>@(isRtl ? "أدخل بياناتك الشخصية" : "Enter your personal information")</li>
+                                            <li>@(isRtl ? "اختر طريقة الدراسة والفرع أو رمز الأونلاين" : "Choose study mode, branch or online PIN")</li>
+                                            <li>@(isRtl ? "حدد المواد واختر المعلم لكل مادة" : "Select subjects & teacher for each")</li>
+                                            <li>@(isRtl ? "اختر الجداول وبيانات الحساب الأونلاين" : "Pick schedules & online account (if online)")</li>
+                                            <li>@(isRtl ? "راجع و أكمل التسجيل" : "Review & finish registration")</li>
+                                        </ul>
+                                    </div>
+
+                                    <!-- Step Indicators -->
+                                    <div class="wizard-steps" aria-label="steps">
+                                        <div class="step active" id="step1">1</div>
+                                        <div class="step" id="step2">2</div>
+                                        <div class="step" id="step3">3</div>
+                                        <div class="step" id="step4">4</div>
+                                        <div class="step" id="step5">5</div>
+                                    </div>
+
+                                    <!-- Validation Summary -->
+                                    @if (!ViewData.ModelState.IsValid)
+                                    {
+                                        <div class="alert alert-danger" role="alert">
+                                            <h6 style="margin:0 0 6px;">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                @(isRtl ? "يرجى تصحيح الأخطاء التالية:" : "Please correct the following errors:")
+                                            </h6>
+                                            <ul style="margin:0; padding-inline-start:18px;">
+                                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                                {
+                                                    <li>@error.ErrorMessage</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+
+                                    <!-- Multi-step Registration Form -->
+                                    <form id="registrationForm"
+                                          method="post"
+                                          asp-action="PublicRegister"
+                                          asp-route-root_code="@Model.RootCode"
+                                          autocomplete="off">
+                                        @* @Html.AntiForgeryToken() Uncomment if needed *@
+
+                                        <!-- STEP 1: Personal Information -->
+                                        <div class="form-step active" id="step1Content">
+                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                <i class="fas fa-user"></i>
+                                                @(isRtl ? "البيانات الشخصية" : "Personal Information")
+                                            </h4>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="studentName">
+                                                        @(isRtl ? "الاسم الكامل" : "Full Name") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" class="form-control" id="studentName" name="StudentName" required maxlength="100" />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="birthDate">
+                                                        @(isRtl ? "تاريخ الميلاد" : "Birthdate") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="date" class="form-control" id="birthDate" name="BirthDate" required />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="studentPhone">
+                                                        @(isRtl ? "هاتف الطالب" : "Student Phone") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" required maxlength="20" />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="parentPhone">
+                                                        @(isRtl ? "هاتف الأب" : "Father Phone") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="tel" class="form-control" id="parentPhone" name="StudentFatherPhone" required maxlength="20" />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="motherPhone">
+                                                        @(isRtl ? "هاتف الأم" : "Mother Phone") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="tel" class="form-control" id="motherPhone" name="StudentMotherPhone" required maxlength="20" />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="fatherJob">
+                                                        @(isRtl ? "مهنة الأب" : "Father Job") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" class="form-control" id="fatherJob" name="StudentFatherJob" required maxlength="50" />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label" for="motherJob">
+                                                        @(isRtl ? "مهنة الأم" : "Mother Job") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" class="form-control" id="motherJob" name="StudentMotherJob" required maxlength="50" />
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">
+                                                        @(isRtl ? "النوع" : "Gender") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <div class="d-flex gap-4 mt-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
+                                                            <label class="form-check-label" for="genderMale">@(isRtl ? "ذكر" : "Male")</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
+                                                            <label class="form-check-label" for="genderFemale">@(isRtl ? "أنثى" : "Female")</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- STEP 2: Mode / Branch / PIN -->
+                                        <div class="form-step" id="step2Content">
+                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                <i class="fas fa-laptop"></i>
+                                                @(isRtl ? "وضع الدراسة و الموقع" : "Learning Mode & Location")
+                                            </h4>
+                                            <div class="mb-4">
+                                                <label class="form-label">
+                                                    @(isRtl ? "طريقة الدراسة" : "Study Mode") <span class="text-danger">*</span>
+                                                </label>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
+                                                            <label class="form-check-label" for="modeOffline">
+                                                                <i class="fas fa-building me-2"></i>@(isRtl ? "مركز (أوفلاين)" : "Offline (Center)")
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
+                                                            <label class="form-check-label" for="modeOnline">
+                                                                <i class="fas fa-laptop me-2"></i>@(isRtl ? "أونلاين" : "Online")
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Offline branch/year -->
+                                            <div id="branchSection" class="mb-4">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="branchCode">
+                                                            @(isRtl ? "الفرع" : "Branch") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" id="branchCode" name="BranchCode">
+                                                            <option value="">@(isRtl ? "اختر الفرع" : "Select Branch")</option>
+                                                            @foreach (var branch in Model.AvailableBranches)
+                                                            {
+                                                                <option value="@branch.Value">@branch.Text</option>
+                                                            }
+                                                        </select>
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="yearCode">
+                                                            @(isRtl ? "السنة الدراسية" : "Academic Year") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" id="yearCode" name="YearCode">
+                                                            <option value="">@(isRtl ? "اختر السنة" : "Select Year")</option>
+                                                            @foreach (var year in Model.AvailableYears)
+                                                            {
+                                                                <option value="@year.Value">@year.Text</option>
+                                                            }
+                                                        </select>
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="eduYearCodeDisplay">
+                                                            @(isRtl ? "المرحلة التعليمية" : "Education Year")
+                                                        </label>
+                                                        <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                                                        <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Online PIN Flow -->
+                                            <div id="onlinePinSection" style="display:none;">
+                                                <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
+                                                    <i class="fas fa-key text-purple-1"></i>
+                                                    @(isRtl ? "رمز التسجيل أونلاين" : "Online Registration PIN")
+                                                </h5>
+                                                <div class="mb-3">
+                                                    <label for="pinCode" class="form-label">
+                                                        @(isRtl ? "أدخل الرمز" : "Enter PIN") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" class="form-control" id="pinCode" maxlength="20" autocomplete="off" />
+                                                    <div id="pinError" class="text-danger mt-2"></div>
+                                                </div>
+                                                <button type="button" class="btn-theme" id="validatePinBtn">
+                                                    <i class="fas fa-check-circle"></i> @(isRtl ? "تحقق من الرمز" : "Validate PIN")
+                                                </button>
+
+                                                <div id="onlineYearSection" style="display:none;" class="mt-4">
+                                                    <h6 class="mb-3 text-15 fw-600">
+                                                        <i class="fas fa-graduation-cap text-purple-1 me-1"></i>
+                                                        @(isRtl ? "اختر السنة الدراسية" : "Select Academic Year")
+                                                    </h6>
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="onlineYearCode">
+                                                            @(isRtl ? "السنة" : "Academic Year") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" id="onlineYearCode" name="OnlineYearCode">
+                                                            <option value="">@(isRtl ? "اختر السنة" : "Select Year")</option>
+                                                            @foreach (var year in Model.AvailableYears)
+                                                            {
+                                                                <option value="@year.Value">@year.Text</option>
+                                                            }
+                                                        </select>
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="onlineEduYearCodeDisplay">
+                                                            @(isRtl ? "المرحلة التعليمية" : "Education Year")
+                                                        </label>
+                                                        <input type="text" class="form-control" id="onlineEduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                                                        <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" value="@activeEduYear?.Value" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- STEP 3: Subjects & Teachers -->
+                                        <div class="form-step" id="step3Content">
+                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                <i class="fas fa-school"></i>
+                                                @(isRtl ? "اختيار المواد و المعلمين" : "Subject & Teacher Selection")
+                                            </h4>
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                @(isRtl ? "اختر المواد ثم اختر معلم لكل مادة." : "Select your subjects then pick a teacher for each.")
+                                            </div>
+                                            <div id="availableSubjects"></div>
+                                            <div id="selectedSubjectsSummary" class="mt-4" style="display:none;">
+                                                <h6 class="text-16 fw-600 mb-2">@(isRtl ? "المواد المختارة" : "Selected Subjects")</h6>
+                                                <div id="selectedSubjectsList"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- STEP 4: Schedules / Online Account -->
+                                        <div class="form-step" id="step4Content">
+                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                <i class="fas fa-calendar"></i>
+                                                @(isRtl ? "اختيار الجداول" : "Schedule Selection")
+                                            </h4>
+                                            <div id="scheduleSection">
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    @(isRtl ? "اختر الجدول المناسب لكل مادة." : "Choose a schedule for each subject.")
+                                                </div>
+                                                <div id="scheduleSelection"></div>
+                                            </div>
+
+                                            <div id="onlineUserSection" style="display:none;">
+                                                <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
+                                                    <i class="fas fa-user-lock text-purple-1"></i>
+                                                    @(isRtl ? "إنشاء حساب أونلاين" : "Create Online Account")
+                                                </h5>
+                                                <div class="mb-3">
+                                                    <label for="username" class="form-label">
+                                                        @(isRtl ? "اسم المستخدم" : "Username") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" class="form-control" id="username" maxlength="40" autocomplete="off" />
+                                                    <div id="userError" class="text-danger mt-2"></div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="password" class="form-label">
+                                                        @(isRtl ? "كلمة المرور" : "Password") <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="password" class="form-control" id="password" maxlength="40" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- STEP 5: Confirmation -->
+                                        <div class="form-step" id="step5Content">
+                                            <div id="offlineSummarySection">
+                                                <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                    @(isRtl ? "تأكيد البيانات" : "Confirmation")
+                                                </h4>
+                                                <div class="alert alert-success">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    @(isRtl ? "راجع بياناتك قبل الإرسال." : "Review your information before submitting.")
+                                                </div>
+                                                <div id="registrationSummary"></div>
+                                                <div class="form-check mt-4">
+                                                    <input class="form-check-input" type="checkbox" id="termsAccepted" required />
+                                                    <label class="form-check-label" for="termsAccepted">
+                                                        @(isRtl ? "أوافق على الشروط و الأحكام" : "I accept the terms and conditions")
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div id="onlineRegistrationSection" style="display:none;">
+                                                <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                    @(isRtl ? "إكمال التسجيل الأونلاين" : "Complete Online Registration")
+                                                </h4>
+                                                <div class="alert alert-success">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    @(isRtl ? "جاهز لإكمال التسجيل." : "Ready to complete your online registration.")
+                                                </div>
+                                                <button type="button" class="btn-theme-success w-100" id="completeOnlineBtn">
+                                                    <i class="fas fa-cloud-download-alt"></i>
+                                                    @(isRtl ? "إكمال التسجيل الأونلاين" : "Finish Online Registration")
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Navigation Buttons -->
+                                        <div class="navigation-buttons">
+                                            <button type="button" class="btn-theme-secondary" id="prevBtn" style="display:none;">
+                                                <i class="fas fa-arrow-right"></i>
+                                                @(isRtl ? "السابق" : "Previous")
+                                            </button>
+                                            <div class="flex-grow-1"></div>
+                                            <button type="button" class="btn-theme" id="nextBtn">
+                                                @(isRtl ? "التالي" : "Next")
+                                                <i class="fas @(isRtl ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                                            </button>
+                                            <button type="button" class="btn-theme-success" id="submitBtn" style="display:none;">
+                                                <i class="fas fa-check"></i>
+                                                @(isRtl ? "تأكيد التسجيل" : "Complete Registration")
+                                            </button>
+                                        </div>
+
+                                        <div class="security-note">
+                                            <i class="fas fa-lock me-1"></i>
+                                            @(isRtl ? "بياناتك آمنة و مشفرة." : "Your data is secure and protected.")
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Loading Overlay (used by StudentRegistration.js) -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
         <div class="loading-spinner">
             <div class="spinner-border" role="status"></div>
-            <p class="mt-3 mb-0">Processing your registration...</p>
+            <p class="mt-3 mb-0">@(isRtl ? "جارٍ معالجة التسجيل..." : "Processing your registration...")</p>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Core JS Dependencies (Match theme; add GSAP if main.js depends) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"></script>
+    <!-- Add plugins only if your main.js / animations use them -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script> -->
+    <!-- Vendor bundle and theme scripts -->
+    <script src="/js/vendors.js"></script>
+    <script src="~/js/main.js"></script>
+    <script src="/AWS/js/language-switcher.js"></script>
+    <script src="/AWS/js/auth-layout-fix.js"></script>
+
+    <!-- Registration Logic -->
     <script src="~/js/StudentRegistration.js"></script>
+
+    <!-- SweetAlert2 (used for some confirmations maybe) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Ensure preloader hides even if theme animation fails
+        window.addEventListener('load', function () {
+            const pre = document.querySelector('.preloader');
+            pre?.classList.add('is-hidden');
+            document.body.classList.remove('preloader-visible');
+            setTimeout(() => pre?.remove(), 800);
+        });
+    </script>
 </body>
 </html>

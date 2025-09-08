@@ -1,0 +1,586 @@
+@{
+    Layout = null;
+    // Arabic Centres Page (RTL)
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Arabic fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
+          rel="stylesheet" />
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+          integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin="" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap"
+          rel="stylesheet" />
+
+    <link rel="stylesheet" href="/css/vendors.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/bw-theme.css" />
+
+    <style>
+        .centre-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #f1f1f1;
+        }
+
+            .centre-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+            }
+
+        .centre-card__image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+            .centre-card__image img {
+                height: 100%;
+                object-fit: cover;
+                transition: transform .3s ease;
+            }
+
+        .centre-card:hover .centre-card__image img {
+            transform: scale(1.05);
+        }
+
+        .centre-card__overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg,transparent 0%,rgba(0,0,0,.3) 100%);
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .centre-card:hover .centre-card__overlay {
+            opacity: 1;
+        }
+
+        #centres-map {
+            z-index: 1 !important;
+        }
+
+        .leaflet-control-container {
+            z-index: 2 !important;
+        }
+
+        .header {
+            z-index: 999 !important;
+        }
+
+        .map-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        html[dir="rtl"] .mr-10 {
+            margin-right: 0 !important;
+            margin-left: 10px !important;
+        }
+
+        html[dir="rtl"] .mr-8 {
+            margin-right: 0 !important;
+            margin-left: 8px !important;
+        }
+
+        html[dir="rtl"] i.far, html[dir="rtl"] i.fas {
+            margin-right: 0;
+        }
+
+        /* Badge / label tweaks */
+        .sectionTitle__title {
+            font-weight: 700;
+        }
+    </style>
+
+    <title>الأستاذ أحمد فضل — المراكز التعليمية</title>
+</head>
+
+<body class="preloader-visible" data-barba="wrapper">
+    <!-- preloader start -->
+    <div class="preloader js-preloader">
+        <div class="preloader__bg"></div>
+    </div>
+    <!-- preloader end -->
+
+    <main class="main-content">
+        <header data-anim="fade"
+                data-add-bg
+                class="header -type-4 -shadow bg-white border-bottom-light js-header">
+            <div class="header__container py-10">
+                <div class="row justify-between items-center">
+                    <div class="col-auto">
+                        <div class="header-left d-flex items-center">
+                            <a href="home-ar.cshtml"
+                               class="brand-logo"
+                               aria-label="Ahmed Fadl">
+                                <span class="brand-logo__letter">A</span>
+                                <span class="brand-logo__sep">|</span>
+                                <span class="brand-logo__letter">F</span>
+                            </a>
+                            <div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
+                                <div class="header-menu__content">
+                                    <div class="mobile-bg js-mobile-bg"></div>
+
+                                    <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
+                                        <a href="login-ar.cshtml" class="text-dark-1">تسجيل الدخول</a>
+                                        <a href="signup-ar.cshtml" class="text-dark-1 ml-30">إنشاء حساب</a>
+                                    </div>
+
+                                    <div class="menu js-navList">
+                                        <ul class="menu__nav text-dark-1 -is-active">
+                                            <a data-barba href="home-ar.cshtml">الرئيسية</a>
+                                            <a data-barba href="about-ar.cshtml">حول المدرس</a>
+                                            <a data-barba href="courses-ar.cshtml">الدروس</a>
+                                            <a data-barba href="centres-ar.cshtml">المراكز</a>
+                                            <a data-barba href="outstanding-students-ar.cshtml">الطلاب المتميزون</a>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mobile-footer px-20 py-20 border-top-light js-mobile-footer">
+                                        <div class="mobile-footer__number">
+                                            <div class="text-17 fw-500 text-dark-1">اتصل بنا</div>
+                                            <div class="text-17 fw-500 text-dark-1">800 388 80 90</div>
+                                        </div>
+
+                                        <div class="lh-2 mt-10">
+                                            <div>
+                                                ٣٢٩ شارع كوينزبيري،<br />نورث ملبورن VIC ٣٠٥١، أستراليا.
+                                            </div>
+                                            <div>hi@@educrat.com</div>
+                                        </div>
+
+                                        <div class="mobile-socials mt-10">
+                                            <a href="#" class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-facebook"></i>
+                                            </a>
+                                            <a href="#" class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-twitter"></i>
+                                            </a>
+                                            <a href="#" class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-instagram"></i>
+                                            </a>
+                                            <a href="#" class="d-flex items-center justify-center rounded-full size-40">
+                                                <i class="fa fa-linkedin"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="header-menu-close"
+                                     data-el-toggle=".js-mobile-menu-toggle">
+                                    <div class="size-40 d-flex items-center justify-center rounded-full bg-white">
+                                        <div class="icon-close text-dark-1 text-16"></div>
+                                    </div>
+                                </div>
+
+                                <div class="header-menu-bg"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-auto">
+                        <div class="header-right d-flex items-center">
+                            <div class="header-right__icons text-white d-flex items-center">
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <button id="language-toggle"
+                                            class="language-switcher d-flex items-center text-dark-1 hover:text-purple-1 transition-colors">
+                                        <i class="fas fa-globe text-16 mr-8"></i>
+                                        <span id="current-language" class="text-14 fw-500">العربية</span>
+                                    </button>
+                                </div>
+
+                                <div class="relative -before-border px-20 sm:px-15">
+                                    <div class="toggle-element js-cart-toggle">
+                                        <div class="header-cart bg-white -dark-bg-dark-1 rounded-8">
+                                            <div class="px-30 pt-30 pb-10">
+                                                <div class="row justify-between x-gap-40 pb-20">
+                                                    <div class="col">
+                                                        <div class="row x-gap-10 y-gap-10">
+                                                            <div class="col-auto">
+                                                                <img src="/img/menus/cart/1.png" alt="image" />
+                                                            </div>
+                                                            <div class="col">
+                                                                <div class="text-dark-1 lh-15">
+                                                                    حصة الفلسفة والمنطق الأسبوعية
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <button>
+                                                            <img src="/img/menus/close.svg" alt="icon" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row justify-between x-gap-40 pb-20">
+                                                    <div class="col">
+                                                        <div class="row x-gap-10 y-gap-10">
+                                                            <div class="col-auto">
+                                                                <img src="/img/menus/cart/2.png" alt="image" />
+                                                            </div>
+                                                            <div class="col">
+                                                                <div class="text-dark-1 lh-15">
+                                                                    حصة علم النفس والاجتماع الأسبوعية
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <button>
+                                                            <img src="/img/menus/close.svg" alt="icon" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="px-30 pt-20 pb-30 border-top-light">
+                                                <div class="d-flex justify-between">
+                                                    <div class="text-18 lh-12 text-dark-1 fw-500">
+                                                        الإجمالي:
+                                                    </div>
+                                                    <div class="text-18 lh-12 text-dark-1 fw-500">—</div>
+                                                </div>
+
+                                                <div class="row x-gap-20 y-gap-10 pt-30">
+                                                    <div class="col-sm-6">
+                                                        <button class="button py-20 -dark-1 text-white -dark-button-white col-12">
+                                                            عرض الحصص
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button class="button py-20 -outline-dark-1 text-dark-1 col-12">
+                                                            سجِّل الآن
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-none xl:d-block -before-border pl-20 sm:pl-15">
+                                    <button class="text-dark-1 items-center"
+                                            data-el-toggle=".js-mobile-menu-toggle">
+                                        <i class="text-11 icon icon-mobile-menu"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="header-right__buttons d-flex items-center lg:d-none">
+                                <a href="login-ar.cshtml"
+                                   class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">تسجيل الدخول</a>
+                                <a href="signup-ar.cshtml"
+                                   class="button h-50 px-25 -outline-dark-1 -rounded text-dark-1 ml-20">إنشاء حساب</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-wrapper js-content-wrapper">
+            <!-- Centres Grid Section -->
+            <section class="layout-pt-lg layout-pb-lg">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle">
+                                <h2 class="sectionTitle__title">مواقع التدريس</h2>
+                                <p class="sectionTitle__text">
+                                    يُدرّس الأستاذ أحمد فضل في هذه المراكز عبر مصر
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row y-gap-30 pt-60 lg:pt-50">
+                        <!-- Maadi Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1000&q=80"
+                                         alt="مركز المعادي"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">مركز المعادي للتعلم</h4>
+                                            <div class="text-14 mt-5 text-dark-2">المعادي، القاهرة</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>الجمعة والسبت • ٥:٠٠–٧:٠٠ م</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>الفلسفة والمنطق</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nasr City Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=1000&q=80"
+                                         alt="مركز مدينة نصر"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">مركز مدينة نصر</h4>
+                                            <div class="text-14 mt-5 text-dark-2">مدينة نصر، القاهرة</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>الخميس • ٦:٠٠–٨:٠٠ م</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>علم النفس وعلم الاجتماع</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heliopolis Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1000&q=80"
+                                         alt="أكاديمية مصر الجديدة"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">أكاديمية مصر الجديدة</h4>
+                                            <div class="text-14 mt-5 text-dark-2">مصر الجديدة، القاهرة</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>الثلاثاء • ٦:٠٠–٨:٠٠ م</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>جميع المواد</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zamalek Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1000&q=80"
+                                         alt="مركز الزمالك"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">مركز الزمالك للدراسة</h4>
+                                            <div class="text-14 mt-5 text-dark-2">الزمالك، القاهرة</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>الأربعاء • ٥:٠٠–٧:٠٠ م</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>المنطق والتفكير النقدي</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Cairo Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1000&q=80"
+                                         alt="مركز القاهرة الجديدة"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">مركز القاهرة الجديدة التعليمي</h4>
+                                            <div class="text-14 mt-5 text-dark-2">القاهرة الجديدة</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>الاثنين • ٦:٠٠–٨:٠٠ م</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>الاستعداد للامتحانات</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alexandria Centre -->
+                        <div class="col-xl-4 col-md-6">
+                            <div class="centre-card bg-white rounded-8 shadow-3 overflow-hidden">
+                                <div class="centre-card__image">
+                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=80"
+                                         alt="مركز الإسكندرية"
+                                         class="w-1/1" />
+                                    <div class="centre-card__overlay"></div>
+                                </div>
+                                <div class="p-40">
+                                    <div class="d-flex items-start justify-between">
+                                        <div>
+                                            <h4 class="text-20 fw-600 text-dark-1">مركز الإسكندرية للتعلم</h4>
+                                            <div class="text-14 mt-5 text-dark-2">الإسكندرية</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-14 mt-15">
+                                        <i class="far fa-clock mr-10"></i><span>السبت والأحد • ٤:٠٠–٦:٠٠ م</span>
+                                    </div>
+                                    <div class="text-14 mt-10">
+                                        <i class="far fa-bookmark mr-10"></i><span>جميع المواد (ورش شهرية)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Call To Action -->
+                    <div class="row justify-center pt-60 lg:pt-50">
+                        <div class="col-auto">
+                            <a href="signup-ar.cshtml"
+                               class="button -icon -outline-dark-1 text-dark-1">
+                                <span>سجِّل للوصول إلى الحصص</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Map Section -->
+            <section class="layout-pt-lg layout-pb-lg bg-light-3">
+                <div class="container">
+                    <div class="row justify-center text-center">
+                        <div class="col-auto">
+                            <div class="sectionTitle">
+                                <h2 class="sectionTitle__title">خريطة المواقع</h2>
+                                <p class="sectionTitle__text">اعثر على أقرب مركز إلى موقعك</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row justify-center pt-60 lg:pt-50">
+                        <div class="col-lg-10">
+                            <div class="map-container rounded-8 overflow-hidden shadow-3">
+                                <div id="centres-map" style="height: 420px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="footer -type-1 -dark bg-light-9">
+                <div class="container">
+                    <div class="footer-header border-bottom-dark">
+                        <div class="row y-gap-20 justify-between items-center">
+                            <div class="col-auto"></div>
+                            <div class="col-auto">
+                                <div class="footer-header-socials">
+                                    <div class="footer-header-socials__title text-dark-1">
+                                        تابعنا على وسائل التواصل الاجتماعي
+                                    </div>
+                                    <div class="footer-header-socials__list">
+                                        <a href="#"><i class="text-14 fa fa-facebook"></i></a>
+                                        <a href="#"><i class="text-14 fa fa-twitter"></i></a>
+                                        <a href="#"><i class="text-14 fa fa-instagram"></i></a>
+                                        <a href="#"><i class="text-14 fa fa-linkedin"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer-footer border-top-dark">
+                        <div class="row justify-between y-gap-20">
+                            <div class="col-md-6">
+                                <div class="footer-footer__copyright">
+                                    © ٢٠٢٥ أحمد فضل. جميع الحقوق محفوظة.
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="footer-footer__right">
+                                    <!-- Language switcher placeholder -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <script src="/js/vendors.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          var map = L.map("centres-map", {
+            zoomControl: true,
+            scrollWheelZoom: true,
+            zIndex: 1,
+          }).setView([30.0444, 31.2357], 10); // Cairo
+
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            zIndex: 1,
+          }).addTo(map);
+
+          var centres = [
+            { name: "مركز المعادي للتعلم", lat: 29.962, lng: 31.259 },
+            { name: "مركز مدينة نصر", lat: 30.0626, lng: 31.3497 },
+              { name: "أكاديمية مصر الجديدة", lat: 30.0887, lng: 31.3257 },
+            { name: "مركز الزمالك للدراسة", lat: 30.0621, lng: 31.2179 },
+            { name: "مركز القاهرة الجديدة التعليمي", lat: 30.03, lng: 31.47 },
+            { name: "مركز الإسكندرية للتعلم", lat: 31.2001, lng: 29.9187 },
+          ];
+
+          centres.forEach(function (centre) {
+            L.marker([centre.lat, centre.lng]).addTo(map).bindPopup(centre.name);
+          });
+
+          setTimeout(function () {
+            document.querySelector("#centres-map").style.zIndex = "1";
+            var mapContainer = document.querySelector(".leaflet-container");
+            if (mapContainer) {
+              mapContainer.style.zIndex = "1";
+            }
+          }, 100);
+        });
+    </script>
+</body>
+</html>

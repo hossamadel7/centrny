@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<!-- Google fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+		<!-- Arabic fonts -->
+		<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700&display=swap" rel="stylesheet" />
+
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+			integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer" />
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+			integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+			crossorigin="" />
+
+		<!-- Cursive font for brand logo -->
+		<link
+			href="https://fonts.googleapis.com/css2?family=Allura&display=swap"
+			rel="stylesheet" />
+
+		<!-- Stylesheets -->
+		<link rel="stylesheet" href="~/css/vendors.css" />
+		<link rel="stylesheet" href="~/css/main.css" />
+		<link rel="stylesheet" href="~/css/bw-theme.css" />
+		<!-- removed missing helper css files -->
+		<!-- GLightbox CSS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+
+		<title>الأستاذ أحمد فضل — الفلسفة والمنطق، علم النفس وعلم الاجتماع</title>
+	</head>
+
+	<body class="preloader-visible home-page lang-ar" data-barba="wrapper">
+		<!-- preloader start -->
+		<div class="preloader js-preloader">
+			<div class="preloader__bg"></div>
+		</div>
+		<!-- preloader end -->
+
+		<main class="main-content">
+			<header
+				data-anim="fade"
+				data-add-bg=""
+				class="header -type-4 -shadow bg-white border-bottom-light js-header">
+				<div class="header__container py-10">
+					<div class="row justify-between items-center">
+						<div class="col-auto">
+							<div class="header-left d-flex items-center">
+								<a href="home-ar.html" class="brand-logo" aria-label="Ahmed Fadl"
+									><span class="brand-logo__letter">A</span
+									><span class="brand-logo__sep">|</span
+									><span class="brand-logo__letter">F</span></a
+								>
+								<div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
+									<div class="header-menu__content">
+										<div class="mobile-bg js-mobile-bg"></div>
+
+										<div
+											class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
+											<a href="login-ar.html" class="text-white">تسجيل الدخول</a>
+											<a href="signup-ar.html" class="text-white ml-30">إنشاء حساب</a>
+										</div>
+
+										<div class="menu js-navList">
+											<ul class="menu__nav -is-active">
+											<a data-barba href="/home-ar">الرئيسية</a>
+											<a data-barba href="/about-ar">عن المدرس</a>
+											<a data-barba href="/courses-ar">الدروس</a>
+											<a data-barba href="/centres-ar">المراكز</a>
+											<a data-barba href="/outstanding-students-ar">الطلاب المتميزون</a>
+											</ul>
+										</div>
+
+										<div
+											class="mobile-footer px-20 py-20 border-top-light js-mobile-footer">
+											<div class="mobile-footer__number">
+												<div class="text-17 fw-500">اتصل بنا</div>
+												<div class="text-17 fw-500">800 388 80 90</div>
+											</div>
+
+											<div class="lh-2 mt-10">
+												<div>
+													329 Queensberry Street,<br />
+													North Melbourne VIC 3051, Australia.
+												</div>
+												<div>contact@ahmedfadl.edu</div>
+											</div>
+
+											<div class="mobile-socials mt-10">
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-facebook"></i>
+												</a>
+
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-twitter"></i>
+												</a>
+
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-instagram"></i>
+												</a>
+
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-linkedin"></i>
+												</a>
+											</div>
+										</div>
+									</div>
+
+									<div
+										class="header-menu-close"
+										data-el-toggle=".js-mobile-menu-toggle">
+										<div
+											class="size-40 d-flex items-center justify-center rounded-full bg-white">
+											<div class="icon-close text-white text-16"></div>
+										</div>
+									</div>
+
+									<div class="header-menu-bg"></div>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-auto">
+							<div class="header-right d-flex items-center">
+								<div class="header-right__icons text-white d-flex items-center">
+									<!-- Language Switcher -->
+									<div class="relative -before-border px-20 sm:px-15">
+										<button id="language-toggle" class="language-switcher d-flex items-center text-dark-1 hover:text-purple-1 transition-colors">
+											<i class="fas fa-globe text-16 mr-8"></i>
+											<span id="current-language" class="text-14 fw-500">العربيه</span>
+										</button>
+									</div>
+
+									<div class="relative -before-border px-20 sm:px-15">
+										<div class="toggle-element js-cart-toggle">
+											<div
+												class="header-cart bg-white -dark-bg-dark-1 rounded-8">
+												<div class="px-30 pt-30 pb-10">
+													<div class="row justify-between x-gap-40 pb-20">
+														<div class="col">
+															<div class="row x-gap-10 y-gap-10">
+																<div class="col-auto">
+																	<img src="img/menus/cart/1.png" alt="image" />
+																</div>
+
+																<div class="col">
+																	<div class="text-dark-1 lh-15">
+																		حل المشكلات المنطقية: من الحجج إلى البراهين
+																	</div>
+
+																	<div class="d-flex items-center mt-10">
+																		<div
+																			class="lh-12 fw-500 line-through text-light-1 mr-10">
+																			—
+																		</div>
+																		<div
+																			class="text-18 lh-12 fw-500 text-dark-1">
+																			سجل
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														<div class="col-auto">
+															<button>
+																<img src="img/menus/close.svg" alt="icon" />
+															</button>
+														</div>
+													</div>
+
+													<div class="row justify-between x-gap-40 pb-20">
+														<div class="col">
+															<div class="row x-gap-10 y-gap-10">
+																<div class="col-auto">
+																	<img src="img/menus/cart/2.png" alt="image" />
+																</div>
+
+																<div class="col">
+																	<div class="text-dark-1 lh-15">
+																		أساسيات علم النفس: الذاكرة والتعلم والسلوك
+																	</div>
+
+																	<div class="d-flex items-center mt-10">
+																		<div
+																			class="lh-12 fw-500 line-through text-light-1 mr-10">
+																			—
+																		</div>
+																		<div
+																			class="text-18 lh-12 fw-500 text-dark-1">
+																			سجل
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														<div class="col-auto">
+															<button>
+																<img src="img/menus/close.svg" alt="icon" />
+															</button>
+														</div>
+													</div>
+												</div>
+
+												<div class="px-30 pt-20 pb-30 border-top-light">
+													<div class="d-flex justify-between">
+														<div class="text-18 lh-12 text-dark-1 fw-500">
+															الإجمالي:
+														</div>
+														<div class="text-18 lh-12 text-dark-1 fw-500">
+															—
+														</div>
+													</div>
+
+													<div class="row x-gap-20 y-gap-10 pt-30">
+														<div class="col-sm-6">
+															<button
+																class="button py-20 -dark-1 text-white -dark-button-white col-12">
+																عرض الدروس
+															</button>
+														</div>
+														<div class="col-sm-6">
+															<button
+																class="button py-20 -purple-1 text-white col-12">
+																سجل الآن
+															</button>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="d-none xl:d-block -before-border pl-20 sm:pl-15">
+										<button
+											class="text-dark-1 items-center"
+											data-el-toggle=".js-mobile-menu-toggle">
+											<i class="text-11 icon icon-mobile-menu"></i>
+										</button>
+									</div>
+								</div>
+
+								<div
+									class="header-right__buttons d-flex items-center lg:d-none">
+									<a
+										href="login-ar.html"
+										class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">تسجيل الدخول</a>
+									<a
+										href="signup-ar.html"
+										class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</header>
+
+			<div class="content-wrapper js-content-wrapper">
+				<section
+					data-anim-wrap
+					class="masthead -type-3 bg-light-6 js-mouse-move-container">
+					<div class="container">
+						<div class="row y-gap-30 items-center justify-center">
+							<div class="col-xl-7 col-lg-11 relative z-5">
+								<div class="masthead__content pl-32 lg:pl-0">
+									<h1
+										data-anim-child="slide-up delay-1"
+										class="masthead__title">
+										تعلم مع الأستاذ أحمد فضل<br />الفلسفة والمنطق • علم النفس وعلم الاجتماع
+									</h1>
+
+									<p
+										data-anim-child="slide-up delay-2"
+										class="masthead__text text-17 text-dark-1 mt-25">
+										مدرس خبير في الفلسفة والمنطق وعلم النفس وعلم الاجتماع. شرح واضح، استراتيجيات جاهزة للامتحانات، ودروس مشوقة تبني التفكير النقدي وتحقق أعلى الدرجات.
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="layout-pt-lg layout-pb-lg">
+					<div data-anim-wrap class="container">
+						<div class="row justify-center text-center">
+							<div class="col-auto">
+								<div class="sectionTitle">
+									<h2 class="sectionTitle__title">
+										ابدأ التعلم مع الأستاذ فضل
+									</h2>
+
+									<p class="sectionTitle__text">
+										دروس مركزة. ملاحظات واضحة. نتائج مثبتة.
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="row y-gap-30 justify-between pt-60 lg:pt-50">
+							<div class="col-lg-3 col-md-6">
+								<div class="coursesCard -type-3 text-center">
+									<div class="coursesCard__icon bg-green-3">
+										<img src="../img/home-4/learning/1.svg" alt="icon" />
+									</div>
+
+									<div class="coursesCard__content mt-30">
+										<h5 class="coursesCard__title text-18 lh-1 fw-500">
+											شرح واضح وبسيط
+										</h5>
+										<p class="coursesCard__text text-14 mt-10">
+											فهم الأفكار الأساسية بسرعة مع التدريس المتدرج.
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-lg-3 col-md-6">
+								<div class="coursesCard -type-3 text-center">
+									<div class="coursesCard__icon bg-yellow-2">
+										<img src="../img/home-4/learning/2.svg" alt="icon" />
+									</div>
+
+									<div class="coursesCard__content mt-30">
+										<h5 class="coursesCard__title text-18 lh-1 fw-500">
+											ممارسة مركزة للامتحانات
+										</h5>
+										<p class="coursesCard__text text-14 mt-10">
+											أسئلة موجهة، إجابات نموذجية، ونصائح للتقييم.
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-lg-3 col-md-6">
+								<div class="coursesCard -type-3 text-center">
+									<div class="coursesCard__icon bg-blue-2">
+										<img src="../img/home-4/learning/3.svg" alt="icon" />
+									</div>
+
+									<div class="coursesCard__content mt-30">
+										<h5 class="coursesCard__title text-18 lh-1 fw-500">
+											ملاحظات منظمة
+										</h5>
+										<p class="coursesCard__text text-14 mt-10">
+											ملخصات مختصرة يمكنك مراجعتها في دقائق.
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-lg-3 col-md-6">
+								<div class="coursesCard -type-3 text-center">
+									<div class="coursesCard__icon bg-orange-3">
+										<img src="../img/home-4/learning/4.svg" alt="icon" />
+									</div>
+
+									<div class="coursesCard__content mt-30">
+										<h5 class="coursesCard__title text-18 lh-1 fw-500">
+											إرشاد شخصي
+										</h5>
+										<p class="coursesCard__text text-14 mt-10">
+											احصل على تغذية راجعة ودعم مباشر عند الحاجة.
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<!-- Featured Videos Section -->
+				<section class="layout-pt-lg layout-pb-lg">
+					<div class="container">
+						<div class="row justify-center text-center">
+							<div class="col-auto">
+								<div class="sectionTitle">
+									<h2 class="sectionTitle__title">دروس الفيديو المميزة</h2>
+									<p class="sectionTitle__text">
+										تعرف على أسلوبي في التدريس من خلال هذه الدروس المجانية
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="row y-gap-30 pt-60 lg:pt-50">
+
+							<!-- Course Cards Grid -->
+							<div class="row y-gap-30" style="margin: auto;">
+								
+								<!-- Video Card 1 -->
+								<div class="col-lg-4 col-md-6">
+									<div class="course-card bg-white rounded-16 shadow-4 overflow-hidden">
+										<div class="course-card__image">
+											<img src="https://img.youtube.com/vi/PMG-0bUpJ5g/maxresdefault.jpg" alt="مراجعة علم اجتماع" class="w-1/1" loading="lazy">
+											<div class="course-card__overlay">
+												<div class="play-button" onclick="playVideo('PMG-0bUpJ5g', this)">
+													<i class="fas fa-play text-white text-20"></i>
+												</div>
+											</div>
+											<div class="course-duration">
+												<span class="bg-green-1 text-white px-10 py-5 rounded-4 text-12">مجاني</span>
+											</div>
+										</div>
+										<div class="course-card__content p-30">
+											<div class="course-category mb-15">
+												<span class="badge bg-purple-1 text-white px-15 py-8 rounded-6 text-13 fw-500">علم اجتماع</span>
+											</div>
+											<h4 class="course-title text-20 fw-600 text-dark-1 mb-15">مراجعة علم اجتماع الصف الثاني الثانوي شهر أكتوبر</h4>
+											<p class="course-description text-15 text-light-1 mb-20">مراجعة شاملة لمنهج علم الاجتماع للصف الثاني الثانوي - ثانوية عامة 2025 مع الأستاذ أحمد فضل.</p>
+											<div class="course-footer d-flex items-center justify-between">
+												<div class="free-badge">
+													<span class="text-18 fw-700 text-green-1">مجاني</span>
+												</div>
+												<button class="button -sm -purple-1 text-white px-25 py-12" onclick="playVideo('PMG-0bUpJ5g', this)">شاهد الآن</button>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- Video Card 2 -->
+								<div class="col-lg-4 col-md-6">
+									<div class="course-card bg-white rounded-16 shadow-4 overflow-hidden">
+										<div class="course-card__image">
+											<img src="https://img.youtube.com/vi/2wwn9p8yF6E/maxresdefault.jpg" alt="الدرس الأول علم نفس" class="w-1/1" loading="lazy">
+											<div class="course-card__overlay">
+												<div class="play-button" onclick="playVideo('2wwn9p8yF6E', this)">
+													<i class="fas fa-play text-white text-20"></i>
+												</div>
+											</div>
+											<div class="course-duration">
+												<span class="bg-green-1 text-white px-10 py-5 rounded-4 text-12">مجاني</span>
+											</div>
+										</div>
+										<div class="course-card__content p-30">
+											<div class="course-category mb-15">
+												<span class="badge bg-blue-1 text-white px-15 py-8 rounded-6 text-13 fw-500">علم نفس</span>
+											</div>
+											<h4 class="course-title text-20 fw-600 text-dark-1 mb-15">الدرس الأول علم نفس تانية ثانوي شرح من الآخر</h4>
+											<p class="course-description text-15 text-light-1 mb-20">شرح مفصل ومبسط للدرس الأول في مادة علم النفس للصف الثاني الثانوي مع الأستاذ أحمد فضل.</p>
+											<div class="course-footer d-flex items-center justify-between">
+												<div class="free-badge">
+													<span class="text-18 fw-700 text-green-1">مجاني</span>
+												</div>
+												<button class="button -sm -blue-1 text-white px-25 py-12" onclick="playVideo('2wwn9p8yF6E', this)">شاهد الآن</button>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- Video Card 3 -->
+								<div class="col-lg-4 col-md-6">
+									<div class="course-card bg-white rounded-16 shadow-4 overflow-hidden">
+										<div class="course-card__image">
+											<img src="https://img.youtube.com/vi/kha31jFKTlc/maxresdefault.jpg" alt="الدرس الأول فلسفة" class="w-1/1" loading="lazy">
+											<div class="course-card__overlay">
+												<div class="play-button" onclick="playVideo('kha31jFKTlc', this)">
+													<i class="fas fa-play text-white text-20"></i>
+												</div>
+											</div>
+											<div class="course-duration">
+												<span class="bg-green-1 text-white px-10 py-5 rounded-4 text-12">مجاني</span>
+											</div>
+										</div>
+										<div class="course-card__content p-30">
+											<div class="course-category mb-15">
+												<span class="badge bg-green-1 text-white px-15 py-8 rounded-6 text-13 fw-500">فلسفة</span>
+											</div>
+											<h4 class="course-title text-20 fw-600 text-dark-1 mb-15">الدرس الأول فلسفة أولى ثانوي شرح من الآخر</h4>
+											<p class="course-description text-15 text-light-1 mb-20">مقدمة شاملة لمادة الفلسفة للصف الأول الثانوي مع شرح مبسط ومفهوم مع الأستاذ أحمد فضل.</p>
+											<div class="course-footer d-flex items-center justify-between">
+												<div class="free-badge">
+													<span class="text-18 fw-700 text-green-1">مجاني</span>
+												</div>
+												<button class="button -sm -green-1 text-white px-25 py-12" onclick="playVideo('kha31jFKTlc', this)">شاهد الآن</button>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</div>
+
+						<div class="row justify-center pt-60 lg:pt-50">
+							<div class="col-auto">
+								<a
+									href="courses-ar.html"
+									class="button -icon -outline-dark-1 text-dark-1">
+									شاهد جميع الفيديوهات
+								</a>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="layout-pt-md layout-pb-md bg-dark-5">
+					<div data-anim-wrap class="container">
+						<div class="row justify-center text-center">
+							<div class="col-auto">
+								<div class="sectionTitle -light">
+									<h2 class="sectionTitle__title">التخصصات التعليمية</h2>
+									<p class="sectionTitle__text">
+										مجالان متكاملان من التميز الأكاديمي
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="subjects-showcase pt-40 lg:pt-30">
+							<!-- Philosophy & Logic Subject -->
+							<div class="subject-panel subject-panel--left" data-anim-child="slide-right delay-1">
+								<div class="subject-panel__content">
+									<div class="subject-panel__header">
+										<div class="subject-panel__icon-container">
+											<div class="subject-panel__icon philosophy-icon">
+												<i class="fas fa-lightbulb"></i>
+											</div>
+										</div>
+										<div class="subject-panel__meta">
+											<h3 class="subject-panel__title">الفلسفة والمنطق</h3>
+										</div>
+									</div>
+									<div class="subject-panel__body">
+										<p class="subject-panel__description">
+											تطوير المهارات التحليلية من خلال الاستدلال المنهجي والأطر الأخلاقية ومنهجيات حل المشكلات المنطقية.
+										</p>
+
+									</div>
+								</div>
+								<div class="subject-panel__visual">
+									<div class="visual-element philosophy-visual"></div>
+								</div>
+							</div>
+
+							<!-- Psychology & Sociology Subject -->
+							<div class="subject-panel subject-panel--right" data-anim-child="slide-left delay-2">
+								<div class="subject-panel__visual">
+									<div class="visual-element psychology-visual"></div>
+								</div>
+								<div class="subject-panel__content">
+									<div class="subject-panel__header">
+										<div class="subject-panel__icon-container">
+											<div class="subject-panel__icon psychology-icon">
+												<i class="fas fa-users-cog"></i>
+											</div>
+										</div>
+										<div class="subject-panel__meta">
+											<h3 class="subject-panel__title">علم النفس وعلم الاجتماع</h3>
+										</div>
+									</div>
+									<div class="subject-panel__body">
+										<p class="subject-panel__description">
+											استكشاف تعقيدات السلوك البشري والهياكل الاجتماعية والمبادئ النفسية من خلال التعلم القائم على الأدلة.
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="layout-pt-lg layout-pb-lg bg-dark-5" dir="rtl">
+					<div class="container">
+						<div class="row justify-center text-center">
+							<div class="col-auto">
+								<div class="sectionTitle">
+									<h2 class="sectionTitle__title text-white">
+										آراء الطلاب في الأستاذ فضل
+									</h2>
+
+									<p class="sectionTitle__text text-white">
+										نتائج مستمرة، تدريس واضح، وثقة حقيقية في الامتحانات.
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div
+							class="pt-60 lg:pt-50 js-section-slider"
+							data-gap="30"
+							data-pagination
+							data-slider-cols="xl-2"
+							data-anim-wrap>
+							<div class="swiper-wrapper">
+								<div class="swiper-slide">
+									<div
+										data-anim-child="slide-left delay-1"
+										class="testimonials -type-3 sm:px-20 sm:py-40 bg-white">
+										<div class="row y-gap-30 md:text-center md:justify-center">
+											<div class="col-md-auto">
+												<div class="testimonials__image">
+													<img
+														src="img/home-4/testimonials/1.png"
+														alt="image" />
+												</div>
+											</div>
+
+											<div class="col-md">
+												<div class="d-flex items-center md:justify-center">
+													<span class="text-14 lh-1 text-yellow-1">4.5</span>
+													<div class="x-gap-5 px-10">
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+													</div>
+													<span class="text-13 lh-1">(1991)</span>
+												</div>
+
+												<p
+													class="testimonials__text text-16 lh-17 fw-500 mt-15">
+													"حوّل الأستاذ فضل المنطق المعقد إلى خطوات بسيطة. ارتفعت درجاتي من المتوسط إلى A خلال فصل واحد."
+												</p>
+
+												<div class="mt-15">
+													<div class="text-15 lh-1 text-dark-1 fw-500">
+														مريم أ.
+													</div>
+													<div class="text-13 lh-1 mt-10">طالبة في الصف الثاني عشر</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div
+										data-anim-child="slide-left delay-2"
+										class="testimonials -type-3 sm:px-20 sm:py-40 bg-white">
+										<div class="row y-gap-30 md:text-center md:justify-center">
+											<div class="col-md-auto">
+												<div class="testimonials__image">
+													<img
+														src="img/home-4/testimonials/2.png"
+														alt="image" />
+												</div>
+											</div>
+
+											<div class="col-md">
+												<div class="d-flex items-center md:justify-center">
+													<span class="text-14 lh-1 text-yellow-1">4.5</span>
+													<div class="x-gap-5 px-10">
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+													</div>
+													<span class="text-13 lh-1">(1991)</span>
+												</div>
+
+												<p
+													class="testimonials__text text-16 lh-17 fw-500 mt-15">
+													"أصبحت علم النفس أخيرًا منطقيًا. ملاحظات قصيرة، أمثلة حقيقية، وممارسة مستهدفة—مزيج مثالي."
+												</p>
+
+												<div class="mt-15">
+													<div class="text-15 lh-1 text-dark-1 fw-500">
+														عمر س.
+													</div>
+													<div class="text-13 lh-1 mt-10">مرشح IGCSE</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div
+										data-anim-child="slide-left delay-3"
+										class="testimonials -type-3 sm:px-20 sm:py-40 bg-white">
+										<div class="row y-gap-30 md:text-center md:justify-center">
+											<div class="col-md-auto">
+												<div class="testimonials__image">
+													<img
+														src="img/home-4/testimonials/3.png"
+														alt="image" />
+												</div>
+											</div>
+
+											<div class="col-md">
+												<div class="d-flex items-center md:justify-center">
+													<span class="text-14 lh-1 text-yellow-1">4.5</span>
+													<div class="x-gap-5 px-10">
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+													</div>
+													<span class="text-13 lh-1">(1991)</span>
+												</div>
+
+												<p
+													class="testimonials__text text-16 lh-17 fw-500 mt-15">
+													"أصبحت مقالات علم الاجتماع سهلة الهيكلة. حفظتني قوائم التحقق والأجوبة النموذجية ساعات من العمل."
+												</p>
+
+												<div class="mt-15">
+													<div class="text-15 lh-1 text-dark-1 fw-500">
+														سارة ن.
+													</div>
+													<div class="text-13 lh-1 mt-10">شهادة الثانوية العامة</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- Added testimonials -->
+								<div class="swiper-slide">
+									<div
+										data-anim-child="slide-left delay-4"
+										class="testimonials -type-3 sm:px-20 sm:py-40 bg-white">
+										<div class="row y-gap-30 md:text-center md:justify-center">
+											<div class="col-md-auto">
+												<div class="testimonials__image">
+													<img
+														src="img/home-4/testimonials/1.png"
+														alt="image" />
+												</div>
+											</div>
+											<div class="col-md">
+												<div class="d-flex items-center md:justify-center">
+													<span class="text-14 lh-1 text-yellow-1">4.7</span>
+													<div class="x-gap-5 px-10">
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+													</div>
+													<span class="text-13 lh-1">(1200)</span>
+												</div>
+												<p
+													class="testimonials__text text-16 lh-17 fw-500 mt-15">
+													"أوراق الامتحانات السابقة أصبحت سهلة بعد استراتيجياته المنطقية. تحسنت توقيتاتي ودقتي كثيرًا."
+												</p>
+												<div class="mt-15">
+													<div class="text-15 lh-1 text-dark-1 fw-500">
+														يوسف ك.
+													</div>
+													<div class="text-13 lh-1 mt-10">طالب IGCSE</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div
+										data-anim-child="slide-left delay-5"
+										class="testimonials -type-3 sm:px-20 sm:py-40 bg-white">
+										<div class="row y-gap-30 md:text-center md:justify-center">
+											<div class="col-md-auto">
+												<div class="testimonials__image">
+													<img
+														src="img/home-4/testimonials/2.png"
+														alt="image" />
+												</div>
+											</div>
+											<div class="col-md">
+												<div class="d-flex items-center md:justify-center">
+													<span class="text-14 lh-1 text-yellow-1">4.8</span>
+													<div class="x-gap-5 px-10">
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+													</div>
+													<span class="text-13 lh-1">(1580)</span>
+												</div>
+												<p class="testimonials__text text-16 lh-17 fw-500 mt-15">
+													ملاحظات علم النفس واضحة ومباشرة للهدف. أخيرًا أعرف ماذا أكتب في الامتحانات.
+												</p>
+												<div class="mt-15">
+													<div class="text-15 lh-1 text-dark-1 fw-500">نور هـ.</div>
+													<div class="text-13 lh-1 mt-10">طالبة في الصف الثاني عشر</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div
+										data-anim-child="slide-left delay-6"
+										class="testimonials -type-3 sm:px-20 sm:py-40 bg-white">
+										<div class="row y-gap-30 md:text-center md:justify-center">
+											<div class="col-md-auto">
+												<div class="testimonials__image">
+													<img
+														src="img/home-4/testimonials/3.png"
+														alt="image" />
+												</div>
+											</div>
+											<div class="col-md">
+												<div class="d-flex items-center md:justify-center">
+													<span class="text-14 lh-1 text-yellow-1">5.0</span>
+													<div class="x-gap-5 px-10">
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+														<i class="text-11 icon-star text-yellow-1"></i>
+													</div>
+													<span class="text-13 lh-1">(860)</span>
+												</div>
+												<p
+													class="testimonials__text text-16 lh-17 fw-500 mt-15">
+													"قوائم التحقق من الامتحانات والإجابات النموذجية وفرت ساعات. حققت درجتي المستهدفة."
+												</p>
+												<div class="mt-15">
+													<div class="text-15 lh-1 text-dark-1 fw-500">
+														سلمى ر.
+													</div>
+													<div class="text-13 lh-1 mt-10">ثانوية عامة</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div
+								class="d-flex justify-center x-gap-15 items-center pt-60 lg:pt-40" dir="rtl">
+								<div class="col-auto">
+									<button
+										class="d-flex items-center text-24 arrow-left-hover js-prev">
+										<i class="icon text-white icon-arrow-right"></i>
+									</button>
+								</div>
+								<div class="col-auto">
+									<div class="pagination -arrows js-pagination"></div>
+								</div>
+								<div class="col-auto">
+									<button
+										class="d-flex items-center text-24 arrow-right-hover js-next">
+										<i class="icon text-white icon-arrow-left"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="layout-pt-md layout-pb-md bg-beige-1">
+					<div class="container">
+						<div data-anim-wrap class="row y-gap-30">
+							<div class="col-lg-3 col-sm-6">
+								<div
+									data-anim-child="slide-left delay-1"
+									class="counter -type-1">
+									<div class="counter__number text-dark-1">1,500+</div>
+									<div class="counter__title text-light-1">طلاب تم تدريسهم</div>
+								</div>
+							</div>
+
+							<div class="col-lg-3 col-sm-6">
+								<div
+									data-anim-child="slide-left delay-2"
+									class="counter -type-1">
+									<div class="counter__number text-dark-1">5,000+</div>
+									<div class="counter__title text-light-1">ساعات التدريس</div>
+								</div>
+							</div>
+
+							<div class="col-lg-3 col-sm-6">
+								<div
+									data-anim-child="slide-left delay-3"
+									class="counter -type-1">
+									<div class="counter__number text-dark-1">95%</div>
+									<div class="counter__title text-light-1">هدف A و A* تم تحقيقه</div>
+								</div>
+							</div>
+
+							<div class="col-lg-3 col-sm-6">
+								<div
+									data-anim-child="slide-left delay-4"
+									class="counter -type-1">
+									<div class="counter__number text-dark-1">4</div>
+									<div class="counter__title text-light-1">مواد متخصصة</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="layout-pt-lg layout-pb-lg border-top-light" dir="rtl">
+					<div data-anim-wrap class="container">
+						<div class="row justify-center text-center">
+							<div class="col-auto">
+								<div class="sectionTitle">
+									<h2 class="sectionTitle__title">
+										الجلسات القادمة
+									</h2>
+
+									<p class="sectionTitle__text">
+										جلسات مباشرة أسبوعية، امتحانات تجريبية، وورش أسئلة وأجوبة.
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div
+							class="pt-60 lg:pt-50 js-section-slider"
+							data-gap="30"
+							data-pagination
+							data-slider-cols="xl-3 lg-3 md-2">
+							<div class="swiper-wrapper">
+								<div class="swiper-slide">
+									<div class="eventCard -type-3 bg-light-4 rounded-8">
+
+										<h4 class="eventCard__title text-24 lh-15 fw-500">
+											دورة مكثفة في المنطق: أشكال الحجج والمغالطات
+										</h4>
+
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div class="eventCard -type-3 bg-light-4 rounded-8">
+
+										<h4 class="eventCard__title text-24 lh-15 fw-500">
+											أسئلة وأجوبة في علم النفس: الذاكرة والتعلم والسلوك
+										</h4>
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div class="eventCard -type-3 bg-light-4 rounded-8">
+
+
+										<h4 class="eventCard__title text-24 lh-15 fw-500">
+											ورشة علم الاجتماع: الثقافة والمعايير والتغيير الاجتماعي
+										</h4>
+
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div class="eventCard -type-3 bg-light-4 rounded-8">
+
+
+										<h4 class="eventCard__title text-24 lh-15 fw-500">
+											ماراثون الامتحان: أوراق الفلسفة والمنطق السابقة
+										</h4>
+
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div class="eventCard -type-3 bg-light-4 rounded-8">
+
+
+										<h4 class="eventCard__title text-24 lh-15 fw-500">
+											العقل والمعرفة: التركيز على نظرية المعرفة
+										</h4>
+
+									</div>
+								</div>
+
+								<div class="swiper-slide">
+									<div class="eventCard -type-3 bg-light-4 rounded-8">
+
+
+										<h4 class="eventCard__title text-24 lh-15 fw-500">
+											البحث الاجتماعي: الطرق والأخلاقيات
+										</h4>
+
+									</div>
+								</div>
+							</div>
+
+							<div
+								class="d-flex justify-center x-gap-15 items-center pt-60 lg:pt-40" dir="rtl">
+								<div class="col-auto">
+									<button
+										class="d-flex items-center text-24 arrow-left-hover js-prev">
+										<i class="icon icon-arrow-right"></i>
+									</button>
+								</div>
+								<div class="col-auto">
+									<div class="pagination -arrows js-pagination"></div>
+								</div>
+								<div class="col-auto">
+									<button
+										class="d-flex items-center text-24 arrow-right-hover js-next">
+										<i class="icon icon-arrow-left"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<footer class="footer -type-1 -dark bg-light-9">
+					<div class="container">
+						<div class="footer-header border-bottom-dark">
+							<div class="row y-gap-20 justify-between items-center">
+								<div class="col-auto"></div>
+								<div class="col-auto">
+									<div class="footer-header-socials">
+										<div class="footer-header-socials__title text-dark-1">
+											تابعنا على وسائل التواصل الاجتماعي
+										</div>
+										<div class="footer-header-socials__list">
+											<a href="#"><i class="text-14 fa fa-facebook"></i></a>
+
+											<a href="#"><i class="text-14 fa fa-twitter"></i></a>
+
+											<a href="#"><i class="text-14 fa fa-instagram"></i></a>
+
+											<a href="#"><i class="text-14 fa fa-linkedin"></i></a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="footer-footer border-top-dark">
+							<div class="row justify-between y-gap-20">
+								<div class="col-md-6">
+									<div class="footer-footer__copyright">
+										© ٢٠٢٥ أحمد فضل. جميع الحقوق محفوظة.
+									</div>
+								</div>
+
+								<div class="col-auto">
+									<div class="footer-footer__right">
+										<!-- Language switcher moved to header -->
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</footer>
+			</div>
+		</main>
+
+		<!-- JavaScript -->
+		<script
+			src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+			integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+			crossorigin=""></script>
+	<script src="../js/vendors.js"></script>
+	<!-- GLightbox JS -->
+	<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+		<script src="../js/main.js"></script>
+	</body>
+</html>

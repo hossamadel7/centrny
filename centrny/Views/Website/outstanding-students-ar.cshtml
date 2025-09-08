@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<!-- Arabic fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
+			rel="stylesheet" />
+
+		<!-- Google fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+			integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer" />
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+			integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+			crossorigin="" />
+
+		<!-- Cursive font for brand logo -->
+		<link
+			href="https://fonts.googleapis.com/css2?family=Allura&display=swap"
+			rel="stylesheet" />
+
+		<!-- Stylesheets -->
+		<link rel="stylesheet" href="../css/vendors.css" />
+		<link rel="stylesheet" href="../css/main.css" />
+		<link rel="stylesheet" href="../css/bw-theme.css" />
+		<link rel="stylesheet" href="../css/rtl-numbers-fix.css" />
+		<link rel="stylesheet" href="../css/footer-center.css" />
+		<link rel="stylesheet" href="../css/rtl-numbers-fix.css" />
+
+		<style>
+			/* Fix RTL icon spacing for Outstanding Students page */
+			html[dir="rtl"] .mr-8 {
+				margin-right: 0 !important;
+				margin-left: 8px !important;
+			}
+
+			html[dir="rtl"] .mr-10 {
+				margin-right: 0 !important;
+				margin-left: 10px !important;
+			}
+
+			html[dir="rtl"] .mr-20 {
+				margin-right: 0 !important;
+				margin-left: 20px !important;
+			}
+
+			html[dir="rtl"] .mr-30 {
+				margin-right: 0 !important;
+				margin-left: 30px !important;
+			}
+
+			/* Ensure proper icon spacing in RTL mode */
+			html[dir="rtl"] i.far,
+			html[dir="rtl"] i.fas {
+				margin-right: 0;
+			}
+		</style>
+
+		<title>الأستاذ أحمد فضل — الفلسفة والمنطق، علم النفس وعلم الاجتماع</title>
+	</head>
+
+	<body class="home-page" data-barba="wrapper">
+		<!-- preloader start -->
+		<div class="preloader js-preloader">
+			<div class="preloader__bg"></div>
+		</div>
+		<!-- preloader end -->
+
+		<main class="main-content">
+			<header
+				data-anim="fade"
+				data-add-bg=""
+				class="header -type-4 -shadow bg-white border-bottom-light js-header">
+				<div class="header__container py-10">
+					<div class="row justify-between items-center">
+						<div class="col-auto">
+							<div class="header-left d-flex items-center">
+								<a
+									href="home-ar.html"
+									class="brand-logo"
+									aria-label="Ahmed Fadl"
+									><span class="brand-logo__letter">A</span
+									><span class="brand-logo__sep">|</span
+									><span class="brand-logo__letter">F</span></a
+								>
+								<div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
+									<div class="header-menu__content">
+										<div class="mobile-bg js-mobile-bg"></div>
+
+										<div
+											class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
+											<a href="login-ar.html" class="text-dark-1"
+												>تسجيل الدخول</a
+											>
+											<a href="signup-ar.html" class="text-dark-1 ml-30"
+												>إنشاء حساب</a
+											>
+										</div>
+
+										<div class="menu js-navList">
+											<ul class="menu__nav text-dark-1 -is-active">
+												<a data-barba href="home-ar.html">الرئيسية</a>
+
+												<a data-barba href="about-ar.html">عن المدرس</a>
+
+												<a data-barba href="courses-ar.html">الكورسات</a>
+
+												<a data-barba href="centres-ar.html">المراكز</a>
+
+												<a data-barba href="outstanding-students-ar.html"
+													>الطلاب المتميزون</a
+												>
+											</ul>
+										</div>
+
+										<div
+											class="mobile-footer px-20 py-20 border-top-light js-mobile-footer">
+											<div class="mobile-footer__number">
+												<div class="text-17 fw-500 text-dark-1">اتصل بنا</div>
+												<div class="text-17 fw-500 text-purple-1">
+													800 388 80 90
+												</div>
+											</div>
+
+											<div class="lh-2 mt-10">
+												<div>
+													329 شارع كوينزبري،<br />
+													شمال ملبورن فيك 3051، أستراليا.
+												</div>
+												<div>hi@educrat.com</div>
+											</div>
+
+											<div class="mobile-socials mt-10">
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-facebook"></i>
+												</a>
+
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-twitter"></i>
+												</a>
+
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-instagram"></i>
+												</a>
+
+												<a
+													href="#"
+													class="d-flex items-center justify-center rounded-full size-40">
+													<i class="fa fa-linkedin"></i>
+												</a>
+											</div>
+										</div>
+									</div>
+
+									<div
+										class="header-menu-close"
+										data-el-toggle=".js-mobile-menu-toggle">
+										<div
+											class="size-40 d-flex items-center justify-center rounded-full bg-white">
+											<div class="icon-close text-dark-1 text-16"></div>
+										</div>
+									</div>
+
+									<div class="header-menu-bg"></div>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-auto">
+							<div class="header-right d-flex items-center">
+								<div class="header-right__icons text-white d-flex items-center">
+									<!-- Language Switcher -->
+									<div class="relative -before-border px-20 sm:px-15">
+										<button
+											id="language-toggle"
+											class="language-switcher d-flex items-center text-dark-1 hover:text-purple-1 transition-colors">
+											<i
+												class="fas fa-globe text-16 ml-8"
+												style="margin-right: 8px"></i>
+											<span id="current-language" class="text-14 fw-500"
+												>العربية</span
+											>
+										</button>
+									</div>
+									<div class="relative -before-border px-20 sm:px-15">
+										<div class="toggle-element js-cart-toggle">
+											<div
+												class="header-cart bg-white -dark-bg-dark-1 rounded-8">
+												<div class="px-30 pt-30 pb-10">
+													<div class="row justify-between x-gap-40 pb-20">
+														<div class="col">
+															<div class="row x-gap-10 y-gap-10">
+																<div class="col-auto">
+																	<img src="img/menus/cart/1.png" alt="image" />
+																</div>
+
+																<div class="col">
+																	<div class="text-dark-1 lh-15">
+																		The Ultimate Drawing Course Beginner to
+																		Advanced...
+																	</div>
+
+																	<div class="d-flex items-center mt-10">
+																		<div
+																			class="lh-12 fw-500 line-through text-light-1 mr-10">
+																			$179
+																		</div>
+																		<div
+																			class="text-18 lh-12 fw-500 text-dark-1">
+																			$79
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														<div class="col-auto">
+															<button>
+																<img src="img/menus/close.svg" alt="icon" />
+															</button>
+														</div>
+													</div>
+
+													<div class="row justify-between x-gap-40 pb-20">
+														<div class="col">
+															<div class="row x-gap-10 y-gap-10">
+																<div class="col-auto">
+																	<img src="img/menus/cart/2.png" alt="image" />
+																</div>
+
+																<div class="col">
+																	<div class="text-dark-1 lh-15">
+																		User Experience Design Essentials - Adobe XD
+																		UI UX...
+																	</div>
+
+																	<div class="d-flex items-center mt-10">
+																		<div
+																			class="lh-12 fw-500 line-through text-light-1 mr-10">
+																			$179
+																		</div>
+																		<div
+																			class="text-18 lh-12 fw-500 text-dark-1">
+																			$79
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														<div class="col-auto">
+															<button>
+																<img src="img/menus/close.svg" alt="icon" />
+															</button>
+														</div>
+													</div>
+												</div>
+
+												<div class="px-30 pt-20 pb-30 border-top-light">
+													<div class="d-flex justify-between">
+														<div class="text-18 lh-12 text-dark-1 fw-500">
+															المجموع:
+														</div>
+														<div class="text-18 lh-12 text-dark-1 fw-500">
+															$659
+														</div>
+													</div>
+
+													<div class="row x-gap-20 y-gap-10 pt-30">
+														<div class="col-sm-6">
+															<button
+																class="button py-20 -dark-1 text-white -dark-button-white col-12">
+																عرض السلة
+															</button>
+														</div>
+														<div class="col-sm-6">
+															<button
+																class="button py-20 -purple-1 text-white col-12">
+																الدفع
+															</button>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="d-none xl:d-block -before-border pl-20 sm:pl-15">
+										<button
+											class="text-dark-1 items-center"
+											data-el-toggle=".js-mobile-menu-toggle">
+											<i class="text-11 icon icon-mobile-menu"></i>
+										</button>
+									</div>
+								</div>
+
+								<div
+									class="header-right__buttons d-flex items-center lg:d-none">
+									<a
+										href="login-ar.html"
+										class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20"
+										>تسجيل الدخول</a
+									>
+									<a
+										href="signup-ar.html"
+										class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20"
+										>إنشاء حساب</a
+									>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</header>
+
+			<div class="content-wrapper js-content-wrapper">
+				<!-- Outstanding Students List -->
+				<section class="layout-pt-lg layout-pb-lg">
+					<div class="container">
+						<div class="row justify-center text-center mb-60">
+							<div class="col-auto">
+								<div class="sectionTitle">
+									<h2 class="sectionTitle__title">الطلاب المتميزون</h2>
+									<p class="sectionTitle__text">
+										أفضل طلاب السيد أحمد فضل أداءً
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- Students List Container -->
+						<div class="row justify-center">
+							<div class="col-lg-10 col-xl-8">
+								<div
+									class="students-list bg-white rounded-16 px-40 py-40 border-light">
+									<!-- Student Item 1 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>1</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/avatars/1.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													سارة أحمد حسن
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز المعادي التعليمي
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>50/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 2 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>2</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/avatars/small-1.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													محمد علي إبراهيم
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز مدينة نصر
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>50/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 3 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>3</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/team/1.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													فاطمة محمود علي
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													أكاديمية هليوبوليس
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>49/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 4 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>4</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/team/2.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													أحمد يوسف عمر
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز الزمالك الدراسي
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>49/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 5 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>5</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/team/3.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													نور حسن علي
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز القاهرة الجديدة التعليمي
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>48/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 6 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>6</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/avatars/1.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													عمر خالد مصطفى
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز الإسكندرية التعليمي
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>48/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 7 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>7</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/avatars/small-1.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													مريم أحمد فريد
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز المعادي التعليمي
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>48/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 8 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>8</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/team/1.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													يوسف محمد سعيد
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													مركز مدينة نصر
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>47/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Student Item 9 -->
+									<div
+										class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+										<div class="student-info d-flex items-center">
+											<div class="student-rank">
+												<span
+													class="rank-number text-24 fw-600 text-purple-1 mr-30"
+													>9</span
+												>
+											</div>
+											<div class="student-avatar mr-20">
+												<img
+													src="img/team/2.png"
+													alt="Student"
+													class="size-60 rounded-full" />
+											</div>
+											<div class="student-details">
+												<h5 class="student-name text-18 fw-500 text-dark-1">
+													آية إبراهيم حسن
+												</h5>
+												<div class="student-centre text-14 text-light-1 mt-5">
+													أكاديمية هليوبوليس
+												</div>
+											</div>
+										</div>
+										<div class="student-grade">
+											<span class="grade-score text-20 fw-600 text-purple-1"
+												>47/50</span
+											>
+										</div>
+									</div>
+
+									<!-- Additional Students (Initially Hidden) -->
+									<div
+										class="additional-students-group"
+										id="studentsGroup2"
+										style="display: none">
+										<!-- Student Item 10 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>10</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														محمود طارق سليمان
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>46/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 11 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>11</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														ياسمين خالد مصطفى
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>46/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 12 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>12</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														كريم أحمد فاروق
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>45/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 13 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>13</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														رنا محمد سعيد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>45/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 14 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>14</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														عمرو حسن عبد الله
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>44/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 15 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>15</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														سلمى يوسف إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														أكاديمية هليوبوليس
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>44/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 16 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>16</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														حسام طارق محمود
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>43/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 17 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>17</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														دينا علي محمد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>43/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 18 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>18</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														خالد عمر فريد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>42/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 19 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>19</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														منة حسن علي
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>42/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 20 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>20</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														تامر أحمد يوسف
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>41/50</span
+												>
+											</div>
+										</div>
+									</div>
+
+									<!-- Students Group 3 (21-30) - Initially Hidden -->
+									<div
+										class="additional-students-group"
+										id="studentsGroup3"
+										style="display: none">
+										<!-- Student Item 21 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>21</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														ريم محمود حسن
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														أكاديمية هليوبوليس
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>35/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 22 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>22</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														مصطفى علي إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>35/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 23 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>23</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														حبيبة عمر سعيد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>34/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 24 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>24</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														إبراهيم خالد فاروق
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>34/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 25 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>25</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														ليلى حسن محمد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>33/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 26 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>26</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														عادل طارق سليمان
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>33/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 27 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>27</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														ندى أحمد إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														أكاديمية هليوبوليس
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>32/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 28 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>28</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														زياد محمد علي
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>32/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 29 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>29</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														أميرة يوسف حسن
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>31/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 30 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>30</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														شريف عمر عبد الله
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>31/50</span
+												>
+											</div>
+										</div>
+									</div>
+
+									<!-- Students Group 4 (31-40) - Initially Hidden -->
+									<div
+										class="additional-students-group"
+										id="studentsGroup4"
+										style="display: none">
+										<!-- Student Item 31 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>31</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														باسم أحمد سعيد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>30/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 32 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>32</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														رحمة طارق حسن
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>30/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 33 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>33</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														وسام علي إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														أكاديمية هليопوليس
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>29/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 34 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>34</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														نور محمد فريد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>29/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 35 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>35</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														مروان يوسف عمر
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>28/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 36 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>36</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														إسراء حسن علي
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>28/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 37 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>37</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														سيف أحمد خالد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>27/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 38 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>38</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														ملك عمر سعيد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>27/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 39 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>39</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														ياسين محمد إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														أكاديمية هليوبوليس
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>26/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 40 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>40</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														رنا خالد حسن
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>26/50</span
+												>
+											</div>
+										</div>
+									</div>
+
+									<!-- Students Group 5 (41-50) - Initially Hidden -->
+									<div
+										class="additional-students-group"
+										id="studentsGroup5"
+										style="display: none">
+										<!-- Student Item 41 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>41</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														حازم طارق علي
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>25/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 42 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>42</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														غادة محمد سعيد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>25/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 43 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>43</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														سمير حسن عمر
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>24/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 44 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>44</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														فرح أحمد يوسف
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>24/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 45 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>45</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														راغب علي إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														أكاديمية هليوبوليس
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>23/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 46 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>46</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/3.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														إيمان عمر حسن
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الزمالك الدراسي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>23/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 47 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>47</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/small-1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														كرم محمد علي
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز القاهرة الجديدة التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>22/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 48 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>48</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														هدى يوسف سعيد
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز الإسكندرية التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>22/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 49 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20 border-bottom-light">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>49</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/team/2.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														باسل أحمد فاروق
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز المعادي التعليمي
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>21/50</span
+												>
+											</div>
+										</div>
+
+										<!-- Student Item 50 -->
+										<div
+											class="student-item d-flex items-center justify-between py-20">
+											<div class="student-info d-flex items-center">
+												<div class="student-rank">
+													<span
+														class="rank-number text-24 fw-600 text-purple-1 mr-30"
+														>50</span
+													>
+												</div>
+												<div class="student-avatar mr-20">
+													<img
+														src="img/avatars/1.png"
+														alt="Student"
+														class="size-60 rounded-full" />
+												</div>
+												<div class="student-details">
+													<h5 class="student-name text-18 fw-500 text-dark-1">
+														رانيا حسن إبراهيم
+													</h5>
+													<div class="student-centre text-14 text-light-1 mt-5">
+														مركز مدينة نصر
+													</div>
+												</div>
+											</div>
+											<div class="student-grade">
+												<span class="grade-score text-20 fw-600 text-purple-1"
+													>21/50</span
+												>
+											</div>
+										</div>
+									</div>
+
+									<!-- Show More/Less Button -->
+									<div class="text-center pt-30" id="showMoreContainer">
+										<button
+											id="showMoreBtn"
+											class="button -purple-1 text-white px-40 py-15 rounded-8"
+											onclick="toggleStudentsList()">
+											<span>عرض المزيد من الطلاب</span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<footer class="footer -type-1 -dark bg-light-9">
+					<div class="container">
+						<div class="footer-header border-bottom-dark">
+							<div class="row y-gap-20 justify-between items-center">
+								<div class="col-auto"></div>
+								<div class="col-auto">
+									<div class="footer-header-socials">
+										<div class="footer-header-socials__title text-dark-1">
+											تابعنا على وسائل التواصل الاجتماعي
+										</div>
+										<div class="footer-header-socials__list">
+											<a href="#"><i class="text-14 fa fa-facebook"></i></a>
+
+											<a href="#"><i class="text-14 fa fa-twitter"></i></a>
+
+											<a href="#"><i class="text-14 fa fa-instagram"></i></a>
+
+											<a href="#"><i class="text-14 fa fa-linkedin"></i></a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="footer-footer border-top-dark">
+							<div class="row justify-between y-gap-20">
+								<div class="col-md-6">
+									<div class="footer-footer__copyright">
+										© ٢٠٢٥ أحمد فضل. جميع الحقوق محفوظة.
+									</div>
+								</div>
+
+								<div class="col-auto">
+									<div class="footer-footer__right">
+										<!-- English button removed -->
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</footer>
+			</div>
+		</main>
+
+		<!-- JavaScript -->
+		<script
+			src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+			integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+			crossorigin=""></script>
+		<script src="../js/vendors.js"></script>
+		<script src="../js/main.js"></script>
+		<script>
+			console.log('DEBUG: loaded "outstanding students.html" (space)');
+			// Ensure preloader is hidden
+			window.addEventListener("load", function () {
+				const preloader = document.querySelector(".preloader");
+				const body = document.body;
+				if (preloader) {
+					preloader.style.display = "none";
+				}
+				body.classList.remove("preloader-visible");
+			});
+
+			// Variables to track current display state
+			let currentGroup = 1; // Start with group 1 (first 10 students) shown
+			const totalGroups = 5; // We have 5 groups of 10 students each
+			const studentsPerGroup = 10;
+
+			function updateButtonText() {
+				const showMoreBtn = document.getElementById("showMoreBtn");
+				const currentLang = document.documentElement.lang;
+
+				if (currentGroup >= totalGroups) {
+					// Show "Show Less" button
+					showMoreBtn.innerHTML = `
+						<span>عرض عدد أقل</span>
+					`;
+				} else {
+					// Show "Show More" button with remaining count
+					const remainingStudents =
+						(totalGroups - currentGroup) * studentsPerGroup;
+					showMoreBtn.innerHTML = `
+						<span>عرض المزيد من الطلاب (${remainingStudents})</span>
+					`;
+				}
+			}
+
+			function toggleStudentsList() {
+				const showMoreContainer = document.getElementById("showMoreContainer");
+
+				if (currentGroup >= totalGroups) {
+					// Show Less functionality - hide all additional groups
+					for (let i = 2; i <= totalGroups; i++) {
+						const group = document.getElementById(`studentsGroup${i}`);
+						if (group) {
+							group.style.display = "none";
+						}
+					}
+					currentGroup = 1;
+				} else {
+					// Show More functionality - show the next group
+					currentGroup++;
+					const nextGroup = document.getElementById(
+						`studentsGroup${currentGroup}`
+					);
+					if (nextGroup) {
+						nextGroup.style.display = "block";
+					}
+				}
+
+				// Update button text based on current state
+				updateButtonText();
+			}
+
+			// Initialize button text on page load
+			document.addEventListener("DOMContentLoaded", function () {
+				updateButtonText();
+			});
+
+			// Update button text when language changes
+			document.addEventListener("languageChanged", function () {
+				updateButtonText();
+			});
+		</script>
+	</body>
+</html>

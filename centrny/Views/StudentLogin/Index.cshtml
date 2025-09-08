@@ -13,16 +13,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Allura&display=swap" rel="stylesheet" />
-
+    <link href="~/css/vendors.css" rel="stylesheet" />
     <!-- THEME / VENDOR CSS (now using /AWS/ paths) -->
-    <link rel="stylesheet" href="/css/vendors.css" />
+    
     <link rel="stylesheet" href="~/css/main.css" />
     <link rel="stylesheet" href="/AWS/css/bw-theme.css" />
     <link rel="stylesheet" href="/AWS/css/rtl-numbers-fix.css" />
-    <link rel="stylesheet" href="/AWS/css/footer-center.css" />
-    <link rel="stylesheet" href="/AWS/css/auth-rtl-fix.css" />
+   
     <!-- Optional custom student login styles (move the file to /AWS/css/ if you want everything unified) -->
-    <link rel="stylesheet" href="/AWS/css/StudentLogin.css" />
+    <link rel="stylesheet" href="~/css/StudentLogin.css" />
 
     <style>
         body {
@@ -234,7 +233,7 @@
                 <div class="form-page__img bg-dark-1 d-none d-lg-block">
                     <div class="form-page-composition">
                         <div class="-bg">
-                            <img data-move="30" class="js-mouse-move" src="/AWS/img/login/bg.png" alt="bg" /><img src="~/aws/img/login/bg.png" />
+                            <img data-move="30" class="js-mouse-move" src="/AWS/img/login/bg.png" alt="bg" />
                         </div>
                         <div class="-el-1">
                             <img data-move="20" class="js-mouse-move" src="/AWS/img/home-9/hero/bg.png" alt="image" />
@@ -327,12 +326,13 @@
     </main>
 
     <!-- JS (updated to /AWS/ paths) -->
-    <script src="/AWS/js/vendors.js"></script>
-    <script src="/AWS/js/main.js"></script>
-    <script src="/AWS/js/language-switcher.js"></script>
+    <script src="/js/vendors.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/aws/js/language-switcher.js"></script>
     <!-- Move or copy your login logic file into /AWS/js/ then use the line below -->
     <script src="/js/StudentLogin.js"></script>
-
+    <script src="~/aws/js/auth-layout-fix.js"></script>
+    <script src="~/aws/js/enhanced-hover-effects.js"></script>
     <script>
         window.addEventListener('load', function () {
             document.querySelector('.preloader')?.remove();
