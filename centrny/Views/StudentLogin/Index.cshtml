@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Student Login";
-    Layout = null; // Full standalone page to match provided HTML template design
+    Layout = null; // Standalone page
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -9,31 +9,26 @@
     <title>Student Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Fonts -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Allura&display=swap" rel="stylesheet" />
 
-    <!-- Vendor / Theme CSS (adjust paths if your project uses ~/css/...) -->
-    <link rel="stylesheet" href="~/css/vendors.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/main.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/bw-theme.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/rtl-numbers-fix.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/footer-center.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/auth-rtl-fix.css" asp-append-version="true" />
-
-    <!-- (Optional) Keep your original StudentLogin custom file if it has logic-specific styles -->
-    <link rel="stylesheet" href="~/css/StudentLogin.css" asp-append-version="true" />
+    <!-- THEME / VENDOR CSS (now using /AWS/ paths) -->
+    <link rel="stylesheet" href="/css/vendors.css" />
+    <link rel="stylesheet" href="~/css/main.css" />
+    <link rel="stylesheet" href="/AWS/css/bw-theme.css" />
+    <link rel="stylesheet" href="/AWS/css/rtl-numbers-fix.css" />
+    <link rel="stylesheet" href="/AWS/css/footer-center.css" />
+    <link rel="stylesheet" href="/AWS/css/auth-rtl-fix.css" />
+    <!-- Optional custom student login styles (move the file to /AWS/css/ if you want everything unified) -->
+    <link rel="stylesheet" href="/AWS/css/StudentLogin.css" />
 
     <style>
-        /* Extra adjustments to merge old logic styles with new template look */
-
         body {
-            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cairo','Segoe UI',Tahoma,Arial,sans-serif;
         }
 
-        /* Use template card look but allow spinner & state messages */
         .student-login-status {
             margin-top: 14px;
             display: none;
@@ -57,7 +52,6 @@
                 border: 1px solid #b2f5c5;
             }
 
-        /* Button merges template styles + original logic span */
         #btnStudentLogin.button {
             position: relative;
         }
@@ -67,7 +61,6 @@
             cursor: not-allowed;
         }
 
-        /* Loading spinner inside button */
         .loading-spinner {
             width: 18px;
             height: 18px;
@@ -75,21 +68,17 @@
             border-top-color: #4b3b7f;
             border-radius: 50%;
             display: inline-block;
-            animation: spin 0.8s linear infinite;
+            animation: spin .8s linear infinite;
             vertical-align: middle;
             margin-inline-end: 6px;
         }
 
         @@keyframes spin {
-            to
-
-        {
-            transform: rotate(360deg);
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        }
-
-        /* Keep the password toggle accessible; style to fit template */
         .password-container {
             position: relative;
         }
@@ -112,7 +101,6 @@
                 color: #4b3b7f;
             }
 
-        /* Ensure inputs take full width inside template grid col */
         .contact-form input.form-control,
         .contact-form input[type="text"],
         .contact-form input[type="password"] {
@@ -131,7 +119,7 @@
         }
 
         .brand-logo {
-            font-family: 'Allura', cursive;
+            font-family: 'Allura',cursive;
             font-size: 32px;
             text-decoration: none;
             color: #fff;
@@ -144,19 +132,29 @@
             font-weight: 300;
         }
 
-        /* If you want to remove preloader quickly while keeping markup */
-        /* .preloader, .preloader__bg { display:none !important; } */
+        /* Provide fallback display utilities if vendor CSS not yet loaded */
+        .d-none {
+            display: none !important;
+        }
+        @@media (min-width:992px) {
+            .d-lg-block
+
+        {
+            display: block !important;
+        }
+
+        }
     </style>
 </head>
 <body class="preloader-visible login-page" data-barba="wrapper">
-    <!-- Preloader (template) -->
+    <!-- Preloader -->
     <div class="preloader js-preloader">
         <div class="preloader__bg"></div>
     </div>
 
     <main class="main-content bg-beige-1">
-        <!-- Header copied from template (simplified) -->
-        <header data-anim="fade" data-add-bg class="header -type-4 -shadow bg-white border-bottom-light js-header">
+        <!-- Header -->
+        <header class="header -type-4 -shadow bg-white border-bottom-light js-header" data-anim="fade" data-add-bg>
             <div class="header__container py-10">
                 <div class="row justify-between items-center">
                     <div class="col-auto">
@@ -236,19 +234,19 @@
                 <div class="form-page__img bg-dark-1 d-none d-lg-block">
                     <div class="form-page-composition">
                         <div class="-bg">
-                            <img data-move="30" class="js-mouse-move" src="~/img/login/bg.png" alt="bg" />
+                            <img data-move="30" class="js-mouse-move" src="/AWS/img/login/bg.png" alt="bg" /><img src="~/aws/img/login/bg.png" />
                         </div>
                         <div class="-el-1">
-                            <img data-move="20" class="js-mouse-move" src="~/img/home-9/hero/bg.png" alt="image" />
+                            <img data-move="20" class="js-mouse-move" src="/AWS/img/home-9/hero/bg.png" alt="image" />
                         </div>
                         <div class="-el-2">
-                            <img data-move="40" class="js-mouse-move" src="~/img/home-9/hero/1.png" alt="icon" />
+                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/1.png" alt="icon" />
                         </div>
                         <div class="-el-3">
-                            <img data-move="40" class="js-mouse-move" src="~/img/home-9/hero/2.png" alt="icon" />
+                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/2.png" alt="icon" />
                         </div>
                         <div class="-el-4">
-                            <img data-move="40" class="js-mouse-move" src="~/img/home-9/hero/3.png" alt="icon" />
+                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/3.png" alt="icon" />
                         </div>
                     </div>
                 </div>
@@ -264,7 +262,7 @@
                                         <a href="~/Register/@(ViewBag?.RootCode ?? 0)" class="text-purple-1">سجل مجاناً</a>
                                     </p>
 
-                                    <!-- ORIGINAL LOGIC FORM (IDs & names preserved) -->
+                                    <!-- Login Form -->
                                     <form id="studentLoginForm" method="post" autocomplete="off" class="contact-form respondForm__form row y-gap-20 pt-30">
                                         @Html.AntiForgeryToken()
 
@@ -318,7 +316,7 @@
                                             </p>
                                         </div>
                                     </form>
-                                    <!-- END FORM -->
+                                    <!-- /Login Form -->
                                 </div>
                             </div>
                         </div>
@@ -328,24 +326,19 @@
         </div>
     </main>
 
-    <!-- Scripts -->
-    <script src="~/js/vendors.js" asp-append-version="true"></script>
-    <script src="~/js/main.js" asp-append-version="true"></script>
-    <script src="~/js/language-switcher.js" asp-append-version="true"></script>
-    <script src="~/js/studentLogin.js" asp-append-version="true"></script>
+    <!-- JS (updated to /AWS/ paths) -->
+    <script src="/AWS/js/vendors.js"></script>
+    <script src="/AWS/js/main.js"></script>
+    <script src="/AWS/js/language-switcher.js"></script>
+    <!-- Move or copy your login logic file into /AWS/js/ then use the line below -->
+    <script src="/js/StudentLogin.js"></script>
 
     <script>
-        // If original template expected to remove preloader:
         window.addEventListener('load', function () {
-            document.querySelector('.preloader')?.classList.add('is-hidden');
+            document.querySelector('.preloader')?.remove();
             document.body.classList.remove('preloader-visible');
-            // fallback: force hide after a delay
-            setTimeout(() => {
-                document.querySelector('.preloader')?.remove();
-            }, 800);
         });
 
-        // Password toggle logic (kept exactly, just minor safety)
         (function () {
             const toggleBtn = document.getElementById('toggleStudentPwd');
             const pwd = document.getElementById('Password');
@@ -364,24 +357,23 @@
             }
         })();
 
-        // Submit loading state (kept)
-        document.getElementById('studentLoginForm').addEventListener('submit', function () {
+        document.getElementById('studentLoginForm')?.addEventListener('submit', function () {
             const submitButton = document.getElementById('btnStudentLogin');
             const loginText = submitButton.querySelector('.login-text');
-
             submitButton.disabled = true;
             loginText.innerHTML = '<span class="loading-spinner"></span>Signing In...';
-
-            // (Adjust/remove timeout in real implementation)
+            // Safety fallback if AJAX script fails to re-enable:
             setTimeout(() => {
-                submitButton.disabled = false;
-                loginText.textContent = 'Sign In';
-            }, 3000);
+                if (submitButton.disabled) {
+                    submitButton.disabled = false;
+                    loginText.textContent = 'Sign In';
+                }
+            }, 8000);
         });
 
-        // Status message helper (logic preserved)
-        function showLoginStatus(message, isError = true) {
+        window.showLoginStatus = function (message, isError = true) {
             const statusDiv = document.getElementById('studentLoginStatus');
+            if (!statusDiv) return;
             statusDiv.textContent = message;
             statusDiv.className = 'student-login-status ' + (isError ? 'error' : 'success');
             statusDiv.style.display = 'block';
@@ -390,9 +382,7 @@
                 statusDiv.style.transition = 'opacity 0.3s ease';
                 statusDiv.style.opacity = '1';
             }, 10);
-        }
-        // Expose if your studentLogin.js expects it:
-        window.showLoginStatus = showLoginStatus;
+        };
     </script>
 </body>
 </html>
