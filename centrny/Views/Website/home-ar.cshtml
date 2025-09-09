@@ -1,3 +1,7 @@
+@{
+	Layout = null;
+	// Converted from home.html to Razor (.cshtml). Paths made root-relative. Internal page links updated to .cshtml
+}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 	<head>
@@ -15,9 +19,9 @@
 		<link
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-			integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
-			crossorigin="anonymous"
-			referrerpolicy="no-referrer" />
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+		
 		<link
 			rel="stylesheet"
 			href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
@@ -56,7 +60,7 @@
 					<div class="row justify-between items-center">
 						<div class="col-auto">
 							<div class="header-left d-flex items-center">
-								<a href="home-ar.html" class="brand-logo" aria-label="Ahmed Fadl"
+								<a href="home-ar" class="brand-logo" aria-label="Ahmed Fadl"
 									><span class="brand-logo__letter">A</span
 									><span class="brand-logo__sep">|</span
 									><span class="brand-logo__letter">F</span></a
@@ -67,8 +71,9 @@
 
 										<div
 											class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
-											<a href="login-ar.html" class="text-white">تسجيل الدخول</a>
-											<a href="signup-ar.html" class="text-white ml-30">إنشاء حساب</a>
+											<a href="studentlogin" class="text-white">تسجيل الدخول</a>
+										<a href="register/58" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
+
 										</div>
 
 										<div class="menu js-navList">
@@ -158,7 +163,7 @@
 														<div class="col">
 															<div class="row x-gap-10 y-gap-10">
 																<div class="col-auto">
-																	<img src="img/menus/cart/1.png" alt="image" />
+																<img src="~/AWS/img/menus/cart/1.png" alt="image" />
 																</div>
 
 																<div class="col">
@@ -182,7 +187,7 @@
 
 														<div class="col-auto">
 															<button>
-																<img src="img/menus/close.svg" alt="icon" />
+																<img src="~/AWS/img/menus/close.svg" alt="icon" />
 															</button>
 														</div>
 													</div>
@@ -191,7 +196,7 @@
 														<div class="col">
 															<div class="row x-gap-10 y-gap-10">
 																<div class="col-auto">
-																	<img src="img/menus/cart/2.png" alt="image" />
+																	<img src="~/AWS/img/menus/cart/2.png" alt="image" />
 																</div>
 
 																<div class="col">
@@ -215,7 +220,7 @@
 
 														<div class="col-auto">
 															<button>
-																<img src="img/menus/close.svg" alt="icon" />
+																<img src="~/AWS/img/menus/close.svg" alt="icon" />
 															</button>
 														</div>
 													</div>
@@ -262,10 +267,9 @@
 								<div
 									class="header-right__buttons d-flex items-center lg:d-none">
 									<a
-										href="login-ar.html"
+										href="studentlogin"
 										class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">تسجيل الدخول</a>
-									<a
-										href="signup-ar.html"
+									<a href="/register/58"
 										class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
 								</div>
 							</div>
@@ -276,28 +280,31 @@
 
 			<div class="content-wrapper js-content-wrapper">
 				<section
-					data-anim-wrap
-					class="masthead -type-3 bg-light-6 js-mouse-move-container">
-					<div class="container">
-						<div class="row y-gap-30 items-center justify-center">
-							<div class="col-xl-7 col-lg-11 relative z-5">
-								<div class="masthead__content pl-32 lg:pl-0">
-									<h1
-										data-anim-child="slide-up delay-1"
-										class="masthead__title">
-										تعلم مع الأستاذ أحمد فضل<br />الفلسفة والمنطق • علم النفس وعلم الاجتماع
-									</h1>
-
-									<p
-										data-anim-child="slide-up delay-2"
-										class="masthead__text text-17 text-dark-1 mt-25">
-										مدرس خبير في الفلسفة والمنطق وعلم النفس وعلم الاجتماع. شرح واضح، استراتيجيات جاهزة للامتحانات، ودروس مشوقة تبني التفكير النقدي وتحقق أعلى الدرجات.
-									</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</section>
+    data-anim-wrap
+    class="masthead -type-3 js-mouse-move-container"
+    style="background-image: url('/AWS/img/fadl/20240802-565A9947.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; min-height: 65vh;">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);z-index:1;"></div>
+    <div class="container" style="position:relative;z-index:2;">
+        <div class="row y-gap-30 items-center justify-center">
+            <div class="col-xl-7 col-lg-11 relative z-5">
+                <div class="masthead__content pl-32 lg:pl-0">
+                    <h1
+                        data-anim-child="slide-up delay-1"
+                        class="masthead__title"
+                        style="color:#fff;">
+                        تعلم مع الأستاذ أحمد فضل<br />الفلسفة والمنطق • علم النفس وعلم الاجتماع
+                    </h1>
+                    <p
+                        data-anim-child="slide-up delay-2"
+                        class="masthead__text text-17 mt-25"
+                        style="color:#fff;">
+                        مدرس خبير في الفلسفة والمنطق وعلم النفس وعلم الاجتماع. شرح واضح، استراتيجيات جاهزة للامتحانات، ودروس مشوقة تبني التفكير النقدي وتحقق أعلى الدرجات.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 				<section class="layout-pt-lg layout-pb-lg">
 					<div data-anim-wrap class="container">
@@ -319,7 +326,7 @@
 							<div class="col-lg-3 col-md-6">
 								<div class="coursesCard -type-3 text-center">
 									<div class="coursesCard__icon bg-green-3">
-										<img src="../img/home-4/learning/1.svg" alt="icon" />
+									<img src="~/AWS/img/home-4/learning/1.svg" alt="icon" />
 									</div>
 
 									<div class="coursesCard__content mt-30">
@@ -336,7 +343,7 @@
 							<div class="col-lg-3 col-md-6">
 								<div class="coursesCard -type-3 text-center">
 									<div class="coursesCard__icon bg-yellow-2">
-										<img src="../img/home-4/learning/2.svg" alt="icon" />
+									<img src="~/AWS/img/home-4/learning/2.svg" alt="icon" />
 									</div>
 
 									<div class="coursesCard__content mt-30">
@@ -353,7 +360,7 @@
 							<div class="col-lg-3 col-md-6">
 								<div class="coursesCard -type-3 text-center">
 									<div class="coursesCard__icon bg-blue-2">
-										<img src="../img/home-4/learning/3.svg" alt="icon" />
+									<img src="~/AWS/img/home-4/learning/3.svg" alt="icon" />
 									</div>
 
 									<div class="coursesCard__content mt-30">
@@ -370,7 +377,7 @@
 							<div class="col-lg-3 col-md-6">
 								<div class="coursesCard -type-3 text-center">
 									<div class="coursesCard__icon bg-orange-3">
-										<img src="../img/home-4/learning/4.svg" alt="icon" />
+									<img src="~/AWS/img/home-4/learning/4.svg" alt="icon" />
 									</div>
 
 									<div class="coursesCard__content mt-30">
@@ -605,8 +612,7 @@
 										<div class="row y-gap-30 md:text-center md:justify-center">
 											<div class="col-md-auto">
 												<div class="testimonials__image">
-													<img
-														src="img/home-4/testimonials/1.png"
+													<img src="~/AWS/img/home-4/testimonials/1.png"
 														alt="image" />
 												</div>
 											</div>
@@ -647,8 +653,7 @@
 										<div class="row y-gap-30 md:text-center md:justify-center">
 											<div class="col-md-auto">
 												<div class="testimonials__image">
-													<img
-														src="img/home-4/testimonials/2.png"
+													<img src="~/AWS/img/home-4/testimonials/2.png"
 														alt="image" />
 												</div>
 											</div>
@@ -689,8 +694,7 @@
 										<div class="row y-gap-30 md:text-center md:justify-center">
 											<div class="col-md-auto">
 												<div class="testimonials__image">
-													<img
-														src="img/home-4/testimonials/3.png"
+													<img src="~/AWS/img/home-4/testimonials/3.png"
 														alt="image" />
 												</div>
 											</div>
@@ -732,8 +736,7 @@
 										<div class="row y-gap-30 md:text-center md:justify-center">
 											<div class="col-md-auto">
 												<div class="testimonials__image">
-													<img
-														src="img/home-4/testimonials/1.png"
+													<img src="~/AWS/img/home-4/testimonials/1.png"
 														alt="image" />
 												</div>
 											</div>
@@ -771,8 +774,7 @@
 										<div class="row y-gap-30 md:text-center md:justify-center">
 											<div class="col-md-auto">
 												<div class="testimonials__image">
-													<img
-														src="img/home-4/testimonials/2.png"
+													<img src="~/AWS/img/home-4/testimonials/2.png"
 														alt="image" />
 												</div>
 											</div>
@@ -807,8 +809,7 @@
 										<div class="row y-gap-30 md:text-center md:justify-center">
 											<div class="col-md-auto">
 												<div class="testimonials__image">
-													<img
-														src="img/home-4/testimonials/3.png"
+													<img src="~/AWS/img/home-4/testimonials/3.png"
 														alt="image" />
 												</div>
 											</div>
@@ -839,7 +840,7 @@
 									</div>
 								</div>
 							</div>
-
+							
 							<div
 								class="d-flex justify-center x-gap-15 items-center pt-60 lg:pt-40" dir="rtl">
 								<div class="col-auto">

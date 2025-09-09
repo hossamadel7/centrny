@@ -402,17 +402,17 @@ i {
 }
 
 /* Background image layer */
-.home-page .masthead.-type-3::before {
-	content: "";
-	position: absolute;
-	inset: 0;
-	background-image: url("../img/fadl/20240802-565A9947.jpg");
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
-	z-index: 0;
-	opacity: 1 !important;
-}
+	.home-page .masthead.-type-3::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background-image: url("/AWS/img/fadl/20240802-565A9947.jpg")!important;
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		z-index: 0;
+		opacity: 1 !important;
+	}
 
 /* Dark overlay for text readability */
 .home-page .masthead.-type-3::after {

@@ -1,306 +1,411 @@
-﻿@model centrny.Controllers.PinController.PinsViewModel
+﻿@using Microsoft.Extensions.Localization
+@using System.Globalization
+@inject IStringLocalizerFactory LocalizerFactory
+
 @{
-    ViewData["Title"] = "Pins Management";
+    var Localizer = LocalizerFactory.Create("Pin", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+
+    ViewData["Title"] = Localizer["Title_PinsManagement"];
+    var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/Pin.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.min.css" />
 }
 
 <script>
     window.rootCode = '@Model.RootCode';
 </script>
 
-<div class="container-fluid" id="pin-page">
-    <div class="pins-page-header">
-        <h1 class="pins-page-title">
-            <i class="bi bi-shield-lock"></i>
-            Pins Management System
-        </h1>
-        <p class="text-muted mb-0">Root: @Model.RootCode | User: @Model.UserCode</p>
-
-        <div class="pins-stats-grid">
-            <div class="pins-stat-card" style="--accent: var(--pins-primary)">
-                <div class="pins-stat-header"><i class="bi bi-wallet2 pins-stat-icon"></i></div>
-                <h3 class="pins-stat-value" id="walletCodesCount">@Model.WalletCodesCount</h3>
-                <p class="pins-stat-label">Wallet Codes Total Count</p>
-            </div>
-            <div class="pins-stat-card" style="--accent: var(--pins-success)">
-                <div class="pins-stat-header"><i class="bi bi-check-circle pins-stat-icon"></i></div>
-                <h3 class="pins-stat-value" id="activePinsCount">@Model.ActiveCount</h3>
-                <p class="pins-stat-label">Active Pins</p>
-            </div>
-            <div class="pins-stat-card" style="--accent: var(--pins-warning)">
-                <div class="pins-stat-header"><i class="bi bi-currency-dollar pins-stat-icon"></i></div>
-                <h3 class="pins-stat-value" id="soldPinsCount">@Model.SoldCount</h3>
-                <p class="pins-stat-label">Sold Pins</p>
-            </div>
-            <div class="pins-stat-card" style="--accent: var(--pins-danger)">
-                <div class="pins-stat-header"><i class="bi bi-x-circle pins-stat-icon"></i></div>
-                <h3 class="pins-stat-value" id="usedPinsCount">@Model.UsedCount</h3>
-                <p class="pins-stat-label">Used Pins</p>
-            </div>
-        </div>
+<!DOCTYPE html>
+<html lang="@htmlLang" dir="@htmlDir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <div id="js-localization"
+         data-title-pins-management="@Localizer["Title_PinsManagement"]"
+         data-header-pins-management-system="@Localizer["Header_PinsManagementSystem"]"
+         data-label-root="@Localizer["Label_Root"]"
+         data-label-user="@Localizer["Label_User"]"
+         data-wallet-total-label="@Localizer["Wallet_Total_Label"]"
+         data-wallet-1x-label="@Localizer["Wallet_1x_Label"]"
+         data-wallet-4x-label="@Localizer["Wallet_4x_Label"]"
+         data-wallet-16x-label="@Localizer["Wallet_16x_Label"]"
+         data-label-filter-type="@Localizer["Label_FilterType"]"
+         data-label-filter-status="@Localizer["Label_FilterStatus"]"
+         data-option-all-types="@Localizer["Option_AllTypes"]"
+         data-option-session="@Localizer["Option_Session"]"
+         data-option-exam="@Localizer["Option_Exam"]"
+         data-option-all-status="@Localizer["Option_AllStatus"]"
+         data-option-used="@Localizer["Option_Used"]"
+         data-option-active="@Localizer["Option_Active"]"
+         data-option-sold="@Localizer["Option_Sold"]"
+         data-button-generate-pins="@Localizer["Button_GeneratePins"]"
+         data-button-refresh="@Localizer["Button_Refresh"]"
+         data-table-pins-list="@Localizer["Table_PinsList"]"
+         data-meta-total="@Localizer["Meta_Total"]"
+         data-meta-page="@Localizer["Meta_Page"]"
+         data-column-pin-code="@Localizer["Column_PinCode"]"
+         data-column-watermark="@Localizer["Column_Watermark"]"
+         data-column-type="@Localizer["Column_Type"]"
+         data-column-times="@Localizer["Column_Times"]"
+         data-column-status="@Localizer["Column_Status"]"
+         data-column-status-toggle-hint="@Localizer["Column_StatusToggleHint"]"
+         data-column-active="@Localizer["Column_Active"]"
+         data-column-created="@Localizer["Column_Created"]"
+         data-column-actions="@Localizer["Column_Actions"]"
+         data-no-pins-found="@Localizer["NoPinsFound"]"
+         data-generate-type="@Localizer["Generate_Type"]"
+         data-generate-sessions="@Localizer["Generate_Sessions"]"
+         data-generate-quantity="@Localizer["Generate_Quantity"]"
+         data-generate-available-hint-template="@Localizer["Generate_AvailableHintTemplate"]"
+         data-edit-title="@Localizer["Edit_Title"]"
+         data-edit-watermark="@Localizer["Edit_Watermark"]"
+         data-edit-type="@Localizer["Edit_Type"]"
+         data-edit-sessions="@Localizer["Edit_Sessions"]"
+         data-edit-status="@Localizer["Edit_Status"]"
+         data-edit-active="@Localizer["Edit_Active"]"
+         data-edit-update-pin="@Localizer["Edit_UpdatePin"]"
+         data-msg-refreshing-pins="@Localizer["Msg_RefreshingPins"]"
+         data-msg-pins-refreshed="@Localizer["Msg_PinsRefreshed"]"
+         data-msg-used-pins-cannot-toggle="@Localizer["Msg_UsedPinsCannotToggle"]"
+         data-msg-toggle-failed="@Localizer["Msg_ToggleFailed"]"
+         data-msg-exceeds-available-template="@Localizer["Msg_RequestedExceedsAvailableTemplate"]"
+         data-msg-pins-generated-success="@Localizer["Msg_PinsGeneratedSuccess"]"
+         data-msg-failed-generate-pins="@Localizer["Msg_FailedGeneratePins"]"
+         data-msg-unexpected-generate="@Localizer["Msg_UnexpectedGenerate"]"
+         data-msg-pin-updated-success="@Localizer["Msg_PinUpdatedSuccess"]"
+         data-msg-failed-update-pin="@Localizer["Msg_FailedUpdatePin"]"
+         data-msg-unexpected-update-pin="@Localizer["Msg_UnexpectedUpdatePin"]"
+         data-msg-pin-deleted-success="@Localizer["Msg_PinDeletedSuccess"]"
+         data-msg-failed-delete-pin="@Localizer["Msg_FailedDeletePin"]"
+         data-msg-unexpected-delete-pin="@Localizer["Msg_UnexpectedDeletePin"]"
+         data-type-exam="@Localizer["Type_Exam"]"
+         data-type-session="@Localizer["Type_Session"]"
+         data-status-used="@Localizer["Status_Used"]"
+         data-status-active="@Localizer["Status_Active"]"
+         data-status-sold="@Localizer["Status_Sold"]">
     </div>
 
-    <div class="row mb-3 gap-3">
-        <div class="col-auto">
-            <label for="filterType" class="form-label fw-semibold mb-1">Filter Type</label>
-            <select id="filterType" class="form-select form-select-sm">
-                <option value="">All Types</option>
-                <option value="session">Session</option>
-                <option value="exam">Exam</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <label for="filterStatus" class="form-label fw-semibold mb-1">Filter Status</label>
-            <select id="filterStatus" class="form-select form-select-sm">
-                <option value="">All Status</option>
-                <option value="used">Used</option>
-                <option value="active">Active</option>
-                <option value="sold">Sold</option>
-            </select>
-        </div>
-    </div>
+    <div class="container-fluid" id="pin-page">
+        <div class="pins-page-header">
+            <h1 class="pins-page-title">
+                <i class="bi bi-shield-lock"></i>
+                @Localizer["Header_PinsManagementSystem"]
+            </h1>
+            <p class="text-muted mb-0">@Localizer["Label_Root"]: @Model.RootCode | @Localizer["Label_User"]: @Model.UserCode</p>
 
-    <div class="pins-action-bar">
-        <div class="pins-search-box">
-            <i class="bi bi-search pins-search-icon"></i>
-            <input type="text" class="pins-search-input" id="searchInput" placeholder="Search pins by watermark, pin code...">
-        </div>
-        <div class="pins-actions">
-            <button id="openGenerateModal" class="btn-modern btn-primary" type="button">
-                <i class="bi bi-plus-circle"></i> Generate Pins
-            </button>
-            <button id="refreshPinsBtn" class="btn-modern btn-secondary" type="button">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-        </div>
-    </div>
+            <div class="pins-stats-grid">
+                <div class="pins-stat-card" style="--accent: var(--pins-primary)">
+                    <div class="pins-stat-header"><i class="bi bi-wallet2 pins-stat-icon"></i></div>
+                    <h3 class="pins-stat-value" id="walletCodesCount">@Model.WalletCodesCount</h3>
+                    <p class="pins-stat-label">@Localizer["Wallet_Total_Label"]</p>
+                </div>
+                <div class="pins-stat-card" style="--accent: var(--pins-success)">
+                    <div class="pins-stat-header"><i class="bi bi-check-circle pins-stat-icon"></i></div>
+                    <h3 class="pins-stat-value" id="activePinsCount">@Model.ActiveCount</h3>
+                    <p class="pins-stat-label">@Localizer["Option_Active"]</p>
+                </div>
+                <div class="pins-stat-card" style="--accent: var(--pins-warning)">
+                    <div class="pins-stat-header"><i class="bi bi-currency-dollar pins-stat-icon"></i></div>
+                    <h3 class="pins-stat-value" id="soldPinsCount">@Model.SoldCount</h3>
+                    <p class="pins-stat-label">@Localizer["Option_Sold"]</p>
+                </div>
+                <div class="pins-stat-card" style="--accent: var(--pins-danger)">
+                    <div class="pins-stat-header"><i class="bi bi-x-circle pins-stat-icon"></i></div>
+                    <h3 class="pins-stat-value" id="usedPinsCount">@Model.UsedCount</h3>
+                    <p class="pins-stat-label">@Localizer["Option_Used"]</p>
+                </div>
+            </div>
 
-    <div id="alertsArea">
-        @if (!string.IsNullOrWhiteSpace(Model.Message))
-        {
-            <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>@Model.Message</div>
-        }
-        @if (!string.IsNullOrWhiteSpace(Model.Error))
-        {
-            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@Model.Error</div>
-        }
-    </div>
-
-    <div class="pins-table-container">
-        <div class="pins-table-header">
-            <h2 class="pins-table-title">Pins List</h2>
-            <div class="pins-table-meta">
-                <span>Total: <strong id="pinTotal">@Model.TotalCount</strong></span>
-                <span>|</span>
-                <span>Page: <strong id="currentPageDisplay">@Model.CurrentPage</strong></span>
+            <div class="pins-stats-grid" style="margin-top:12px;">
+                <div class="pins-stat-card" style="--accent: var(--pins-info)">
+                    <div class="pins-stat-header"><i class="bi bi-1-circle pins-stat-icon"></i></div>
+                    <h3 class="pins-stat-value" id="walletCount1">@Model.WalletCount1</h3>
+                    <p class="pins-stat-label">@Localizer["Wallet_1x_Label"]</p>
+                </div>
+                <div class="pins-stat-card" style="--accent: var(--pins-info)">
+                    <div class="pins-stat-header"><i class="bi bi-4-circle pins-stat-icon"></i></div>
+                    <h3 class="pins-stat-value" id="walletCount4">@Model.WalletCount4</h3>
+                    <p class="pins-stat-label">@Localizer["Wallet_4x_Label"]</p>
+                </div>
+                <div class="pins-stat-card" style="--accent: var(--pins-info)">
+                    <div class="pins-stat-header">
+                        <i class="bi bi-1-circle pins-stat-icon"></i><i class="bi bi-6-circle pins-stat-icon" style="margin-left:2px;"></i>
+                    </div>
+                    <h3 class="pins-stat-value" id="walletCount16">@Model.WalletCount16</h3>
+                    <p class="pins-stat-label">@Localizer["Wallet_16x_Label"]</p>
+                </div>
             </div>
         </div>
 
-        <div class="table-responsive-modern">
-            <table class="table-modern" id="pinsTable">
-                <thead>
-                    <tr>
-                        <th>Pin Code</th>
-                        <th>Watermark</th>
-                        <th>Type</th>
-                        <th>Times</th>
-                        <th>Status</th>
-                        <th>Active</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Pins.Count == 0)
-                    {
+        <div class="row mb-3 gap-3">
+            <div class="col-auto">
+                <label for="filterType" class="form-label fw-semibold mb-1">@Localizer["Label_FilterType"]</label>
+                <select id="filterType" class="form-select form-select-sm">
+                    <option value="">@Localizer["Option_AllTypes"]</option>
+                    <option value="session">@Localizer["Option_Session"]</option>
+                    <option value="exam">@Localizer["Option_Exam"]</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="filterStatus" class="form-label fw-semibold mb-1">@Localizer["Label_FilterStatus"]</label>
+                <select id="filterStatus" class="form-select form-select-sm">
+                    <option value="">@Localizer["Option_AllStatus"]</option>
+                    <option value="used">@Localizer["Option_Used"]</option>
+                    <option value="active">@Localizer["Option_Active"]</option>
+                    <option value="sold">@Localizer["Option_Sold"]</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="pins-action-bar">
+            <div class="pins-search-box">
+                <i class="bi bi-search pins-search-icon"></i>
+                <input type="text" class="pins-search-input" id="searchInput" placeholder="@Localizer["Table_PinsList"]">
+            </div>
+            <div class="pins-actions">
+                <button id="openGenerateModal" class="btn-modern btn-primary" type="button">
+                    <i class="bi bi-plus-circle"></i> @Localizer["Button_GeneratePins"]
+                </button>
+                <button id="refreshPinsBtn" class="btn-modern btn-secondary" type="button">
+                    <i class="bi bi-arrow-clockwise"></i> @Localizer["Button_Refresh"]
+                </button>
+            </div>
+        </div>
+
+        <div id="alertsArea">
+            @if (!string.IsNullOrWhiteSpace(Model.Message))
+            {
+                <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>@Model.Message</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Error))
+            {
+                <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@Model.Error</div>
+            }
+        </div>
+
+        <div class="pins-table-container">
+            <div class="pins-table-header">
+                <h2 class="pins-table-title">@Localizer["Table_PinsList"]</h2>
+                <div class="pins-table-meta">
+                    <span>@Localizer["Meta_Total"]: <strong id="pinTotal">@Model.TotalCount</strong></span>
+                    <span>|</span>
+                    <span>@Localizer["Meta_Page"]: <strong id="currentPageDisplay">@Model.CurrentPage</strong></span>
+                </div>
+            </div>
+
+            <div class="table-responsive-modern">
+                <table class="table-modern" id="pinsTable">
+                    <thead>
                         <tr>
-                            <td colspan="8" class="text-center py-5">
-                                <i class="bi bi-inbox text-muted" style="font-size:3rem;"></i>
-                                <p class="text-muted mt-3 mb-0">No pins found</p>
-                            </td>
+                            <th>@Localizer["Column_PinCode"]</th>
+                            <th>@Localizer["Column_Watermark"]</th>
+                            <th>@Localizer["Column_Type"]</th>
+                            <th>@Localizer["Column_Times"]</th>
+                            <th>@Localizer["Column_Status"] <small class="text-muted">(@Localizer["Column_StatusToggleHint"])</small></th>
+                            <th>@Localizer["Column_Active"]</th>
+                            <th>@Localizer["Column_Created"]</th>
+                            <th>@Localizer["Column_Actions"]</th>
                         </tr>
-                    }
-                    else
-                    {
-                        @foreach (var pin in Model.Pins)  // initial page subset only; JS will replace
+                    </thead>
+                    <tbody>
+                        @if (Model.Pins.Count == 0)
                         {
-                            <tr data-pin="@pin.PinCode">
-                                <td><strong>@pin.PinCode</strong></td>
-                                <td>
-                                    <span class="text-truncate" style="max-width:150px;display:block;" title="@pin.Watermark">
-                                        @pin.Watermark
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="type-badge @(pin.Type ? "type-exam" : "type-session")">
-                                        @(pin.Type ? "Exam" : "Session")
-                                    </span>
-                                </td>
-                                <td><strong>@pin.Times</strong></td>
-                                <td>
-                                    @{
-                                        var statusClass = pin.Status switch
-                                        {
-                                            0 => "status-used",
-                                            1 => "status-active",
-                                            2 => "status-sold",
-                                            _ => "status-used"
-                                        };
-                                        var statusText = pin.Status switch
-                                        {
-                                            0 => "Used",
-                                            1 => "Active",
-                                            2 => "Sold",
-                                            _ => "Unknown"
-                                        };
-                                    }
-                                    <span class="status-badge @statusClass">
-                                        <span class="status-dot"></span>@statusText
-                                    </span>
-                                </td>
-                                <td>
-                                    @if (pin.IsActive == 1)
-                                    {
-                                        <i class="bi bi-check-circle text-success"></i>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi bi-x-circle text-danger"></i>
-                                    }
-                                </td>
-                                <td>@pin.InsertTime.ToString("MMM dd, yyyy HH:mm")</td>
-                                <td>
-                                    <div class="pins-actions-cell">
-                                        <button class="btn-icon btn-edit" onclick="editPin(@pin.PinCode)" title="Edit Pin">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn-icon btn-delete" onclick="confirmDeletePin(@pin.PinCode)" title="Delete Pin">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="bi bi-inbox text-muted" style="font-size:3rem;"></i>
+                                    <p class="text-muted mt-3 mb-0">@Localizer["NoPinsFound"]</p>
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                        else
+                        {
+                            @foreach (var pin in Model.Pins)
+                            {
+                                var statusClass = pin.Status switch
+                                {
+                                    0 => "status-used",
+                                    1 => "status-active",
+                                    2 => "status-sold",
+                                    _ => "status-used"
+                                };
+                                var statusText = pin.Status switch
+                                {
+                                    0 => Localizer["Status_Used"].Value,
+                                    1 => Localizer["Status_Active"].Value,
+                                    2 => Localizer["Status_Sold"].Value,
+                                    _ => "Unknown"
+                                };
+                                var clickable = pin.Status == 1 || pin.Status == 2;
+                                var title = clickable ? Localizer["Column_StatusToggleHint"].Value : "";
+                                var cursor = clickable ? "cursor:pointer;" : "";
 
-        <div class="pins-pagination-container">
-            <div class="pins-pagination-info">
-                Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalPins">@Model.TotalCount</span> results
+                                <tr data-pin="@pin.PinCode">
+                                    <td><strong>@pin.PinCode</strong></td>
+                                    <td>
+                                        <span class="text-truncate" style="max-width:150px;display:block;" title="@pin.Watermark">
+                                            @pin.Watermark
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="type-badge @(pin.Type ? "type-exam" : "type-session")">
+                                            @(pin.Type ? Localizer["Type_Exam"].Value : Localizer["Type_Session"].Value)
+                                        </span>
+                                    </td>
+                                    <td><strong>@pin.Times</strong></td>
+                                    <td>
+                                        <span class="status-badge @statusClass @( (pin.Status == 1 || pin.Status == 2) ? "clickable" : "" )" title="@title" style="@cursor">
+                                            <span class="status-dot"></span>@statusText
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (pin.IsActive == 1)
+                                        {
+                                            <i class="bi bi-check-circle text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-x-circle text-danger"></i>
+                                        }
+                                    </td>
+                                    <td>@pin.InsertTime.ToString("MMM dd, yyyy HH:mm")</td>
+                                    <td>
+                                        <div class="pins-actions-cell">
+                                            <button class="btn-icon btn-edit" onclick="editPin(@pin.PinCode)" title="Edit Pin">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn-icon btn-delete" onclick="confirmDeletePin(@pin.PinCode)" title="Delete Pin">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
             </div>
-            <div class="pins-pagination" id="paginationContainer"></div>
+
+            <div class="pins-pagination-container">
+                <div class="pins-pagination-info">
+                    @Localizer["Meta_Total"]: <span id="showingStart">1</span> - <span id="showingEnd">10</span> / <span id="totalPins">@Model.TotalCount</span>
+                </div>
+                <div class="pins-pagination" id="paginationContainer"></div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Generate Modal -->
-<div class="pins-modal-overlay" id="generateModal">
-    <div class="pins-modal">
-        <div class="pins-modal-header">
-            <h3 class="pins-modal-title"><i class="bi bi-plus-circle"></i> Generate New Pins</h3>
-            <button type="button" class="pins-modal-close" id="closeGenerateModal">&times;</button>
-        </div>
-        <div class="pins-modal-body">
-            <form id="generatePinsForm">
-                @Html.AntiForgeryToken()
-                <div class="pins-form-grid">
-                    <div class="form-group">
-                        <label class="form-label-modern">Type</label>
-                        <select name="Type" class="form-select-modern" required>
-                            <option value="0">Session</option>
-                            <option value="1">Exam</option>
-                        </select>
+    <div class="pins-modal-overlay" id="generateModal" style="display:none;">
+        <div class="pins-modal">
+            <div class="pins-modal-header">
+                <h3 class="pins-modal-title"><i class="bi bi-plus-circle"></i> @Localizer["Button_GeneratePins"]</h3>
+                <button type="button" class="pins-modal-close" id="closeGenerateModal">&times;</button>
+            </div>
+            <div class="pins-modal-body">
+                <form id="generatePinsForm">
+                    @Html.AntiForgeryToken()
+                    <div class="pins-form-grid">
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Generate_Type"]</label>
+                            <select name="Type" class="form-select-modern" required>
+                                <option value="0">@Localizer["Option_Session"]</option>
+                                <option value="1">@Localizer["Option_Exam"]</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Generate_Sessions"]</label>
+                            <select name="Times" class="form-select-modern" required>
+                                <option value="1">1</option>
+                                <option value="4">4</option>
+                                <option value="16">16</option>
+                            </select>
+                            <div class="form-text" id="availableForTimesHint"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Generate_Quantity"]</label>
+                            <input type="number" name="Number" min="1" max="10000" value="1" class="form-control-modern" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label-modern">Sessions</label>
-                        <select name="Times" class="form-select-modern" required>
-                            <option value="1">1 session</option>
-                            <option value="4">4 sessions</option>
-                            <option value="16">16 sessions</option>
-                        </select>
+                    <div class="pins-modal-footer">
+                        <button type="button" class="btn-modern btn-secondary" id="cancelGenerateBtn">@Localizer["Button_Refresh"]</button>
+                        <button type="submit" class="btn-modern btn-primary" id="submitGenerateBtn">
+                            <span class="btn-text">@Localizer["Button_GeneratePins"]</span>
+                            <div class="spinner-border spinner-border-sm d-none" id="generateSpinner"></div>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label-modern">Quantity</label>
-                        <input type="number" name="Number" min="1" max="10000" value="1" class="form-control-modern" required>
-                    </div>
-                </div>
-                <div class="pins-modal-footer">
-                    <button type="button" class="btn-modern btn-secondary" id="cancelGenerateBtn">Cancel</button>
-                    <button type="submit" class="btn-modern btn-primary" id="submitGenerateBtn">
-                        <span class="btn-text">Generate</span>
-                        <div class="spinner-border spinner-border-sm d-none" id="generateSpinner"></div>
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Edit Modal -->
-<div class="pins-modal-overlay" id="editModal">
-    <div class="pins-modal">
-        <div class="pins-modal-header">
-            <h3 class="pins-modal-title"><i class="bi bi-pencil"></i> Edit Pin</h3>
-            <button type="button" class="pins-modal-close" id="closeEditModal">&times;</button>
-        </div>
-        <div class="pins-modal-body">
-            <form id="editPinForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" id="editPinCode" name="PinCode">
-                <div class="pins-form-grid">
-                    <div class="form-group">
-                        <label class="form-label-modern">Watermark</label>
-                        <input type="text" id="editWatermark" name="Watermark" class="form-control-modern" required maxlength="20">
+    <div class="pins-modal-overlay" id="editModal" style="display:none;">
+        <div class="pins-modal">
+            <div class="pins-modal-header">
+                <h3 class="pins-modal-title"><i class="bi bi-pencil"></i> @Localizer["Edit_Title"]</h3>
+                <button type="button" class="pins-modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <div class="pins-modal-body">
+                <form id="editPinForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editPinCode" name="PinCode">
+                    <div class="pins-form-grid">
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Edit_Watermark"]</label>
+                            <input type="text" id="editWatermark" name="Watermark" class="form-control-modern" required maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Edit_Type"]</label>
+                            <select id="editType" name="Type" class="form-select-modern" required>
+                                <option value="false">@Localizer["Option_Session"]</option>
+                                <option value="true">@Localizer["Option_Exam"]</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Edit_Sessions"]</label>
+                            <select id="editTimes" name="Times" class="form-select-modern" required>
+                                <option value="1">1</option>
+                                <option value="4">4</option>
+                                <option value="16">16</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Edit_Status"]</label>
+                            <select id="editStatus" name="Status" class="form-select-modern" required>
+                                <option value="0">@Localizer["Option_Used"]</option>
+                                <option value="1">@Localizer["Option_Active"]</option>
+                                <option value="2">@Localizer["Option_Sold"]</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">@Localizer["Edit_Active"]</label>
+                            <select id="editIsActive" name="IsActive" class="form-select-modern" required>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label-modern">Type</label>
-                        <select id="editType" name="Type" class="form-select-modern" required>
-                            <option value="false">Session</option>
-                            <option value="true">Exam</option>
-                        </select>
+                    <div class="pins-modal-footer">
+                        <button type="button" class="btn-modern btn-secondary" id="cancelEditBtn">@Localizer["Button_Refresh"]</button>
+                        <button type="submit" class="btn-modern btn-success">
+                            <span class="btn-text">@Localizer["Edit_UpdatePin"]</span>
+                            <div class="spinner-border spinner-border-sm d-none" id="editSpinner"></div>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label-modern">Sessions</label>
-                        <select id="editTimes" name="Times" class="form-select-modern" required>
-                            <option value="1">1 session</option>
-                            <option value="4">4 sessions</option>
-                            <option value="16">16 sessions</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label-modern">Status</label>
-                        <select id="editStatus" name="Status" class="form-select-modern" required>
-                            <option value="0">Used</option>
-                            <option value="1">Active</option>
-                            <option value="2">Sold</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label-modern">Active</label>
-                        <select id="editIsActive" name="IsActive" class="form-select-modern" required>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="pins-modal-footer">
-                    <button type="button" class="btn-modern btn-secondary" id="cancelEditBtn">Cancel</button>
-                    <button type="submit" class="btn-modern btn-success">
-                        <span class="btn-text">Update Pin</span>
-                        <div class="spinner-border spinner-border-sm d-none" id="editSpinner"></div>
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    <script src="~/js/pins.js"></script>
-}
+    @section Scripts {
+        <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
+        <script defer src="~/js/pins.js" asp-append-version="true"></script>
+    }
+</body>
+</html>

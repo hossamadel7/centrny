@@ -11,7 +11,7 @@ public partial class Attend
 
     public int StudentId { get; set; }
 
-    public int HallId { get; set; }
+    public int? HallId { get; set; }
 
     public int? ScheduleCode { get; set; }
 
@@ -25,7 +25,7 @@ public partial class Attend
 
     public virtual Class Class { get; set; } = null!;
 
-    public virtual Hall Hall { get; set; } = null!;
+    public virtual Hall? Hall { get; set; }
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
 

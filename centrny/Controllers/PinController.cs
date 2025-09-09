@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using centrny.Attributes;
 using centrny.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +13,6 @@ using Microsoft.Extensions.Logging;
 
 namespace centrny.Controllers
 {
-    
     [RequirePageAccess("Codes generator")]
     public class PinController : Controller
     {
@@ -33,7 +31,16 @@ namespace centrny.Controllers
         {
             public int RootCode { get; set; }
             public int UserCode { get; set; }
+
+            // Backward compatibility: single total value (now equals sum of 1/4/16)
             public int WalletCodesCount { get; set; }
+
+            // New per-times buckets
+            public int WalletCount1 { get; set; }
+            public int WalletCount4 { get; set; }
+            public int WalletCount16 { get; set; }
+            public int WalletCountTotal => WalletCount1 + WalletCount4 + WalletCount16;
+
             public List<PinRow> Pins { get; set; } = new();
             public string? Message { get; set; }
             public string? Error { get; set; }
@@ -104,7 +111,20 @@ namespace centrny.Controllers
             public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
             public bool HasNextPage => Page < TotalPages;
             public bool HasPreviousPage => Page > 1;
+
+            // Backward compatibility: single total wallet amount (sum of 1/4/16)
             public int WalletCodesCount { get; set; }
+
+            // Optional richer counts returned by some endpoints
+            public WalletCounts? WalletCounts { get; set; }
+        }
+
+        public class WalletCounts
+        {
+            public int Times1 { get; set; }
+            public int Times4 { get; set; }
+            public int Times16 { get; set; }
+            public int Total => Times1 + Times4 + Times16;
         }
 
         // -------- Actions ----------
@@ -124,7 +144,6 @@ namespace centrny.Controllers
             {
                 var totalCount = await GetPinsTotalCountAsync(rootCode.Value);
                 var pinsPage = await GetPinsAsync(rootCode.Value, page, pageSize);
-                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
 
                 // Status counts for ALL pins of this root (not just page)
                 var statusCounts = await _context.Pins
@@ -137,11 +156,17 @@ namespace centrny.Controllers
                 int active = statusCounts.FirstOrDefault(s => s.Key == 1)?.C ?? 0;
                 int sold = statusCounts.FirstOrDefault(s => s.Key == 2)?.C ?? 0;
 
+                // New: per-times wallet counts (1/4/16)
+                var wc = await GetWalletCountsAsync(rootCode.Value);
+
                 var vm = new PinsViewModel
                 {
                     RootCode = rootCode.Value,
                     UserCode = userCode.Value,
-                    WalletCodesCount = walletCount,
+                    WalletCodesCount = wc.Total, // keep legacy field for compatibility
+                    WalletCount1 = wc.Times1,
+                    WalletCount4 = wc.Times4,
+                    WalletCount16 = wc.Times16,
                     Pins = pinsPage, // only current page for initial render
                     TotalCount = totalCount,
                     UsedCount = used,
@@ -158,10 +183,15 @@ namespace centrny.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading pins page for RootCode={RootCode}", rootCode);
+                var wc = new WalletCounts();
                 return View("Index", new PinsViewModel
                 {
                     RootCode = rootCode ?? 0,
                     UserCode = userCode ?? 0,
+                    WalletCodesCount = wc.Total,
+                    WalletCount1 = wc.Times1,
+                    WalletCount4 = wc.Times4,
+                    WalletCount16 = wc.Times16,
                     Error = "Failed to load pins data."
                 });
             }
@@ -191,9 +221,25 @@ namespace centrny.Controllers
 
             try
             {
+                // Pre-check against the selected times bucket (1, 4, or 16)
+                var wc = await GetWalletCountsAsync(rootCode.Value);
+                var available = req.Times switch
+                {
+                    1 => wc.Times1,
+                    4 => wc.Times4,
+                    16 => wc.Times16,
+                    _ => 0
+                };
+                if (req.Number > available)
+                {
+                    return Json(new { success = false, error = "Requested quantity exceeds the available balance for the selected sessions." });
+                }
+
                 _logger.LogInformation("Generating {Number} pins for RootCode={RootCode}, Type={Type}, Times={Times}",
                     req.Number, rootCode, req.Type, req.Times);
 
+                // NOTE: The stored procedure should decrement ONLY the wallet row matching @times (1/4/16),
+                // and auto-create missing (Root_Code, Times) rows at 0 if needed, within a TRANSACTION.
                 await GeneratePinsAsync(rootCode.Value, req.Type == 1, req.Times, req.Number, userCode.Value);
 
                 return Json(new { success = true, message = $"Successfully generated {req.Number} pins." });
@@ -201,7 +247,8 @@ namespace centrny.Controllers
             catch (SqlException sqlEx)
             {
                 _logger.LogError(sqlEx, "SQL error generating pins for RootCode={RootCode}", rootCode);
-                return Json(new { success = false, error = "Database error occurred while generating pins." });
+                // Surface the SP message if useful, else generic:
+                return Json(new { success = false, error = sqlEx.Message });
             }
             catch (Exception ex)
             {
@@ -330,7 +377,7 @@ namespace centrny.Controllers
             {
                 var totalCount = await GetPinsTotalCountAsync(rootCode.Value, search);
                 var pins = await GetPinsAsync(rootCode.Value, page, pageSize, search);
-                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
+                var walletTotal = await GetWalletCodesCountAsync(rootCode.Value);
 
                 return Json(new PaginatedResponse<PinRow>
                 {
@@ -339,7 +386,7 @@ namespace centrny.Controllers
                     TotalCount = totalCount,
                     Page = page,
                     PageSize = pageSize,
-                    WalletCodesCount = walletCount
+                    WalletCodesCount = walletTotal
                 });
             }
             catch (Exception ex)
@@ -387,14 +434,16 @@ namespace centrny.Controllers
                     })
                     .ToListAsync();
 
-                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
+                // New: return per-times wallet counts
+                var wc = await GetWalletCountsAsync(rootCode.Value);
 
                 return Json(new
                 {
                     success = true,
                     data = pins,
                     totalCount = pins.Count,
-                    walletCodesCount = walletCount
+                    walletCodesCount = wc.Total, // backward compatible
+                    walletCounts = new { times1 = wc.Times1, times4 = wc.Times4, times16 = wc.Times16, total = wc.Total }
                 });
             }
             catch (Exception ex)
@@ -446,7 +495,7 @@ namespace centrny.Controllers
             }
         }
 
-        // GET: /Pin/Stats (AJAX) - still available (not strictly needed with /All)
+        // GET: /Pin/Stats (AJAX)
         [HttpGet]
         public async Task<IActionResult> Stats()
         {
@@ -465,7 +514,9 @@ namespace centrny.Controllers
                     .ToListAsync();
 
                 var totalPins = await _context.Pins.CountAsync(p => p.RootCode == rootCode.Value);
-                var walletCount = await GetWalletCodesCountAsync(rootCode.Value);
+
+                // Use new sum across 1/4/16 instead of "latest row"
+                var wc = await GetWalletCountsAsync(rootCode.Value);
                 var statsDict = stats.ToDictionary(s => s.Status, s => s.Count);
 
                 return Json(new
@@ -477,7 +528,7 @@ namespace centrny.Controllers
                         used = statsDict.GetValueOrDefault(0, 0),
                         active = statsDict.GetValueOrDefault(1, 0),
                         sold = statsDict.GetValueOrDefault(2, 0),
-                        walletCodes = walletCount
+                        walletCodes = wc.Total
                     }
                 });
             }
@@ -533,22 +584,29 @@ namespace centrny.Controllers
             return await query.CountAsync();
         }
 
+        // Backward compat: this now returns the sum across Times=1/4/16
         private async Task<int> GetWalletCodesCountAsync(int rootCode)
         {
-            try
-            {
-                var walletCode = await _context.WalletCodes
-                    .Where(w => w.RootCode == rootCode && w.IsActive)
-                    .OrderByDescending(w => w.WalletCode1)
-                    .FirstOrDefaultAsync();
+            var wc = await GetWalletCountsAsync(rootCode);
+            return wc.Total;
+        }
 
-                return walletCode?.Count ?? 0;
-            }
-            catch (Exception ex)
+        // New: per-times wallet counts for the root from WalletCodes
+        private async Task<WalletCounts> GetWalletCountsAsync(int rootCode)
+        {
+            var rows = await _context.WalletCodes
+                .AsNoTracking()
+                .Where(w => w.RootCode == rootCode && w.IsActive && (w.Times == 1 || w.Times == 4 || w.Times == 16))
+                .GroupBy(w => w.Times)
+                .Select(g => new { Times = g.Key, Count = g.Sum(x => x.Count) })
+                .ToListAsync();
+
+            return new WalletCounts
             {
-                _logger.LogWarning(ex, "Error getting wallet code count for RootCode={RootCode}", rootCode);
-                return 0;
-            }
+                Times1 = rows.FirstOrDefault(r => r.Times == 1)?.Count ?? 0,
+                Times4 = rows.FirstOrDefault(r => r.Times == 4)?.Count ?? 0,
+                Times16 = rows.FirstOrDefault(r => r.Times == 16)?.Count ?? 0
+            };
         }
 
         private async Task GeneratePinsAsync(int rootCode, bool type, int times, int number, int insertUser)
@@ -568,6 +626,8 @@ namespace centrny.Controllers
                 CommandTimeout = 120
             };
 
+            // IMPORTANT: The stored procedure should accept @rootcode INT (recommended)
+            // and decrement ONLY the Wallet_Codes row where Times = @times.
             command.Parameters.Add(new SqlParameter("@rootcode", SqlDbType.Int) { Value = rootCode });
             command.Parameters.Add(new SqlParameter("@type", SqlDbType.Bit) { Value = type });
             command.Parameters.Add(new SqlParameter("@times", SqlDbType.Int) { Value = times });

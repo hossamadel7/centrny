@@ -1,14 +1,21 @@
-﻿@model List<centrny.Models.WalletExam>
+﻿@model List<centrny.Models.WalletCode>
 @using System.Globalization
 
 @{
     ViewData["Title"] = "Wallet Exams";
-    string FormatDate(DateOnly d) => d.ToString("MMM dd, yyyy", CultureInfo.InvariantCulture);
+    string FormatDate(DateOnly d) => d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    int currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    int totalPages = (int)(ViewBag.TotalPages ?? 1);
+    int pageSize = (int)(ViewBag.PageSize ?? 10);
+    int totalItems = (int)(ViewBag.TotalItems ?? 0);
 }
+
+<!-- Bootstrap CSS (required for proper modal styling/behavior) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
 <link href="~/css/Hamody.css" rel="stylesheet" />
 
-<!-- Gradient Centered Header -->
 <div class="questions-header mb-0">
     <h2>
         <i class="fa-solid fa-wallet"></i>
@@ -16,18 +23,10 @@
     </h2>
 </div>
 
-<div class="table-card" style="max-width:1400px;">flex
-    <!-- Unified Filters Row: all filters beside each other -->
+<div class="table-card" style="max-width:1400px;">
     <div class="filters-row" style="display:flex; flex-wrap:wrap; gap:18px; justify-content:center; align-items: flex-end; margin-bottom:30px;">
         <div>
-            <input id="searchInput" class="form-control" style="min-width:180px; border-radius:18px;" placeholder="Search by WalletExamCode..." />
-        </div>
-        <div>
-            <select id="statusFilter" class="form-select" style="min-width:120px; border-radius:18px;">
-                <option value="">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
+            <input id="searchInput" class="form-control" style="min-width:180px; border-radius:18px;" placeholder="Search..." />
         </div>
         <div>
             <select id="expiryFilter" class="form-select" style="min-width:120px; border-radius:18px;">
@@ -36,7 +35,6 @@
                 <option value="active">Active</option>
             </select>
         </div>
-        <!-- Center/Teacher Selection for filtering roots -->
         <div style="display: flex; gap:14px; align-items: center;">
             <div>
                 <label class="form-label mb-1" style="font-weight:600;">Type:</label>
@@ -55,117 +53,198 @@
             </div>
         </div>
     </div>
+    <button class="modern-btn primary-btn" type="button" data-bs-toggle="modal" data-bs-target="#addWalletExamModal">
+        <i class="fas fa-plus"></i> Add Wallet Exam
+    </button>
 
-    <!-- Wallet Exams Table -->
     <div class="table-responsive" style="width:100%; overflow-x:auto;">
-    
         <table class="gradient-table" id="walletExamTable">
-        <thead>
-            <tr>
-                <th>WalletExamCode</th>
-                <th>Amount</th>
-                <th>DateStart</th>
-                <th>ExpireDate</th>
-                <th>Days Left</th>
-                <th>Status</th>
-                <th>RootCode</th>
-                <th>RootType</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            @foreach (var item in Model)
-            {
-                var daysLeft = (item.ExpireDate.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
-                var daysLeftText = daysLeft < 0 ? "Expired" : $"{daysLeft} days";
-                var statusText = item.IsActive ? "Active" : "Inactive";
-                var rootTypeText = item.RootCodeNavigation != null
-                ? (item.RootCodeNavigation.IsCenter ? "center" : "teacher")
-                : "";
-
-                <tr data-id="@item.WalletExamCode">
-                    <td class="walletExamCode">@item.WalletExamCode</td>
-                    <td class="amount">@item.Amount</td>
-                    <td class="dateStart">@FormatDate(item.DateStart)</td>
-                    <td class="expireDate">@FormatDate(item.ExpireDate)</td>
-                    <td class="daysLeft">@daysLeftText</td>
-                    <td class="status">@statusText</td>
-                    <td class="rootCode">@item.RootCode</td>
-                    <td class="rootType">@rootTypeText</td>
-                    <td>
-                        <button class="modern-btn success-btn btn-edit">Edit</button>
-                        <button class="modern-btn delete-btn btn-delete">Delete</button>
-                    </td>
+            <thead>
+                <tr>
+                    <th>Amount</th>
+                    <th>DateStart</th>
+                    <th>ExpireDate</th>
+                    <th>Days Left</th>
+                    <th>Count</th>
+                    <th>Original Count</th>
+                    <th>Times</th>
+                    <th>RootCode</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody id="tableBody">
+                @foreach (var item in Model)
+                {
+                    var daysLeft = (item.ExpireDate.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
+                    var daysLeftText = daysLeft < 0 ? "Expired" : $"{daysLeft} days";
+
+                    <tr data-id="@item.WalletCode1"
+                        data-amount="@item.Amount"
+                        data-datestart="@FormatDate(item.DateStart)"
+                        data-expiredate="@FormatDate(item.ExpireDate)"
+                        data-count="@item.Count"
+                        data-originalcount="@item.OriginalCount"
+                        data-times="@item.Times"
+                        data-rootcode="@item.RootCode">
+                        <td class="amount">@item.Amount</td>
+                        <td class="dateStart">@FormatDate(item.DateStart)</td>
+                        <td class="expireDate">@FormatDate(item.ExpireDate)</td>
+                        <td class="daysLeft">@daysLeftText</td>
+                        <td class="count">@item.Count</td>
+                        <td class="originalCount">@item.OriginalCount</td>
+                        <td class="times">@item.Times</td>
+                        <td class="rootCode">@item.RootCode</td>
+                        <td>
+                            <button class="modern-btn success-btn btn-edit" type="button">Edit</button>
+                            <button class="modern-btn delete-btn btn-delete" type="button">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-
-    <div id="alertPlaceholder"></div>
-
-    <!-- Add Button -->
-    <div class="d-flex justify-content-center mb-3">
-        <button class="modern-btn primary-btn" data-bs-toggle="modal" data-bs-target="#addWalletExamModal">
-            <i class="fas fa-plus"></i> Add Wallet Exam
-        </button>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal fade" id="addWalletExamModal" tabindex="-1" aria-labelledby="addWalletExamModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <form id="addWalletExamForm" class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addWalletExamModalLabel">Add Wallet Exam</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-
-                    <div class="mb-3">
-                        <label class="form-label">Amount</label>
-                        <input type="number" name="amount" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Date Start</label>
-                        <input type="date" name="dateStart" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Expire Date</label>
-                        <input type="date" name="expireDate" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Is Active</label>
-                        <select name="isActive" class="form-select">
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Root Name</label>
-                        <select id="modalRootSelect" name="modalRootSelect" class="form-select" required>
-                            <option value="">-- Select Root --</option>
-                        </select>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="modern-btn primary-btn">Add</button>
-                    <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
 </div>
 
+<!-- Pagination OUTSIDE scroll containers -->
+<nav aria-label="WalletExam pagination" class="d-flex justify-content-center mt-3">
+    <ul class="pagination">
+        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+            <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1 })">Previous</a>
+        </li>
+        @{
+            int startPage = currentPage - 2 > 0 ? currentPage - 2 : 1;
+            int endPage = startPage + 4 <= totalPages ? startPage + 4 : totalPages;
+            if (endPage - startPage < 4)
+                startPage = endPage - 4 > 0 ? endPage - 4 : 1;
+            for (int i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(currentPage == i ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                </li>
+            }
+        }
+        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+            <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1 })">Next</a>
+        </li>
+    </ul>
+    <span class="ms-3 align-self-center" style="font-size:0.96em; color:#666;">
+        Showing @((currentPage-1)*pageSize+1)-@(System.Math.Min(currentPage*pageSize, totalItems)) of @totalItems
+    </span>
+</nav>
+
+<div id="alertPlaceholder"></div>
+
+<div class="d-flex justify-content-center mb-3">
+    <button class="modern-btn primary-btn" type="button" data-bs-toggle="modal" data-bs-target="#addWalletExamModal">
+        <i class="fas fa-plus"></i> Add Wallet Exam
+    </button>
+</div>
+
+<!-- Modals should be at the end of the document, outside scrollable containers -->
+<!-- Add Modal -->
+<div class="modal fade" id="addWalletExamModal" tabindex="-1" aria-labelledby="addWalletExamModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <form id="addWalletExamForm" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addWalletExamModalLabel">Add Wallet Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Amount</label>
+                    <input type="number" name="amount" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Date Start</label>
+                    <input type="date" name="dateStart" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Expire Date</label>
+                    <input type="date" name="expireDate" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Count</label>
+                    <input type="number" name="count" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Original Count</label>
+                    <input type="number" name="originalCount" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Times</label>
+                    <input type="number" name="times" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Root Name</label>
+                    <select id="modalRootSelect" name="modalRootSelect" class="form-select" required>
+                        <option value="">-- Select Root --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="modern-btn primary-btn">Add</button>
+                <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editWalletExamModal" tabindex="-1" aria-labelledby="editWalletExamModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <form id="editWalletExamForm" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editWalletExamModalLabel">Edit Wallet Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="walletCode1" id="editWalletCode1" />
+                <div class="mb-3">
+                    <label class="form-label">Amount</label>
+                    <input type="number" name="amount" id="editAmount" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Date Start</label>
+                    <input type="date" name="dateStart" id="editDateStart" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Expire Date</label>
+                    <input type="date" name="expireDate" id="editExpireDate" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Count</label>
+                    <input type="number" name="count" id="editCount" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Original Count</label>
+                    <input type="number" name="originalCount" id="editOriginalCount" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Times</label>
+                    <input type="number" name="times" id="editTimes" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Root Name</label>
+                    <select id="editModalRootSelect" name="modalRootSelect" class="form-select" required>
+                        <option value="">-- Select Root --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="modern-btn primary-btn">Save</button>
+                <button type="button" class="modern-btn secondary-btn" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     window.updateWalletExamUrl = '@Url.Action("UpdateWalletExam", "WalletExam")';
     window.addWalletExamUrl = '@Url.Action("AddWalletExam", "WalletExam")';
+    window.softDeleteWalletExamUrl = '@Url.Action("SoftDelete", "WalletExam", new { id = "__ID__" })';
 </script>
 <script src="~/js/Wallet.js"></script>
 
@@ -173,8 +252,22 @@
     @Html.AntiForgeryToken()
 </form>
 
-<!-- Unified colored button styles (if not already included in Hamody.css) -->
 <style>
+    /* Force Bootstrap modal behavior in case any custom CSS overrides it */
+    .modal {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        z-index: 1055;
+        display: none;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        outline: 0;
+    }
+    .modal.show { display: block; }
+    .modal-backdrop { z-index: 1050; }
+
     .modern-btn {
         font-weight: 600 !important;
         padding: 0.65rem 1.3rem !important;
@@ -191,29 +284,29 @@
         gap: 0.5em !important;
     }
 
-        .modern-btn.primary-btn {
-            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%) !important;
-            color: #fff !important;
-        }
+    .modern-btn.primary-btn {
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%) !important;
+        color: #fff !important;
+    }
 
-        .modern-btn.success-btn {
-            background: linear-gradient(135deg, #00b894 0%, #55a3ff 100%) !important;
-            color: #fff !important;
-        }
+    .modern-btn.success-btn {
+        background: linear-gradient(135deg, #00b894 0%, #55a3ff 100%) !important;
+        color: #fff !important;
+    }
 
-        .modern-btn.delete-btn {
-            background: linear-gradient(135deg, #e17055 0%, #fd79a8 100%) !important;
-            color: #fff !important;
-        }
+    .modern-btn.delete-btn {
+        background: linear-gradient(135deg, #e17055 0%, #fd79a8 100%) !important;
+        color: #fff !important;
+    }
 
-        .modern-btn.secondary-btn {
-            background: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%) !important;
-            color: #6c5ce7 !important;
-            font-weight: 600 !important;
-        }
+    .modern-btn.secondary-btn {
+        background: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%) !important;
+        color: #6c5ce7 !important;
+        font-weight: 600 !important;
+    }
 
-        .modern-btn:hover, .modern-btn:focus {
-            box-shadow: 0 8px 36px rgba(108, 92, 231, 0.18) !important;
-            transform: scale(1.05) !important;
-        }
+    .modern-btn:hover, .modern-btn:focus {
+        box-shadow: 0 8px 36px rgba(108, 92, 231, 0.18) !important;
+        transform: scale(1.05) !important;
+    }
 </style>

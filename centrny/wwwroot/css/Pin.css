@@ -746,3 +746,50 @@ body {
         --pins-gray-900: #ffffff;
     }
 }
+/* Center the custom pins modals perfectly on screen */
+.pins-modal-overlay {
+    position: fixed;
+    inset: 0; /* top:0; right:0; bottom:0; left:0 */
+    display: none; /* hidden by default */
+    align-items: center; /* vertical center */
+    justify-content: center; /* horizontal center */
+    background: rgba(16, 16, 32, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1050;
+    padding: 24px; /* breathing room on small screens */
+}
+
+    /* When opened (class toggled in JS) */
+    .pins-modal-overlay.is-open {
+        display: flex !important; /* use flex to center, override any inline display */
+    }
+
+/* The modal panel */
+.pins-modal {
+    width: 100%;
+    max-width: 520px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    overflow: hidden; /* keep header/footer pinned while body can scroll if needed */
+}
+
+    /* Allow inner scrolling if content is tall, while keeping modal centered */
+    .pins-modal .pins-modal-body {
+        max-height: calc(100vh - 180px);
+        overflow: auto;
+    }
+
+/* Prevent page scroll when any modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Optional: small tweak to the close "X" button inside custom modal header */
+.pins-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+}

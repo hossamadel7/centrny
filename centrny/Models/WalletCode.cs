@@ -13,6 +13,8 @@ public partial class WalletCode
 
     public int OriginalCount { get; set; }
 
+    public int? Times { get; set; }
+
     public DateOnly ExpireDate { get; set; }
 
     public DateOnly DateStart { get; set; }

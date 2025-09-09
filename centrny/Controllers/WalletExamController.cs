@@ -2,6 +2,7 @@
 using centrny.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Linq;
 
@@ -17,12 +18,30 @@ namespace centrny.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        // --- Session Helpers (like BranchController) ---
+        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
+        private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+
+        // --- Pagination: Index ---
+        public async Task<IActionResult> Index(int page = 1)
         {
-            // Load WalletCodes with Root navigation for table rendering
-            var walletCodes = await _context.WalletCodes
+            int pageSize = 10;
+            var query = _context.WalletCodes
                 .Include(w => w.RootCodeNavigation)
+                .Where(w => w.IsActive);
+
+            int totalItems = await query.CountAsync();
+            var walletCodes = await query
+                .OrderByDescending(w => w.WalletCode1)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.TotalPages = (int)System.Math.Ceiling((double)totalItems / pageSize);
+
             return View(walletCodes);
         }
 
@@ -39,6 +58,7 @@ namespace centrny.Controllers
         {
             if (ModelState.IsValid)
             {
+                walletCode.IsActive = true; // Always true on add
                 _context.WalletCodes.Add(walletCode);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -63,7 +83,6 @@ namespace centrny.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, WalletCode walletCode)
         {
-            // Use the correct PK property here, e.g. WalletCodeId
             if (id != walletCode.WalletCode1)
             {
                 return NotFound();
@@ -73,7 +92,22 @@ namespace centrny.Controllers
             {
                 try
                 {
-                    _context.Update(walletCode);
+                    var existing = await _context.WalletCodes.FindAsync(id);
+                    if (existing == null)
+                        return NotFound();
+
+                    // Update fields, force IsActive true
+                    existing.Amount = walletCode.Amount;
+                    existing.Count = walletCode.Count;
+                    existing.OriginalCount = walletCode.OriginalCount;
+                    existing.ExpireDate = walletCode.ExpireDate;
+                    existing.DateStart = walletCode.DateStart;
+                    existing.RootCode = walletCode.RootCode;
+                    existing.Times = walletCode.Times;
+                    existing.Type = walletCode.Type;
+                    existing.Status = walletCode.Status;
+                    existing.IsActive = true;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -98,7 +132,6 @@ namespace centrny.Controllers
         public async Task<IActionResult> UpdateWalletExam([FromBody] WalletCode walletCode)
         {
             ModelState.Remove(nameof(WalletCode.RootCodeNavigation));
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -111,8 +144,11 @@ namespace centrny.Controllers
             existing.OriginalCount = walletCode.OriginalCount;
             existing.ExpireDate = walletCode.ExpireDate;
             existing.DateStart = walletCode.DateStart;
-            existing.IsActive = walletCode.IsActive;
+            existing.IsActive = true; // Always true on edit
             existing.RootCode = walletCode.RootCode;
+            existing.Times = walletCode.Times;
+            existing.Type = walletCode.Type;
+            existing.Status = walletCode.Status;
 
             await _context.SaveChangesAsync();
             return Ok();
@@ -124,10 +160,10 @@ namespace centrny.Controllers
         public async Task<IActionResult> AddWalletExam([FromBody] WalletCode walletCode)
         {
             ModelState.Remove(nameof(WalletCode.RootCodeNavigation));
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            walletCode.IsActive = true; // Always true on add
             _context.WalletCodes.Add(walletCode);
             await _context.SaveChangesAsync();
 
@@ -146,17 +182,33 @@ namespace centrny.Controllers
         }
 
         [RequirePageAccess("WalletExam", "delete")]
-        [HttpPost, ActionName("Delete")]
+        [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var walletCode = await _context.WalletCodes.FindAsync(id);
             if (walletCode != null)
             {
-                _context.WalletCodes.Remove(walletCode);
+                walletCode.IsActive = false;
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // Endpoint for JS soft delete
+        [RequirePageAccess("WalletExam", "delete")]
+        [HttpPost]
+        [Route("WalletExam/SoftDelete/{id}")]
+        public async Task<IActionResult> SoftDelete(int id)
+        {
+            var walletCode = await _context.WalletCodes.FindAsync(id);
+            if (walletCode != null)
+            {
+                walletCode.IsActive = false;
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return NotFound();
         }
 
         // --- API Endpoint for roots ---

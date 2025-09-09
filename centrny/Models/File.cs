@@ -33,6 +33,8 @@ public partial class File
 
     public bool IsActive { get; set; }
 
+    public bool? IsOnlineLesson { get; set; }
+
     public virtual Lesson LessonCodeNavigation { get; set; } = null!;
 
     public virtual Root RootCodeNavigation { get; set; } = null!;
