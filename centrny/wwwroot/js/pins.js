@@ -450,9 +450,7 @@
                 <td>${formatDate(pin.insertTime)}</td>
                 <td>
                     <div class="pins-actions-cell">
-                        <button class="btn-icon btn-edit" onclick="editPin(${pin.pinCode})" title="Edit Pin">
-                            <i class="bi bi-pencil"></i>
-                        </button>
+                    
                         <button class="btn-icon btn-delete" onclick="confirmDeletePin(${pin.pinCode})" title="Delete Pin">
                             <i class="bi bi-trash"></i>
                         </button>
