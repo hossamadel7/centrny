@@ -7,11 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Views\Reports\MyClassesReport.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Views\Reports\MyClassesReport.cshtml" />
     <None Include="wwwroot\AWS\fonts\.DS_Store" />
     <None Include="wwwroot\AWS\js\enhanced-hover-effects.js" />
     <None Include="wwwroot\Image\clasrio-high-resolution-logo-transparent %282%29.png" />
