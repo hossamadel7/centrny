@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+
+	<data name="Title_Dashboard">
+		<value>لوحة الطالب</value>
+	</data>
+	<data name="Title_LearningCenter">
+		<value>مركز التعلم</value>
+	</data>
+
+	<data name="Nav_Dashboard">
+		<value>لوحة القيادة</value>
+	</data>
+	<data name="Nav_LearningCenter">
+		<value>مركز التعلم</value>
+	</data>
+
+	<data name="Section_AcademicOverview">
+		<value>النظرة الأكاديمية</value>
+	</data>
+	<data name="Section_StudentInformation">
+		<value>معلومات الطالب</value>
+	</data>
+	<data name="Section_EnrolledSubjects">
+		<value>المواد المسجلة</value>
+	</data>
+	<data name="Section_ExaminationResults">
+		<value>نتائج الاختبارات</value>
+	</data>
+
+	<data name="Stat_Subjects">
+		<value>المواد</value>
+	</data>
+	<data name="Stat_Exams">
+		<value>الاختبارات</value>
+	</data>
+	<data name="Stat_Attendance">
+		<value>الحضور</value>
+	</data>
+	<data name="Stat_Average">
+		<value>المعدل %</value>
+	</data>
+
+	<data name="Label_FullName">
+		<value>الاسم الكامل</value>
+	</data>
+	<data name="Label_Age">
+		<value>العمر</value>
+	</data>
+	<data name="Label_AgeSuffix">
+		<value>سنة</value>
+	</data>
+	<data name="Label_AcademicYear">
+		<value>السنة الدراسية</value>
+	</data>
+	<data name="Label_Branch">
+		<value>الفرع</value>
+	</data>
+	<data name="Label_ContactNumber">
+		<value>رقم التواصل</value>
+	</data>
+	<data name="Label_ParentContact">
+		<value>رقم ولي الأمر</value>
+	</data>
+	<data name="Label_MemberSince">
+		<value>عضو منذ</value>
+	</data>
+
+	<data name="Badge_Subscribed">
+		<value>مشترك</value>
+	</data>
+	<data name="Badge_Regular">
+		<value>عادي</value>
+	</data>
+
+	<data name="Empty_NoSubjectsTitle">
+		<value>لا توجد مواد</value>
+	</data>
+	<data name="Empty_NoSubjectsMessage">
+		<value>لم يتم تسجيل أي مواد بعد.</value>
+	</data>
+	<data name="Empty_NoExamsTitle">
+		<value>لا توجد اختبارات</value>
+	</data>
+	<data name="Empty_NoExamsMessage">
+		<value>لا توجد نتائج اختبارات حالياً.</value>
+	</data>
+	<data name="Empty_NoChaptersTitle">
+		<value>لا توجد فصول</value>
+	</data>
+	<data name="Empty_NoChaptersMessage">
+		<value>لا توجد فصول متاحة لهذه المادة.</value>
+	</data>
+	<data name="Empty_NoLessonsTitle">
+		<value>لا توجد دروس</value>
+	</data>
+	<data name="Empty_NoLessonsMessage">
+		<value>لا توجد دروس لهذا الفصل.</value>
+	</data>
+
+	<data name="Select_SubjectLabel">
+		<value>اختر المادة</value>
+	</data>
+	<data name="Select_SubjectPlaceholder">
+		<value>اختر مادة...</value>
+	</data>
+	<data name="Button_ExploreChapters">
+		<value>استعراض الفصول</value>
+	</data>
+	<data name="Header_SubjectChapters">
+		<value>فصول المادة</value>
+	</data>
+	<data name="Button_BackToSubjects">
+		<value>العودة للمواد</value>
+	</data>
+	<data name="Header_ChapterLessons">
+		<value>دروس الفصل</value>
+	</data>
+	<data name="Button_BackToChapters">
+		<value>العودة للفصول</value>
+	</data>
+	<data name="Button_AccessLesson">
+		<value>دخول الدرس</value>
+	</data>
+
+	<data name="Label_Subject">
+		<value>المادة</value>
+	</data>
+	<data name="Label_Teacher">
+		<value>المعلم</value>
+	</data>
+	<data name="Label_Date">
+		<value>التاريخ</value>
+	</data>
+	<data name="Label_Type">
+		<value>النوع</value>
+	</data>
+	<data name="Label_Status">
+		<value>الحالة</value>
+	</data>
+
+	<data name="Type_Exam">
+		<value>اختبار</value>
+	</data>
+	<data name="Type_Quiz">
+		<value>اختبار قصير</value>
+	</data>
+	<data name="Status_Passed">
+		<value>ناجح</value>
+	</data>
+	<data name="Status_Failed">
+		<value>راسب</value>
+	</data>
+
+	<data name="Online_Badge">
+		<value>أونلاين</value>
+	</data>
+	<data name="Fee_Label">
+		<value>الرسوم</value>
+	</data>
+	<data name="Added_Label">
+		<value>أضيف</value>
+	</data>
+
+	<data name="Alert_DashboardLoaded">
+		<value>تم تحميل اللوحة</value>
+	</data>
+	<data name="Alert_DashboardFailed">
+		<value>فشل تحميل اللوحة</value>
+	</data>
+	<data name="Alert_LoadChaptersFailed">
+		<value>فشل تحميل الفصول</value>
+	</data>
+	<data name="Alert_LoadLessonsFailed">
+		<value>فشل تحميل الدروس</value>
+	</data>
+	<data name="Alert_LoadSubjectsFailed">
+		<value>فشل تحميل المواد</value>
+	</data>
+	<data name="Alert_LoadExamsFailed">
+		<value>فشل تحميل الاختبارات</value>
+	</data>
+
+	<data name="Loading_Subjects">
+		<value>جارٍ تحميل المواد...</value>
+	</data>
+	<data name="Loading_Exams">
+		<value>جارٍ تحميل نتائج الاختبارات...</value>
+	</data>
+	<data name="Loading_Chapters">
+		<value>جارٍ تحميل الفصول...</value>
+	</data>
+	<data name="Loading_Lessons">
+		<value>جارٍ تحميل الدروس...</value>
+	</data>
+
+	<data name="Confirm_AccessLesson">
+		<value>هل تريد الدخول إلى هذا الدرس؟</value>
+	</data>
+	<data name="Redirecting">
+		<value>جارٍ إعادة التوجيه...</value>
+	</data>
+
+	<data name="NotAssigned">
+		<value>غير محدد</value>
+	</data>
+	<data name="NotProvided">
+		<value>غير متوفر</value>
+	</data>
+	<data name="Error">
+		<value>خطأ</value>
+	</data>
+</root>

@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="metadata">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string"/>
+							<xsd:attribute name="type" type="xsd:string"/>
+							<xsd:attribute name="mimetype" type="xsd:string"/>
+							<xsd:attribute ref="xml:space"/>
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+								<xsd:element name="comment" type="xsd:string" minOccurs="0"/>
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string"/>
+							<xsd:attribute name="xml:space" use="preserve"/>
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string"/>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+
+	<data name="Title_PinsManagement">
+		<value>إدارة الأكواد</value>
+	</data>
+	<data name="Header_PinsManagementSystem">
+		<value>نظام إدارة الأكواد</value>
+	</data>
+	<data name="Label_Root">
+		<value>المركز</value>
+	</data>
+	<data name="Label_User">
+		<value>المستخدم</value>
+	</data>
+	<data name="Wallet_Total_Label">
+		<value>إجمالي رصيد المحفظة</value>
+	</data>
+
+	<!-- Per-times wallet labels (Arabic) -->
+	<data name="Wallet_1x_Label">
+		<value>رصيد 1 جلسة</value>
+	</data>
+	<data name="Wallet_4x_Label">
+		<value>رصيد 4 جلسات</value>
+	</data>
+	<data name="Wallet_16x_Label">
+		<value>رصيد 16 جلسة</value>
+	</data>
+
+	<data name="Label_FilterType">
+		<value>تصفية حسب النوع</value>
+	</data>
+	<data name="Label_FilterStatus">
+		<value>تصفية حسب الحالة</value>
+	</data>
+	<data name="Option_AllTypes">
+		<value>كل الأنواع</value>
+	</data>
+	<data name="Option_Session">
+		<value>جلسة</value>
+	</data>
+	<data name="Option_Exam">
+		<value>امتحان</value>
+	</data>
+	<data name="Option_AllStatus">
+		<value>كل الحالات</value>
+	</data>
+	<data name="Option_Used">
+		<value>مستخدم</value>
+	</data>
+	<data name="Option_Active">
+		<value>نشط</value>
+	</data>
+	<data name="Option_Sold">
+		<value>مباع</value>
+	</data>
+
+	<data name="Button_GeneratePins">
+		<value>توليد أكواد</value>
+	</data>
+	<data name="Button_Refresh">
+		<value>تحديث</value>
+	</data>
+
+	<data name="Table_PinsList">
+		<value>قائمة الأكواد</value>
+	</data>
+	<data name="Meta_Total">
+		<value>الإجمالي</value>
+	</data>
+	<data name="Meta_Page">
+		<value>الصفحة</value>
+	</data>
+
+	<data name="Column_PinCode">
+		<value>رمز الكود</value>
+	</data>
+	<data name="Column_Watermark">
+		<value>العلامة المائية</value>
+	</data>
+	<data name="Column_Type">
+		<value>النوع</value>
+	</data>
+	<data name="Column_Times">
+		<value>عدد الجلسات</value>
+	</data>
+	<data name="Column_Status">
+		<value>الحالة</value>
+	</data>
+	<data name="Column_StatusToggleHint">
+		<value>اضغط للتبديل</value>
+	</data>
+	<data name="Column_Active">
+		<value>مفعل</value>
+	</data>
+	<data name="Column_Created">
+		<value>تاريخ الإنشاء</value>
+	</data>
+	<data name="Column_Actions">
+		<value>إجراءات</value>
+	</data>
+
+	<data name="NoPinsFound">
+		<value>لا توجد أكواد</value>
+	</data>
+
+	<data name="Generate_Type">
+		<value>النوع</value>
+	</data>
+	<data name="Generate_Sessions">
+		<value>الجلسات</value>
+	</data>
+	<data name="Generate_Quantity">
+		<value>الكمية</value>
+	</data>
+	<data name="Generate_AvailableHintTemplate">
+		<value>المتاح لـ {0} جلسات: {1}</value>
+	</data>
+
+	<data name="Edit_Title">
+		<value>تعديل الكود</value>
+	</data>
+	<data name="Edit_Watermark">
+		<value>العلامة المائية</value>
+	</data>
+	<data name="Edit_Type">
+		<value>النوع</value>
+	</data>
+	<data name="Edit_Sessions">
+		<value>الجلسات</value>
+	</data>
+	<data name="Edit_Status">
+		<value>الحالة</value>
+	</data>
+	<data name="Edit_Active">
+		<value>مفعل</value>
+	</data>
+	<data name="Edit_UpdatePin">
+		<value>تحديث الكود</value>
+	</data>
+
+	<data name="Msg_RefreshingPins">
+		<value>جارٍ تحديث الأكواد...</value>
+	</data>
+	<data name="Msg_PinsRefreshed">
+		<value>تم تحديث الأكواد بنجاح!</value>
+	</data>
+	<data name="Msg_UsedPinsCannotToggle">
+		<value>لا يمكن تبديل حالة الكود المستخدم.</value>
+	</data>
+	<data name="Msg_ToggleFailed">
+		<value>فشل تبديل حالة الكود.</value>
+	</data>
+	<data name="Msg_RequestedExceedsAvailableTemplate">
+		<value>الكمية المطلوبة ({0}) أكبر من الرصيد المتاح ({1}) لـ {2} جلسات.</value>
+	</data>
+
+	<data name="Msg_PinsGeneratedSuccess">
+		<value>تم توليد الأكواد بنجاح!</value>
+	</data>
+	<data name="Msg_FailedGeneratePins">
+		<value>فشل توليد الأكواد</value>
+	</data>
+	<data name="Msg_UnexpectedGenerate">
+		<value>حدث خطأ غير متوقع أثناء التوليد</value>
+	</data>
+	<data name="Msg_PinUpdatedSuccess">
+		<value>تم تحديث الكود بنجاح!</value>
+	</data>
+	<data name="Msg_FailedUpdatePin">
+		<value>فشل تحديث الكود</value>
+	</data>
+	<data name="Msg_UnexpectedUpdatePin">
+		<value>حدث خطأ غير متوقع أثناء التحديث</value>
+	</data>
+	<data name="Msg_PinDeletedSuccess">
+		<value>تم حذف الكود بنجاح!</value>
+	</data>
+	<data name="Msg_FailedDeletePin">
+		<value>فشل حذف الكود</value>
+	</data>
+	<data name="Msg_UnexpectedDeletePin">
+		<value>حدث خطأ غير متوقع أثناء الحذف</value>
+	</data>
+
+	<data name="Type_Exam">
+		<value>امتحان</value>
+	</data>
+	<data name="Type_Session">
+		<value>جلسة</value>
+	</data>
+	<data name="Status_Used">
+		<value>مستخدم</value>
+	</data>
+	<data name="Status_Active">
+		<value>نشط</value>
+	</data>
+	<data name="Status_Sold">
+		<value>مباع</value>
+	</data>
+</root>

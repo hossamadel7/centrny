@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="metadata">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string"/>
+							<xsd:attribute name="type" type="xsd:string"/>
+							<xsd:attribute name="mimetype" type="xsd:string"/>
+							<xsd:attribute ref="xml:space"/>
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+								<xsd:element name="comment" type="xsd:string" minOccurs="0"/>
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string"/>
+							<xsd:attribute name="xml:space" use="preserve"/>
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0"/>
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string"/>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+
+	<data name="Title_PinsManagement">
+		<value>Pins Management</value>
+	</data>
+	<data name="Header_PinsManagementSystem">
+		<value>Pins Management System</value>
+	</data>
+	<data name="Label_Root">
+		<value>Root</value>
+	</data>
+	<data name="Label_User">
+		<value>User</value>
+	</data>
+	<data name="Wallet_Total_Label">
+		<value>Wallet Codes Total Count</value>
+	</data>
+
+	<!-- Added per-times wallet labels -->
+	<data name="Wallet_1x_Label">
+		<value>1x Wallet Count</value>
+	</data>
+	<data name="Wallet_4x_Label">
+		<value>4x Wallet Count</value>
+	</data>
+	<data name="Wallet_16x_Label">
+		<value>16x Wallet Count</value>
+	</data>
+
+	<data name="Label_FilterType">
+		<value>Filter Type</value>
+	</data>
+	<data name="Label_FilterStatus">
+		<value>Filter Status</value>
+	</data>
+	<data name="Option_AllTypes">
+		<value>All Types</value>
+	</data>
+	<data name="Option_Session">
+		<value>Session</value>
+	</data>
+	<data name="Option_Exam">
+		<value>Exam</value>
+	</data>
+	<data name="Option_AllStatus">
+		<value>All Status</value>
+	</data>
+	<data name="Option_Used">
+		<value>Used</value>
+	</data>
+	<data name="Option_Active">
+		<value>Active</value>
+	</data>
+	<data name="Option_Sold">
+		<value>Sold</value>
+	</data>
+
+	<data name="Button_GeneratePins">
+		<value>Generate Pins</value>
+	</data>
+	<data name="Button_Refresh">
+		<value>Refresh</value>
+	</data>
+
+	<data name="Table_PinsList">
+		<value>Pins List</value>
+	</data>
+	<data name="Meta_Total">
+		<value>Total</value>
+	</data>
+	<data name="Meta_Page">
+		<value>Page</value>
+	</data>
+
+	<data name="Column_PinCode">
+		<value>Pin Code</value>
+	</data>
+	<data name="Column_Watermark">
+		<value>Watermark</value>
+	</data>
+	<data name="Column_Type">
+		<value>Type</value>
+	</data>
+	<data name="Column_Times">
+		<value>Times</value>
+	</data>
+	<data name="Column_Status">
+		<value>Status</value>
+	</data>
+	<data name="Column_StatusToggleHint">
+		<value>click to toggle</value>
+	</data>
+	<data name="Column_Active">
+		<value>Active</value>
+	</data>
+	<data name="Column_Created">
+		<value>Created</value>
+	</data>
+	<data name="Column_Actions">
+		<value>Actions</value>
+	</data>
+
+	<data name="NoPinsFound">
+		<value>No pins found</value>
+	</data>
+
+	<data name="Generate_Type">
+		<value>Type</value>
+	</data>
+	<data name="Generate_Sessions">
+		<value>Sessions</value>
+	</data>
+	<data name="Generate_Quantity">
+		<value>Quantity</value>
+	</data>
+	<data name="Generate_AvailableHintTemplate">
+		<value>Available for {0} sessions: {1}</value>
+	</data>
+
+	<data name="Edit_Title">
+		<value>Edit Pin</value>
+	</data>
+	<data name="Edit_Watermark">
+		<value>Watermark</value>
+	</data>
+	<data name="Edit_Type">
+		<value>Type</value>
+	</data>
+	<data name="Edit_Sessions">
+		<value>Sessions</value>
+	</data>
+	<data name="Edit_Status">
+		<value>Status</value>
+	</data>
+	<data name="Edit_Active">
+		<value>Active</value>
+	</data>
+	<data name="Edit_UpdatePin">
+		<value>Update Pin</value>
+	</data>
+
+	<data name="Msg_RefreshingPins">
+		<value>Refreshing pins...</value>
+	</data>
+	<data name="Msg_PinsRefreshed">
+		<value>Pins refreshed successfully!</value>
+	</data>
+	<data name="Msg_UsedPinsCannotToggle">
+		<value>Used pins cannot be toggled.</value>
+	</data>
+	<data name="Msg_ToggleFailed">
+		<value>Failed to toggle pin status.</value>
+	</data>
+	<data name="Msg_RequestedExceedsAvailableTemplate">
+		<value>Requested quantity ({0}) exceeds available balance ({1}) for {2} sessions.</value>
+	</data>
+
+	<data name="Msg_PinsGeneratedSuccess">
+		<value>Pins generated successfully!</value>
+	</data>
+	<data name="Msg_FailedGeneratePins">
+		<value>Failed to generate pins</value>
+	</data>
+	<data name="Msg_UnexpectedGenerate">
+		<value>Unexpected error during generation</value>
+	</data>
+	<data name="Msg_PinUpdatedSuccess">
+		<value>Pin updated successfully!</value>
+	</data>
+	<data name="Msg_FailedUpdatePin">
+		<value>Failed to update pin</value>
+	</data>
+	<data name="Msg_UnexpectedUpdatePin">
+		<value>Unexpected error during update</value>
+	</data>
+	<data name="Msg_PinDeletedSuccess">
+		<value>Pin deleted successfully!</value>
+	</data>
+	<data name="Msg_FailedDeletePin">
+		<value>Failed to delete pin</value>
+	</data>
+	<data name="Msg_UnexpectedDeletePin">
+		<value>Unexpected error deleting pin</value>
+	</data>
+
+	<data name="Type_Exam">
+		<value>Exam</value>
+	</data>
+	<data name="Type_Session">
+		<value>Session</value>
+	</data>
+	<data name="Status_Used">
+		<value>Used</value>
+	</data>
+	<data name="Status_Active">
+		<value>Active</value>
+	</data>
+	<data name="Status_Sold">
+		<value>Sold</value>
+	</data>
+</root>

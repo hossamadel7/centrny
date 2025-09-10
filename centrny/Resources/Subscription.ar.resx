@@ -1,0 +1,228 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+				xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" />
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string" />
+							<xsd:attribute name="xml:space" default="preserve" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" />
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+
+	<data name="Title">
+		<value>خطط الاشتراك</value>
+	</data>
+	<data name="Subtitle">
+		<value>إدارة خطط الاشتراك ومشتريات الطلاب</value>
+	</data>
+	<data name="Refresh">
+		<value>تحديث</value>
+	</data>
+	<data name="NewPlan">
+		<value>خطة جديدة</value>
+	</data>
+	<data name="CreateSubscriptionPlan">
+		<value>إنشاء خطة اشتراك</value>
+	</data>
+	<data name="EditSubscriptionPlan">
+		<value>تعديل خطة اشتراك</value>
+	</data>
+	<data name="PlanInformation">
+		<value>معلومات الخطة</value>
+	</data>
+	<data name="PlanName">
+		<value>اسم الخطة</value>
+	</data>
+	<data name="Price">
+		<value>السعر</value>
+	</data>
+	<data name="ExpiryMonths">
+		<value>مدة الانتهاء (أشهر)</value>
+	</data>
+	<data name="Description">
+		<value>الوصف</value>
+	</data>
+	<data name="DescriptionPlaceholder">
+		<value>وصف الخطة (اختياري)</value>
+	</data>
+	<data name="SubjectsInPlan">
+		<value>المواد</value>
+	</data>
+	<data name="AddSubject">
+		<value>إضافة مادة</value>
+	</data>
+	<data name="Year">
+		<value>السنة</value>
+	</data>
+	<data name="Subject">
+		<value>المادة</value>
+	</data>
+	<data name="Count">
+		<value>العدد</value>
+	</data>
+	<data name="Remove">
+		<value>حذف</value>
+	</data>
+	<data name="TotalCount">
+		<value>العدد الإجمالي</value>
+	</data>
+	<data name="Close">
+		<value>إغلاق</value>
+	</data>
+	<data name="SavePlan">
+		<value>حفظ الخطة</value>
+	</data>
+	<data name="UpdatePlan">
+		<value>تحديث الخطة</value>
+	</data>
+	<data name="DeleteSubscriptionPlan">
+		<value>حذف خطة الاشتراك</value>
+	</data>
+	<data name="DeleteConfirmQuestion">
+		<value>هل أنت متأكد أنك تريد حذف هذه الخطة؟</value>
+	</data>
+	<data name="DeleteConfirmNote">
+		<value>لا يمكن التراجع عن هذا الإجراء.</value>
+	</data>
+	<data name="Cancel">
+		<value>إلغاء</value>
+	</data>
+	<data name="DeletePlan">
+		<value>حذف الخطة</value>
+	</data>
+	<data name="BuyPlanForStudent">
+		<value>شراء الخطة للطالب</value>
+	</data>
+	<data name="FindStudent">
+		<value>البحث عن طالب</value>
+	</data>
+	<data name="StudentPhoneNumber">
+		<value>رقم هاتف الطالب</value>
+	</data>
+	<data name="SearchStudent">
+		<value>بحث عن الطالب</value>
+	</data>
+	<data name="SearchResults">
+		<value>نتائج البحث</value>
+	</data>
+	<data name="StudentName">
+		<value>اسم الطالب</value>
+	</data>
+	<data name="AcademicYear">
+		<value>السنة الدراسية</value>
+	</data>
+	<data name="SearchForStudentPrompt">
+		<value>ابحث عن طالب باستخدام رقم هاتفه</value>
+	</data>
+	<data name="SelectPlanAndStudent">
+		<value>اختر خطة وطالب</value>
+	</data>
+	<data name="ConfirmPurchase">
+		<value>تأكيد الشراء</value>
+	</data>
+	<data name="Actions">
+		<value>إجراءات</value>
+	</data>
+
+	<!-- JS / notifications -->
+	<data name="None">
+		<value>لا يوجد</value>
+	</data>
+	<data name="LoadingPlans">
+		<value>جارٍ تحميل الخطط...</value>
+	</data>
+	<data name="NoPlans">
+		<value>لم يتم العثور على خطط اشتراك.</value>
+	</data>
+	<data name="PlanCreated">
+		<value>تم إنشاء الخطة بنجاح.</value>
+	</data>
+	<data name="PlanUpdated">
+		<value>تم تحديث الخطة بنجاح.</value>
+	</data>
+	<data name="PlanDeleted">
+		<value>تم حذف الخطة بنجاح.</value>
+	</data>
+	<data name="PlanDeleteFailed">
+		<value>فشل الحذف.</value>
+	</data>
+	<data name="OperationFailed">
+		<value>فشلت العملية.</value>
+	</data>
+	<data name="SearchFailed">
+		<value>فشل البحث.</value>
+	</data>
+	<data name="NoStudentsFound">
+		<value>لم يتم العثور على طلاب.</value>
+	</data>
+	<data name="EnterPhoneWarning">
+		<value>أدخل رقم هاتف للبحث.</value>
+	</data>
+	<data name="PlanPurchased">
+		<value>تم شراء الخطة بنجاح.</value>
+	</data>
+	<data name="PurchaseFailed">
+		<value>فشل الشراء.</value>
+	</data>
+	<data name="ErrorLoadingPlans">
+		<value>حدث خطأ أثناء جلب الخطط.</value>
+	</data>
+	<data name="InvalidSubjectsWarning">
+		<value>يرجى إكمال كل صفوف المواد.</value>
+	</data>
+	<data name="PlanNameRequired">
+		<value>اسم الخطة مطلوب.</value>
+	</data>
+	<data name="AtLeastOneSubjectRequired">
+		<value>مطلوب صف مادة واحد على الأقل.</value>
+	</data>
+	<data name="FailedToLoadPlan">
+		<value>فشل تحميل خطة الاشتراك.</value>
+	</data>
+	<data name="FailedToLoadYears">
+		<value>فشل تحميل السنوات.</value>
+	</data>
+	<data name="FailedToLoadSubjects">
+		<value>فشل تحميل المواد للسنة المحددة.</value>
+	</data>
+	<data name="ErrorDeletingPlan">
+		<value>خطأ في حذف الخطة.</value>
+	</data>
+	<data name="ErrorPurchasingPlan">
+		<value>خطأ في شراء الخطة.</value>
+	</data>
+	<data name="ErrorSavingPlan">
+		<value>خطأ في حفظ خطة الاشتراك.</value>
+	</data>
+</root>
