@@ -671,7 +671,7 @@
             `;
         }
 
-        function renderContentList(content) {
+            function renderContentList(content) {
             const container = document.getElementById('lessonContentList');
 
             if (content.length === 0) {
@@ -687,14 +687,75 @@
 
             const sortedContent = [...content].sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
 
-            container.innerHTML = sortedContent.map((item, index) => {
+            // Add bulk actions header if there are files/videos
+            const hasSelectableContent = sortedContent.some(item => item.fileType !== 3);
+            let bulkActionsHtml = '';
+
+            if (hasSelectableContent) {
+                bulkActionsHtml = `
+                    <div class="bulk-actions-bar mb-3 p-3 bg-light rounded" style="display: none;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span id="selectedCount">0</span> item(s) selected
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-success me-2" onclick="bulkUpdateOnlineStatus(true)">
+                                    <i class="fas fa-wifi me-1"></i> Mark as Online Lesson
+                                </button>
+                                <button class="btn btn-sm btn-secondary me-2" onclick="bulkUpdateOnlineStatus(false)">
+                                    <i class="fas fa-desktop me-1"></i> Mark as Offline
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                                    <i class="fas fa-times me-1"></i> Clear Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = bulkActionsHtml + sortedContent.map((item, index) => {
                 const isVideo = item.fileType === 1;
                 const isExam = item.fileType === 3;
+                const isFile = item.fileType === 0;
 
                 let itemClass = isVideo ? 'video-item' : isExam ? 'exam-item' : 'file-item';
                 let badgeClass = isVideo ? 'video-badge' : isExam ? 'exam-badge' : 'file-badge';
                 let typeName = isVideo ? 'Video' : isExam ? 'Exam' : 'File';
                 let iconClass = isVideo ? 'fas fa-play-circle' : isExam ? 'fas fa-clipboard-check' : 'fas fa-file-alt';
+
+                // Online lesson indicator
+                let onlineIndicator = '';
+                let onlineToggle = '';
+
+                if (!isExam) {
+                    const isOnline = item.isOnlineLesson === true;
+                    onlineIndicator = isOnline ?
+                        `<span class="badge bg-success ms-2" title="Online Lesson"><i class="fas fa-wifi"></i> Online</span>` :
+                        `<span class="badge bg-secondary ms-2" title="Offline Content"><i class="fas fa-desktop"></i> Offline</span>`;
+
+                    onlineToggle = `
+                        <div class="form-check form-switch ms-3">
+                            <input class="form-check-input online-lesson-toggle" type="checkbox"
+                                   ${isOnline ? 'checked' : ''}
+                                   data-file-code="${item.itemCode}"
+                                   title="Toggle Online Lesson Status">
+                            <label class="form-check-label small text-muted">Online Lesson</label>
+                        </div>
+                    `;
+                }
+
+                // Selection checkbox for non-exam items
+                let selectionCheckbox = '';
+                if (!isExam) {
+                    selectionCheckbox = `
+                        <div class="form-check me-3">
+                            <input class="form-check-input content-selector" type="checkbox"
+                                   data-file-code="${item.itemCode}"
+                                   onchange="updateBulkActions()">
+                        </div>
+                    `;
+                }
 
                 let metaInfo = '';
                 let actionButton = '';
@@ -722,6 +783,7 @@
                          data-item-type="${isExam ? 'exam' : 'file'}"
                          data-current-sort="${item.sortOrder || 999}">
                         <div class="d-flex align-items-center">
+                            ${selectionCheckbox}
                             <div class="drag-handle me-3" title="Drag to reorder">
                                 <i class="fas fa-grip-vertical"></i>
                             </div>
@@ -730,17 +792,19 @@
                             </div>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center justify-content-between">
-                                    <div>
+                                    <div class="flex-grow-1">
                                         <h6 class="mb-1">
                                             <span class="content-badge ${badgeClass}">
                                                 ${typeName} #${index + 1}
                                             </span>
                                             ${item.displayName}
+                                            ${onlineIndicator}
                                             <small class="text-muted sort-indicator">(Sort: ${item.sortOrder || 'None'})</small>
                                         </h6>
                                         <small class="text-muted">
                                             <i class="fas fa-info-circle me-1"></i>${metaInfo}
                                         </small>
+                                        ${onlineToggle}
                                     </div>
                                     <div>${actionButton}</div>
                                 </div>
@@ -749,8 +813,89 @@
                     </div>
                 `;
             }).join('');
+
+
+            // Add event listeners for online lesson toggles
+            document.querySelectorAll('.online-lesson-toggle').forEach(toggle => {
+                toggle.addEventListener('change', async function() {
+                    const fileCode = parseInt(this.dataset.fileCode);
+                    const isOnline = this.checked;
+
+                    try {
+                        const response = await fetch('/LessonContent/UpdateOnlineLessonStatus', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                fileCode: fileCode,
+                                isOnlineLesson: isOnline
+                            })
+                        });
+
+                        if (!response.ok) throw new Error('Failed to update');
+
+                        showSuccessMessage(`Marked as ${isOnline ? 'online' : 'offline'} lesson`);
+                        // Update the visual indicator
+                        const indicator = this.closest('.content-item').querySelector('.badge');
+                        if (indicator) {
+                            indicator.className = isOnline ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+                            indicator.innerHTML = isOnline ? '<i class="fas fa-wifi"></i> Online' : '<i class="fas fa-desktop"></i> Offline';
+                        }
+                    } catch (error) {
+                        console.error('Error updating online lesson status:', error);
+                        this.checked = !isOnline; // Revert the toggle
+                        alert('Error updating online lesson status');
+                    }
+                });
+            });
         }
 
+
+        function updateBulkActions() {
+            const checkboxes = document.querySelectorAll('.content-selector:checked');
+            const bulkBar = document.querySelector('.bulk-actions-bar');
+            const countSpan = document.getElementById('selectedCount');
+
+            if (bulkBar && countSpan) {
+                countSpan.textContent = checkboxes.length;
+                bulkBar.style.display = checkboxes.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        async function bulkUpdateOnlineStatus(isOnline) {
+            const checkboxes = document.querySelectorAll('.content-selector:checked');
+            const fileCodes = Array.from(checkboxes).map(cb => parseInt(cb.dataset.fileCode));
+
+            if (fileCodes.length === 0) {
+                alert('Please select at least one item');
+                return;
+            }
+
+            try {
+                const response = await fetch('/LessonContent/BulkUpdateOnlineLessonStatus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileCodes: fileCodes,
+                        isOnlineLesson: isOnline
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to update');
+
+                const result = await response.json();
+                showSuccessMessage(result.message);
+                clearSelection();
+                await forceReloadContent(); // Refresh the content list
+            } catch (error) {
+                console.error('Error bulk updating online lesson status:', error);
+                alert('Error updating online lesson status');
+            }
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.content-selector').forEach(cb => cb.checked = false);
+            updateBulkActions();
+        }
         /* ================== SORTABLE ================== */
         function initializeSortable() {
             const container = document.getElementById('lessonContentList');

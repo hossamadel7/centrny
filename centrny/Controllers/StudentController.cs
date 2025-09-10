@@ -26,15 +26,20 @@ namespace centrny.Controllers
         }
 
         // Session/context helpers
-        private int GetSessionInt(string key) => (int)HttpContext.Session.GetInt32(key);
+        private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
-        private (int userCode, int groupCode, int rootCode, string username) GetSessionContext() =>
-            (
-                GetSessionInt("UserCode"),
-                GetSessionInt("GroupCode"),
-                _context.Roots.FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.Replace("www.", ""))?.RootCode ?? 0,
+        private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
+        {
+            var rootRecord = _context.Roots
+                .FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", ""));
+
+            return (
+                GetSessionInt("UserCode"),      // This should return int?
+                GetSessionInt("GroupCode"),     // This should return int?
+                rootRecord?.RootCode,
                 GetSessionString("Username")
             );
+        }
         private int GetRootCode() =>
             _context.Roots.FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.Replace("www.", ""))?.RootCode ?? 0;
         // ==================== REGISTRATION METHODS ====================
@@ -428,24 +433,22 @@ namespace centrny.Controllers
             var allowedGroups = new[] { "Admins", "Attendance Officers" };
 
             var users = await _context.Users
-                .Join(_context.Groups, u => u.GroupCode, g => g.GroupCode,
-                    (u, g) => new { u, g })
+                .Join(_context.Groups, u => u.GroupCode, g => g.GroupCode, (u, g) => new { u, g })
                 .Where(joined => joined.g.BranchCode == req.BranchCode && allowedGroups.Contains(joined.g.GroupName))
-                .Select(joined => new { joined.u.UserCode, joined.u.Password, joined.u.Username })
+                .Select(joined => new { joined.u.UserCode, joined.u.Password, joined.u.Username, joined.u.GroupCode })
                 .ToListAsync();
 
             foreach (var user in users)
             {
                 if (user.Password == req.Password)
                 {
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, user.Username),
-                        new Claim("UserId", user.UserCode.ToString())
-                    };
-                    var identity = new ClaimsIdentity(claims, "AttendancePassword");
-                    var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync(principal);
+                    // Set session values - make sure these are being set
+                    HttpContext.Session.SetInt32("UserCode", user.UserCode);
+                    HttpContext.Session.SetInt32("GroupCode", user.GroupCode);
+                    HttpContext.Session.SetString("Username", user.Username);
+
+                    // Force session to save immediately
+                    await HttpContext.Session.CommitAsync();
 
                     return Json(new
                     {
@@ -463,14 +466,28 @@ namespace centrny.Controllers
                 error = "Wrong password or not authorized for this branch."
             });
         }
-
         [HttpPost]
         [Route("Student/MarkAttendance")]
         public async Task<IActionResult> MarkAttendance([FromBody] MarkAttendanceRequest request)
         {
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
+
+            if (!userCode.HasValue || !groupCode.HasValue)
+            {
+                return Json(new { success = false, error = "Session expired. Please authenticate again." });
+            }
+
+            if (!rootCode.HasValue)
+            {
+                return Json(new { success = false, error = "Invalid domain configuration." });
+            }
+
             if (request == null || string.IsNullOrEmpty(request.ItemKey))
                 return Json(new { success = false, error = "Invalid request." });
+
+            // Validate required request fields
+            if (!request.AttendanceType.HasValue)
+                return Json(new { success = false, error = "Attendance type is required." });
 
             var student = await GetStudentByItemKey(request.ItemKey);
             if (student == null)
@@ -485,29 +502,38 @@ namespace centrny.Controllers
             if (classEntity == null)
                 return Json(new { success = false, error = "Class not found." });
 
+           
+
             if (!await IsCurrentUserAdmin(student.RootCode, classEntity.BranchCode))
                 return Json(new { success = false, error = "Only administrators can mark attendance." });
 
             if (await _context.Attends.AnyAsync(a => a.StudentId == student.StudentCode && a.ClassId == request.ClassCode))
                 return Json(new { success = false, error = "Student has already been marked as attended for this class." });
 
+            // Determine session price
             int discountTypeCode = await GetDiscountTypeCode();
             decimal sessionPriceToSave = classEntity.ClassPrice ?? 0;
 
-            if (request.AttendanceType == discountTypeCode && request.SessionPrice.HasValue && request.SessionPrice.Value > 0)
+            // Safe handling of nullable values
+            if (request.AttendanceType.Value == discountTypeCode &&
+                request.SessionPrice.HasValue &&
+                request.SessionPrice.Value > 0)
+            {
                 sessionPriceToSave = request.SessionPrice.Value;
+            }
 
+            // Create attendance record with safe nullable handling
             var attendance = new Attend
             {
                 TeacherCode = classEntity.TeacherCode,
                 ScheduleCode = classEntity.ScheduleCode,
                 ClassId = request.ClassCode,
-                HallId = (int)classEntity.HallCode,
+                HallId = classEntity.HallCode, // Safe because we validated above
                 StudentId = student.StudentCode,
                 AttendDate = DateTime.Now,
                 SessionPrice = sessionPriceToSave,
                 RootCode = student.RootCode,
-                Type = (int)request.AttendanceType
+                Type = request.AttendanceType.Value // Safe because we validated above
             };
 
             _context.Attends.Add(attendance);
@@ -517,10 +543,10 @@ namespace centrny.Controllers
             {
                 success = true,
                 message = "Attendance marked successfully.",
-                attendanceDate = attendance.AttendDate.ToString("yyyy-MM-dd HH:mm")
+                attendanceDate = attendance.AttendDate.ToString("yyyy-MM-dd HH:mm"),
+                markedBy = username
             });
         }
-
         [HttpGet]
         [Route("Student/GetAttendanceTypes")]
         public async Task<IActionResult> GetAttendanceTypes()
@@ -1355,26 +1381,59 @@ namespace centrny.Controllers
             if (student == null)
                 return Json(new { error = "Student not found." });
 
-            // Join StudentExam with Exam, return only exams (ISExam == true)
-            var exams = await _context.StudentExams
-                .Where(se => se.StudentCode == student.StudentCode)
-                .Join(_context.Exams,
-                      se => se.ExamCode,
-                      e => e.ExamCode,
-                      (se, e) => new { StudentExam = se, Exam = e })
-                .Where(joined => joined.Exam.IsExam == true)
-                .OrderByDescending(joined => joined.StudentExam.InsertTime)
-                .Select(joined => new
+            // Get all classes the student has actually attended
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>()); // No attended classes, return empty
+
+            // Get lessons linked to attended classes
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>()); // No lessons linked to attended classes
+
+            // Get exam files (FileType 3, IsOnlineLesson = false)
+            var examFiles = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                           f.IsActive &&
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
+                           f.FileType == 3) // Exams only
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new
                 {
-                    joined.Exam.ExamCode,
-                    ExamName = joined.Exam.ExamName,
-                    joined.StudentExam.InsertTime,
-                    joined.StudentExam.ExamDegree,
-                    joined.StudentExam.StudentResult
+                    ExamCode = f.FileCode, // Using FileCode as ExamCode for consistency
+                    ExamName = f.DisplayName ?? "Unknown Exam",
+                    FileCode = f.FileCode,
+                    DisplayName = f.DisplayName,
+                    FileType = f.FileType,
+                    FileTypeName = "Exam",
+                    SortOrder = f.SortOrder,
+                    InsertTime = f.InsertTime,
+                    IsActive = f.IsActive,
+                    LessonCode = f.LessonCode,
+                    LessonName = f.LessonCodeNavigation.LessonName,
+                    SubjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    TeacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
+                    // Additional exam-specific fields that might be useful
+                    Duration = f.Duration,
+                    DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null
                 })
                 .ToListAsync();
 
-            return Json(exams);
+            return Json(examFiles);
         }
 
         [HttpGet]
@@ -1385,30 +1444,123 @@ namespace centrny.Controllers
             if (student == null)
                 return Json(new { error = "Student not found." });
 
-            // Join StudentExam with Exam, return only assignments (ISExam == false)
-            var assignments = await _context.StudentExams
-                .Where(se => se.StudentCode == student.StudentCode)
-                .Join(_context.Exams,
-                      se => se.ExamCode,
-                      e => e.ExamCode,
-                      (se, e) => new { StudentExam = se, Exam = e })
-                .Where(joined => joined.Exam.IsExam == false)
-                .OrderByDescending(joined => joined.StudentExam.InsertTime)
-                .Select(joined => new
+            // Get all classes the student has actually attended
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>()); // No attended classes, return empty
+
+            // Get lessons linked to attended classes
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>()); // No lessons linked to attended classes
+
+            // Get assignment files (FileType 0 or 1, IsOnlineLesson = false)
+            var assignmentFiles = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                           f.IsActive &&
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
+                           (f.FileType == 0 || f.FileType == 1)) // Files or Videos
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new
                 {
-                    joined.Exam.ExamCode,
-                    AssignName = joined.Exam.ExamName,
-
-
-                    joined.StudentExam.ExamDegree,
-                    joined.StudentExam.StudentResult,
-                    joined.StudentExam.IsActive,
-
+                    FileCode = f.FileCode,
+                    DisplayName = f.DisplayName ?? "Unknown File",
+                    FileType = f.FileType,
+                    FileTypeName = f.FileType == 1 ? "Video" : "File",
+                    FileExtension = f.FileExtension,
+                    FileSizeBytes = f.FileSizeBytes, // Keep as raw bytes
+                    Duration = f.Duration,
+                    DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
+                    VideoProvider = f.VideoProvider,
+                    VideoProviderName = f.VideoProvider == 0 ? "YouTube" :
+                                      f.VideoProvider == 1 ? "Bunny CDN" : "Unknown",
+                    SortOrder = f.SortOrder,
+                    InsertTime = f.InsertTime,
+                    IsActive = f.IsActive,
+                    LessonCode = f.LessonCode,
+                    LessonName = f.LessonCodeNavigation.LessonName,
+                    SubjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    TeacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
                 })
                 .ToListAsync();
 
-            return Json(assignments);
+            // Format file sizes after the query
+            var result = assignmentFiles.Select(f => new
+            {
+                f.FileCode,
+                f.DisplayName,
+                f.FileType,
+                f.FileTypeName,
+                f.FileExtension,
+                f.FileSizeBytes,
+                FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                f.Duration,
+                f.DurationFormatted,
+                f.VideoProvider,
+                f.VideoProviderName,
+                f.SortOrder,
+                f.InsertTime,
+                f.IsActive,
+                f.LessonCode,
+                f.LessonName,
+                f.SubjectName,
+                f.TeacherName
+            }).ToList();
+
+            return Json(result);
         }
+
+        [HttpGet]
+        [Route("Student/GetUpcomingExams/{item_key}")]
+        public async Task<IActionResult> GetUpcomingExams(string item_key)
+        {
+            // Redirect to existing method or implement specific logic for upcoming exams
+            return await GetStudentExams(item_key);
+        }
+
+        [HttpGet]
+        [Route("Student/GetAttendedExams/{item_key}")]
+        public async Task<IActionResult> GetAttendedExams(string item_key)
+        {
+            // Redirect to existing method or implement specific logic for attended exams
+            return await GetStudentExams(item_key);
+        }
+
+        [HttpGet]
+        [Route("Student/GetAssignments/{item_key}")]
+        public async Task<IActionResult> GetAssignments(string item_key)
+        {
+            // Redirect to existing method
+            return await GetStudentAssignments(item_key);
+        }
+
+        private static string FormatFileSize(long bytes)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len /= 1024;
+            }
+            return $"{len:0.##} {sizes[order]}";
+        }
+
         [HttpPost]
         [Route("Student/ValidatePin")]
         public async Task<IActionResult> ValidatePin([FromBody] PinValidationRequest request)

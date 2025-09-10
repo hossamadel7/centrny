@@ -76,6 +76,46 @@ body {
 
 /* Header Layout Container */
 
+.lesson-exam {
+    border-left: 4px solid #f39c12;
+}
+
+.video-assignment {
+    border-left: 4px solid #e74c3c;
+}
+
+.file-assignment {
+    border-left: 4px solid #3498db;
+}
+
+.assignment-icon.video {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.assignment-icon.file {
+    background-color: #3498db;
+    color: white;
+}
+
+.assignments-summary,
+.exams-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.assignments-grid,
+.exams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
 .attendance-password-modal {
     display: none;
     position: fixed;

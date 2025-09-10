@@ -38,7 +38,7 @@ namespace centrny.Controllers
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
             );
         }
 
@@ -427,7 +427,63 @@ namespace centrny.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateOnlineLessonStatus([FromBody] UpdateOnlineLessonDto dto)
+        {
+            var rootCode = GetSessionInt("RootCode");
+            if (rootCode == null) return Unauthorized();
 
+            try
+            {
+                var file = await _context.Files
+                    .FirstOrDefaultAsync(f => f.FileCode == dto.FileCode &&
+                                              f.RootCode == rootCode.Value);
+
+                if (file == null)
+                    return NotFound("File not found");
+
+                file.IsOnlineLesson = dto.IsOnlineLesson;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Online lesson status updated" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to update status", details = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkUpdateOnlineLessonStatus([FromBody] BulkUpdateOnlineLessonDto dto)
+        {
+            var rootCode = GetSessionInt("RootCode");
+            if (rootCode == null) return Unauthorized();
+
+            try
+            {
+                var files = await _context.Files
+                    .Where(f => dto.FileCodes.Contains(f.FileCode) &&
+                               f.RootCode == rootCode.Value)
+                    .ToListAsync();
+
+                foreach (var file in files)
+                {
+                    file.IsOnlineLesson = dto.IsOnlineLesson;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Updated {files.Count} file(s) as {(dto.IsOnlineLesson ? "online" : "offline")} lessons"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to update statuses", details = ex.Message });
+            }
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetTeacherLessons(
@@ -543,6 +599,7 @@ namespace centrny.Controllers
                     duration = f.Duration,
                     durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
                     contentType = "content",
+                    isOnlineLesson = f.IsOnlineLesson, // Added this property
                     examDegree = (string)null,
                     examTimer = (string)null,
                     isOnline = (bool?)null,
@@ -564,6 +621,7 @@ namespace centrny.Controllers
                     duration = (TimeSpan?)null,
                     durationFormatted = (string)null,
                     contentType = "exam",
+                    isOnlineLesson = (bool?)null, // Exams don't have this property, so null
                     examDegree = e.ExamDegree,
                     examTimer = e.ExamTimer.ToString(@"HH\:mm"),
                     isOnline = e.IsOnline,
@@ -1295,6 +1353,17 @@ namespace centrny.Controllers
         public string PinCode { get; set; } = null!;
     }
 
+    public class UpdateOnlineLessonDto
+    {
+        public int FileCode { get; set; }
+        public bool IsOnlineLesson { get; set; }
+    }
+
+    public class BulkUpdateOnlineLessonDto
+    {
+        public List<int> FileCodes { get; set; } = new();
+        public bool IsOnlineLesson { get; set; }
+    }
     public class UpdateProgressDto
     {
         public int StudentCode { get; set; }

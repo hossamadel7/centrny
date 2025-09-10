@@ -27,19 +27,14 @@ namespace centrny.Controllers
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode ,
-    GetSessionString("Username")
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
+                GetSessionString("Username")
             );
         }
 
-        // --- Authority Check via Session ---
-      
-
         public async Task<IActionResult> Index()
         {
-          
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-           
 
             ViewBag.UserRootCode = rootCode.Value;
             ViewBag.UserGroupCode = groupCode.Value;
@@ -51,8 +46,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubjects()
         {
-          
-            var (userCode, groupCode, rootCode,username) = GetSessionContext();
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             var subjects = await (from s in _context.Subjects
                                   where s.RootCode == rootCode.Value
@@ -68,7 +62,7 @@ namespace centrny.Controllers
                                       RootName = r != null ? r.RootName : null,
                                       YearName = y != null ? y.YearName : null,
                                       s.YearCode,
-                                      EduYearCode = y != null 
+                                      EduYearCode = y != null
                                   })
                                   .ToListAsync();
 
@@ -80,11 +74,10 @@ namespace centrny.Controllers
         {
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
-
             var teachJoin = await (from t in _context.Teaches
                                    join teacher in _context.Teachers on t.TeacherCode equals teacher.TeacherCode
                                    join branch in _context.Branches on t.BranchCode equals branch.BranchCode
-                                   where t.SubjectCode == subjectCode && t.RootCode==rootCode
+                                   where t.SubjectCode == subjectCode && t.RootCode == rootCode
                                    select new
                                    {
                                        t.TeacherCode,
@@ -117,7 +110,7 @@ namespace centrny.Controllers
                 t.SubjectCode == dto.SubjectCode &&
                 t.BranchCode == dto.BranchCode &&
                 t.EduYearCode == dto.EduYearCode &&
-                t.RootCode == rootCode.Value // <--- session rootCode only!
+                t.RootCode == rootCode.Value
             );
 
             if (teach == null)
@@ -133,21 +126,17 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetActiveYears()
         {
-            // Get session context (adjust if your GetSessionContext returns a different tuple)
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
 
             if (!rootCode.HasValue)
                 return Json(new { success = false, message = "Root not resolved (no rootCode in session)." });
 
-            // Query all years that belong to this root
             var query = _context.Years
                 .AsNoTracking()
                 .Where(y => y.RootCode == rootCode.Value);
 
-         
             var yearList = await query
-                .OrderBy(y => y.YearSort)          // If YearSort exists
-                                                   // .OrderBy(y => y.YearName)       // Use this instead if you do NOT have YearSort
+                .OrderBy(y => y.YearSort)
                 .Select(y => new {
                     yearCode = y.YearCode,
                     yearName = y.YearName
@@ -160,9 +149,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTeachersByRoot()
         {
-         
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-           
 
             var teachers = await _context.Teachers
                 .Where(t => t.RootCode == rootCode.Value && t.IsActive)
@@ -175,9 +162,7 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBranchesByRoot()
         {
-           
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-           
 
             var branches = await _context.Branches
                 .Where(b => b.RootCode == rootCode.Value)
@@ -186,7 +171,7 @@ namespace centrny.Controllers
 
             return Json(branches);
         }
-        [RequirePageAccess("Question", "insert")]
+
         [RequirePageAccess("Question", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddTeacherToSubject([FromBody] AddTeacherToSubjectDto dto)
@@ -224,7 +209,7 @@ namespace centrny.Controllers
             {
                 TeacherCode = dto.TeacherCode,
                 SubjectCode = dto.SubjectCode,
-                EduYearCode = activeEduYear.EduCode, // set to the only active EduYear code for this root
+                EduYearCode = activeEduYear.EduCode,
                 BranchCode = dto.BranchCode,
                 RootCode = rootCode.Value,
                 YearCode = dto.YearCode,
@@ -240,6 +225,7 @@ namespace centrny.Controllers
 
             return Ok(new { success = true, message = SubjectRes.Subject_SuccessTeacherAssigned });
         }
+
         [RequirePageAccess("Question", "insert")]
         [HttpPost]
         public async Task<IActionResult> AddSubject([FromBody] AddSubjectDto dto)
@@ -291,20 +277,16 @@ namespace centrny.Controllers
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubjectName) || dto.YearCode == 0)
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
-          
-
-            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode && s.RootCode==rootCode);
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode && s.RootCode == rootCode);
 
             if (subject == null)
                 return NotFound(SubjectRes.Subject_SubjectNotFound);
 
-            // Root isolation check
-           
-
             subject.SubjectName = dto.SubjectName;
             subject.IsPrimary = dto.IsPrimary;
             subject.YearCode = dto.YearCode;
-            subject.InsertTime = DateTime.Now;
+            subject.LastUpdateUser = userCode.Value;
+            subject.LastUpdateTime = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -330,14 +312,11 @@ namespace centrny.Controllers
                 return BadRequest(SubjectRes.Subject_InvalidData);
 
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
-      
 
             var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectCode == dto.SubjectCode && s.RootCode == rootCode);
 
             if (subject == null)
                 return NotFound(SubjectRes.Subject_SubjectNotFound);
-
-           
 
             _context.Subjects.Remove(subject);
             await _context.SaveChangesAsync();
@@ -351,6 +330,7 @@ namespace centrny.Controllers
             public bool IsPrimary { get; set; }
             public int YearCode { get; set; }
         }
+
         public class EditSubjectDto
         {
             public int SubjectCode { get; set; }
@@ -358,10 +338,12 @@ namespace centrny.Controllers
             public bool IsPrimary { get; set; }
             public int YearCode { get; set; }
         }
+
         public class DeleteSubjectDto
         {
             public int SubjectCode { get; set; }
         }
+
         public class AddTeacherToSubjectDto
         {
             public int TeacherCode { get; set; }
