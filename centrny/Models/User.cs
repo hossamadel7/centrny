@@ -71,6 +71,8 @@ public partial class User
 
     public virtual ICollection<Hall> HallLastUpdateUserNavigations { get; set; } = new List<Hall>();
 
+    public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
+
     public virtual User InsertUserNavigation { get; set; } = null!;
 
     public virtual ICollection<User> InverseInsertUserNavigation { get; set; } = new List<User>();

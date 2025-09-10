@@ -77,6 +77,8 @@ public partial class Root
 
     public virtual ICollection<Hall> Halls { get; set; } = new List<Hall>();
 
+    public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
+
     public virtual ICollection<Root> InverseRootParentCodeNavigation { get; set; } = new List<Root>();
 
     public virtual ICollection<Item> Items { get; set; } = new List<Item>();

@@ -45,6 +45,8 @@ public partial class CenterContext : DbContext
 
     public virtual DbSet<Hall> Halls { get; set; }
 
+    public virtual DbSet<Income> Incomes { get; set; }
+
     public virtual DbSet<Item> Items { get; set; }
 
     public virtual DbSet<ItemType> ItemTypes { get; set; }
@@ -869,6 +871,38 @@ public partial class CenterContext : DbContext
                 .HasForeignKey(d => d.RootCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Hall_Root");
+        });
+
+        modelBuilder.Entity<Income>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Income__3213E83F368FD5D6");
+
+            entity.ToTable("Income");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("amount");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.InsertTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("insert_time");
+            entity.Property(e => e.InsertUserCode).HasColumnName("insert_user_code");
+            entity.Property(e => e.PaymentDate).HasColumnName("payment_date");
+            entity.Property(e => e.RootCode).HasColumnName("root_code");
+
+            entity.HasOne(d => d.InsertUserCodeNavigation).WithMany(p => p.Incomes)
+                .HasForeignKey(d => d.InsertUserCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Income_User");
+
+            entity.HasOne(d => d.RootCodeNavigation).WithMany(p => p.Incomes)
+                .HasForeignKey(d => d.RootCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Income_Root");
         });
 
         modelBuilder.Entity<Item>(entity =>
