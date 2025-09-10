@@ -1343,6 +1343,7 @@ body {
         width: 100%;
         box-shadow: 0 8px 32px #0004, 0 2px 8px #0002;
         position: relative;
+        z-index: 1100;
     }
 
     .attendance-password-modal .modal-header {
@@ -1361,6 +1362,10 @@ body {
         color: #888;
         cursor: pointer;
     }
+    .attendance-password-modal .modal-dialog {
+        position: relative;
+        z-index: 1100;
+    }
 
     .attendance-password-modal .form-group {
         margin-bottom: 1em;
@@ -1376,6 +1381,7 @@ body {
 
     .attendance-password-modal .btn {
         min-width: 90px;
+        pointer-events: auto;
     }
 
     .attendance-password-modal .error-msg {

@@ -1,192 +1,339 @@
+@using Microsoft.Extensions.Localization
+@using System.Globalization
+@model centrny.Controllers.OnlineStudentController.StudentDashboardViewModel
+@inject IStringLocalizerFactory LocalizerFactory
 @{
-    ViewData["Title"] = "Learning Center";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var Localizer = LocalizerFactory.Create("OnlineStudent", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    var culture = CultureInfo.CurrentUICulture;
+    var isArabic = culture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = culture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
+    Layout = null;
+
+    // Show root name if available, else dash (no forced "EduCenter")
+    var rootName = Model?.Student?.RootCodeNavigation?.RootName ?? "-";
+
+    ViewData["Title"] = Localizer["Title_LearningCenter"];
+
+    var studentName = Model?.Student?.StudentName;
+    var yearName = Model?.Student?.YearCodeNavigation?.YearName ?? Localizer["NotAssigned"];
+    var branchName = Model?.Student?.BranchCodeNavigation?.BranchName ?? Localizer["NotAssigned"];
+    int? studentCode = Model?.Student?.StudentCode;
 }
+<!DOCTYPE html>
+<html lang="@htmlLang" dir="@htmlDir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @if (isArabic)
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    }
+    else
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet" />
+    }
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/OnlineStudent.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="js-online-localization"
+         data-nav-dashboard="@Localizer["Nav_Dashboard"]"
+         data-nav-learning="@Localizer["Nav_LearningCenter"]"
+         data-badge-subscribed="@Localizer["Badge_Subscribed"]"
+         data-badge-regular="@Localizer["Badge_Regular"]"
+         data-section-academic="@Localizer["Section_AcademicOverview"]"
+         data-stat-subjects="@Localizer["Stat_Subjects"]"
+         data-stat-exams="@Localizer["Stat_Exams"]"
+         data-stat-attendance="@Localizer["Stat_Attendance"]"
+         data-stat-average="@Localizer["Stat_Average"]"
+         data-section-student-information="@Localizer["Section_StudentInformation"]"
+         data-label-full-name="@Localizer["Label_FullName"]"
+         data-label-age="@Localizer["Label_Age"]"
+         data-label-age-suffix="@Localizer["Label_AgeSuffix"]"
+         data-label-academic-year="@Localizer["Label_AcademicYear"]"
+         data-label-branch="@Localizer["Label_Branch"]"
+         data-label-contact-number="@Localizer["Label_ContactNumber"]"
+         data-label-parent-contact="@Localizer["Label_ParentContact"]"
+         data-label-member-since="@Localizer["Label_MemberSince"]"
+         data-section-enrolled-subjects="@Localizer["Section_EnrolledSubjects"]"
+         data-section-examination-results="@Localizer["Section_ExaminationResults"]"
+         data-empty-no-subjects-title="@Localizer["Empty_NoSubjectsTitle"]"
+         data-empty-no-subjects-message="@Localizer["Empty_NoSubjectsMessage"]"
+         data-empty-no-exams-title="@Localizer["Empty_NoExamsTitle"]"
+         data-empty-no-exams-message="@Localizer["Empty_NoExamsMessage"]"
+         data-label-subject="@Localizer["Label_Subject"]"
+         data-label-teacher="@Localizer["Label_Teacher"]"
+         data-label-date="@Localizer["Label_Date"]"
+         data-label-type="@Localizer["Label_Type"]"
+         data-label-status="@Localizer["Label_Status"]"
+         data-status-passed="@Localizer["Status_Passed"]"
+         data-status-failed="@Localizer["Status_Failed"]"
+         data-type-exam="@Localizer["Type_Exam"]"
+         data-type-quiz="@Localizer["Type_Quiz"]"
+         data-online-badge="@Localizer["Online_Badge"]"
+         data-fee-label="@Localizer["Fee_Label"]"
+         data-loading-subjects="@Localizer["Loading_Subjects"]"
+         data-loading-exams="@Localizer["Loading_Exams"]"
+         data-alert-dashboard-loaded="@Localizer["Alert_DashboardLoaded"]"
+         data-alert-dashboard-failed="@Localizer["Alert_DashboardFailed"]"
+         data-alert-load-subjects-failed="@Localizer["Alert_LoadSubjectsFailed"]"
+         data-alert-load-exams-failed="@Localizer["Alert_LoadExamsFailed"]"
+         data-alert-load-chapters-failed="@Localizer["Alert_LoadChaptersFailed"]"
+         data-alert-load-lessons-failed="@Localizer["Alert_LoadLessonsFailed"]"
+         data-empty-no-chapters-title="@Localizer["Empty_NoChaptersTitle"]"
+         data-empty-no-chapters-message="@Localizer["Empty_NoChaptersMessage"]"
+         data-empty-no-lessons-title="@Localizer["Empty_NoLessonsTitle"]"
+         data-empty-no-lessons-message="@Localizer["Empty_NoLessonsMessage"]"
+         data-select-subject-placeholder="@Localizer["Select_SubjectPlaceholder"]"
+         data-select-subject-label="@Localizer["Select_SubjectLabel"]"
+         data-button-explore-chapters="@Localizer["Button_ExploreChapters"]"
+         data-header-subject-chapters="@Localizer["Header_SubjectChapters"]"
+         data-button-back-to-subjects="@Localizer["Button_BackToSubjects"]"
+         data-header-chapter-lessons="@Localizer["Header_ChapterLessons"]"
+         data-button-back-to-chapters="@Localizer["Button_BackToChapters"]"
+         data-button-access-lesson="@Localizer["Button_AccessLesson"]"
+         data-added-label="@Localizer["Added_Label"]"
+         data-confirm-access-lesson="@Localizer["Confirm_AccessLesson"]"
+         data-redirecting="@Localizer["Redirecting"]"
+         data-not-assigned="@Localizer["NotAssigned"]"
+         data-not-provided="@Localizer["NotProvided"]"
+         data-error="@Localizer["Error"]"
+         data-locale="@htmlLang"
+         data-dir="@htmlDir"></div>
 
-<div class="container-fluid px-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-gray-800">
-                    <i class="fas fa-graduation-cap me-2"></i>Learning Center
-                </h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0" id="breadcrumb">
-                        <li class="breadcrumb-item active">Learning Center</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-    </div>
-
-    <!-- Alert Container -->
-    <div id="alertContainer" class="mb-3"></div>
-
-    <!-- Subject Selection -->
-    <div class="row mb-4" id="subjectSelection">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-book me-2"></i>Select Subject
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="subjectSelect" class="form-label">Choose a subject to view chapters:</label>
-                        <select class="form-select" id="subjectSelect">
-                            <option value="">Loading subjects...</option>
-                        </select>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="loadChaptersBtn" disabled>
-                        <i class="fas fa-arrow-right me-2"></i>View Chapters
+    <nav class="navbar navbar-expand-lg modern-navbar">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="/OnlineStudent">
+                <i class="fas fa-graduation-cap"></i>
+                @rootName
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav @(!isArabic ? "me-auto" : "ms-auto")">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/OnlineStudent">
+                            <i class="fas fa-tachometer-alt"></i>
+                            @Localizer["Nav_Dashboard"]
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/OnlineStudent/Learning">
+                            <i class="fas fa-book-reader"></i>
+                            @Localizer["Nav_LearningCenter"]
+                        </a>
+                    </li>
+                </ul>
+                <div class="language-switcher">
+                    <button class="language-btn @(isArabic ? "" : "active")" onclick="switchLanguage('en')">
+                        <i class="fas fa-globe"></i> EN
+                    </button>
+                    <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">
+                        <i class="fas fa-globe"></i> AR
                     </button>
                 </div>
             </div>
         </div>
+    </nav>
+
+    <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+
+    <div class="mobile-nav-sidebar">
+        <div class="mobile-nav-header">
+            <a href="/OnlineStudent" class="mobile-nav-brand">
+                <i class="fas fa-graduation-cap me-2"></i>
+                @rootName
+            </a>
+            <button class="mobile-nav-close" onclick="closeMobileNav()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mobile-nav-links">
+            <a href="/OnlineStudent" class="mobile-nav-link active">
+                <i class="fas fa-tachometer-alt"></i>
+                @Localizer["Nav_Dashboard"]
+            </a>
+            <a href="/OnlineStudent/Learning" class="mobile-nav-link">
+                <i class="fas fa-book-reader"></i>
+                @Localizer["Nav_LearningCenter"]
+            </a>
+        </div>
+        <div class="mobile-language-switcher">
+            <div class="mobile-language-title">@Localizer["Label_Language"]</div>
+            <div class="mobile-language-options">
+                <button class="language-btn @(isArabic ? "" : "active")" onclick="switchLanguage('en')">English</button>
+                <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">«·⁄—»Ì…</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Chapters Grid -->
-    <div class="row mb-4" id="chaptersSection" style="display: none;">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-layer-group me-2"></i>Chapters
-                    </h6>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="backToSubjectsBtn">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Subjects
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="loading-spinner text-center py-4" style="display: none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+    <div class="dashboard-container">
+        <div id="alertContainer" class="alert-container"></div>
+
+        @if (Model?.Student != null)
+        {
+            <div class="student-header mb-4">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h1 class="page-title">
+                            <i class="fas fa-user-graduate"></i>
+                            @studentName
+                        </h1>
+                        <div class="student-meta">
+                            @if (studentCode.HasValue)
+                            {
+                                <span class="badge bg-primary">ID: @studentCode</span>
+                            }
+                            <span class="text-light">
+                                @yearName - @branchName
+                            </span>
                         </div>
-                        <p class="mt-2">Loading chapters...</p>
                     </div>
-                    <div class="row" id="chaptersGrid">
-                        <!-- Chapters will be loaded here -->
+                    <div class="col-md-4 text-@(isArabic ? "start" : "end")">
+                        <span id="subscription-status" class="badge bg-secondary">
+                            @Localizer["Badge_Regular"]
+                        </span>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        }
 
-    <!-- Lessons Section -->
-    <div class="row mb-4" id="lessonsSection" style="display: none;">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-play-circle me-2"></i>Lessons
-                    </h6>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="backToChaptersBtn">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Chapters
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="loading-spinner text-center py-4" style="display: none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+        <!-- Subject Selection -->
+        <div id="subjectSelection" class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <div class="learning-card">
+                    <div class="learning-card-header">
+                        <h2 class="learning-card-title">
+                            <i class="fas fa-book"></i>
+                            @Localizer["Select_SubjectLabel"]
+                        </h2>
+                    </div>
+                    <div class="learning-card-body">
+                        <div class="mb-4">
+                            <label for="subjectSelect" class="form-label">
+                                @Localizer["Select_SubjectLabel"]
+                            </label>
+                            <select class="form-select" id="subjectSelect">
+                                <option value="">@Localizer["Select_SubjectPlaceholder"]</option>
+                            </select>
                         </div>
-                        <p class="mt-2">Loading lessons...</p>
-                    </div>
-                    <div id="lessonsContainer">
-                        <!-- Lessons will be loaded here -->
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary btn-lg" id="loadChaptersBtn" disabled>
+                                <i class="fas fa-arrow-right"></i>
+                                @Localizer["Button_ExploreChapters"]
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Chapters -->
+        <div id="chaptersSection" class="row d-none">
+            <div class="col-12">
+                <div class="learning-card">
+                    <div class="learning-card-header">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <h2 class="learning-card-title">
+                                <i class="fas fa-layer-group"></i>
+                                @Localizer["Header_SubjectChapters"]
+                            </h2>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="backToSubjectsBtn">
+                                <i class="fas fa-arrow-left"></i>
+                                @Localizer["Button_BackToSubjects"]
+                            </button>
+                        </div>
+                    </div>
+                    <div class="learning-card-body">
+                        <div class="loading-spinner text-center d-none">
+                            <div class="spinner"></div>
+                            <p>@Localizer["Loading_Chapters"]</p>
+                        </div>
+                        <div class="row" id="chaptersGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons -->
+        <div id="lessonsSection" class="row d-none">
+            <div class="col-12">
+                <div class="learning-card">
+                    <div class="learning-card-header">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <h2 class="learning-card-title">
+                                <i class="fas fa-play-circle"></i>
+                                @Localizer["Header_ChapterLessons"]
+                            </h2>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="backToChaptersBtn">
+                                <i class="fas fa-arrow-left"></i>
+                                @Localizer["Button_BackToChapters"]
+                            </button>
+                        </div>
+                    </div>
+                    <div class="learning-card-body">
+                        <div class="loading-spinner text-center d-none">
+                            <div class="spinner"></div>
+                            <p>@Localizer["Loading_Lessons"]</p>
+                        </div>
+                        <div id="lessonsContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- (Optional) If you also want enrolled subjects / exams here, you can add those sections again -->
+
     </div>
-</div>
 
-<!-- Custom CSS -->
-<style>
-.chapter-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-    border: 1px solid #e3e6f0;
-    border-radius: 0.35rem;
-    margin-bottom: 1.5rem;
-}
+    <script>
+        // If rootName is just "-" attempt to fetch real one (in case model wasn't provided)
+        document.addEventListener('DOMContentLoaded', () => {
+            const brandEls = document.querySelectorAll('.navbar-brand, .mobile-nav-brand');
+            const currentRoot = '@rootName';
+            if (!currentRoot || currentRoot === '-' || currentRoot === '' ) {
+                fetch('/OnlineStudent/GetStudentInfo')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d && d.rootName) {
+                            brandEls.forEach(el => {
+                                // Replace only text node part after icon if present
+                                const icon = el.querySelector('i');
+                                if (icon) {
+                                    el.innerHTML = icon.outerHTML + ' ' + d.rootName;
+                                } else {
+                                    el.textContent = d.rootName;
+                                }
+                            });
+                        }
+                    })
+                    .catch(() => {});
+            }
+        });
 
-.chapter-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-    border-color: #5a5c69;
-}
-
-.chapter-card .card-body {
-    padding: 1.5rem;
-}
-
-.chapter-header {
-    display: flex;
-    justify-content-between;
-    align-items-start;
-    margin-bottom: 1rem;
-}
-
-.chapter-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #5a5c69;
-    margin: 0;
-}
-
-.lessons-count-badge {
-    background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 10rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.chapter-description {
-    color: #858796;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
-}
-
-.lesson-item {
-    border: 1px solid #e3e6f0;
-    border-radius: 0.35rem;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    background: #f8f9fc;
-    transition: background-color 0.2s;
-}
-
-.lesson-item:hover {
-    background: #eaecf4;
-}
-
-.lesson-header {
-    display: flex;
-    justify-content-between;
-    align-items-center;
-    margin-bottom: 0.5rem;
-}
-
-.lesson-title {
-    font-weight: 600;
-    color: #5a5c69;
-    margin: 0;
-}
-
-.lesson-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.lesson-description {
-    color: #858796;
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-}
-</style>
-
-<script src="~/js/OnlineStudent.js"></script>
+        function switchLanguage(lang) {
+            document.cookie = ".AspNetCore.Culture=c=" + lang + "|uic=" + lang + "; path=/; max-age=31536000";
+            location.reload();
+        }
+        function closeMobileNav() {
+            document.querySelector('.mobile-nav-sidebar')?.classList.remove('open');
+            document.querySelector('.mobile-nav-overlay')?.classList.remove('show');
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggler = document.querySelector('.navbar-toggler');
+            if (toggler) {
+                toggler.addEventListener('click', () => {
+                    document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
+                    document.querySelector('.mobile-nav-overlay')?.classList.add('show');
+                });
+            }
+        });
+    </script>
+    <script src="~/js/OnlineStudent.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -553,6 +553,43 @@ namespace centrny.Controllers
                 sessionId = HttpContext.Session.Id
             });
         }
+        [HttpGet("GetStudentInfo")]
+        public async Task<IActionResult> GetStudentInfo()
+        {
+            try
+            {
+                var studentCodeString = HttpContext.Session.GetString("StudentCode");
+                if (string.IsNullOrEmpty(studentCodeString))
+                {
+                    return Json(new { error = "Student not found in session" });
+                }
+
+                // Convert string to int for comparison
+                if (!int.TryParse(studentCodeString, out int studentCode))
+                {
+                    return Json(new { error = "Invalid student code format" });
+                }
+
+                var student = await _context.Students
+                    .Include(s => s.RootCodeNavigation)
+                    .FirstOrDefaultAsync(s => s.StudentCode == studentCode);
+
+                if (student == null)
+                {
+                    return Json(new { error = "Student not found" });
+                }
+
+                return Json(new
+                {
+                    rootName = student.RootCodeNavigation?.RootName ?? "EduCenter",
+                    studentName = student.StudentName
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = "Failed to load student info" });
+            }
+        }
 
         [HttpGet("GetSystemInfo")]
         public IActionResult GetSystemInfo()

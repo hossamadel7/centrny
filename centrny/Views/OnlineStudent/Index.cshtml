@@ -1,450 +1,315 @@
-﻿@using centrny.Controllers
+﻿@using Microsoft.Extensions.Localization
+@using System.Globalization
+@using centrny.Controllers
 @model OnlineStudentController.StudentDashboardViewModel
+@inject IStringLocalizerFactory LocalizerFactory
 @{
-    ViewData["Title"] = $"{Model.Student.StudentName} - Student Dashboard";
+    var Localizer = LocalizerFactory.Create("OnlineStudent", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+    var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
+    var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var htmlDir = isArabic ? "rtl" : "ltr";
+
+    // Show actual root name only; if null show a dash (no default "EduCenter")
+    var rootName = Model.Student.RootCodeNavigation?.RootName ?? "-";
+    ViewData["Title"] = $"{Model.Student.StudentName} - {Localizer["Title_Dashboard"]}";
     Layout = null;
+
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var age = today.Year - Model.Student.StudentBirthdate.Year;
+    if (Model.Student.StudentBirthdate > today.AddYears(-age)) age--;
 }
+<!DOCTYPE html>
+<html lang="@htmlLang" dir="@htmlDir">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @if (isArabic)
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    }
+    else
+    {
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet" />
+    }
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/OnlineStudent.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="js-online-localization"
+         data-nav-dashboard="@Localizer["Nav_Dashboard"]"
+         data-nav-learning="@Localizer["Nav_LearningCenter"]"
+         data-badge-subscribed="@Localizer["Badge_Subscribed"]"
+         data-badge-regular="@Localizer["Badge_Regular"]"
+         data-section-academic="@Localizer["Section_AcademicOverview"]"
+         data-stat-subjects="@Localizer["Stat_Subjects"]"
+         data-stat-exams="@Localizer["Stat_Exams"]"
+         data-stat-attendance="@Localizer["Stat_Attendance"]"
+         data-stat-average="@Localizer["Stat_Average"]"
+         data-section-student-information="@Localizer["Section_StudentInformation"]"
+         data-label-full-name="@Localizer["Label_FullName"]"
+         data-label-age="@Localizer["Label_Age"]"
+         data-label-age-suffix="@Localizer["Label_AgeSuffix"]"
+         data-label-academic-year="@Localizer["Label_AcademicYear"]"
+         data-label-branch="@Localizer["Label_Branch"]"
+         data-label-contact-number="@Localizer["Label_ContactNumber"]"
+         data-label-parent-contact="@Localizer["Label_ParentContact"]"
+         data-label-member-since="@Localizer["Label_MemberSince"]"
+         data-section-enrolled-subjects="@Localizer["Section_EnrolledSubjects"]"
+         data-section-examination-results="@Localizer["Section_ExaminationResults"]"
+         data-empty-no-subjects-title="@Localizer["Empty_NoSubjectsTitle"]"
+         data-empty-no-subjects-message="@Localizer["Empty_NoSubjectsMessage"]"
+         data-empty-no-exams-title="@Localizer["Empty_NoExamsTitle"]"
+         data-empty-no-exams-message="@Localizer["Empty_NoExamsMessage"]"
+         data-label-subject="@Localizer["Label_Subject"]"
+         data-label-teacher="@Localizer["Label_Teacher"]"
+         data-label-date="@Localizer["Label_Date"]"
+         data-label-type="@Localizer["Label_Type"]"
+         data-label-status="@Localizer["Label_Status"]"
+         data-status-passed="@Localizer["Status_Passed"]"
+         data-status-failed="@Localizer["Status_Failed"]"
+         data-type-exam="@Localizer["Type_Exam"]"
+         data-type-quiz="@Localizer["Type_Quiz"]"
+         data-online-badge="@Localizer["Online_Badge"]"
+         data-fee-label="@Localizer["Fee_Label"]"
+         data-loading-subjects="@Localizer["Loading_Subjects"]"
+         data-loading-exams="@Localizer["Loading_Exams"]"
+         data-alert-dashboard-loaded="@Localizer["Alert_DashboardLoaded"]"
+         data-alert-dashboard-failed="@Localizer["Alert_DashboardFailed"]"
+         data-alert-load-subjects-failed="@Localizer["Alert_LoadSubjectsFailed"]"
+         data-alert-load-exams-failed="@Localizer["Alert_LoadExamsFailed"]"
+         data-not-assigned="@Localizer["NotAssigned"]"
+         data-not-provided="@Localizer["NotProvided"]"
+         data-error="@Localizer["Error"]"
+         data-locale="@htmlLang"
+         data-dir="@htmlDir"></div>
 
-<div class="container-fluid" style="max-width:1400px;">
-    <div id="alertContainer" class="alert-container"></div>
+    <nav class="navbar navbar-expand-lg modern-navbar">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="/OnlineStudent">
+                <i class="fas fa-graduation-cap"></i>
+                @rootName
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav @(!isArabic ? "me-auto" : "ms-auto")">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/OnlineStudent">
+                            <i class="fas fa-tachometer-alt"></i>
+                            @Localizer["Nav_Dashboard"]
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/OnlineStudent/Learning">
+                            <i class="fas a-book-reader fa-book-reader"></i>
+                            @Localizer["Nav_LearningCenter"]
+                        </a>
+                    </li>
+                </ul>
+                <div class="language-switcher">
+                    <button class="language-btn @(isArabic ? "" : "active")" onclick="switchLanguage('en')">
+                        <i class="fas fa-globe"></i> EN
+                    </button>
+                    <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">
+                        <i class="fas fa-globe"></i> AR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div class="student-header">
-        <div class="row">
-            <div class="col-md-8">
-                <h1 class="page-title">
-                    <i class="fas fa-user-graduate"></i>
-                    @Model.Student.StudentName
-                </h1>
-                <p class="student-meta">
-                    <span class="badge bg-primary">ID: @Model.Student.StudentCode</span>
-                    <span class="text-light">
-                        @(Model.Student.YearCodeNavigation?.YearName ?? "Year N/A") - @(Model.Student.BranchCodeNavigation?.BranchName ?? "Branch N/A")
+    <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+
+    <div class="mobile-nav-sidebar">
+        <div class="mobile-nav-header">
+            <a href="/OnlineStudent" class="mobile-nav-brand">
+                <i class="fas fa-graduation-cap me-2"></i>
+                @rootName
+            </a>
+            <button class="mobile-nav-close" onclick="closeMobileNav()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mobile-nav-links">
+            <a href="/OnlineStudent" class="mobile-nav-link active">
+                <i class="fas fa-tachometer-alt"></i>
+                @Localizer["Nav_Dashboard"]
+            </a>
+            <a href="/OnlineStudent/Learning" class="mobile-nav-link">
+                <i class="fas fa-book-reader"></i>
+                @Localizer["Nav_LearningCenter"]
+            </a>
+        </div>
+        <div class="mobile-language-switcher">
+            <div class="mobile-language-title">@Localizer["Label_Language"]</div>
+            <div class="mobile-language-options">
+                <button class="language-btn @(isArabic ? "" : "active")" onclick="switchLanguage('en')">English</button>
+                <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">العربية</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div id="alertContainer" class="alert-container"></div>
+
+        <div class="student-header">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1 class="page-title">
+                        <i class="fas fa-user-graduate"></i>
+                        @Model.Student.StudentName
+                    </h1>
+                    <div class="student-meta">
+                        <span class="badge bg-primary">ID: @Model.Student.StudentCode</span>
+                        <span class="text-light">
+                            @(Model.Student.YearCodeNavigation?.YearName ?? Localizer["NotAssigned"])
+                            -
+                            @(Model.Student.BranchCodeNavigation?.BranchName ?? Localizer["NotAssigned"])
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-@(isArabic ? "start" : "end")">
+                    <span id="subscription-status" class="badge @(Model.IsSubscribed ? "bg-success" : "bg-secondary")">
+                        @(Model.IsSubscribed ? Localizer["Badge_Subscribed"] : Localizer["Badge_Regular"])
                     </span>
-                </p>
+                </div>
             </div>
-            <div class="col-md-4 text-end">
-                <span id="subscription-status" class="badge @(Model.IsSubscribed ? "bg-success" : "bg-secondary")">
-                    @(Model.IsSubscribed ? "Subscribed" : "Regular")
-                </span>
+        </div>
+
+        <div class="stats-overview">
+            <h3 class="mb-0">@Localizer["Section_AcademicOverview"]</h3>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-item">
+                    <div class="stat-number" id="subjectsCount">@Model.EnrolledSubjects.Count</div>
+                    <div class="stat-label">@Localizer["Stat_Subjects"]</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="examsCount">@Model.AttendedExams.Count</div>
+                    <div class="stat-label">@Localizer["Stat_Exams"]</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="attendanceCount">@Model.TotalAttendanceCount</div>
+                    <div class="stat-label">@Localizer["Stat_Attendance"]</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="averageGrade">--</div>
+                    <div class="stat-label">@Localizer["Stat_Average"]</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-user"></i>
+                    @Localizer["Section_StudentInformation"]
+                </h2>
+            </div>
+            <div class="section-content">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="info-item">
+                            <label>@Localizer["Label_FullName"]</label>
+                            <span>@Model.Student.StudentName</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item">
+                            <label>@Localizer["Label_Age"]</label>
+                            <span>@age @Localizer["Label_AgeSuffix"]</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item">
+                            <label>@Localizer["Label_AcademicYear"]</label>
+                            <span>@(Model.Student.YearCodeNavigation?.YearName ?? Localizer["NotAssigned"])</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item">
+                            <label>@Localizer["Label_Branch"]</label>
+                            <span>@(Model.Student.BranchCodeNavigation?.BranchName ?? Localizer["NotAssigned"])</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <label>@Localizer["Label_ContactNumber"]</label>
+                            <span>@(Model.Student.StudentPhone ?? Localizer["NotProvided"])</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <label>@Localizer["Label_ParentContact"]</label>
+                            <span>@(Model.Student.StudentFatherPhone ?? Localizer["NotProvided"])</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <label>@Localizer["Label_MemberSince"]</label>
+                            <span>@Model.Student.SubscribtionTime.ToString("MMMM yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-book-open"></i>
+                    @Localizer["Section_EnrolledSubjects"]
+                </h2>
+            </div>
+            <div class="section-content">
+                <div id="subjectsGrid" class="subjects-grid">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>@Localizer["Loading_Subjects"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    @Localizer["Section_ExaminationResults"]</h2>
+            </div>
+            <div class="section-content">
+                <div id="examsGrid" class="exams-grid">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>@Localizer["Loading_Exams"]</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="stats-overview">
-        <h3 class="mb-0">Academic Overview</h3>
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-item">
-                <div class="stat-number" id="subjectsCount">@Model.EnrolledSubjects.Count</div>
-                <div class="stat-label">Subjects</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="examsCount">@Model.AttendedExams.Count</div>
-                <div class="stat-label">Exams</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="attendanceCount">@Model.TotalAttendanceCount</div>
-                <div class="stat-label">Attendance</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="averageGrade">--</div>
-                <div class="stat-label">Average %</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section-card">
-        <div class="section-header">
-            <h2 class="section-title"><i class="fas fa-user"></i> Student Info</h2>
-        </div>
-        <div class="section-content">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <label>Name</label>
-                        <span>@Model.Student.StudentName</span>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    @{
-                        var today = DateOnly.FromDateTime(DateTime.Today);
-                        var age = today.Year - Model.Student.StudentBirthdate.Year;
-                        if (Model.Student.StudentBirthdate > today.AddYears(-age)) age--;
-                    }
-                    <div class="info-item">
-                        <label>Age</label>
-                        <span>@age years</span>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <label>Year</label>
-                        <span>@(Model.Student.YearCodeNavigation?.YearName ?? "N/A")</span>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <label>Branch</label>
-                        <span>@(Model.Student.BranchCodeNavigation?.BranchName ?? "N/A")</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-item">
-                        <label>Phone</label>
-                        <span>@Model.Student.StudentPhone</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-item">
-                        <label>Parent Phone</label>
-                        <span>@(Model.Student.StudentFatherPhone ?? Model.Student.StudentFatherPhone ?? "N/A")</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-item">
-                        <label>Member Since</label>
-                        <span>@Model.Student.SubscribtionTime.ToString("MMMM yyyy")</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section-card">
-        <div class="section-header">
-            <h2 class="section-title"><i class="fas fa-book-open"></i> Enrolled Subjects</h2>
-        </div>
-        <div class="section-content">
-            <div id="subjectsGrid" class="subjects-grid">
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <span>Loading subjects...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section-card">
-        <div class="section-header">
-            <h2 class="section-title"><i class="fas fa-clipboard-list"></i> Exams & Grades</h2>
-        </div>
-        <div class="section-content">
-            <div id="examsGrid" class="exams-grid">
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <span>Loading exam results...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
+    <script>
+        function switchLanguage(lang) {
+            document.cookie = ".AspNetCore.Culture=c=" + lang + "|uic=" + lang + "; path=/; max-age=31536000";
+            location.reload();
+        }
+        function closeMobileNav() {
+            document.querySelector('.mobile-nav-sidebar')?.classList.remove('open');
+            document.querySelector('.mobile-nav-overlay')?.classList.remove('show');
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggler = document.querySelector('.navbar-toggler');
+            if (toggler) {
+                toggler.addEventListener('click', () => {
+                    document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
+                    document.querySelector('.mobile-nav-overlay')?.classList.add('show');
+                });
+            }
+        });
+    </script>
     <script src="~/js/OnlineStudent.js"></script>
-}
-
-<style>
-    /* (Same styles as earlier answer, kept concise here for brevity; retain your previous styling or merge) */
-    .student-header {
-        background: linear-gradient(135deg,#667eea,#764ba2);
-        color: #fff;
-        padding: 2rem;
-        border-radius: 14px;
-        margin-bottom: 1.75rem
-    }
-
-    .page-title {
-        font-size: 2.2rem;
-        font-weight: 600;
-        margin: 0 0 .5rem
-    }
-
-    .stats-overview {
-        background: linear-gradient(135deg,#667eea,#764ba2);
-        color: #fff;
-        padding: 1.75rem;
-        border-radius: 14px;
-        margin-bottom: 1.75rem
-    }
-
-    .stats-grid {
-        display: grid;
-        gap: 1.25rem;
-        grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
-        margin-top: 1rem
-    }
-
-    .stat-item {
-        background: rgba(255,255,255,.12);
-        padding: 1rem;
-        border-radius: 10px;
-        text-align: center
-    }
-
-    .stat-number {
-        font-size: 1.9rem;
-        font-weight: 600
-    }
-
-    .section-card {
-        background: #fff;
-        border: 1px solid #e4e7ec;
-        border-radius: 14px;
-        margin-bottom: 1.75rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,.06)
-    }
-
-    .section-header {
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #ebeef3;
-        background: linear-gradient(45deg,#f9fafb,#eff2f6)
-    }
-
-    .section-title {
-        margin: 0;
-        font-size: 1.15rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: .6rem;
-        color: #2c3e50
-    }
-
-        .section-title i {
-            color: #667eea
-        }
-
-    .section-content {
-        padding: 1.5rem
-    }
-
-    .info-item {
-        background: #f8f9fa;
-        padding: .85rem 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #667eea
-    }
-
-        .info-item label {
-            font-size: .75rem;
-            letter-spacing: .5px;
-            text-transform: uppercase;
-            margin: 0 0 .25rem;
-            font-weight: 600;
-            color: #555
-        }
-
-        .info-item span {
-            font-size: .95rem;
-            font-weight: 500;
-            color: #283036
-        }
-
-    .subjects-grid, .exams-grid {
-        display: grid;
-        gap: 1.25rem
-    }
-
-    .subjects-grid {
-        grid-template-columns: repeat(auto-fill,minmax(320px,1fr))
-    }
-
-    .exams-grid {
-        grid-template-columns: repeat(auto-fill,minmax(360px,1fr))
-    }
-
-    .subject-card, .exam-card {
-        background: linear-gradient(145deg,#ffffff,#f8f9fb);
-        border: 1px solid #e6e9ef;
-        border-radius: 12px;
-        padding: 1.1rem;
-        position: relative;
-        overflow: hidden;
-        transition: .25s
-    }
-
-        .subject-card:before, .exam-card:before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 4px;
-            width: 100%;
-            background: linear-gradient(90deg,#667eea,#764ba2)
-        }
-
-        .exam-card:before {
-            background: linear-gradient(90deg,#17a2b8,#764ba2)
-        }
-
-        .subject-card:hover, .exam-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 22px rgba(0,0,0,.12)
-        }
-
-    .subject-header, .exam-header {
-        display: flex;
-        justify-content: space-between;
-        gap: .75rem;
-        flex-wrap: wrap;
-        margin-bottom: .75rem
-    }
-
-        .subject-header h4, .exam-header h4 {
-            margin: 0;
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: #2c3e50
-        }
-
-    .teacher-badge, .grade-badge {
-        background: #667eea;
-        color: #fff;
-        padding: .4rem .75rem;
-        border-radius: 22px;
-        font-size: .7rem;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        gap: .35rem
-    }
-
-    .grade-badge {
-        background: #17a2b8
-    }
-
-    .grade-pass {
-        background: linear-gradient(45deg,#28a745,#20c997)
-    }
-
-    .grade-fail {
-        background: linear-gradient(45deg,#dc3545,#fd7e14)
-    }
-
-    .subject-details, .exam-details {
-        display: flex;
-        flex-direction: column;
-        gap: .45rem
-    }
-
-    .detail-item, .detail-row {
-        display: flex;
-        align-items: center;
-        gap: .6rem;
-        font-size: .8rem;
-        color: #444;
-        background: rgba(102,126,234,.06);
-        padding: .45rem .6rem;
-        border-radius: 6px
-    }
-
-        .detail-item i {
-            color: #667eea;
-            font-size: .85rem;
-            width: 16px;
-            text-align: center
-        }
-
-    .online-badge {
-        background: linear-gradient(45deg,#28a745,#20c997);
-        color: #fff;
-        padding: .3rem .6rem;
-        font-size: .65rem;
-        border-radius: 16px;
-        display: inline-flex;
-        align-items: center;
-        gap: .3rem;
-        margin-top: .4rem
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 2.8rem 1rem;
-        color: #6c7782
-    }
-
-        .empty-state i {
-            font-size: 2.4rem;
-            opacity: .4;
-            margin-bottom: .6rem;
-            color: #667eea
-        }
-
-    .loading-spinner {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 2.4rem;
-        color: #667eea
-    }
-
-    .spinner {
-        width: 42px;
-        height: 42px;
-        border: 4px solid #eceff3;
-        border-top: 4px solid #667eea;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: .75rem
-    }
-
-    .alert-container {
-        position: fixed;
-        top: 18px;
-        right: 18px;
-        z-index: 1200
-    }
-
-    .alert-message {
-        padding: .85rem 1.2rem;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        gap: .55rem;
-        box-shadow: 0 4px 14px rgba(0,0,0,.12);
-        font-size: .8rem
-    }
-
-    .alert-success {
-        background: #d4edda;
-        color: #155724
-    }
-
-    .alert-error {
-        background: #f8d7da;
-        color: #721c24
-    }
-
-    .alert-info {
-        background: #d1ecf1;
-        color: #0c5460
-    }
-    @@keyframes spin {
-        to
-
-    {
-        transform: rotate(360deg)
-    }
-
-    }
-    @@media (max-width:768px) {
-        .subjects-grid,.exams-grid
-
-    {
-        grid-template-columns: 1fr
-    }
-
-    .student-header {
-        padding: 1.4rem
-    }
-
-    .page-title {
-        font-size: 1.65rem
-    }
-
-    .stats-overview {
-        padding: 1.25rem
-    }
-
-    }
-</style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

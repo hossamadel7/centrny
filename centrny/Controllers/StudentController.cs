@@ -11,6 +11,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 
 namespace centrny.Controllers
 {
@@ -25,23 +26,34 @@ namespace centrny.Controllers
             _logger = logger;
         }
 
-        // Session/context helpers
+        // ------------------ SESSION HELPERS ------------------
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
+
+        // Keep rootCode by domain (consistent with original design)
         private (int? userCode, int? groupCode, int? rootCode, string username) GetSessionContext()
         {
             var rootRecord = _context.Roots
                 .FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", ""));
 
             return (
-                GetSessionInt("UserCode"),      // This should return int?
-                GetSessionInt("GroupCode"),     // This should return int?
+                GetSessionInt("UserCode"),
+                GetSessionInt("GroupCode"),
                 rootRecord?.RootCode,
                 GetSessionString("Username")
             );
         }
+
         private int GetRootCode() =>
             _context.Roots.FirstOrDefault(x => x.RootDomain == HttpContext.Request.Host.Host.Replace("www.", ""))?.RootCode ?? 0;
+
+        private void LogSessionIfInvalid(string scope, int? userCode, int? groupCode, string username)
+        {
+            if (!userCode.HasValue || !groupCode.HasValue || string.IsNullOrEmpty(username))
+            {
+                _logger.LogWarning($"[{scope}] Missing session values. UserCode={userCode?.ToString() ?? "null"}, GroupCode={groupCode?.ToString() ?? "null"}, Username={(username ?? "null")}. SessionId={HttpContext.Session.Id}");
+            }
+        }
         // ==================== REGISTRATION METHODS ====================
 
         //[HttpGet]
@@ -426,45 +438,85 @@ namespace centrny.Controllers
         }
         // ==================== ATTENDANCE METHODS ====================
 
+
         [HttpPost]
         [Route("Student/CheckAttendancePassword")]
         public async Task<IActionResult> CheckAttendancePassword([FromBody] AttendancePasswordRequest req)
         {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, error = "Invalid request payload." });
+
             var allowedGroups = new[] { "Admins", "Attendance Officers" };
 
-            var users = await _context.Users
-                .Join(_context.Groups, u => u.GroupCode, g => g.GroupCode, (u, g) => new { u, g })
-                .Where(joined => joined.g.BranchCode == req.BranchCode && allowedGroups.Contains(joined.g.GroupName))
-                .Select(joined => new { joined.u.UserCode, joined.u.Password, joined.u.Username, joined.u.GroupCode })
-                .ToListAsync();
+            var users = await (
+                from u in _context.Users
+                join g in _context.Groups on u.GroupCode equals g.GroupCode
+                where g.BranchCode == req.BranchCode && allowedGroups.Contains(g.GroupName)
+                select new
+                {
+                    u.UserCode,
+                    u.Password,
+                    u.Username,
+                    u.GroupCode,
+                    g.GroupName,
+                    g.BranchCode,   // int
+                    g.RootCode      // int
+                }
+            ).ToListAsync();
 
             foreach (var user in users)
             {
-                if (user.Password == req.Password)
+                if (user.Password == MD5hasher(req.Password))
                 {
-                    // Set session values - make sure these are being set
+                    // Set session keys (no condition needed; they are ints)
                     HttpContext.Session.SetInt32("UserCode", user.UserCode);
                     HttpContext.Session.SetInt32("GroupCode", user.GroupCode);
                     HttpContext.Session.SetString("Username", user.Username);
+                    HttpContext.Session.SetInt32("BranchCode", (int)user.BranchCode);
+                    HttpContext.Session.SetInt32("RootCode", user.RootCode);
 
-                    // Force session to save immediately
-                    await HttpContext.Session.CommitAsync();
+                    // (Claims optional—kept for consistency)
+                    var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim("UserId", user.UserCode.ToString()),
+                new Claim("GroupCode", user.GroupCode.ToString()),
+                new Claim("GroupName", user.GroupName)
+            };
+                    var identity = new ClaimsIdentity(claims, "AttendancePassword");
+                    await HttpContext.SignInAsync(new ClaimsPrincipal(identity));
+
+                    _logger.LogInformation(
+                        "[CheckAttendancePassword] Session set: UserCode={UserCode}, GroupCode={GroupCode}, Branch={Branch}, Root={Root}, SessionId={SessionId}",
+                        user.UserCode, user.GroupCode, user.BranchCode, user.RootCode, HttpContext.Session.Id);
 
                     return Json(new
                     {
                         success = true,
                         username = user.Username,
                         userCode = user.UserCode,
-                        message = "User authorized and logged in. You may now mark attendance."
+                        message = "User authorized. You may now mark attendance."
                     });
                 }
             }
 
-            return Json(new
+            _logger.LogWarning("[CheckAttendancePassword] Failed authorization attempt for BranchCode={BranchCode}", req.BranchCode);
+            return Json(new { success = false, error = "Wrong password or not authorized for this branch." });
+        }
+
+        // Put this method inside the StudentController (private or public static)
+        public static string MD5hasher(string input)
+        {
+            using (var md5 = System.Security.Cryptography.MD5.Create())
             {
-                success = false,
-                error = "Wrong password or not authorized for this branch."
-            });
+                byte[] inputBytes = System.Text.Encoding.Unicode.GetBytes(input ?? "");
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                var sb = new System.Text.StringBuilder();
+                foreach (var b in hashBytes)
+                    sb.Append(b.ToString("X2")); // Uppercase hex
+                return sb.ToString();
+            }
         }
         [HttpPost]
         [Route("Student/MarkAttendance")]
@@ -474,6 +526,7 @@ namespace centrny.Controllers
 
             if (!userCode.HasValue || !groupCode.HasValue)
             {
+                LogSessionIfInvalid("MarkAttendance", userCode, groupCode, username);
                 return Json(new { success = false, error = "Session expired. Please authenticate again." });
             }
 
@@ -485,7 +538,6 @@ namespace centrny.Controllers
             if (request == null || string.IsNullOrEmpty(request.ItemKey))
                 return Json(new { success = false, error = "Invalid request." });
 
-            // Validate required request fields
             if (!request.AttendanceType.HasValue)
                 return Json(new { success = false, error = "Attendance type is required." });
 
@@ -502,19 +554,15 @@ namespace centrny.Controllers
             if (classEntity == null)
                 return Json(new { success = false, error = "Class not found." });
 
-           
-
             if (!await IsCurrentUserAdmin(student.RootCode, classEntity.BranchCode))
                 return Json(new { success = false, error = "Only administrators can mark attendance." });
 
             if (await _context.Attends.AnyAsync(a => a.StudentId == student.StudentCode && a.ClassId == request.ClassCode))
                 return Json(new { success = false, error = "Student has already been marked as attended for this class." });
 
-            // Determine session price
             int discountTypeCode = await GetDiscountTypeCode();
             decimal sessionPriceToSave = classEntity.ClassPrice ?? 0;
 
-            // Safe handling of nullable values
             if (request.AttendanceType.Value == discountTypeCode &&
                 request.SessionPrice.HasValue &&
                 request.SessionPrice.Value > 0)
@@ -522,18 +570,17 @@ namespace centrny.Controllers
                 sessionPriceToSave = request.SessionPrice.Value;
             }
 
-            // Create attendance record with safe nullable handling
             var attendance = new Attend
             {
                 TeacherCode = classEntity.TeacherCode,
                 ScheduleCode = classEntity.ScheduleCode,
                 ClassId = request.ClassCode,
-                HallId = classEntity.HallCode, // Safe because we validated above
+                HallId = classEntity.HallCode,
                 StudentId = student.StudentCode,
                 AttendDate = DateTime.Now,
                 SessionPrice = sessionPriceToSave,
                 RootCode = student.RootCode,
-                Type = request.AttendanceType.Value // Safe because we validated above
+                Type = request.AttendanceType.Value
             };
 
             _context.Attends.Add(attendance);

@@ -9,6 +9,7 @@
     var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
     var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var htmlDir = isArabic ? "rtl" : "ltr";
+    Layout = null;
 }
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
@@ -32,12 +33,23 @@
             direction: rtl;
             text-align: right;
         }
-
         .class-warning {
             color: #d32f2f;
             font-weight: bold;
             margin-bottom: 0.3em;
             font-size: 1em;
+        }
+
+        .attendance-password-modal {
+            position: fixed;
+            z-index: 1050;
+        }
+        .attendance-password-modal .modal-dialog {
+            position: relative;
+            z-index: 1100;
+        }
+        .attendance-password-modal .modal-dialog * {
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -99,7 +111,6 @@
                                 <i class="fas @(Model.IsActive ? "fa-check-circle" : "fa-times-circle")"></i>
                                 <span id="status-label"></span>
                             </div>
-                            <!-- 4 Info Cards stacked for mobile and row for desktop -->
                             <div class="row justify-content-center mt-4">
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
@@ -138,14 +149,14 @@
                                     </div>
                                 </div>
                             </div>
+                            <a href="@Url.Action("StudentData", "Student", new { item_key = Model.ItemKey })" class="modern-link-btn">
+                                <i class="fas fa-tasks"></i> @Localizer["ViewAssignmentsAndExams"]
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- ... rest of your code unchanged ... -->
-            <a href="@Url.Action("StudentData", "Student", new { item_key = Model.ItemKey })" class="modern-link-btn">
-                <i class="fas fa-tasks"></i> @Localizer["ViewAssignmentsAndExams"]
-            </a>
+
             <div class="profile-content">
                 <!-- Upcoming Classes -->
                 <div class="section-card">
@@ -192,37 +203,39 @@
             </div>
         </div>
     </div>
+
     <!-- Weekly Classes Modal -->
-    <div id="weeklyModal" class="modal-overlay">
-        <div class="weekly-modal">
+    <div id="weeklyModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="weekly-modal" role="document">
             <div class="modal-header">
                 <h3 class="modal-title" id="modalTitle"></h3>
-                <button class="close-btn" onclick="closeWeeklyModal()">
+                <button class="close-btn" onclick="closeWeeklyModal()" aria-label="Close weekly modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Dynamic content will be loaded here -->
-            </div>
+            <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
+
     <!-- Attendance Password Modal -->
-    <div id="attendancePasswordModal" class="attendance-password-modal">
-        <div class="modal-dialog">
+    <div id="attendancePasswordModal" class="attendance-password-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog" role="document" onclick="event.stopPropagation();">
             <div class="modal-header">
                 Attendance Authorization
-                <button class="close-btn" type="button" onclick="closeAttendancePasswordModal()">
+                <button class="close-btn" type="button" onclick="closeAttendancePasswordModal()" aria-label="Close password modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div id="attendancePasswordError" class="error-msg" style="display:none;"></div>
-            <form id="attendancePasswordForm" autocomplete="off" onsubmit="return false;">
+            <form id="attendancePasswordForm" autocomplete="off" novalidate>
                 <div class="form-group">
                     <label for="attendancePasswordInput">Please enter your password:</label>
                     <input type="password" class="form-control" id="attendancePasswordInput" autocomplete="off" />
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeAttendancePasswordModal()">Cancel</button>
+                    <button type="button" class="btn btn-secondary" id="attendancePasswordCancelBtn">
+                        Cancel
+                    </button>
                     <button type="submit" class="btn btn-primary" id="attendancePasswordSubmitBtn">
                         Submit
                     </button>
@@ -230,36 +243,41 @@
             </form>
         </div>
     </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        // ---- localStorage branch auth helpers ----
-        function isBranchAuthorized(branchCode) {
-            let auth = localStorage.getItem('authorizedBranches');
-            if (!auth) return false;
-            try {
-                let obj = JSON.parse(auth);
-                return !!obj[branchCode];
-            } catch {
-                return false;
-            }
-        }
-        function setBranchAuthorized(branchCode) {
-            let auth = localStorage.getItem('authorizedBranches');
-            let obj = {};
-            if (auth) {
-                try { obj = JSON.parse(auth); } catch {}
-            }
-            obj[branchCode] = true;
-            localStorage.setItem('authorizedBranches', JSON.stringify(obj));
+        // ========== Utility & State ==========
+        const ITEM_KEY = '@Model.ItemKey';
+        const CAN_MARK_ATTENDANCE = @Model.CanMarkAttendance.ToString().ToLower();
+        let subjectsData = [];
+        let attendanceTypes = [];
+        let upcomingClassesData = [];
+        let lastBranchCode = null;
+        const $loc = $('#js-localization');
+
+        function getJsString(key) { return $loc.data(key) ?? key; }
+        function escapeHtml(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
 
-        function getJsString(key) { return $('#js-localization').data(key); }
+        function isBranchAuthorized(branchCode) {
+            if (branchCode == null) return false;
+            try {
+                const auth = JSON.parse(localStorage.getItem('authorizedBranches') || '{}');
+                return !!auth[branchCode];
+            } catch { return false; }
+        }
+        function setBranchAuthorized(branchCode) {
+            if (branchCode == null) return;
+            let auth = {};
+            try { auth = JSON.parse(localStorage.getItem('authorizedBranches') || '{}'); } catch {}
+            auth[branchCode] = true;
+            localStorage.setItem('authorizedBranches', JSON.stringify(auth));
+        }
+
+        // ========== Labels ==========
         function setStudentLabels() {
-            $('#academic-year-label').text(getJsString('academic-year'));
-            $('#branch-label').text(getJsString('branch'));
-            $('#student-label').text(getJsString('student'));
-            $('#parent-phone-label').text(getJsString('parent-phone'));
-            $('#student-phone-label').text(getJsString('student-phone'));
             $('#todays-classes-title').text(getJsString('todays-classes'));
             $('#admin-view-label').text(getJsString('admin-view'));
             $('#viewing-todays-classes-only-admins-label').text(getJsString('viewing-todays-classes-only-admins'));
@@ -269,23 +287,48 @@
             $('#loading-subjects-label').text(getJsString('loading-subjects'));
             $('#modalTitle').text(getJsString('weekly-classes'));
             $('#status-label').text(getJsString('@(Model.IsActive ? "active-student" : "inactive-student")'));
+            $('#student-label').text(getJsString('student'));
         }
-        const ITEM_KEY = '@Model.ItemKey';
-        const CAN_MARK_ATTENDANCE = "@Model.CanMarkAttendance.ToString().ToLower()";
-        let subjectsData = [];
-        let attendanceTypes = [];
-        let upcomingClassesData = [];
-        let lastBranchCode = null;
 
+        // ========== Data Loaders ==========
+        async function loadAttendanceTypes() {
+            try {
+                const r = await fetch('/Student/GetAttendanceTypes');
+                attendanceTypes = await r.json();
+                if (!Array.isArray(attendanceTypes)) attendanceTypes = [];
+            } catch { attendanceTypes = []; }
+        }
+
+        async function loadStudentSubjects() {
+            try {
+                const r = await fetch(`/Student/GetStudentSubjects/${ITEM_KEY}`);
+                subjectsData = await r.json();
+                renderSubjects(subjectsData);
+            } catch {
+                showError('subjectsGrid', 'failed-to-load-subjects');
+            }
+        }
+
+        async function loadUpcomingClasses() {
+            try {
+                const r = await fetch(`/Student/GetUpcomingClasses/${ITEM_KEY}`);
+                upcomingClassesData = await r.json();
+                renderUpcomingClasses(upcomingClassesData);
+            } catch {
+                showError('upcomingClassesGrid', 'failed-to-load-classes');
+            }
+        }
+
+        // ========== Rendering ==========
         function showError(containerId, key) {
             const container = document.getElementById(containerId);
+            if (!container) return;
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-exclamation-triangle"></i>
                     <h4>${getJsString('error')}</h4>
                     <p>${getJsString(key)}</p>
-                </div>
-            `;
+                </div>`;
         }
 
         function renderEmptyState(icon, titleKey, msgKey) {
@@ -296,444 +339,474 @@
             </div>`;
         }
 
-        async function loadAttendanceTypes() {
-            try {
-                const response = await fetch('/Student/GetAttendanceTypes');
-                attendanceTypes = await response.json();
-            } catch {}
-        }
-        async function loadStudentSubjects() {
-            try {
-                const response = await fetch(`/Student/GetStudentSubjects/${ITEM_KEY}`);
-                const data = await response.json();
-                subjectsData = data;
-                renderSubjects(data);
-            } catch {
-                showError('subjectsGrid', 'failed-to-load-subjects');
-            }
-        }
         function renderSubjects(subjects) {
             const container = document.getElementById('subjectsGrid');
-            if (subjects.length === 0) {
+            if (!container) return;
+            if (!subjects || subjects.length === 0) {
                 container.innerHTML = renderEmptyState('fa-book-open', 'no-subjects-found', 'no-subjects-found-msg');
                 return;
             }
-            container.innerHTML = subjects.map(subject => `
-                <div class="subject-card">
-                    <div class="subject-header">
-                        <div class="subject-icon">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <h3 class="subject-name">${subject.subjectName}</h3>
-                    </div>
-                    <div class="subject-details">
-                        <div class="subject-detail">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <span>${subject.teacherName}</span>
-                        </div>
-                        <div class="subject-detail">
-                            <i class="fas fa-phone"></i>
-                            <span>${subject.teacherPhone || getJsString('na')}</span>
-                        </div>
-                        <div class="subject-detail">
-                            <i class="fas fa-building"></i>
-                            <span>${subject.branchName}</span>
-                        </div>
-                        <div class="subject-detail">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span>${subject.eduYearName}</span>
-                        </div>
-                        <div class="subject-detail">
-                            <i class="fas fa-dollar-sign"></i>
-                            <span>${subject.studentFee ? subject.studentFee + ' EGP' : getJsString('free')}</span>
-                        </div>
-                        <div class="subject-detail">
-                            <i class="fas fa-${subject.isOnline ? 'laptop' : 'school'}"></i>
-                            <span>${subject.isOnline ? getJsString('online') : getJsString('in-person')}</span>
-                        </div>
-                    </div>
-                    ${subject.scheduleDay ? `
-                        <div class="schedule-info">
-                            <div class="schedule-day">
-                                <i class="fas fa-calendar-day"></i>
-                                ${subject.scheduleDay}
-                            </div>
-                            ${subject.scheduleStartTime && subject.scheduleEndTime ? `
-                                <div class="schedule-time">
-                                    <i class="fas fa-clock"></i>
-                                    <span>${subject.scheduleStartTime} - ${subject.scheduleEndTime}</span>
-                                </div>
-                            ` : ''}
-                            ${subject.hallName ? `
-                                <div class="subject-detail" style="margin-top: 0.5rem;">
-                                    <i class="fas fa-door-open"></i>
-                                    <span>${subject.hallName}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                    ` : ''}
-                    <div style="margin-top: 1rem;">
-                        <button class="view-weekly-btn" onclick="viewWeeklyClasses(${subject.subjectCode}, ${subject.teacherCode}, ${subject.yearCode}, '${subject.subjectName}', '${subject.teacherName}')">
-                            <i class="fas fa-calendar-week"></i>
-                            ${getJsString('weekly-classes')}
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        function filterSubjects(searchTerm) {
-            const filtered = subjectsData.filter(subject =>
-                subject.subjectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                subject.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                subject.branchName.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            renderSubjects(filtered);
-        }
-        async function loadUpcomingClasses() {
-            try {
-                const response = await fetch(`/Student/GetUpcomingClasses/${ITEM_KEY}`);
-                const data = await response.json();
-                upcomingClassesData = data;
-                renderUpcomingClasses(data);
-            } catch {
-                showError('upcomingClassesGrid', 'failed-to-load-classes');
-            }
+            container.innerHTML = subjects.map(s => subjectCardHtml(s)).join('');
         }
 
-        function getDiscountAttendanceType() {
-            return attendanceTypes.find(type =>
-                type.text.toLowerCase().includes('discount') ||
-                type.text.includes('خصم')
-            );
-        }
-
-        function renderAttendanceControls(classItem) {
-            if (classItem.isAttended) {
-                return `
-                    <div class="attended-badge">
-                        <i class="fas fa-check"></i>
-                        <span>${getJsString('already-attended')}</span>
-                    </div>
-                `;
-            }
-            if (!isBranchAuthorized(classItem.branchCode)) {
-                return '';
-            }
-            const discountType = getDiscountAttendanceType();
-            const discountValue = discountType ? discountType.value : null;
+        function subjectCardHtml(s) {
             return `
-                <div class="attendance-controls">
-                    <select class="attendance-type-select" id="attendanceType_${classItem.classCode}" onchange="onAttendanceTypeChange(${classItem.classCode})">
-                        ${attendanceTypes.map(type => `<option value="${type.value}">${type.text}</option>`).join('')}
-                    </select>
-                    <input type="number" min="0" step="1" placeholder="Session price" class="discount-price-input" id="discountPrice_${classItem.classCode}" style="display:none;" />
-                    <button class="attend-btn" onclick="markAttendance(${classItem.classCode}, '${encodeURIComponent(JSON.stringify(classItem))}')" id="attendBtn_${classItem.classCode}">
-                        <i class="fas fa-check"></i>
-                        <span>${getJsString('mark-attendance')}</span>
+            <div class="subject-card">
+                <div class="subject-header">
+                    <div class="subject-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="subject-name">${escapeHtml(s.subjectName)}</h3>
+                </div>
+                <div class="subject-details">
+                    ${subjectDetail('fa-chalkboard-teacher', s.teacherName)}
+                    ${subjectDetail('fa-phone', s.teacherPhone || getJsString('na'))}
+                    ${subjectDetail('fa-building', s.branchName)}
+                    ${subjectDetail('fa-graduation-cap', s.eduYearName)}
+                    ${subjectDetail('fa-dollar-sign', s.studentFee ? s.studentFee + ' EGP' : getJsString('free'))}
+                    ${subjectDetail(s.isOnline ? 'fa-laptop' : 'fa-school', s.isOnline ? getJsString('online') : getJsString('in-person'))}
+                </div>
+                ${s.scheduleDay ? scheduleInfoHtml(s) : ''}
+                <div style="margin-top:1rem;">
+                    <button class="view-weekly-btn"
+                            data-weekly='${encodeURIComponent(JSON.stringify({
+                                subjectCode: s.subjectCode,
+                                teacherCode: s.teacherCode,
+                                yearCode: s.yearCode,
+                                subjectName: s.subjectName,
+                                teacherName: s.teacherName
+                            }))}'>
+                        <i class="fas fa-calendar-week"></i>
+                        ${getJsString('weekly-classes')}
                     </button>
                 </div>
-            `;
+            </div>`;
         }
 
-        function onAttendanceTypeChange(classCode) {
-            const select = document.getElementById(`attendanceType_${classCode}`);
-            const input = document.getElementById(`discountPrice_${classCode}`);
-            const discountType = getDiscountAttendanceType();
-            const discountValue = discountType ? discountType.value.toString() : null;
-            if (select.value === discountValue) {
-                input.style.display = 'inline-block';
-            } else {
-                input.style.display = 'none';
-                input.value = '';
-            }
+        function subjectDetail(icon, text) {
+            return `<div class="subject-detail">
+                <i class="fas ${icon}"></i><span>${escapeHtml(text)}</span>
+            </div>`;
         }
 
-        async function markAttendance(classCode, classItemStr) {
-            const classItem = JSON.parse(decodeURIComponent(classItemStr));
-            const button = document.getElementById(`attendBtn_${classCode}`);
-            const select = document.getElementById(`attendanceType_${classCode}`);
-            const discountInput = document.getElementById(`discountPrice_${classCode}`);
-            if (!button || !select) return;
-            const attendanceType = parseInt(select.value);
-            const discountType = getDiscountAttendanceType();
-            const discountValue = discountType ? Number(discountType.value) : null;
-            let sessionPrice = null;
-            if (attendanceType === discountValue && discountInput && discountInput.value) {
-                sessionPrice = parseInt(discountInput.value);
-            }
-            button.disabled = true;
-            button.classList.add('attending');
-            button.innerHTML = `<i class="fas fa-spinner fa-spin"></i><span>${getJsString('marking')}</span>`;
-            try {
-                const payload = { itemKey: ITEM_KEY, classCode: classCode, attendanceType: attendanceType };
-                if (sessionPrice !== null) {
-                    payload.sessionPrice = sessionPrice;
-                }
-                const response = await fetch('/Student/MarkAttendance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    alert(getJsString('attendance-marked-successfully'));
-                    loadUpcomingClasses();
-                } else {
-                    alert(result.error || getJsString('failed-to-mark-attendance'));
-                    button.disabled = false;
-                    button.classList.remove('attending');
-                    button.innerHTML = `<i class="fas fa-check"></i><span>${getJsString('mark-attendance')}</span>`;
-                }
-            } catch {
-                alert(getJsString('attendance-error'));
-                button.disabled = false;
-                button.classList.remove('attending');
-                button.innerHTML = `<i class="fas fa-check"></i><span>${getJsString('mark-attendance')}</span>`;
-            }
+        function scheduleInfoHtml(s) {
+            return `
+            <div class="schedule-info">
+                <div class="schedule-day">
+                    <i class="fas fa-calendar-day"></i>
+                    ${escapeHtml(s.scheduleDay)}
+                </div>
+                ${(s.scheduleStartTime && s.scheduleEndTime) ? `
+                <div class="schedule-time">
+                    <i class="fas fa-clock"></i>
+                    <span>${escapeHtml(s.scheduleStartTime)} - ${escapeHtml(s.scheduleEndTime)}</span>
+                </div>` : ''}
+                ${s.hallName ? `
+                <div class="subject-detail" style="margin-top:0.5rem;">
+                    <i class="fas fa-door-open"></i>
+                    <span>${escapeHtml(s.hallName)}</span>
+                </div>` : ''}
+            </div>`;
         }
 
         function renderUpcomingClasses(classes) {
             const container = document.getElementById('upcomingClassesGrid');
-            if (classes.length === 0) {
+            if (!container) return;
+            if (!classes || classes.length === 0) {
                 container.innerHTML = renderEmptyState('fa-clock', 'no-classes-available', 'no-classes-available-msg');
                 return;
             }
-            container.innerHTML = classes.map(classItem => {
-                const showScheduleWarning =
-                    (classItem.assignedScheduleCode != null) &&
-                    (classItem.scheduleCode == null || classItem.scheduleCode !== classItem.assignedScheduleCode);
-                return `
-                <div class="class-card ${!classItem.canAttend ? 'attended' : ''}"
-                    style="cursor:pointer;"
-                    data-class='${JSON.stringify(classItem).replace(/'/g, "&apos;")}'
-                    onclick='onClassCardClick(this.getAttribute("data-class"))'>
-                    <div class="class-header">
-                        <div class="class-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                        <div class="class-info">
-                             ${showScheduleWarning ? `<div class="class-warning">This class is not in your regular schedule.</div>` : ""}
-                            <h3>${classItem.className}</h3>
-                            <div class="class-subject">${classItem.subjectName}</div>
-                        </div>
+            container.innerHTML = classes.map(c => classCardHtml(c)).join('');
+        }
+
+        function classCardHtml(c) {
+            const scheduleWarning = (c.assignedScheduleCode != null) &&
+                                    (c.scheduleCode == null || c.scheduleCode !== c.assignedScheduleCode);
+            return `
+            <div class="class-card ${!c.canAttend ? 'attended' : ''}"
+                 data-class='${encodeURIComponent(JSON.stringify(c))}'>
+                <div class="class-header">
+                    <div class="class-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
                     </div>
-                    <div class="class-details">
-                        <div class="class-detail">
-                            <i class="fas fa-user-tie"></i>
-                            <span>${classItem.teacherName}</span>
-                        </div>
-                        <div class="class-detail">
-                            <i class="fas fa-building"></i>
-                            <span>${classItem.branchName}</span>
-                        </div>
-                        <div class="class-detail">
-                            <i class="fas fa-door-open"></i>
-                            <span>${classItem.hallName}</span>
-                        </div>
-                        <div class="class-detail">
-                            <i class="fas fa-dollar-sign"></i>
-                            <span>${classItem.classPrice ? classItem.classPrice + ' EGP' : getJsString('free')}</span>
-                        </div>
+                    <div class="class-info">
+                        ${scheduleWarning ? `<div class="class-warning">This class is not in your regular schedule.</div>` : ''}
+                        <h3>${escapeHtml(c.className)}</h3>
+                        <div class="class-subject">${escapeHtml(c.subjectName)}</div>
                     </div>
-                    <div class="class-time">
-                        <div class="time-info">
-                            <div class="time-label">${getJsString('start-time')}</div>
-                            <div class="time-value">${classItem.startTime}</div>
-                        </div>
-                        <div class="time-info">
-                            <div class="time-label">${getJsString('end-time')}</div>
-                            <div class="time-value">${classItem.endTime}</div>
-                        </div>
-                    </div>
-                    ${renderAttendanceControls(classItem)}
                 </div>
-            `;
-            }).join('');
+                <div class="class-details">
+                    ${classDetail('fa-user-tie', c.teacherName)}
+                    ${classDetail('fa-building', c.branchName)}
+                    ${classDetail('fa-door-open', c.hallName)}
+                    ${classDetail('fa-dollar-sign', c.classPrice ? c.classPrice + ' EGP' : getJsString('free'))}
+                </div>
+                <div class="class-time">
+                    <div class="time-info">
+                        <div class="time-label">${getJsString('start-time')}</div>
+                        <div class="time-value">${escapeHtml(c.startTime)}</div>
+                    </div>
+                    <div class="time-info">
+                        <div class="time-label">${getJsString('end-time')}</div>
+                        <div class="time-value">${escapeHtml(c.endTime)}</div>
+                    </div>
+                </div>
+                ${renderAttendanceControls(c)}
+            </div>`;
         }
 
-        function onClassCardClick(classItemJson) {
-            let classItem;
-            try {
-                classItem = JSON.parse(classItemJson.replace(/&apos;/g, "'"));
-            } catch {
-                classItem = null;
-            }
-            lastBranchCode = classItem ? classItem.branchCode : null;
-            if (!isBranchAuthorized(lastBranchCode)) {
-                $('#attendancePasswordInput').val('');
-                $('#attendancePasswordError').hide();
-                $('#attendancePasswordModal').addClass('show');
-                setTimeout(() => {
-                    $('#attendancePasswordInput').focus();
-                }, 200);
-            }
+        function classDetail(icon, text) {
+            return `<div class="class-detail">
+                <i class="fas ${icon}"></i><span>${escapeHtml(text)}</span>
+            </div>`;
         }
 
-        function closeAttendancePasswordModal() {
-            $('#attendancePasswordModal').removeClass('show');
+        function getDiscountAttendanceType() {
+            return attendanceTypes.find(t =>
+                (t.text || '').toLowerCase().includes('discount') ||
+                (t.text || '').includes('خصم')
+            );
         }
 
-        $('#attendancePasswordForm').on('submit', async function() {
-            const password = $('#attendancePasswordInput').val();
-            if (!password) return;
-            $('#attendancePasswordSubmitBtn').attr('disabled', true);
-            $('#attendancePasswordError').hide();
-            try {
-                const res = await fetch('/Student/CheckAttendancePassword', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        Password: password,
-                        BranchCode: lastBranchCode
-                    })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    $('#attendancePasswordModal').removeClass('show');
-                    setBranchAuthorized(lastBranchCode);
-                    renderUpcomingClasses(upcomingClassesData);
-                } else {
-                    $('#attendancePasswordError').text(result.error || 'Wrong password or not authorized.').show();
-                    $('#attendancePasswordInput').val('').focus();
-                }
-            } finally {
-                $('#attendancePasswordSubmitBtn').attr('disabled', false);
+        function renderAttendanceControls(c) {
+            if (c.isAttended) {
+                return `<div class="attended-badge">
+                    <i class="fas fa-check"></i>
+                    <span>${getJsString('already-attended')}</span>
+                </div>`;
             }
-        });
+            if (!isBranchAuthorized(c.branchCode)) return '';
+            return `
+            <div class="attendance-controls" data-attendance="${c.classCode}">
+                <select class="attendance-type-select" id="attendanceType_${c.classCode}">
+                    ${attendanceTypes.map(t => `<option value="${t.value}">${escapeHtml(t.text)}</option>`).join('')}
+                </select>
+                <input type="number" min="0" step="1" placeholder="Session price"
+                       class="discount-price-input" id="discountPrice_${c.classCode}" style="display:none;" />
+                <button class="attend-btn" data-attend-btn="${c.classCode}">
+                    <i class="fas fa-check"></i>
+                    <span>${getJsString('mark-attendance')}</span>
+                </button>
+            </div>`;
+        }
 
-        async function viewWeeklyClasses(subjectCode, teacherCode, yearCode, subjectName, teacherName) {
+        // ========== Weekly Classes ==========
+        function openWeeklyModal(payload) {
             const modal = document.getElementById('weeklyModal');
             const modalTitle = document.getElementById('modalTitle');
             const modalBody = document.getElementById('modalBody');
-            modalTitle.textContent = `${getJsString('weekly-classes')} - ${subjectName} (${teacherName})`;
+            if (!modal || !modalTitle || !modalBody) return;
+            modalTitle.textContent = `${getJsString('weekly-classes')} - ${payload.subjectName} (${payload.teacherName})`;
             modalBody.innerHTML = `
                 <div class="loading-spinner">
                     <div class="spinner"></div>
                     <span>${getJsString('loading-weekly-classes')}</span>
-                </div>
-            `;
+                </div>`;
             modal.classList.add('show');
-            try {
-                const response = await fetch(`/Student/GetWeeklyClasses/${ITEM_KEY}?subjectCode=${subjectCode}&teacherCode=${teacherCode}&yearCode=${yearCode}`);
-                const classes = await response.json();
-                if (classes.error) {
-                    modalBody.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <h4>${getJsString('error')}</h4>
-                            <p>${classes.error}</p>
-                        </div>
-                    `;
-                    return;
-                }
-                renderWeeklyClasses(classes);
-            } catch {
-                modalBody.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h4>${getJsString('error')}</h4>
-                        <p>${getJsString('failed-to-load-classes')}</p>
-                    </div>
-                `;
-            }
+            modal.setAttribute('aria-hidden', 'false');
+
+            fetch(`/Student/GetWeeklyClasses/${ITEM_KEY}?subjectCode=${payload.subjectCode}&teacherCode=${payload.teacherCode}&yearCode=${payload.yearCode}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        modalBody.innerHTML = renderEmptyState('fa-exclamation-triangle', 'error', 'failed-to-load-classes');
+                        return;
+                    }
+                    renderWeeklyClasses(data);
+                })
+                .catch(() => {
+                    modalBody.innerHTML = renderEmptyState('fa-exclamation-triangle', 'error', 'failed-to-load-classes');
+                });
         }
-        function renderWeeklyClasses(classes) {
+
+        function renderWeeklyClasses(list) {
             const modalBody = document.getElementById('modalBody');
-            if (classes.length === 0) {
+            if (!modalBody) return;
+            if (!list || !list.length) {
                 modalBody.innerHTML = renderEmptyState('fa-calendar-times', 'no-classes-this-week', 'no-classes-this-week-msg');
                 return;
             }
             modalBody.innerHTML = `
                 <div class="upcoming-classes-grid">
-                    ${classes.map(classItem => {
-                        const showScheduleWarning =
-                            (classItem.assignedScheduleCode != null) &&
-                            (classItem.scheduleCode == null || classItem.scheduleCode !== classItem.assignedScheduleCode);
-                        return `
-                            <div class="class-card ${classItem.isAttended ? 'attended' : ''}"
-                                style="cursor:pointer;"
-                                data-class='${JSON.stringify(classItem).replace(/'/g, "&apos;")}'
-                                onclick='onWeeklyClassCardClick(this.getAttribute("data-class"))'>
-                                <div class="class-header">
-                                    <div class="class-icon">
-                                        <i class="fas fa-chalkboard-teacher"></i>
-                                    </div>
-                                    <div class="class-info">
-                                        <h3>${classItem.className}</h3>
-                                        <div class="class-subject">${classItem.subjectName}</div>
-                                    </div>
-                                </div>
-                                <div class="class-details">
-                                    <div class="class-detail">
-                                        <i class="fas fa-calendar-day"></i>
-                                        <span>${classItem.dayOfWeek} - ${classItem.classDate}</span>
-                                    </div>
-                                    <div class="class-detail">
-                                        <i class="fas fa-user-tie"></i>
-                                        <span>${classItem.teacherName}</span>
-                                    </div>
-                                    <div class="class-detail">
-                                        <i class="fas fa-building"></i>
-                                        <span>${classItem.branchName}</span>
-                                    </div>
-                                    <div class="class-detail">
-                                        <i class="fas fa-door-open"></i>
-                                        <span>${classItem.hallName}</span>
-                                    </div>
-                                </div>
-                                <div class="class-time">
-                                    <div class="time-info">
-                                        <div class="time-label">${getJsString('start-time')}</div>
-                                        <div class="time-value">${classItem.startTime}</div>
-                                    </div>
-                                    <div class="time-info">
-                                        <div class="time-label">${getJsString('end-time')}</div>
-                                        <div class="time-value">${classItem.endTime}</div>
-                                    </div>
-                                </div>
-                                ${showScheduleWarning ? `<div class="class-warning">This is not your class</div>` : ""}
-                                ${renderAttendanceControls(classItem)}
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
+                    ${list.map(c => weeklyClassCardHtml(c)).join('')}
+                </div>`;
         }
-        function onWeeklyClassCardClick(classItemJson) {
-            let classItem;
+
+        function weeklyClassCardHtml(c) {
+            const warning = (c.assignedScheduleCode != null) &&
+                            (c.scheduleCode == null || c.scheduleCode !== c.assignedScheduleCode);
+            return `
+            <div class="class-card ${c.isAttended ? 'attended' : ''}"
+                 data-class='${encodeURIComponent(JSON.stringify(c))}'>
+                <div class="class-header">
+                    <div class="class-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <div class="class-info">
+                        <h3>${escapeHtml(c.className)}</h3>
+                        <div class="class-subject">${escapeHtml(c.subjectName)}</div>
+                    </div>
+                </div>
+                <div class="class-details">
+                    ${classDetail('fa-calendar-day', `${escapeHtml(c.dayOfWeek)} - ${escapeHtml(c.classDate)}`)}
+                    ${classDetail('fa-user-tie', c.teacherName)}
+                    ${classDetail('fa-building', c.branchName)}
+                    ${classDetail('fa-door-open', c.hallName)}
+                </div>
+                <div class="class-time">
+                    <div class="time-info">
+                        <div class="time-label">${getJsString('start-time')}</div>
+                        <div class="time-value">${escapeHtml(c.startTime)}</div>
+                    </div>
+                    <div class="time-info">
+                        <div class="time-label">${getJsString('end-time')}</div>
+                        <div class="time-value">${escapeHtml(c.endTime)}</div>
+                    </div>
+                </div>
+                ${warning ? `<div class="class-warning">This is not your class</div>` : ''}
+                ${renderAttendanceControls(c)}
+            </div>`;
+        }
+
+        // ========== Attendance Actions ==========
+        async function submitAttendance(button, classCode, attendanceType, sessionPrice) {
+            button.disabled = true;
+            button.classList.add('attending');
+            button.innerHTML = `<i class="fas fa-spinner fa-spin"></i><span>${getJsString('marking')}</span>`;
             try {
-                classItem = JSON.parse(classItemJson.replace(/&apos;/g, "'"));
+                const payload = { itemKey: ITEM_KEY, classCode: Number(classCode), attendanceType };
+                if (sessionPrice != null) payload.sessionPrice = sessionPrice;
+                const res = await fetch('/Student/MarkAttendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(getJsString('attendance-marked-successfully'));
+                    loadUpcomingClasses();
+                } else {
+                    alert(result.error || getJsString('failed-to-mark-attendance'));
+                    resetAttendBtn(button);
+                }
             } catch {
-                classItem = null;
-            }
-            lastBranchCode = classItem ? classItem.branchCode : null;
-            if (!isBranchAuthorized(lastBranchCode)) {
-                $('#attendancePasswordInput').val('');
-                $('#attendancePasswordError').hide();
-                $('#attendancePasswordModal').addClass('show');
-                setTimeout(() => {
-                    $('#attendancePasswordInput').focus();
-                }, 200);
+                alert(getJsString('attendance-error'));
+                resetAttendBtn(button);
             }
         }
 
+        function resetAttendBtn(button) {
+            button.disabled = false;
+            button.classList.remove('attending');
+            button.innerHTML = `<i class="fas fa-check"></i><span>${getJsString('mark-attendance')}</span>`;
+        }
+
+        // ========== Modal Control ==========
+        function openAttendancePasswordModal() {
+            const modal = $('#attendancePasswordModal');
+            $('#attendancePasswordInput').val('');
+            $('#attendancePasswordError').hide();
+            modal.addClass('show').attr('aria-hidden', 'false');
+            setTimeout(() => $('#attendancePasswordInput').trigger('focus'), 50);
+            console.log('[Modal] Attendance password modal opened');
+        }
+
+        function closeAttendancePasswordModal() {
+            $('#attendancePasswordModal').removeClass('show').attr('aria-hidden', 'true');
+            console.log('[Modal] Attendance password modal closed');
+        }
+        window.closeAttendancePasswordModal = closeAttendancePasswordModal;
+
         function closeWeeklyModal() {
-            document.getElementById('weeklyModal').classList.remove('show');
+            const m = document.getElementById('weeklyModal');
+            if (m) {
+                m.classList.remove('show');
+                m.setAttribute('aria-hidden', 'true');
+            }
         }
-        function setupEventListeners() {
-            document.getElementById('subjectSearch').addEventListener('input', function(e) {
-                filterSubjects(e.target.value);
+        window.closeWeeklyModal = closeWeeklyModal;
+
+        // ========== Event Delegation ==========
+        function setupDelegatedEvents() {
+            document.addEventListener('click', e => {
+                // 1. Weekly classes button
+                const weeklyBtn = e.target.closest('.view-weekly-btn');
+                if (weeklyBtn) {
+                    const payloadStr = weeklyBtn.getAttribute('data-weekly');
+                    let payload = null;
+                    try { payload = JSON.parse(decodeURIComponent(payloadStr)); } catch { payload = null; }
+                    if (payload) openWeeklyModal(payload);
+                    return;
+                }
+
+                // 2. Attendance button BEFORE class-card handler
+                const attendBtn = e.target.closest('[data-attend-btn]');
+                if (attendBtn) {
+                    e.stopPropagation();
+                    const classCode = attendBtn.getAttribute('data-attend-btn');
+                    const select = document.getElementById(`attendanceType_${classCode}`);
+                    if (!select) return;
+                    const discountType = getDiscountAttendanceType();
+                    const discountValue = discountType ? Number(discountType.value) : null;
+                    const discountInput = document.getElementById(`discountPrice_${classCode}`);
+                    const attendanceType = parseInt(select.value);
+                    let sessionPrice = null;
+                    if (attendanceType === discountValue && discountInput && discountInput.value) {
+                        sessionPrice = parseInt(discountInput.value);
+                    }
+                    submitAttendance(attendBtn, classCode, attendanceType, sessionPrice);
+                    return;
+                }
+
+                // 3. If click is inside attendance controls (select/input) do not trigger card handler
+                if (e.target.closest('.attendance-controls')) {
+                    return;
+                }
+
+                // 4. Class card (authorization check)
+                const classCard = e.target.closest('.class-card');
+                if (classCard && classCard.hasAttribute('data-class')) {
+                    let c = null;
+                    try { c = JSON.parse(decodeURIComponent(classCard.getAttribute('data-class'))); } catch { c = null; }
+                    if (c) {
+                        lastBranchCode = c.branchCode;
+                        if (!isBranchAuthorized(lastBranchCode)) {
+                            openAttendancePasswordModal();
+                        }
+                    }
+                    return;
+                }
+
+                // 5. Overlays
+                if (e.target.id === 'attendancePasswordModal') {
+                    closeAttendancePasswordModal();
+                    return;
+                }
+                if (e.target.id === 'weeklyModal') {
+                    closeWeeklyModal();
+                }
             });
-            document.getElementById('weeklyModal').addEventListener('click', function(e) {
-                if (e.target === this) closeWeeklyModal();
+
+            document.addEventListener('change', e => {
+                const select = e.target.closest('.attendance-type-select');
+                if (select) {
+                    const classCode = select.id.split('_')[1];
+                    const discountType = getDiscountAttendanceType();
+                    const discountValue = discountType ? String(discountType.value) : null;
+                    const input = document.getElementById(`discountPrice_${classCode}`);
+                    if (input) {
+                        if (select.value === discountValue) {
+                            input.style.display = 'inline-block';
+                        } else {
+                            input.value = '';
+                            input.style.display = 'none';
+                        }
+                    }
+                }
+            });
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    closeAttendancePasswordModal();
+                    closeWeeklyModal();
+                }
             });
         }
-        document.addEventListener('DOMContentLoaded', async function() {
+
+        // ========== Attendance Password Form ==========
+        function setupAttendancePasswordForm() {
+            const form = document.getElementById('attendancePasswordForm');
+            if (!form) return;
+            const cancelBtn = document.getElementById('attendancePasswordCancelBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', closeAttendancePasswordModal);
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const passwordInput = document.getElementById('attendancePasswordInput');
+                const errorBox = $('#attendancePasswordError');
+                const submitBtn = $('#attendancePasswordSubmitBtn');
+
+                const password = (passwordInput.value || '').trim();
+                if (!password) {
+                    errorBox.text('Required').show();
+                    return;
+                }
+                if (lastBranchCode == null) {
+                    errorBox.text('Invalid branch context').show();
+                    return;
+                }
+
+                submitBtn.prop('disabled', true);
+                errorBox.hide();
+                try {
+                    const res = await fetch('/Student/CheckAttendancePassword', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            Password: password,
+                            BranchCode: lastBranchCode
+                        })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        closeAttendancePasswordModal();
+                        setBranchAuthorized(lastBranchCode);
+                        renderUpcomingClasses(upcomingClassesData);
+                    } else {
+                        errorBox.text(result.error || 'Wrong password or not authorized.').show();
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
+                } catch {
+                    errorBox.text(getJsString('attendance-error')).show();
+                } finally {
+                    submitBtn.prop('disabled', false);
+                }
+            });
+
+            // Reinforced click -> always routes through submit handler
+            const btn = document.getElementById('attendancePasswordSubmitBtn');
+            if (btn) {
+                btn.addEventListener('click', function (ev) {
+                    if (form.requestSubmit) {
+                        ev.preventDefault();
+                        form.requestSubmit(btn);
+                    }
+                });
+            }
+
+            // Overlay detection (debug)
+            setTimeout(() => {
+                const rect = btn.getBoundingClientRect();
+                const el = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                if (el !== btn) {
+                    console.warn('[Attendance Modal] Another element overlays submit button:', el);
+                }
+            }, 200);
+        }
+
+        // ========== Search ==========
+        function setupSearch() {
+            const input = document.getElementById('subjectSearch');
+            if (!input) return;
+            input.addEventListener('input', e => {
+                const term = e.target.value.toLowerCase();
+                const filtered = subjectsData.filter(s =>
+                    (s.subjectName || '').toLowerCase().includes(term) ||
+                    (s.teacherName || '').toLowerCase().includes(term) ||
+                    (s.branchName || '').toLowerCase().includes(term)
+                );
+                renderSubjects(filtered);
+            });
+        }
+
+        // ========== Init ==========
+        document.addEventListener('DOMContentLoaded', async function () {
             setStudentLabels();
+            setupDelegatedEvents();
+            setupAttendancePasswordForm();
+            setupSearch();
             await loadAttendanceTypes();
-            loadUpcomingClasses();
-            loadStudentSubjects();
-            setupEventListeners();
+            await Promise.all([loadUpcomingClasses(), loadStudentSubjects()]);
+            console.log('[StudentProfile] Initialized');
         });
     </script>
 </body>
