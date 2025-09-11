@@ -42,7 +42,93 @@
 	App.html = document.querySelector("html");
 	App.body = document.querySelector("body");
 	App.SMcontroller = new ScrollMagic.Controller();
+	const Preloader = (function () {
+		const preloader = document.querySelector(".js-preloader");
+		const bg = preloader.querySelector(".preloader__bg");
 
+		function initial() {
+			gsap.registerEffect({
+				name: "preloaderInitial",
+				effect: (target, config) => {
+					document.documentElement.classList.add("html-overflow-hidden");
+					const tl = gsap.timeline();
+
+					if (!document.body.classList.contains("preloader-visible")) {
+						document.documentElement.classList.remove("html-overflow-hidden");
+						return tl;
+					}
+
+					return tl.to(bg, {
+						ease: "quart.inOut",
+						duration: 0.6,
+						scaleY: 0,
+						onComplete: () => {
+							document.documentElement.classList.remove("html-overflow-hidden");
+						},
+					});
+				},
+				extendTimeline: true,
+			});
+		}
+
+		function show() {
+			gsap.registerEffect({
+				name: "preloaderShow",
+				effect: (target, config) => {
+					const tl = gsap.timeline();
+					if (!preloader) return tl;
+
+					return tl.to(bg, {
+						ease: "quart.inOut",
+						duration: 0.6,
+						scaleY: 1,
+						onStart: () => {
+							bg.classList.remove("origin-bottom");
+							document.documentElement.classList.add("html-overflow-hidden");
+						},
+					});
+				},
+				extendTimeline: true,
+			});
+		}
+
+		function hide() {
+			gsap.registerEffect({
+				name: "preloaderHide",
+				effect: (target, config) => {
+					const tl = gsap.timeline();
+
+					return tl.to(bg, {
+						ease: "quart.inOut",
+						duration: 0.6,
+						delay: 0.1,
+						scaleY: 0,
+						onStart: () => {
+							bg.classList.add("origin-bottom");
+						},
+						onComplete: () => {
+							document.documentElement.classList.remove("html-overflow-hidden");
+							document.documentElement.classList.remove("overflow-hidden");
+							document.body.classList.remove("overflow-hidden");
+						},
+					});
+				},
+				extendTimeline: true,
+			});
+		}
+
+		function init() {
+			if (!preloader) return;
+
+			initial();
+			show();
+			hide();
+		}
+
+		return {
+			init: init,
+		};
+	})();
 	window.onload = function () {
 		customEasingsInit();
 		Preloader.init();
@@ -1557,8 +1643,18 @@
 		}
 
 		function pieChart(target, animDelay = 0) {
-			const counterVal = target.getAttribute("data-percent");
+			if (!target) return; // Check if target exists
+
+			let counterVal = target.getAttribute("data-percent");
 			const chartBar = target.querySelector(".js-chart-bar");
+			const barPercent = target.querySelector(".js-chart-percent");
+
+			// Ensure required elements exist
+			if (!chartBar || !barPercent) return;
+
+			// Parse counterVal to a number if it's a string
+			counterVal = Number(counterVal);
+			if (isNaN(counterVal)) counterVal = 0;
 
 			if (counterVal < 0) {
 				counterVal = 0;
@@ -1585,7 +1681,6 @@
 			);
 
 			let object = { count: 0 };
-			const barPercent = target.querySelector(".js-chart-percent");
 
 			gsap.to(object, {
 				count: counterVal,
@@ -1594,7 +1689,10 @@
 				ease: "power3.inOut",
 
 				onUpdate: function () {
-					barPercent.innerHTML = Math.round(object.count) + "%";
+					// Additional null check for safety
+					if (barPercent) {
+						barPercent.innerHTML = Math.round(object.count) + "%";
+					}
 				},
 			});
 		}
@@ -1823,93 +1921,7 @@
   02. Preloader
 ---------------------------------------------------*/
 
-	const Preloader = (function () {
-		const preloader = document.querySelector(".js-preloader");
-		const bg = preloader.querySelector(".preloader__bg");
-
-		function initial() {
-			gsap.registerEffect({
-				name: "preloaderInitial",
-				effect: (target, config) => {
-					document.documentElement.classList.add("html-overflow-hidden");
-					const tl = gsap.timeline();
-
-					if (!document.body.classList.contains("preloader-visible")) {
-						document.documentElement.classList.remove("html-overflow-hidden");
-						return tl;
-					}
-
-					return tl.to(bg, {
-						ease: "quart.inOut",
-						duration: 0.6,
-						scaleY: 0,
-						onComplete: () => {
-							document.documentElement.classList.remove("html-overflow-hidden");
-						},
-					});
-				},
-				extendTimeline: true,
-			});
-		}
-
-		function show() {
-			gsap.registerEffect({
-				name: "preloaderShow",
-				effect: (target, config) => {
-					const tl = gsap.timeline();
-					if (!preloader) return tl;
-
-					return tl.to(bg, {
-						ease: "quart.inOut",
-						duration: 0.6,
-						scaleY: 1,
-						onStart: () => {
-							bg.classList.remove("origin-bottom");
-							document.documentElement.classList.add("html-overflow-hidden");
-						},
-					});
-				},
-				extendTimeline: true,
-			});
-		}
-
-		function hide() {
-			gsap.registerEffect({
-				name: "preloaderHide",
-				effect: (target, config) => {
-					const tl = gsap.timeline();
-
-					return tl.to(bg, {
-						ease: "quart.inOut",
-						duration: 0.6,
-						delay: 0.1,
-						scaleY: 0,
-						onStart: () => {
-							bg.classList.add("origin-bottom");
-						},
-						onComplete: () => {
-							document.documentElement.classList.remove("html-overflow-hidden");
-							document.documentElement.classList.remove("overflow-hidden");
-							document.body.classList.remove("overflow-hidden");
-						},
-					});
-				},
-				extendTimeline: true,
-			});
-		}
-
-		function init() {
-			if (!preloader) return;
-
-			initial();
-			show();
-			hide();
-		}
-
-		return {
-			init: init,
-		};
-	})();
+	
 
 	// Remove "text dark" classes across the whole site at runtime
 	// This removes the tokens .text-dark-1 and .text-dark from elements on page load

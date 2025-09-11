@@ -1,30 +1,30 @@
-﻿// student-registration.js
-// Complete implementation for multi-step student registration form
-// Flow: Personal Info → Mode/Branch → Subjects/Teachers → Schedules → Confirmation
+﻿// student-registration2.js (updated)
+// Multi-step form logic with scrolling & minor UX improvements
 
-// ========== GLOBAL VARIABLES ==========
 let currentStep = 1;
-let selectedSubjects = []; // Array of subject-teacher-schedule combinations
+let selectedSubjects = [];
 let availableSubjects = [];
 let availableTeachers = [];
-let registrationMode = "Offline"; // Default
+let registrationMode = "Offline";
 let pinValidated = false;
 
-// ========== INITIALIZE ==========
 document.addEventListener('DOMContentLoaded', function () {
     updateStepButtons();
     setupEventListeners();
     modeChangeHandler();
+    ensureScrollEnabled();
 });
 
-// ========== EVENT LISTENERS ==========
+function ensureScrollEnabled() {
+    document.documentElement.style.overflowY = 'auto';
+    document.body.style.overflowY = 'auto';
+}
+
 function setupEventListeners() {
-    // Mode selection (online/offline)
     document.querySelectorAll('input[name="Mode"]').forEach(radio => {
         radio.addEventListener('change', modeChangeHandler);
     });
 
-    // Branch change - reload subjects when branch changes
     const branchSelect = document.getElementById('branchCode');
     if (branchSelect) {
         branchSelect.addEventListener('change', function () {
@@ -35,7 +35,6 @@ function setupEventListeners() {
         });
     }
 
-    // Year change - reload subjects when year changes
     const yearSelect = document.getElementById('yearCode');
     if (yearSelect) {
         yearSelect.addEventListener('change', function () {
@@ -46,13 +45,11 @@ function setupEventListeners() {
         });
     }
 
-    // Form validation on input
     document.querySelectorAll('input[required], select[required]').forEach(input => {
         input.addEventListener('blur', validateField);
         input.addEventListener('input', clearValidation);
     });
 
-    // Step navigation buttons
     document.getElementById('prevBtn').addEventListener('click', function () {
         changeStep(-1);
     });
@@ -63,26 +60,17 @@ function setupEventListeners() {
         submitRegistration();
     });
 
-    // PIN validate (online)
     const validatePinBtn = document.getElementById('validatePinBtn');
-    if (validatePinBtn) {
-        validatePinBtn.addEventListener('click', validatePin);
-    }
+    if (validatePinBtn) validatePinBtn.addEventListener('click', validatePin);
 
-    // Username uniqueness check (online)
     const usernameInput = document.getElementById('username');
-    if (usernameInput) {
-        usernameInput.addEventListener('blur', checkUsername);
-    }
+    if (usernameInput) usernameInput.addEventListener('blur', checkUsername);
 
-    // Complete online registration
     const completeOnlineBtn = document.getElementById('completeOnlineBtn');
-    if (completeOnlineBtn) {
-        completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
-    }
+    if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
 }
 
-// ========== MODE HANDLING ==========
+// MODE HANDLING
 function modeChangeHandler() {
     const mode = document.querySelector('input[name="Mode"]:checked').value;
     registrationMode = mode;
@@ -93,11 +81,8 @@ function modeChangeHandler() {
     if (mode === "Online") {
         if (branchSection) branchSection.style.display = "none";
         if (onlinePinSection) onlinePinSection.style.display = "";
-
-        // Hide year selection until PIN is validated
         const onlineYearSection = document.getElementById('onlineYearSection');
         if (onlineYearSection) onlineYearSection.style.display = "none";
-
         document.getElementById('branchCode').required = false;
         document.getElementById('yearCode').required = false;
     } else {
@@ -108,6 +93,7 @@ function modeChangeHandler() {
     }
     resetSubjectsAndTeachers();
 }
+
 function resetSubjectsAndTeachers() {
     selectedSubjects = [];
     availableSubjects = [];
@@ -120,28 +106,24 @@ function resetSubjectsAndTeachers() {
     if (summaryDiv) summaryDiv.style.display = 'none';
 }
 
-// ========== STEP NAVIGATION ==========
+// STEP NAVIGATION
 function changeStep(direction) {
     if (direction === 1 && !validateCurrentStep()) return;
 
-    // Hide current step
     const currentStepContent = document.getElementById(`step${currentStep}Content`);
     if (currentStepContent) currentStepContent.classList.remove('active');
     const currentStepIndicator = document.getElementById(`step${currentStep}`);
     if (currentStepIndicator) currentStepIndicator.classList.remove('active');
 
-    // Update step number
     currentStep += direction;
     if (currentStep < 1) currentStep = 1;
     if (currentStep > 5) currentStep = 5;
 
-    // Show new step
     const newStepContent = document.getElementById(`step${currentStep}Content`);
     if (newStepContent) newStepContent.classList.add('active');
     const newStepIndicator = document.getElementById(`step${currentStep}`);
     if (newStepIndicator) newStepIndicator.classList.add('active');
 
-    // Step-specific logic
     if (currentStep === 3) {
         const branchCode = document.getElementById('branchCode')?.value;
         const yearCode = document.getElementById('yearCode')?.value;
@@ -169,16 +151,28 @@ function changeStep(direction) {
             document.getElementById('onlineRegistrationSection').style.display = "";
         }
     }
+
     updateStepButtons();
+    scrollToFormTop();
+}
+
+function scrollToFormTop() {
+    const box = document.getElementById('registrationRootBox');
+    if (box) {
+        const top = box.getBoundingClientRect().top + window.scrollY - 20;
+        window.scrollTo({ top, behavior: 'smooth' });
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 function updateStepButtons() {
-    document.getElementById('prevBtn').style.display = currentStep > 1 ? 'block' : 'none';
-    document.getElementById('nextBtn').style.display = (currentStep < 5 ? 'block' : 'none');
-    document.getElementById('submitBtn').style.display = (currentStep === 5 && registrationMode === "Offline") ? 'block' : 'none';
+    document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-flex' : 'none';
+    document.getElementById('nextBtn').style.display = currentStep < 5 ? 'inline-flex' : 'none';
+    document.getElementById('submitBtn').style.display = (currentStep === 5 && registrationMode === "Offline") ? 'inline-flex' : 'none';
 }
 
-// ========== VALIDATION ==========
+// VALIDATION
 function validateCurrentStep() {
     const currentStepContent = document.getElementById(`step${currentStep}Content`);
     if (!currentStepContent) return false;
@@ -190,45 +184,41 @@ function validateCurrentStep() {
         if (!validateField({ target: field })) isValid = false;
     });
 
-    // Step 2: Mode-specific validation
     if (currentStep === 2) {
         if (registrationMode === "Offline") {
             const branchCode = document.getElementById('branchCode').value;
             const yearCode = document.getElementById('yearCode').value;
             if (!branchCode || !yearCode) {
-                showAlert('Please select both branch and academic year for offline registration.', 'danger');
+                showAlert('Please select both branch and academic year.', 'danger');
                 isValid = false;
             }
         } else if (registrationMode === "Online" && !pinValidated) {
-            showAlert('Please validate your PIN code for online registration.', 'danger');
+            showAlert('Please validate your PIN code first.', 'danger');
             isValid = false;
         }
     }
 
-    // Step 3: Must select at least one subject with teacher
     if (currentStep === 3) {
         const completeSelections = selectedSubjects.filter(s => s.teacherCode);
         if (completeSelections.length === 0) {
-            showAlert('Please select at least one subject with a teacher.', 'danger');
+            showAlert('Please select at least one subject and a teacher.', 'danger');
             isValid = false;
         }
     }
 
-    // Step 4: For offline, must select schedules for all subjects
     if (currentStep === 4 && registrationMode === "Offline") {
         const missingSchedules = selectedSubjects.filter(s => s.teacherCode && !s.scheduleCode);
         if (missingSchedules.length > 0) {
-            showAlert('Please select schedules for all subjects.', 'danger');
+            showAlert('Please select schedules for all chosen subjects.', 'danger');
             isValid = false;
         }
     }
 
-    // Step 4: For online, must have username and password
     if (currentStep === 4 && registrationMode === "Online") {
         const username = document.getElementById('username')?.value?.trim();
         const password = document.getElementById('password')?.value;
         if (!username || !password) {
-            showAlert('Please enter both username and password.', 'danger');
+            showAlert('Username and password are required.', 'danger');
             isValid = false;
         }
     }
@@ -280,7 +270,7 @@ function clearValidation(event) {
     if (feedback) feedback.textContent = '';
 }
 
-// ========== SUBJECT/TEACHER/SCHEDULE LOADING ==========
+// SUBJECT / TEACHER / SCHEDULE LOADING
 async function loadAvailableSubjects() {
     let branchCode = '';
     let yearCode = '';
@@ -288,16 +278,13 @@ async function loadAvailableSubjects() {
     if (registrationMode === "Offline") {
         branchCode = document.getElementById('branchCode')?.value || '';
         yearCode = document.getElementById('yearCode')?.value || '';
-
         if (!branchCode || !yearCode) {
             resetSubjectsAndTeachers();
             return;
         }
     } else if (registrationMode === "Online") {
-        // For online mode, use the online year selection
         yearCode = document.getElementById('onlineYearCode')?.value || '';
-        branchCode = '0'; // Use 0 or empty for online mode
-
+        branchCode = '0';
         if (!yearCode) {
             resetSubjectsAndTeachers();
             return;
@@ -325,6 +312,7 @@ async function loadAvailableSubjects() {
         hideLoading();
     }
 }
+
 async function loadTeachersForSubjects() {
     let branchCode = '';
     let yearCode = '';
@@ -334,11 +322,10 @@ async function loadTeachersForSubjects() {
         yearCode = document.getElementById('yearCode')?.value || '';
     } else if (registrationMode === "Online") {
         yearCode = document.getElementById('onlineYearCode')?.value || '';
-        branchCode = '0'; // Use 0 for online mode
+        branchCode = '0';
     }
 
     const subjectCodes = availableSubjects.map(s => s.subjectCode).join(',');
-
     if (!subjectCodes) {
         availableTeachers = [];
         return;
@@ -360,6 +347,7 @@ async function loadTeachersForSubjects() {
         availableTeachers = [];
     }
 }
+
 async function loadScheduleForSubjectTeacher(subjectCode, teacherCode) {
     let branchCode = '';
     let yearCode = '';
@@ -373,12 +361,10 @@ async function loadScheduleForSubjectTeacher(subjectCode, teacherCode) {
         const url = `/Student/GetSchedulesForSubjectTeacher?subjectCode=${subjectCode}&teacherCode=${teacherCode}&branchCode=${branchCode}&yearCode=${yearCode}`;
         const response = await fetch(url);
         const result = await response.json();
-
         if (result.error) {
             console.error(result.error);
             return [];
         }
-
         return result;
     } catch (error) {
         console.error('Failed to load schedules:', error);
@@ -394,144 +380,126 @@ async function loadAvailableSchedules() {
 
     if (subjectsWithTeachers.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-4 text-muted">
-                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+            <div class="empty-block">
+                <i class="fas fa-calendar-times"></i>
                 <p>No subjects with teachers selected.</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
-    container.innerHTML = '<div class="text-center py-2"><i class="fas fa-spinner fa-spin"></i> Loading schedules...</div>';
+    container.innerHTML = '<div class="loading-inline"><i class="fas fa-spinner fa-spin"></i> Loading schedules...</div>';
 
     let scheduleHtml = '';
-
     for (const subject of subjectsWithTeachers) {
         const schedules = await loadScheduleForSubjectTeacher(subject.subjectCode, subject.teacherCode);
-
         scheduleHtml += `
-            <div class="mb-4">
-                <h5><i class="fas fa-book me-2"></i>${subject.subjectName} - ${subject.teacherName}</h5>
-                <div class="schedule-options">
-        `;
+        <div class="schedule-subject-block">
+            <h5><i class="fas fa-book me-2"></i>${subject.subjectName} - ${subject.teacherName}</h5>
+            <div class="schedule-options">`;
 
         if (schedules.length > 0) {
-            schedules.forEach(schedule => {
-                const isSelected = subject.scheduleCode === schedule.scheduleCode;
+            schedules.forEach(sch => {
+                const isSelected = subject.scheduleCode === sch.scheduleCode;
                 scheduleHtml += `
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" 
-                               name="schedule_${subject.subjectCode}_${subject.teacherCode}"
-                               value="${schedule.ScheduleCode}"
-                               id="schedule_${subject.subjectCode}_${subject.teacherCode}_${schedule.ScheduleCode}"
-                               ${isSelected ? 'checked' : ''}
-                               onchange="selectSchedule(${subject.subjectCode}, ${subject.teacherCode}, ${schedule.scheduleCode}, '${schedule.scheduleName}', '${schedule.dayOfWeek}', '${schedule.startTime}', '${schedule.endTime}')"
-                        <label class="form-check-label" for="schedule_${subject.subjectCode}_${subject.teacherCode}_${schedule.ScheduleCode}">
-                            <strong>${schedule.scheduleName}</strong><br>
-<small class="text-muted">${schedule.dayOfWeek} ${schedule.startTime}-${schedule.endTime} | Hall: ${schedule.hallName}</small>
-                        </label>
+                <label class="schedule-option ${isSelected ? 'selected' : ''}">
+                    <input type="radio"
+                           name="schedule_${subject.subjectCode}_${subject.teacherCode}"
+                           value="${sch.ScheduleCode}"
+                           ${isSelected ? 'checked' : ''}
+                           onchange="selectSchedule(${subject.subjectCode}, ${subject.teacherCode}, ${sch.scheduleCode}, '${sch.scheduleName}', '${sch.dayOfWeek}', '${sch.startTime}', '${sch.endTime}')">
+                    <div class="so-meta">
+                        <strong>${sch.scheduleName}</strong>
+                        <small>${sch.dayOfWeek} ${sch.startTime}-${sch.endTime} | ${sch.hallName}</small>
                     </div>
-                `;
+                </label>`;
             });
         } else {
-            scheduleHtml += '<p class="text-muted">No schedules available for this teacher.</p>';
+            scheduleHtml += '<p class="text-muted small mb-0">No schedules available.</p>';
         }
 
-        scheduleHtml += '</div></div>';
+        scheduleHtml += `</div></div>`;
     }
 
     container.innerHTML = scheduleHtml;
 }
 
-// ========== SUBJECT/TEACHER SELECTION UI ==========
-
+// RENDER SUBJECTS
 function renderSubjects() {
     const container = document.getElementById('availableSubjects');
     if (!container) return;
 
     if (availableSubjects.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-4 text-muted">
-                <i class="fas fa-book fa-3x mb-3"></i>
+            <div class="empty-block">
+                <i class="fas fa-book"></i>
                 <p>No subjects available for the selected criteria.</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
-    // Load teachers when subjects are rendered
     loadTeachersForSubjects().then(() => {
-        let subjectsHtml = '';
-
+        let html = '';
         availableSubjects.forEach(subject => {
             const isSelected = selectedSubjects.some(s => s.subjectCode === subject.subjectCode);
             const subjectTeachers = availableTeachers.filter(t => t.subjectCode === subject.subjectCode);
 
-            subjectsHtml += `
-                <div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${subject.subjectCode}">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">
-                            <i class="fas fa-book me-2"></i>
-                            ${subject.subjectName}
-                        </h5>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                id="subject_${subject.subjectCode}"
-                                ${isSelected ? 'checked' : ''}
-                                onchange="toggleSubject(${subject.subjectCode}, '${subject.subjectName}')">
-                        </div>
+            html += `
+            <div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${subject.subjectCode}">
+                <div class="subject-header">
+                    <h5 class="subject-title"><i class="fas fa-book me-2"></i>${subject.subjectName}</h5>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               id="subject_${subject.subjectCode}"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="toggleSubject(${subject.subjectCode}, '${subject.subjectName}')">
                     </div>
-                    
-                    <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
-                        <label class="form-label small">Select Teacher</label>
-            `;
+                </div>
+                <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
+                    <label class="form-label small mb-2">${'Select Teacher'}</label>`;
 
             if (subjectTeachers.length > 0) {
                 subjectTeachers.forEach(teacher => {
                     const selectedSubject = selectedSubjects.find(s => s.subjectCode === subject.subjectCode);
                     const isTeacherSelected = selectedSubject && selectedSubject.teacherCode === teacher.teacherCode;
 
-                    subjectsHtml += `
-                        <div class="teacher-option ${isTeacherSelected ? 'selected' : ''}" 
-                             onclick="selectTeacher(${subject.subjectCode}, '${subject.subjectName}', ${teacher.teacherCode}, '${teacher.teacherName}', ${teacher.yearCode}, ${teacher.eduYearCode})">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio"
-                                    name="teacher_${subject.subjectCode}"
-                                    value="${teacher.teacherCode}"
-                                    id="teacher_${subject.subjectCode}_${teacher.teacherCode}"
-                                    ${isTeacherSelected ? 'checked' : ''}>
-                                <label class="form-check-label">
-                                    <strong>${teacher.teacherName}</strong><br>
-                                    <small class="text-muted">${teacher.teacherPhone || 'No phone listed'}</small>
-                                </label>
-                            </div>
+                    html += `
+                    <div class="teacher-option ${isTeacherSelected ? 'selected' : ''}"
+                         onclick="selectTeacher(${subject.subjectCode}, '${subject.subjectName}', ${teacher.teacherCode}, '${teacher.teacherName}', ${teacher.yearCode}, ${teacher.eduYearCode})">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio"
+                                   name="teacher_${subject.subjectCode}"
+                                   value="${teacher.teacherCode}"
+                                   id="teacher_${subject.subjectCode}_${teacher.teacherCode}"
+                                   ${isTeacherSelected ? 'checked' : ''}>
+                            <label class="form-check-label">
+                                <strong>${teacher.teacherName}</strong><br>
+                                <small class="text-muted">${teacher.teacherPhone || 'N/A'}</small>
+                            </label>
                         </div>
-                    `;
+                    </div>`;
                 });
             } else {
-                subjectsHtml += '<p class="text-muted small">No teachers available for this subject.</p>';
+                html += '<p class="text-muted small mb-0">No teachers available.</p>';
             }
 
-            subjectsHtml += '</div></div>';
+            html += `</div></div>`;
         });
 
-        container.innerHTML = subjectsHtml;
+        container.innerHTML = html;
     });
 }
-    
-// ========== SELECTION HANDLERS ==========
 
+// SUBJECT / TEACHER / SCHEDULE SELECTION HANDLERS
 window.toggleSubject = function (subjectCode, subjectName) {
     const checkbox = document.getElementById(`subject_${subjectCode}`);
     const subjectCard = document.querySelector(`[data-subject-code="${subjectCode}"]`);
     const teachersDiv = document.getElementById(`teachers_${subjectCode}`);
 
     if (checkbox.checked) {
-        // Add subject (without teacher initially)
         if (!selectedSubjects.some(s => s.subjectCode === subjectCode)) {
             selectedSubjects.push({
-                subjectCode: subjectCode,
-                subjectName: subjectName,
+                subjectCode,
+                subjectName,
                 teacherCode: null,
                 teacherName: null,
                 yearCode: null,
@@ -543,14 +511,10 @@ window.toggleSubject = function (subjectCode, subjectName) {
         subjectCard.classList.add('selected');
         if (teachersDiv) teachersDiv.classList.remove('d-none');
     } else {
-        // Remove subject
         selectedSubjects = selectedSubjects.filter(s => s.subjectCode !== subjectCode);
         subjectCard.classList.remove('selected');
         if (teachersDiv) teachersDiv.classList.add('d-none');
-
-        // Clear teacher selections
-        const teacherRadios = document.querySelectorAll(`input[name="teacher_${subjectCode}"]`);
-        teacherRadios.forEach(radio => radio.checked = false);
+        document.querySelectorAll(`input[name="teacher_${subjectCode}"]`).forEach(r => r.checked = false);
     }
 
     updateSelectedSubjectsSummary();
@@ -560,39 +524,31 @@ window.selectTeacher = function (subjectCode, subjectName, teacherCode, teacherN
     const radio = document.getElementById(`teacher_${subjectCode}_${teacherCode}`);
     if (radio) radio.checked = true;
 
-    // Find and update the subject in selectedSubjects
-    const subjectIndex = selectedSubjects.findIndex(s => s.subjectCode === subjectCode);
-    if (subjectIndex !== -1) {
-        selectedSubjects[subjectIndex] = {
-            ...selectedSubjects[subjectIndex],
-            teacherCode: teacherCode,
-            teacherName: teacherName,
-            yearCode: yearCode,
-            eduYearCode: eduYearCode,
-            scheduleCode: null, // Reset schedule when teacher changes
+    const idx = selectedSubjects.findIndex(s => s.subjectCode === subjectCode);
+    if (idx !== -1) {
+        selectedSubjects[idx] = {
+            ...selectedSubjects[idx],
+            teacherCode,
+            teacherName,
+            yearCode,
+            eduYearCode,
+            scheduleCode: null,
             scheduleName: null
         };
     }
 
-    // Update teacher option visual state
-    document.querySelectorAll(`#teachers_${subjectCode} .teacher-option`).forEach(option => {
-        option.classList.remove('selected');
-    });
-
-    // Find the clicked teacher option and select it
-    const clickedOption = document.querySelector(`#teacher_${subjectCode}_${teacherCode}`).closest('.teacher-option');
-    if (clickedOption) {
-        clickedOption.classList.add('selected');
-    }
+    document.querySelectorAll(`#teachers_${subjectCode} .teacher-option`).forEach(o => o.classList.remove('selected'));
+    const clicked = document.querySelector(`#teacher_${subjectCode}_${teacherCode}`)?.closest('.teacher-option');
+    if (clicked) clicked.classList.add('selected');
 
     updateSelectedSubjectsSummary();
 };
 
 window.selectSchedule = function (subjectCode, teacherCode, scheduleCode, scheduleName, dayOfWeek, startTime, endTime) {
-    const subjectIndex = selectedSubjects.findIndex(s => s.subjectCode === subjectCode && s.teacherCode === teacherCode);
-    if (subjectIndex !== -1) {
-        selectedSubjects[subjectIndex].scheduleCode = scheduleCode;
-        selectedSubjects[subjectIndex].scheduleName = `${dayOfWeek} ${startTime}-${endTime}`;
+    const idx = selectedSubjects.findIndex(s => s.subjectCode === subjectCode && s.teacherCode === teacherCode);
+    if (idx !== -1) {
+        selectedSubjects[idx].scheduleCode = scheduleCode;
+        selectedSubjects[idx].scheduleName = `${dayOfWeek} ${startTime}-${endTime}`;
     }
     updateSelectedSubjectsSummary();
 };
@@ -614,14 +570,14 @@ function updateSelectedSubjectsSummary() {
         return;
     }
 
-    list.innerHTML = selectedSubjects.map(subject => `
-        <div class="d-flex justify-content-between align-items-center p-2 border rounded mb-2">
-            <div>
-                <strong>${subject.subjectName}</strong>
-                ${subject.teacherName ? `<br><small class="text-muted">Teacher: ${subject.teacherName}</small>` : ''}
-                ${subject.scheduleName ? `<br><small class="text-info">Schedule: ${subject.scheduleName}</small>` : ''}
+    list.innerHTML = selectedSubjects.map(s => `
+        <div class="summary-item">
+            <div class="si-info">
+                <strong>${s.subjectName}</strong>
+                ${s.teacherName ? `<br><small class="text-muted">${s.teacherName}</small>` : ''}
+                ${s.scheduleName ? `<br><small class="text-info">${s.scheduleName}</small>` : ''}
             </div>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSubject(${subject.subjectCode})">
+            <button type="button" class="btn-remove" onclick="removeSubject(${s.subjectCode})">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -630,7 +586,7 @@ function updateSelectedSubjectsSummary() {
     container.style.display = 'block';
 }
 
-// ========== PIN VALIDATION ==========
+// PIN VALIDATION
 async function validatePin() {
     const pin = document.getElementById('pinCode').value.trim();
     if (!pin) {
@@ -652,19 +608,17 @@ async function validatePin() {
         if (data.valid) {
             document.getElementById('pinError').textContent = "";
             pinValidated = true;
-
-            // Show year selection section for online registration
             document.getElementById('onlineYearSection').style.display = "";
 
-            // Add event listener for year change in online mode
             const onlineYearSelect = document.getElementById('onlineYearCode');
-            if (onlineYearSelect) {
+            if (onlineYearSelect && !onlineYearSelect.dataset.bound) {
                 onlineYearSelect.addEventListener('change', function () {
                     resetSubjectsAndTeachers();
                 });
+                onlineYearSelect.dataset.bound = 'true';
             }
 
-            showAlert("PIN validated successfully! Please select your academic year.", "success");
+            showAlert("PIN validated successfully. Select academic year.", "success");
         } else {
             setPinError(data.error || "Invalid PIN.");
             pinValidated = false;
@@ -680,7 +634,7 @@ function setPinError(msg) {
     document.getElementById('pinError').textContent = msg;
 }
 
-// ========== USERNAME CHECK ==========
+// USERNAME CHECK
 async function checkUsername() {
     const username = document.getElementById('username').value.trim();
     if (!username) return;
@@ -701,9 +655,7 @@ async function checkUsername() {
     hideLoading();
 }
 
-
-// ========== REGISTRATION SUBMISSION ==========
-
+// REGISTRATION SUBMISSION
 async function submitOnlineRegistration() {
     const formData = getFormData();
     formData.Mode = "Online";
@@ -730,9 +682,8 @@ async function submitOnlineRegistration() {
             Swal.fire({
                 icon: 'success',
                 title: 'Registration Successful!',
-                text: "Your online registration is complete. You can now log in with your credentials."
+                text: "Your online registration is complete."
             }).then(() => {
-                // Redirect to login or home page
                 window.location.href = '/';
             });
         } else {
@@ -743,6 +694,7 @@ async function submitOnlineRegistration() {
     }
     hideLoading();
 }
+
 async function submitRegistration() {
     if (registrationMode === "Online") return;
 
@@ -754,72 +706,58 @@ async function submitRegistration() {
     const formData = getFormData();
     formData.Mode = registrationMode;
 
-    console.log('Form data being submitted:', formData);
-
-    const root_code = getRootCodeFromUrl();
-    console.log('Root code:', root_code);
-
     showLoading();
     try {
+        const root_code = getRootCodeFromUrl();
         const response = await fetch(`/Register/${root_code}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         });
 
-        console.log('Response status:', response.status);
-
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-
+        const text = await response.text();
         if (!response.ok) {
-            showAlert(`Server error: ${response.status} - ${responseText}`, 'danger');
+            showAlert(`Server error: ${response.status}`, 'danger');
             return;
         }
 
         let result;
         try {
-            result = JSON.parse(responseText);
-        } catch (parseError) {
-            console.error('JSON parse error:', parseError);
+            result = JSON.parse(text);
+        } catch {
             showAlert('Invalid response from server', 'danger');
             return;
         }
-
-        console.log('Parsed result:', result);
 
         if (result.success) {
             Swal.fire({
                 icon: 'success',
                 title: 'Registration Successful!',
-                text: result.message || "Welcome! Your registration has been completed successfully."
+                text: result.message || "Welcome!"
             }).then(() => {
                 window.location.href = result.redirectUrl || `/Register/${root_code}/Success`;
             });
         } else {
-            // Show the specific error from the server
-            const errorMessage = result.error || result.details || 'Registration failed. Please try again.';
-            console.error('Server error:', errorMessage);
-            showAlert(errorMessage, 'danger');
+            showAlert(result.error || 'Registration failed.', 'danger');
         }
     } catch (error) {
-        console.error('Network/Fetch error:', error);
         showAlert(`Network error: ${error.message}`, 'danger');
     } finally {
         hideLoading();
     }
 }
-// ========== SUMMARY ==========
+
+// SUMMARY
 function showRegistrationSummary() {
     const summary = document.getElementById('registrationSummary');
     const formData = getFormData();
 
     summary.innerHTML = `
-        <div class="row">
-            <div class="col-md-6">
-                <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
-                <ul class="list-unstyled">
-                    <li><strong>Full Name:</strong> ${formData.StudentName}</li>
+        <div class="summary-grid">
+            <div>
+                <h5 class="summary-heading"><i class="fas fa-user me-2"></i>Personal Information</h5>
+                <ul class="summary-list">
+                    <li><strong>Name:</strong> ${formData.StudentName}</li>
                     <li><strong>Birthdate:</strong> ${formData.BirthDate}</li>
                     <li><strong>Student Phone:</strong> ${formData.StudentPhone}</li>
                     <li><strong>Father Phone:</strong> ${formData.StudentFatherPhone}</li>
@@ -829,51 +767,46 @@ function showRegistrationSummary() {
                     <li><strong>Gender:</strong> ${formData.Gender === true ? 'Male' : formData.Gender === false ? 'Female' : 'Not Specified'}</li>
                 </ul>
             </div>
-            <div class="col-md-6">
-                <h5><i class="fas fa-school me-2"></i>Academic Information</h5>
-                <ul class="list-unstyled">
-                    <li><strong>Branch:</strong> ${document.getElementById('branchCode')?.selectedOptions[0]?.text || 'Not Selected'}</li>
-                    <li><strong>Academic Year:</strong> ${document.getElementById('yearCode')?.selectedOptions[0]?.text || 'Not Selected'}</li>
-                    <li><strong>Education Year:</strong> ${document.getElementById('eduYearCodeDisplay')?.value || 'Not Selected'}</li>
+            <div>
+                <h5 class="summary-heading"><i class="fas fa-school me-2"></i>Academic Information</h5>
+                <ul class="summary-list">
+                    <li><strong>Branch:</strong> ${document.getElementById('branchCode')?.selectedOptions[0]?.text || '—'}</li>
+                    <li><strong>Academic Year:</strong> ${document.getElementById('yearCode')?.selectedOptions[0]?.text || '—'}</li>
+                    <li><strong>Education Year:</strong> ${document.getElementById('eduYearCodeDisplay')?.value || '—'}</li>
                 </ul>
             </div>
         </div>
-        <h5 class="mt-4"><i class="fas fa-books me-2"></i>Selected Subjects (${selectedSubjects.filter(s => s.teacherCode).length})</h5>
-        <div class="row">
-            ${selectedSubjects.filter(s => s.teacherCode).map(subject => `
-                <div class="col-md-12 mb-2">
-                    <div class="border rounded p-2">
-                        <strong>${subject.subjectName}</strong>
-                        <br><small class="text-muted">Teacher: ${subject.teacherName}</small>
-                        ${subject.scheduleName ? `<br><small class="text-info">Schedule: ${subject.scheduleName}</small>` : ''}
+        <h5 class="summary-heading mt-3"><i class="fas fa-books me-2"></i>Selected Subjects (${selectedSubjects.filter(s => s.teacherCode).length})</h5>
+        <div class="subject-summary-list">
+            ${selectedSubjects.filter(s => s.teacherCode).map(s => `
+                <div class="subject-chip">
+                    <div>
+                        <strong>${s.subjectName}</strong><br>
+                        <small>${s.teacherName}</small>
+                        ${s.scheduleName ? `<br><small class="text-info">${s.scheduleName}</small>` : ''}
                     </div>
-                </div>
-            `).join('')}
+                </div>`).join('')}
         </div>
     `;
 }
 
+// FORM DATA
 function getFormData() {
     const genderRadio = document.querySelector('input[name="Gender"]:checked');
     let genderValue = null;
-    if (genderRadio) {
-        genderValue = genderRadio.value === 'true' ? true : false;
-    }
+    if (genderRadio) genderValue = genderRadio.value === 'true';
 
     let branchCodeValue, yearCodeValue, eduYearCodeValue;
-
     if (registrationMode === "Offline") {
         branchCodeValue = document.getElementById('branchCode')?.value;
         yearCodeValue = document.getElementById('yearCode')?.value;
         eduYearCodeValue = document.getElementById('eduYearCode')?.value;
     } else {
-        // For online mode, use online year selection
-        branchCodeValue = null; // No branch for online
+        branchCodeValue = null;
         yearCodeValue = document.getElementById('onlineYearCode')?.value;
         eduYearCodeValue = document.getElementById('onlineEduYearCode')?.value;
     }
 
-    // Extract arrays for the PublicRegistrationRequest format
     const subjectsArray = [];
     const teachersArray = [];
     const schedulesArray = [];
@@ -882,14 +815,9 @@ function getFormData() {
         if (s.teacherCode && s.yearCode && s.eduYearCode) {
             subjectsArray.push(s.subjectCode);
             teachersArray.push(s.teacherCode);
-
-            // ✅ Fix: Only add schedules for offline mode
-            if (registrationMode === "Offline" && s.scheduleCode) {
-                schedulesArray.push(s.scheduleCode);
-            } else if (registrationMode === "Offline") {
-                schedulesArray.push(0); // Fallback for offline mode
+            if (registrationMode === "Offline") {
+                schedulesArray.push(s.scheduleCode ? s.scheduleCode : 0);
             }
-            // For online mode, don't add anything to schedulesArray
         }
     });
 
@@ -911,7 +839,7 @@ function getFormData() {
         EduYearCode: eduYearCodeValue ? parseInt(eduYearCodeValue) : null,
         SelectedSubjects: subjectsArray,
         SelectedTeachers: teachersArray,
-        SelectedSchedules: registrationMode === "Online" ? [] : schedulesArray, // ✅ Empty array for online
+        SelectedSchedules: registrationMode === "Online" ? [] : schedulesArray,
         PinCode: document.getElementById('pinCode')?.value?.trim() || null,
         Username: document.getElementById('username')?.value?.trim() || null,
         Password: document.getElementById('password')?.value || null
@@ -923,45 +851,33 @@ function getRootCodeFromUrl() {
     return match ? match[1] : null;
 }
 
-// ========== UTILITY FUNCTIONS ==========
-
+// UTILITIES
 function showLoading() {
-    document.getElementById('loadingOverlay').style.display = 'flex';
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.style.display = 'flex';
 }
 
 function hideLoading() {
-    document.getElementById('loadingOverlay').style.display = 'none';
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 function showAlert(message, type = 'info') {
     const currentStepContent = document.getElementById(`step${currentStep}Content`);
     if (!currentStepContent) return;
 
-    // Remove existing alerts
-    const existingAlerts = currentStepContent.querySelectorAll('.alert');
-    existingAlerts.forEach(alert => {
-        if (!alert.classList.contains('alert-success') && !alert.classList.contains('alert-info')) {
-            alert.remove();
-        }
-    });
+    currentStepContent.querySelectorAll('.alert.temp').forEach(a => a.remove());
 
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.className = `alert alert-${type} temp`;
     alertDiv.innerHTML = `
         <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-    currentStepContent.insertBefore(alertDiv, currentStepContent.firstChild);
-
-    if (type === 'success') {
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
-            }
-        }, 5000);
-    }
+        ${message}`;
+    currentStepContent.prepend(alertDiv);
 
     currentStepContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (type !== 'danger') {
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
 }
