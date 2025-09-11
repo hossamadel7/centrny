@@ -1,6 +1,7 @@
 ﻿@using centrny.Controllers
 @inject centrny.Models.CenterContext DbContext
 @{
+    Layout = null;
     var resourceCulture = Context.Session.GetString("ResourceCulture") ?? System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
     resourceCulture = resourceCulture.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? "ar" : "en";
     var isRtl = resourceCulture == "ar";
@@ -10,25 +11,6 @@
         ? LayoutController.GetSidebarPagesForUser(DbContext, Context.Session)
         : new List<SidebarPageViewModel>();
 
-    string rootName = "Centrny";
-    if (User.Identity.IsAuthenticated)
-    {
-        var username = User.Identity.Name;
-        var currentUser = DbContext.Users.FirstOrDefault(u => u.Username == username);
-        if (currentUser != null)
-        {
-            var group = DbContext.Groups.FirstOrDefault(g => g.GroupCode == currentUser.GroupCode);
-            if (group != null)
-            {
-                var root = DbContext.Roots.FirstOrDefault(r => r.RootCode == group.RootCode);
-                if (root != null && !string.IsNullOrEmpty(root.RootName))
-                {
-                    rootName = root.RootName;
-                }
-            }
-        }
-    }
-
     string logoutText = isRtl ? "تسجيل الخروج" : "Logout";
     string loginText = isRtl ? "تسجيل الدخول" : "Login";
 }
@@ -37,229 +19,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@ViewData["Title"] - @rootName</title>
-        @RenderSection("Styles", required: false) <!-- <--- ADD THIS LINE HERE -->
+    <title>@ViewData["Title"] - Centrny</title>
 
     <!-- Google fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" crossorigin="" />
 
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-    <!-- Essential Educrat CSS -->
+    <!-- Theme CSS -->
     <link rel="stylesheet" href="~/css/vendors.css">
     <link rel="stylesheet" href="~/css/main.css">
 
-    <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png" />
-
+    <!-- RTL overrides and Full-view behavior -->
     <style>
-        /* User profile styling */
-        .user-profile {
-            padding: 30px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: center;
-            background: #f8fafc;
+        :root {
+            --sidebar-width: 280px;
         }
 
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            background: #6366f1;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 24px;
-        }
-
-        .user-name {
-            font-size: 17px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 5px;
-        }
-
-        .user-role {
-            font-size: 15px;
-            color: #6366f1;
-            font-weight: 500;
-        }
-
-        /* RTL adjustments */
-        html[dir="rtl"] .dashboard__sidebar {
+        /* Place sidebar on the right in RTL */
+        [dir="rtl"] .dashboard__sidebar {
+            right: 0 !important;
+            left: auto !important;
             border-left: 1px solid #e5e7eb;
             border-right: none;
+            transition: transform .3s ease;
         }
 
-        /* Icon fixes using Font Awesome */
-        .icon-explore:before {
-            font-family: "Font Awesome 5 Free";
-            font-weight: 900;
-            content: "\f0c9";
+        /* Default visible state (no translate) */
+        [dir="rtl"] .dashboard__sidebar {
+            transform: translateX(0) !important;
         }
 
-        .icon-night:before {
-            font-family: "Font Awesome 5 Free";
-            font-weight: 900;
-            content: "\f186";
+        /* Hidden state: slide out to the right */
+        [dir="rtl"] .dashboard.-sidebar-hidden .dashboard__sidebar,
+        [dir="rtl"] .js-dashboard-home-9.-sidebar-hidden .dashboard__sidebar {
+            transform: translateX(100%) !important;
         }
 
-        .icon-power:before {
-            font-family: "Font Awesome 5 Free";
-            font-weight: 900;
-            content: "\f2f5";
+        /* Reserve space for sidebar on the right when visible */
+        [dir="rtl"] .dashboard__main {
+            margin-right: var(--sidebar-width) !important;
+            margin-left: 0 !important;
+            transition: margin-right .3s ease;
+        }
+
+        /* When sidebar is hidden: full-width content */
+        [dir="rtl"] .dashboard.-sidebar-hidden .dashboard__main,
+        [dir="rtl"] .js-dashboard-home-9.-sidebar-hidden .dashboard__main {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Ensure wrapper/content expand to full width when hidden */
+        [dir="rtl"] .dashboard.-sidebar-hidden .content-wrapper,
+        [dir="rtl"] .js-dashboard-home-9.-sidebar-hidden .content-wrapper,
+        [dir="rtl"] .dashboard.-sidebar-hidden .dashboard__content,
+        [dir="rtl"] .js-dashboard-home-9.-sidebar-hidden .dashboard__content {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Flip sidebar item layout */
+        [dir="rtl"] .sidebar__item a {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .sidebar__item i {
+            margin-right: 0;
+            margin-left: 15px;
+        }
+
+        /* Header tweaks for RTL */
+        [dir="rtl"] .header__explore {
+            order: 2;
+        }
+
+        [dir="rtl"] .header__logo {
+            margin-right: 30px;
+            margin-left: 0;
+            order: 1;
+        }
+
+        [dir="rtl"] .ml-15 {
+            margin-left: 0;
+            margin-right: 15px;
+        }
+
+        /* Mobile: content should not reserve sidebar space */
+       @@media (max-width: 992px) {
+            [dir="rtl"] .dashboard__main
+
+        {
+            margin-right: 0 !important;
+        }
+        /* On small screens, when sidebar is visible it overlays from right */
+        [dir="rtl"] .dashboard__sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            height: 100vh;
+            z-index: 1040;
+        }
+
         }
     </style>
 </head>
 
-<body class="@(isRtl ? "rtl" : "ltr") preloader-visible" data-barba="wrapper">
-    <main class="main-content">
-        <!-- Header -->
-        <header class="header -dashboard -dark-bg-dark-1 js-header">
-            <div class="header__container py-20 px-30">
-                <div class="row justify-between items-center">
-                    <div class="col-auto">
-                        <div class="d-flex items-center">
-                            <div class="header__explore text-dark-1">
-                                <button class="d-flex items-center js-dashboard-home-9-sidebar-toggle">
-                                    <i class="icon -dark-text-white icon-explore"></i>
-                                </button>
-                            </div>
-                            <div class="header__logo ml-30 md:ml-20">
-                                <span class="text-20 fw-600 text-dark-1">@ViewData["Title"]</span>
+<body class="preloader-visible" data-barba="wrapper">
+    <!-- preloader start -->
+    <div class="preloader js-preloader">
+        <div class="preloader__bg"></div>
+    </div>
+    <!-- preloader end -->
+
+    <div class="barba-container" data-barba="container">
+        <main class="main-content">
+            <header class="header -dashboard -dark-bg-dark-1 js-header">
+                <div class="header__container py-20 px-30">
+                    <div class="row justify-between items-center">
+                        <div class="col-auto">
+                            <div class="d-flex items-center">
+                                <div class="header__explore text-dark-1">
+                                    <button class="d-flex items-center js-dashboard-home-9-sidebar-toggle" aria-label="Toggle sidebar">
+                                        <i class="icon -dark-text-white icon-explore"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-auto">
-                        <div class="d-flex items-center">
-                            <!-- Dark Mode Toggle -->
-                            <div class="relative sm:d-none">
-                                <button class="js-darkmode-toggle text-light-1 d-flex items-center justify-center size-50 rounded-16 -hover-dshb-header-light">
-                                    <i class="text-24 icon icon-night"></i>
-                                </button>
+                        <div class="col-auto">
+                            <div class="d-flex items-center">
+                                <!-- Dark Mode Toggle -->
+                                <div class="relative sm:d-none">
+                                    <button class="js-darkmode-toggle text-light-1 d-flex items-center justify-center size-50 rounded-16 -hover-dshb-header-light" aria-label="Toggle dark mode">
+                                        <i class="text-24 icon icon-night"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Language Toggle -->
+                                <form method="post" asp-controller="Layout" asp-action="SetResourceLanguage" style="display:inline;" class="@(isRtl ? "mr-15" : "ml-15")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="resourceCulture" value="@(isRtl ? "en" : "ar")" />
+                                    <input type="hidden" name="returnUrl" id="returnUrlInput" />
+                                    <button type="submit" class="button -md -rounded bg-light-4 text-light-1">
+                                        @(isRtl ? "English" : "Arabic")
+                                    </button>
+                                </form>
                             </div>
-
-                            <!-- Language Toggle -->
-                            <form method="post" asp-controller="Layout" asp-action="SetResourceLanguage" style="display:inline;" class="ml-15">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="resourceCulture" value="@(isRtl ? "en" : "ar")" />
-                                <input type="hidden" name="returnUrl" id="returnUrlInput" />
-                                <button type="submit" class="button -md -rounded bg-light-4 text-light-1">
-                                    @(isRtl ? "English" : "Arabic")
-                                </button>
-                            </form>
                         </div>
+
                     </div>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <!-- Dashboard Content -->
-        <div class="content-wrapper js-content-wrapper">
-            <div class="dashboard -home-9 js-dashboard-home-9">
-                <!-- Sidebar -->
-                <div class="dashboard__sidebar scroll-bar-1">
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <div class="user-profile">
-                            <div class="user-avatar">
-                                <i class="fas fa-user-circle"></i>
-                            </div>
-                            <div class="user-name">@User.Identity.Name</div>
-                            <div class="user-role">@User.FindFirst("GroupName")?.Value</div>
-                        </div>
-                    }
-
-                    <!-- Sidebar Navigation -->
-                    <div class="sidebar -dashboard">
-                        @if (sidebarPages.Any())
-                        {
-                            @foreach (var sidebarPage in sidebarPages)
+            <div class="content-wrapper js-content-wrapper">
+                <div class="dashboard -home-9 js-dashboard-home-9">
+                    <div class="dashboard__sidebar scroll-bar-1">
+                        <div class="sidebar -dashboard">
+                            @if (sidebarPages.Any())
                             {
-                                <div class="sidebar__item @(ViewContext.RouteData.Values["controller"]?.ToString() == sidebarPage.Controller && ViewContext.RouteData.Values["action"]?.ToString() == sidebarPage.Action ? "-is-active -dark-bg-dark-2" : "")">
-                                    <a asp-controller="@sidebarPage.Controller" asp-action="@sidebarPage.Action"
-                                       class="d-flex items-center text-17 lh-1 fw-500 @(ViewContext.RouteData.Values["controller"]?.ToString() == sidebarPage.Controller && ViewContext.RouteData.Values["action"]?.ToString() == sidebarPage.Action ? "-dark-text-white" : "")">
-                                        <i class="@sidebarPage.Icon text-15 mr-15"></i>
-                                        @sidebarPage.Text
+                                foreach (var sidebarPage in sidebarPages)
+                                {
+                                    <div class="sidebar__item @(ViewContext.RouteData.Values["controller"]?.ToString() == sidebarPage.Controller && ViewContext.RouteData.Values["action"]?.ToString() == sidebarPage.Action ? "-is-active -dark-bg-dark-2" : "")">
+                                        <a asp-controller="@sidebarPage.Controller" asp-action="@sidebarPage.Action"
+                                           class="d-flex items-center text-17 lh-1 fw-500">
+                                            <i class="@sidebarPage.Icon text-20 @(isRtl ? "ml-15" : "mr-15")"></i>
+                                            @sidebarPage.Text
+                                        </a>
+                                    </div>
+                                }
+                            }
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <div class="sidebar__item">
+                                    <a href="#" class="d-flex items-center text-17 lh-1 fw-500" id="logoutBtn">
+                                        <i class="text-20 icon-power @(isRtl ? "ml-15" : "mr-15")"></i>
+                                        @logoutText
                                     </a>
                                 </div>
                             }
-                        }
-
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <div class="sidebar__item">
-                                <a href="#" class="d-flex items-center text-17 lh-1 fw-500" id="logoutBtn">
-                                    <i class="text-20 icon-power mr-15"></i>
-                                    @logoutText
-                                </a>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="sidebar__item">
-                                <a asp-controller="Login" asp-action="Index" class="d-flex items-center text-17 lh-1 fw-500">
-                                    <i class="text-20 icon-power mr-15"></i>
-                                    @loginText
-                                </a>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Main Content -->
-                <div class="dashboard__main">
-                    <div class="dashboard__content bg-light-4">
-                        <div class="row pb-50 mb-10">
-                            <div class="col-auto">
-                                <h1 class="text-30 lh-12 fw-700">@ViewData["Title"]</h1>
-                            </div>
+                            else
+                            {
+                                <div class="sidebar__item">
+                                    <a asp-controller="Login" asp-action="Index" class="d-flex items-center text-17 lh-1 fw-500">
+                                        <i class="text-20 icon-power @(isRtl ? "ml-15" : "mr-15")"></i>
+                                        @loginText
+                                    </a>
+                                </div>
+                            }
                         </div>
-                        @RenderBody()
+                    </div>
+                    <div class="dashboard__main">
+                        <div class="dashboard__content bg-light-4">
+                            @RenderBody()
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
-    @if (User.Identity.IsAuthenticated)
-    {
-        <form id="logoutForm" method="post" asp-controller="Login" asp-action="Logout" style="display:none;">
-            @Html.AntiForgeryToken()
-        </form>
-    }
-
-    <!-- Essential JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" crossorigin=""></script>
     <script src="~/js/vendors.js"></script>
     <script src="~/js/main.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Set return URL
+        document.addEventListener('DOMContentLoaded', function () {
+            const isRTL = document.documentElement.dir === 'rtl';
+            const dashboard = document.querySelector('.js-dashboard-home-9');
+            const sidebarToggle = document.querySelector('.js-dashboard-home-9-sidebar-toggle');
+
+            // Preserve current URL for language toggle return
             const returnUrlInput = document.getElementById('returnUrlInput');
-            if (returnUrlInput) {
-                returnUrlInput.value = window.location.pathname + window.location.search + window.location.hash;
-            }
+            if (returnUrlInput) returnUrlInput.value = window.location.pathname + window.location.search + window.location.hash;
 
-            // Logout functionality
-            const logoutBtn = document.getElementById('logoutBtn');
-            const logoutForm = document.getElementById('logoutForm');
-
-            if (logoutBtn && logoutForm) {
-                logoutBtn.addEventListener('click', function(e) {
+            if (isRTL && dashboard && sidebarToggle) {
+                // Ensure the theme's LTR handler doesn't fight us; we only toggle the class
+                const onToggle = (e) => {
                     e.preventDefault();
-                    logoutForm.submit();
-                });
+                    e.stopPropagation();
+                    dashboard.classList.toggle('-sidebar-hidden');
+                };
+
+                // Use capture to win over theme's listener if any
+                sidebarToggle.addEventListener('click', onToggle, true);
             }
         });
     </script>
 
-    @RenderSection("Scripts", required: false) <!-- ADD THIS LINE JUST BEFORE </body> -->
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

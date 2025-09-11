@@ -4137,7 +4137,7 @@ h6 {
 }
 
 .footer.-type-1.-green-links .footer-columns a:hover {
-	text-decoration: underline;
+	
 	color: var(--color-green-1) !important;
 }
 
@@ -9898,9 +9898,6 @@ h6 {
 	text-decoration: line-through;
 }
 
-.underline {
-	text-decoration: underline;
-}
 
 .italic {
 	font-style: italic;
