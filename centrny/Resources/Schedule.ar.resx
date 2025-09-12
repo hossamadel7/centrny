@@ -336,6 +336,39 @@
 	<data name="infoPrefix" xml:space="preserve">
     <value>ℹ️ </value>
   </data>
+	<!-- Conflict Detection Strings - Arabic -->
+	<data name="Error_CheckingConflicts" xml:space="preserve">
+  <value>خطأ في التحقق من التعارضات</value>
+</data>
+	<data name="Conflict_Hall" xml:space="preserve">
+  <value>تعارض في القاعة - هذه القاعة محجوزة بالفعل في هذا الوقت</value>
+</data>
+	<data name="Conflict_Teacher" xml:space="preserve">
+  <value>تعارض في المدرس - هذا المدرس لديه جدول مُحدد بالفعل في هذا الوقت</value>
+</data>
+	<data name="Warning_YearOverlap" xml:space="preserve">
+  <value>تحذير: طلاب نفس السنة لديهم صف متداخل مع مدرس آخر</value>
+</data>
+
+	<!-- Additional conflict-related strings -->
+	<data name="Conflict_TimeOverlap" xml:space="preserve">
+  <value>تم اكتشاف تداخل زمني مع جدول موجود</value>
+</data>
+	<data name="Msg_ConflictResolution" xml:space="preserve">
+  <value>يرجى تعديل الوقت أو اختيار موارد مختلفة لحل التعارضات</value>
+</data>
+	<data name="Lbl_ConflictsWith" xml:space="preserve">
+  <value>يتعارض مع</value>
+</data>
+	<data name="Msg_CheckingConflicts" xml:space="preserve">
+  <value>جاري التحقق من تعارضات الجدولة...</value>
+</data>
+	<data name="Lbl_ConflictDetails" xml:space="preserve">
+  <value>تفاصيل التعارض</value>
+</data>
+	<data name="Msg_NoConflictsFound" xml:space="preserve">
+  <value>لم يتم العثور على تعارضات في الجدولة</value>
+</data>
 	<data name="Label_Center" xml:space="preserve"><value>المركز</value></data>
 	<data name="Label_Type" xml:space="preserve"><value>النوع</value></data>
 	<data name="Label_CenterBranch" xml:space="preserve"><value>المركز / الفرع</value></data>

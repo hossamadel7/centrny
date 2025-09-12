@@ -214,51 +214,126 @@ class ScheduleManager {
     }
 
     // Save (Create/Edit) Schedule
+    // Save (Create/Edit) Schedule - Complete method with server-side conflict detection
     async saveSchedule(formData) {
         this.showModalLoader(true);
 
         try {
-            // Validate conflicts
-            const validation = this.validateScheduleConflicts(formData);
+            // First, check server-side conflicts
+            const conflictCheck = await this.checkServerSideConflicts(formData);
 
-            // Show validation messages
-            this.showValidationMessages(validation.errors, validation.warnings);
-
-            // Block save if there are errors
-            if (validation.errors.length > 0) {
+            if (!conflictCheck.success) {
+                this.showToast(conflictCheck.error || getJsString('errorCheckingConflicts') || 'Error checking conflicts', 'error');
                 this.showModalLoader(false);
                 return;
             }
 
+            // Handle server-side conflict results
+            let hasBlockingConflicts = false;
+            const conflicts = [];
+
+            if (conflictCheck.hallConflict) {
+                hasBlockingConflicts = true;
+                conflicts.push(getJsString('conflictHall') || 'Hall conflict detected - this hall is already booked at this time');
+            }
+
+            if (conflictCheck.teacherConflict) {
+                hasBlockingConflicts = true;
+                conflicts.push(getJsString('conflictTeacher') || 'Teacher conflict detected - this teacher is already scheduled at this time');
+            }
+
+            if (conflictCheck.sameYearConflict) {
+                let message = getJsString('warningYearOverlap') || 'Warning: Same year students have overlapping class with different teacher';
+                if (conflictCheck.conflictingTeacherName) {
+                    message += ` (${conflictCheck.conflictingTeacherName})`;
+                }
+                conflicts.push(message);
+            }
+
+            // Show conflicts to user
+            if (conflicts.length > 0) {
+                conflicts.forEach((conflict, index) => {
+                    const isWarning = index === conflicts.length - 1 && conflictCheck.sameYearConflict && !hasBlockingConflicts;
+                    this.showToast(conflict, isWarning ? 'warning' : 'error');
+                });
+
+                // Block save if there are blocking conflicts (hall or teacher)
+                if (hasBlockingConflicts) {
+                    this.showModalLoader(false);
+                    return;
+                }
+            }
+
+            // Run client-side validation as backup
+            const clientValidation = this.validateScheduleConflicts(formData);
+
+            // Show client-side validation messages
+            this.showValidationMessages(clientValidation.errors, clientValidation.warnings);
+
+            // Block save if there are client-side errors
+            if (clientValidation.errors.length > 0) {
+                this.showModalLoader(false);
+                return;
+            }
+
+            // Proceed with saving the schedule
             const url = this.editMode && this.currentScheduleId
                 ? `/Schedule/EditScheduleEvent/${this.currentScheduleId}`
                 : '/Schedule/CreateScheduleEvent';
 
-            const res = await fetch(url, {
+            const saveResponse = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 },
                 body: JSON.stringify(formData)
             });
 
-            const result = await res.json();
+            if (!saveResponse.ok) {
+                throw new Error(`HTTP ${saveResponse.status}: ${saveResponse.statusText}`);
+            }
+
+            const result = await saveResponse.json();
 
             if (result.success) {
+                // Success - close modal and refresh
                 this.closeModal('scheduleModal');
                 this.resetForm();
                 await this.loadSchedules();
-                this.showToast(this.editMode ? getJsString('scheduleUpdated') : getJsString('scheduleCreated'), 'success');
+
+                const successMessage = this.editMode
+                    ? (getJsString('scheduleUpdated') || 'Schedule updated!')
+                    : (getJsString('scheduleCreated') || 'Schedule created!');
+
+                this.showToast(successMessage, 'success');
+
+                // Log success
+                console.log(`Schedule ${this.editMode ? 'updated' : 'created'} successfully:`, result);
             } else {
-                this.showToast(result.error, 'error');
+                // Server returned an error
+                this.showToast(result.error || 'An error occurred while saving the schedule', 'error');
             }
-        } catch (e) {
-            this.showToast(getJsString('errorSavingSchedule'), 'error');
+
+        } catch (error) {
+            console.error('Error in saveSchedule:', error);
+
+            // Handle different types of errors
+            let errorMessage;
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = getJsString('errorNetwork') || 'Network error occurred';
+            } else if (error.message.includes('HTTP')) {
+                errorMessage = `Server error: ${error.message}`;
+            } else {
+                errorMessage = getJsString('errorSavingSchedule') || 'Error saving schedule';
+            }
+
+            this.showToast(errorMessage, 'error');
         } finally {
             this.showModalLoader(false);
         }
     }
+
 
     // Delete Schedule (from modal confirm only)
     async deleteSchedule(id) {
@@ -284,6 +359,42 @@ class ScheduleManager {
             this.showToast(getJsString('errorDeletingSchedule'), 'error');
         } finally {
             this.showModalDeleteSpinner(false);
+        }
+    }
+
+    async checkServerSideConflicts(formData) {
+        try {
+            const conflictData = {
+                dayOfWeek: formData.dayOfWeek,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                teacherCode: formData.teacherCode,
+                hallCode: formData.hallCode,
+                eduYearCode: formData.eduYearCode,
+                branchCode: formData.branchCode,
+                scheduleCode: this.editMode ? this.currentScheduleId : null
+            };
+
+            const response = await fetch('/Schedule/CheckScheduleConflicts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify(conflictData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Server-side conflict check failed:', error);
+            return {
+                success: false,
+                error: getJsString('errorCheckingConflicts') || 'Error checking conflicts'
+            };
         }
     }
 
