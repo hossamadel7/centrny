@@ -487,6 +487,27 @@ function renderReservationCard(r) {
     `;
 }
 
+// Helper: safely hide a Bootstrap modal without throwing
+function safeHideModalById(modalId) {
+    try {
+        const el = document.getElementById(modalId);
+        if (!el) return;
+        if (window.bootstrap && typeof window.bootstrap.Modal === 'function' && typeof window.bootstrap.Modal.getInstance === 'function') {
+            const instance = window.bootstrap.Modal.getInstance(el);
+            if (instance) { instance.hide(); return; }
+        }
+        if (typeof window.$ !== 'undefined' && typeof window.$('#' + modalId).modal === 'function') {
+            window.$('#' + modalId).modal('hide');
+            return;
+        }
+        const closeBtn = el.querySelector('.btn-close');
+        if (closeBtn) closeBtn.click();
+    } catch (e) {
+        // swallow UI errors
+        if (window.console && console.debug) console.debug('safeHideModalById error:', e);
+    }
+}
+
 // --- Modal and Dropdown Management ---
 function resetModalForCreate() {
     isEditMode = false;
@@ -812,7 +833,8 @@ async function saveClass() {
         const data = await response.json();
         if (data.success) {
             await showSuccessAlert(isEditMode ? L("UpdateSuccess") : L("SaveSuccess"));
-            bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
+            // Safe close instead of bootstrap.Modal.getInstance(...).hide()
+            safeHideModalById('addClassModal');
             resetFormFields();
             resetModalForCreate();
             setTimeout(() => location.reload(), 700); // reload after 0.7s
@@ -891,8 +913,8 @@ async function deleteClass(classId) {
             if (data.success) {
                 await showSuccessAlert(L("DeleteSuccess"));
                 loadDayContent();
-                const modal = bootstrap.Modal.getInstance(document.getElementById('classDetailsModal'));
-                if (modal) modal.hide();
+                // Safe close instead of bootstrap.Modal.getInstance(...).hide()
+                safeHideModalById('classDetailsModal');
             } else {
                 await showErrorAlert(data.error || L("DeleteError"));
                 enableScreen();
@@ -912,7 +934,7 @@ function showClassDetailsModal(classId) {
         return;
     }
     let html = `<div class="class-details-list">`;
-  
+
     html += `<div><strong>${L("FormStartTime")}</strong>: ${to12Hr(cls.startTime)}</div>`;
     html += `<div><strong>${L("FormEndTime")}</strong>: ${to12Hr(cls.endTime)}</div>`;
     html += `<div><strong>${L("FormSubject")}</strong>: ${cls.subjectName}</div>`;

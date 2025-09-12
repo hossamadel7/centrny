@@ -671,6 +671,42 @@
             }
         }
 
+        .modal-content {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: var(--shadow-lg);
+            padding: 32px 24px;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            z-index: 10000;
+            animation: modalUpFade 0.35s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* NEW/UPDATED: center modal backgrounds */
+        .modal-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.45);
+            z-index: 1050;
+            padding: 20px;
+            overflow: auto;
+        }
+
+            .modal-background[style*="display: block"] {
+                display: flex !important;
+            }
+
+            .modal-background .modal-content {
+                margin: 0 !important;
+            }
+
     </style>
 </head>
 <body>
@@ -717,6 +753,9 @@
          data-loading-answers="@Localizer["LoadingAnswers"]"
          data-loading-lessons="@Localizer["LoadingLessons"]"
          data-error-loading-questions="@Localizer["ErrorLoadingQuestions"]"
+         data-add-chapter-btn="@Localizer["AddChapterBtn"]"
+         data-add-lesson-btn="@Localizer["AddLessonBtn"]"
+         data-select-option="@Localizer["SelectOption"]"
          data-error-loading-lessons-hierarchy="@Localizer["ErrorLoadingLessonsHierarchy"]" />
 
     <div id="user-root-info-box" style="display: none;"></div>

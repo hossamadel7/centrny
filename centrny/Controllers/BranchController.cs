@@ -217,17 +217,37 @@ namespace centrny.Controllers
         [HttpPut]
         public async Task<IActionResult> EditBranch([FromBody] BranchEditDto dto)
         {
-            var (userCode, groupCode, rootCode, username) = GetSessionContext();
-            if (dto == null) return BadRequest();
-            var branch = await _context.Branches.FirstOrDefaultAsync(c => c.BranchCode == dto.BranchCode && ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
-            if (branch == null) return NotFound();
+            try
+            {
+                var (userCode, groupCode, rootCode, username) = GetSessionContext();
+                if (dto == null) return BadRequest("DTO is null");
+                var branch = await _context.Branches.FirstOrDefaultAsync(
+                    c => c.BranchCode == dto.BranchCode &&
+                    ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
+                if (branch == null) return NotFound("Branch not found");
 
-            branch.BranchName = dto.BranchName;
-            branch.Address = dto.Address;
-            branch.Phone = dto.Phone;
-            branch.StartTime = dto.StartTime;
-            await _context.SaveChangesAsync();
-            return Ok();
+                DateOnly parsedStartTime;
+                try
+                {
+                    parsedStartTime = DateOnly.Parse(dto.StartTime);
+                }
+                catch
+                {
+                    return BadRequest("StartTime format invalid. Use yyyy-MM-dd.");
+                }
+
+                branch.BranchName = dto.BranchName;
+                branch.Address = dto.Address;
+                branch.Phone = dto.Phone;
+                branch.StartTime = parsedStartTime;  // <-- use parsed DateOnly
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                // Log ex.ToString() to file/console
+                return StatusCode(500, ex.ToString());
+            }
         }
 
         [RequirePageAccess("Branch", "delete")]
@@ -356,6 +376,7 @@ namespace centrny.Controllers
         public string BranchName { get; set; } = null!;
         public string Address { get; set; } = null!;
         public string Phone { get; set; } = null!;
+       
         public DateOnly StartTime { get; set; }
         public int CenterCode { get; set; }
         public int InsertUser { get; set; }
@@ -370,6 +391,6 @@ namespace centrny.Controllers
         public string BranchName { get; set; } = null!;
         public string Address { get; set; } = null!;
         public string Phone { get; set; } = null!;
-        public DateOnly StartTime { get; set; }
+        public string StartTime { get; set; }
     }
 }

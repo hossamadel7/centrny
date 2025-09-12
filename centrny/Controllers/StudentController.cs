@@ -451,7 +451,8 @@ namespace centrny.Controllers
             var users = await (
                 from u in _context.Users
                 join g in _context.Groups on u.GroupCode equals g.GroupCode
-                where g.BranchCode == req.BranchCode && allowedGroups.Contains(g.GroupName)
+                where  allowedGroups.Contains(g.GroupName)
+                 //g.BranchCode == req.BranchCode &&
                 select new
                 {
                     u.UserCode,
@@ -472,7 +473,10 @@ namespace centrny.Controllers
                     HttpContext.Session.SetInt32("UserCode", user.UserCode);
                     HttpContext.Session.SetInt32("GroupCode", user.GroupCode);
                     HttpContext.Session.SetString("Username", user.Username);
-                    HttpContext.Session.SetInt32("BranchCode", (int)user.BranchCode);
+                    if (user.BranchCode != null)
+                        HttpContext.Session.SetInt32("BranchCode", (int)user.BranchCode);
+                    else
+                        HttpContext.Session.Remove("BranchCode"); // or set to 0 if you prefer: SetInt32("BranchCode", 0);
                     HttpContext.Session.SetInt32("RootCode", user.RootCode);
 
                     // (Claims optional—kept for consistency)
@@ -1674,20 +1678,11 @@ namespace centrny.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
             if (user == null) return false;
 
-            if (branchCode.HasValue)
-            {
-                // Normal branch-specific check
-                var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode && g.BranchCode == branchCode);
-                return group != null && (group.GroupName == "Admins" || group.GroupName == "Attendance Officers");
-            }
-            else
-            {
-                // For online students, check if user is admin of ANY branch in this root
-                var group = await _context.Groups
-                    .Where(g => g.GroupCode == user.GroupCode && g.RootCode == rootCode)
-                    .FirstOrDefaultAsync(g => g.GroupName == "Admins" || g.GroupName == "Attendance Officers");
-                return group != null;
-            }
+            // Ignore branchCode: only check for group in the root
+            var group = await _context.Groups
+                .Where(g => g.GroupCode == user.GroupCode && g.RootCode == rootCode)
+                .FirstOrDefaultAsync(g => g.GroupName == "Admins" || g.GroupName == "Attendance Officers");
+            return group != null;
         }
 
         private async Task CreateLearnRecords(PublicRegistrationRequest request, Student student)

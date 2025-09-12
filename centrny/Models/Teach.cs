@@ -11,7 +11,7 @@ public partial class Teach
 
     public int EduYearCode { get; set; }
 
-    public int? BranchCode { get; set; }
+    public int BranchCode { get; set; }
 
     public int RootCode { get; set; }
 
@@ -31,7 +31,7 @@ public partial class Teach
 
     public bool IsActive { get; set; }
 
-    public virtual Branch? BranchCodeNavigation { get; set; }
+    public virtual Branch BranchCodeNavigation { get; set; } = null!;
 
     public virtual EduYear EduYearCodeNavigation { get; set; } = null!;
 

@@ -28,18 +28,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Allura&display=swap" rel="stylesheet" />
-
+    <!-- FontAwesome from CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
     <!-- Theme / Vendor CSS (mirror signup.html style) -->
     <link rel="stylesheet" href="~/css/main.css" />
     <link rel="stylesheet" href="~/css/vendors.css" />
     <link rel="stylesheet" href="/AWS/css/bw-theme.css" />
-    <link rel="stylesheet" href="/AWS/css/rtl-numbers-fix.css" />
-    <link rel="stylesheet" href="/AWS/css/auth-rtl-fix.css" />
-
+    <a href="~/aws/fonts/fontawesome-webfont.eot">~/aws/fonts/fontawesome-webfont.eot</a>
+    <a href="~/aws/fonts/icomoon.eot">~/aws/fonts/icomoon.eot</a>
     <!-- Optional custom stylesheet for registration overrides -->
-    <link rel="stylesheet" href="/AWS/css/student-registration.css" />
-
+    <link rel="stylesheet" href="/css/StudentRegistration.css" />
+    <img src="~/aws/fonts/icomoon.svg" />
     <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png" />
+    <a href="~/aws/fonts/icomoon.ttf">~/aws/fonts/icomoon.ttf</a>
+    <a href="~/aws/fonts/fontawesome-webfont.woff">~/aws/fonts/fontawesome-webfont.woff</a>
+    <a href="~/aws/fonts/fontawesome-webfont.ttf">~/aws/fonts/fontawesome-webfont.ttf</a>
+    <a href="~/aws/fonts/fontawesome-webfont.eot">~/aws/fonts/fontawesome-webfont.eot</a>
 
     <style>
         /* Card container mimicking signup.html panel */
@@ -50,13 +54,11 @@
             padding: 50px;
             position: relative;
         }
+
         @@media (max-width: 992px) {
-            .registration-card
-
-        {
-            padding: 28px 24px;
-        }
-
+            .registration-card {
+                padding: 28px 24px;
+            }
         }
 
         .registration-title {
@@ -113,19 +115,17 @@
             .form-step.active {
                 display: block;
             }
+
         @@keyframes fadeStep {
-            from
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
 
-        {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         label.form-label {
@@ -384,6 +384,56 @@
         .text-purple-1 {
             color: #6e59a4;
         }
+
+        /* ========= ADDED MINIMAL CHANGES =========
+                   Put the form content (steps + navigation) inside a boxed container
+                   and make ONLY the Next button white (better in Arabic too).
+                */
+        .form-box-wrapper {
+            background: #ffffff;
+            border: 1px solid #e4e6ef;
+            border-radius: 18px;
+            padding: 30px 30px 38px;
+            max-width: 860px;
+            margin: 0 auto 10px;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+        }
+
+        @@media (max-width: 768px) {
+            .form-box-wrapper {
+                padding: 22px 18px 30px;
+                border-radius: 14px;
+            }
+        }
+
+        /* Space adjustments because steps moved inside box */
+        .form-box-wrapper .wizard-steps {
+            margin: 5px 0 28px;
+        }
+
+        /* White NEXT button (only) */
+        #nextBtn {
+            background: #ffffff !important;
+            color: #6e59a4 !important;
+            border: 2px solid #6e59a4 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+            #nextBtn:hover {
+                background: #6e59a4 !important;
+                color: #fff !important;
+            }
+            /* Keep consistency for focus */
+            #nextBtn:focus-visible {
+                outline: none;
+                box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
+            }
+
+        /* Optional: slightly lighten internal step headings inside box */
+        .form-box-wrapper .form-step h4 {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body class="preloader-visible login-page" data-barba="wrapper">
@@ -452,7 +502,7 @@
                                 </div>
                             </div>
                             <div class="header-right__buttons d-flex items-center lg:d-none">
-                                <a href="~/Auth/Login" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">
+                                <a href="~/Studentlogin" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">
                                     @(isRtl ? "تسجيل الدخول" : "Log in")
                                 </a>
                                 <a href="~/Register/@(Model.RootCode)" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">
@@ -516,348 +566,354 @@
                                         </ul>
                                     </div>
 
-                                    <!-- Step Indicators -->
-                                    <div class="wizard-steps" aria-label="steps">
-                                        <div class="step active" id="step1">1</div>
-                                        <div class="step" id="step2">2</div>
-                                        <div class="step" id="step3">3</div>
-                                        <div class="step" id="step4">4</div>
-                                        <div class="step" id="step5">5</div>
-                                    </div>
+                                    <!-- BEGIN: Boxed Form Content -->
+                                    <div class="form-box-wrapper">
 
-                                    <!-- Validation Summary -->
-                                    @if (!ViewData.ModelState.IsValid)
-                                    {
-                                        <div class="alert alert-danger" role="alert">
-                                            <h6 style="margin:0 0 6px;">
-                                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                                @(isRtl ? "يرجى تصحيح الأخطاء التالية:" : "Please correct the following errors:")
-                                            </h6>
-                                            <ul style="margin:0; padding-inline-start:18px;">
-                                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                                                {
-                                                    <li>@error.ErrorMessage</li>
-                                                }
-                                            </ul>
+                                        <!-- Step Indicators -->
+                                        <div class="wizard-steps" aria-label="steps">
+                                            <div class="step active" id="step1">1</div>
+                                            <div class="step" id="step2">2</div>
+                                            <div class="step" id="step3">3</div>
+                                            <div class="step" id="step4">4</div>
+                                            <div class="step" id="step5">5</div>
                                         </div>
-                                    }
 
-                                    <!-- Multi-step Registration Form -->
-                                    <form id="registrationForm"
-                                          method="post"
-                                          asp-action="PublicRegister"
-                                          asp-route-root_code="@Model.RootCode"
-                                          autocomplete="off">
-                                        @* @Html.AntiForgeryToken() Uncomment if needed *@
+                                        <!-- Validation Summary -->
+                                        @if (!ViewData.ModelState.IsValid)
+                                        {
+                                            <div class="alert alert-danger" role="alert">
+                                                <h6 style="margin:0 0 6px;">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                                    @(isRtl ? "يرجى تصحيح الأخطاء التالية:" : "Please correct the following errors:")
+                                                </h6>
+                                                <ul style="margin:0; padding-inline-start:18px;">
+                                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                                    {
+                                                        <li>@error.ErrorMessage</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
 
-                                        <!-- STEP 1: Personal Information -->
-                                        <div class="form-step active" id="step1Content">
-                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                <i class="fas fa-user"></i>
-                                                @(isRtl ? "البيانات الشخصية" : "Personal Information")
-                                            </h4>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="studentName">
-                                                        @(isRtl ? "الاسم الكامل" : "Full Name") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" class="form-control" id="studentName" name="StudentName" required maxlength="100" />
-                                                    <div class="invalid-feedback"></div>
+                                        <!-- Multi-step Registration Form -->
+                                        <form id="registrationForm"
+                                              method="post"
+                                              asp-action="PublicRegister"
+                                              asp-route-root_code="@Model.RootCode"
+                                              autocomplete="off">
+                                            @* @Html.AntiForgeryToken() Uncomment if needed *@
+
+                                            <!-- STEP 1: Personal Information -->
+                                            <div class="form-step active" id="step1Content">
+                                                <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                    <i class="fas fa-user"></i>
+                                                    @(isRtl ? "البيانات الشخصية" : "Personal Information")
+                                                </h4>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="studentName">
+                                                            @(isRtl ? "الاسم الكامل" : "Full Name") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="studentName" name="StudentName" required maxlength="100" />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="birthDate">
+                                                            @(isRtl ? "تاريخ الميلاد" : "Birthdate") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="date" class="form-control" id="birthDate" name="BirthDate" required />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="birthDate">
-                                                        @(isRtl ? "تاريخ الميلاد" : "Birthdate") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="date" class="form-control" id="birthDate" name="BirthDate" required />
-                                                    <div class="invalid-feedback"></div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="studentPhone">
+                                                            @(isRtl ? "هاتف الطالب" : "Student Phone") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" required maxlength="20" />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="parentPhone">
+                                                            @(isRtl ? "هاتف الأب" : "Father Phone") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="tel" class="form-control" id="parentPhone" name="StudentFatherPhone" required maxlength="20" />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="motherPhone">
+                                                            @(isRtl ? "هاتف الأم" : "Mother Phone") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="tel" class="form-control" id="motherPhone" name="StudentMotherPhone" required maxlength="20" />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="fatherJob">
+                                                            @(isRtl ? "مهنة الأب" : "Father Job") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="fatherJob" name="StudentFatherJob" required maxlength="50" />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label" for="motherJob">
+                                                            @(isRtl ? "مهنة الأم" : "Mother Job") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="motherJob" name="StudentMotherJob" required maxlength="50" />
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">
+                                                            @(isRtl ? "النوع" : "Gender") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <div class="d-flex gap-4 mt-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
+                                                                <label class="form-check-label" for="genderMale">@(isRtl ? "ذكر" : "Male")</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
+                                                                <label class="form-check-label" for="genderFemale">@(isRtl ? "أنثى" : "Female")</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="studentPhone">
-                                                        @(isRtl ? "هاتف الطالب" : "Student Phone") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="tel" class="form-control" id="studentPhone" name="StudentPhone" required maxlength="20" />
-                                                    <div class="invalid-feedback"></div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="parentPhone">
-                                                        @(isRtl ? "هاتف الأب" : "Father Phone") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="tel" class="form-control" id="parentPhone" name="StudentFatherPhone" required maxlength="20" />
-                                                    <div class="invalid-feedback"></div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="motherPhone">
-                                                        @(isRtl ? "هاتف الأم" : "Mother Phone") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="tel" class="form-control" id="motherPhone" name="StudentMotherPhone" required maxlength="20" />
-                                                    <div class="invalid-feedback"></div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="fatherJob">
-                                                        @(isRtl ? "مهنة الأب" : "Father Job") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" class="form-control" id="fatherJob" name="StudentFatherJob" required maxlength="50" />
-                                                    <div class="invalid-feedback"></div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label" for="motherJob">
-                                                        @(isRtl ? "مهنة الأم" : "Mother Job") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" class="form-control" id="motherJob" name="StudentMotherJob" required maxlength="50" />
-                                                    <div class="invalid-feedback"></div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
+
+                                            <!-- STEP 2: Mode / Branch / PIN -->
+                                            <div class="form-step" id="step2Content">
+                                                <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                    <i class="fas fa-laptop"></i>
+                                                    @(isRtl ? "وضع الدراسة و الموقع" : "Learning Mode & Location")
+                                                </h4>
+                                                <div class="mb-4">
                                                     <label class="form-label">
-                                                        @(isRtl ? "النوع" : "Gender") <span class="text-danger">*</span>
+                                                        @(isRtl ? "طريقة الدراسة" : "Study Mode") <span class="text-danger">*</span>
                                                     </label>
-                                                    <div class="d-flex gap-4 mt-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="Gender" value="true" id="genderMale" required />
-                                                            <label class="form-check-label" for="genderMale">@(isRtl ? "ذكر" : "Male")</label>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
+                                                                <label class="form-check-label" for="modeOffline">
+                                                                    <i class="fas fa-building me-2"></i>@(isRtl ? "مركز (أوفلاين)" : "Offline (Center)")
+                                                                </label>
+                                                            </div>
                                                         </div>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
-                                                            <label class="form-check-label" for="genderFemale">@(isRtl ? "أنثى" : "Female")</label>
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
+                                                                <label class="form-check-label" for="modeOnline">
+                                                                    <i class="fas fa-laptop me-2"></i>@(isRtl ? "أونلاين" : "Online")
+                                                                </label>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="invalid-feedback"></div>
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        <!-- STEP 2: Mode / Branch / PIN -->
-                                        <div class="form-step" id="step2Content">
-                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                <i class="fas fa-laptop"></i>
-                                                @(isRtl ? "وضع الدراسة و الموقع" : "Learning Mode & Location")
-                                            </h4>
-                                            <div class="mb-4">
-                                                <label class="form-label">
-                                                    @(isRtl ? "طريقة الدراسة" : "Study Mode") <span class="text-danger">*</span>
-                                                </label>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-check">
-                                                            <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
-                                                            <label class="form-check-label" for="modeOffline">
-                                                                <i class="fas fa-building me-2"></i>@(isRtl ? "مركز (أوفلاين)" : "Offline (Center)")
+                                                <!-- Offline branch/year -->
+                                                <div id="branchSection" class="mb-4">
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label" for="branchCode">
+                                                                @(isRtl ? "الفرع" : "Branch") <span class="text-danger">*</span>
                                                             </label>
+                                                            <select class="form-select" id="branchCode" name="BranchCode">
+                                                                <option value="">@(isRtl ? "اختر الفرع" : "Select Branch")</option>
+                                                                @foreach (var branch in Model.AvailableBranches)
+                                                                {
+                                                                    <option value="@branch.Value">@branch.Text</option>
+                                                                }
+                                                            </select>
+                                                            <div class="invalid-feedback"></div>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-check">
-                                                            <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
-                                                            <label class="form-check-label" for="modeOnline">
-                                                                <i class="fas fa-laptop me-2"></i>@(isRtl ? "أونلاين" : "Online")
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label" for="yearCode">
+                                                                @(isRtl ? "السنة الدراسية" : "Academic Year") <span class="text-danger">*</span>
                                                             </label>
+                                                            <select class="form-select" id="yearCode" name="YearCode">
+                                                                <option value="">@(isRtl ? "اختر السنة" : "Select Year")</option>
+                                                                @foreach (var year in Model.AvailableYears)
+                                                                {
+                                                                    <option value="@year.Value">@year.Text</option>
+                                                                }
+                                                            </select>
+                                                            <div class="invalid-feedback"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label" for="eduYearCodeDisplay">
+                                                                @(isRtl ? "المرحلة التعليمية" : "Education Year")
+                                                            </label>
+                                                            <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                                                            <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Online PIN Flow -->
+                                                <div id="onlinePinSection" style="display:none;">
+                                                    <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
+                                                        <i class="fas fa-key text-purple-1"></i>
+                                                        @(isRtl ? "رمز التسجيل أونلاين" : "Online Registration PIN")
+                                                    </h5>
+                                                    <div class="mb-3">
+                                                        <label for="pinCode" class="form-label">
+                                                            @(isRtl ? "أدخل الرمز" : "Enter PIN") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="pinCode" maxlength="20" autocomplete="off" />
+                                                        <div id="pinError" class="text-danger mt-2"></div>
+                                                    </div>
+                                                    <button type="button" class="btn-theme" id="validatePinBtn">
+                                                        <i class="fas fa-check-circle"></i> @(isRtl ? "تحقق من الرمز" : "Validate PIN")
+                                                    </button>
+
+                                                    <div id="onlineYearSection" style="display:none;" class="mt-4">
+                                                        <h6 class="mb-3 text-15 fw-600">
+                                                            <i class="fas fa-graduation-cap text-purple-1 me-1"></i>
+                                                            @(isRtl ? "اختر السنة الدراسية" : "Select Academic Year")
+                                                        </h6>
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="onlineYearCode">
+                                                                @(isRtl ? "السنة" : "Academic Year") <span class="text-danger">*</span>
+                                                            </label>
+                                                            <select class="form-select" id="onlineYearCode" name="OnlineYearCode">
+                                                                <option value="">@(isRtl ? "اختر السنة" : "Select Year")</option>
+                                                                @foreach (var year in Model.AvailableYears)
+                                                                {
+                                                                    <option value="@year.Value">@year.Text</option>
+                                                                }
+                                                            </select>
+                                                            <div class="invalid-feedback"></div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="onlineEduYearCodeDisplay">
+                                                                @(isRtl ? "المرحلة التعليمية" : "Education Year")
+                                                            </label>
+                                                            <input type="text" class="form-control" id="onlineEduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
+                                                            <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" value="@activeEduYear?.Value" />
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Offline branch/year -->
-                                            <div id="branchSection" class="mb-4">
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label" for="branchCode">
-                                                            @(isRtl ? "الفرع" : "Branch") <span class="text-danger">*</span>
-                                                        </label>
-                                                        <select class="form-select" id="branchCode" name="BranchCode">
-                                                            <option value="">@(isRtl ? "اختر الفرع" : "Select Branch")</option>
-                                                            @foreach (var branch in Model.AvailableBranches)
-                                                            {
-                                                                <option value="@branch.Value">@branch.Text</option>
-                                                            }
-                                                        </select>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label" for="yearCode">
-                                                            @(isRtl ? "السنة الدراسية" : "Academic Year") <span class="text-danger">*</span>
-                                                        </label>
-                                                        <select class="form-select" id="yearCode" name="YearCode">
-                                                            <option value="">@(isRtl ? "اختر السنة" : "Select Year")</option>
-                                                            @foreach (var year in Model.AvailableYears)
-                                                            {
-                                                                <option value="@year.Value">@year.Text</option>
-                                                            }
-                                                        </select>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label" for="eduYearCodeDisplay">
-                                                            @(isRtl ? "المرحلة التعليمية" : "Education Year")
-                                                        </label>
-                                                        <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                                                        <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Online PIN Flow -->
-                                            <div id="onlinePinSection" style="display:none;">
-                                                <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
-                                                    <i class="fas fa-key text-purple-1"></i>
-                                                    @(isRtl ? "رمز التسجيل أونلاين" : "Online Registration PIN")
-                                                </h5>
-                                                <div class="mb-3">
-                                                    <label for="pinCode" class="form-label">
-                                                        @(isRtl ? "أدخل الرمز" : "Enter PIN") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" class="form-control" id="pinCode" maxlength="20" autocomplete="off" />
-                                                    <div id="pinError" class="text-danger mt-2"></div>
-                                                </div>
-                                                <button type="button" class="btn-theme" id="validatePinBtn">
-                                                    <i class="fas fa-check-circle"></i> @(isRtl ? "تحقق من الرمز" : "Validate PIN")
-                                                </button>
-
-                                                <div id="onlineYearSection" style="display:none;" class="mt-4">
-                                                    <h6 class="mb-3 text-15 fw-600">
-                                                        <i class="fas fa-graduation-cap text-purple-1 me-1"></i>
-                                                        @(isRtl ? "اختر السنة الدراسية" : "Select Academic Year")
-                                                    </h6>
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="onlineYearCode">
-                                                            @(isRtl ? "السنة" : "Academic Year") <span class="text-danger">*</span>
-                                                        </label>
-                                                        <select class="form-select" id="onlineYearCode" name="OnlineYearCode">
-                                                            <option value="">@(isRtl ? "اختر السنة" : "Select Year")</option>
-                                                            @foreach (var year in Model.AvailableYears)
-                                                            {
-                                                                <option value="@year.Value">@year.Text</option>
-                                                            }
-                                                        </select>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label" for="onlineEduYearCodeDisplay">
-                                                            @(isRtl ? "المرحلة التعليمية" : "Education Year")
-                                                        </label>
-                                                        <input type="text" class="form-control" id="onlineEduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                                                        <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" value="@activeEduYear?.Value" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- STEP 3: Subjects & Teachers -->
-                                        <div class="form-step" id="step3Content">
-                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                <i class="fas fa-school"></i>
-                                                @(isRtl ? "اختيار المواد و المعلمين" : "Subject & Teacher Selection")
-                                            </h4>
-                                            <div class="alert alert-info">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                @(isRtl ? "اختر المواد ثم اختر معلم لكل مادة." : "Select your subjects then pick a teacher for each.")
-                                            </div>
-                                            <div id="availableSubjects"></div>
-                                            <div id="selectedSubjectsSummary" class="mt-4" style="display:none;">
-                                                <h6 class="text-16 fw-600 mb-2">@(isRtl ? "المواد المختارة" : "Selected Subjects")</h6>
-                                                <div id="selectedSubjectsList"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- STEP 4: Schedules / Online Account -->
-                                        <div class="form-step" id="step4Content">
-                                            <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                <i class="fas fa-calendar"></i>
-                                                @(isRtl ? "اختيار الجداول" : "Schedule Selection")
-                                            </h4>
-                                            <div id="scheduleSection">
+                                            <!-- STEP 3: Subjects & Teachers -->
+                                            <div class="form-step" id="step3Content">
+                                                <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                    <i class="fas fa-school"></i>
+                                                    @(isRtl ? "اختيار المواد و المعلمين" : "Subject & Teacher Selection")
+                                                </h4>
                                                 <div class="alert alert-info">
                                                     <i class="fas fa-info-circle me-2"></i>
-                                                    @(isRtl ? "اختر الجدول المناسب لكل مادة." : "Choose a schedule for each subject.")
+                                                    @(isRtl ? "اختر المواد ثم اختر معلم لكل مادة." : "Select your subjects then pick a teacher for each.")
                                                 </div>
-                                                <div id="scheduleSelection"></div>
-                                            </div>
-
-                                            <div id="onlineUserSection" style="display:none;">
-                                                <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
-                                                    <i class="fas fa-user-lock text-purple-1"></i>
-                                                    @(isRtl ? "إنشاء حساب أونلاين" : "Create Online Account")
-                                                </h5>
-                                                <div class="mb-3">
-                                                    <label for="username" class="form-label">
-                                                        @(isRtl ? "اسم المستخدم" : "Username") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" class="form-control" id="username" maxlength="40" autocomplete="off" />
-                                                    <div id="userError" class="text-danger mt-2"></div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="password" class="form-label">
-                                                        @(isRtl ? "كلمة المرور" : "Password") <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="password" class="form-control" id="password" maxlength="40" />
+                                                <div id="availableSubjects"></div>
+                                                <div id="selectedSubjectsSummary" class="mt-4" style="display:none;">
+                                                    <h6 class="text-16 fw-600 mb-2">@(isRtl ? "المواد المختارة" : "Selected Subjects")</h6>
+                                                    <div id="selectedSubjectsList"></div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <!-- STEP 5: Confirmation -->
-                                        <div class="form-step" id="step5Content">
-                                            <div id="offlineSummarySection">
+                                            <!-- STEP 4: Schedules / Online Account -->
+                                            <div class="form-step" id="step4Content">
                                                 <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                    <i class="fas fa-check-circle text-success"></i>
-                                                    @(isRtl ? "تأكيد البيانات" : "Confirmation")
+                                                    <i class="fas fa-calendar"></i>
+                                                    @(isRtl ? "اختيار الجداول" : "Schedule Selection")
                                                 </h4>
-                                                <div class="alert alert-success">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    @(isRtl ? "راجع بياناتك قبل الإرسال." : "Review your information before submitting.")
+                                                <div id="scheduleSection">
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        @(isRtl ? "اختر الجدول المناسب لكل مادة." : "Choose a schedule for each subject.")
+                                                    </div>
+                                                    <div id="scheduleSelection"></div>
                                                 </div>
-                                                <div id="registrationSummary"></div>
-                                                <div class="form-check mt-4">
-                                                    <input class="form-check-input" type="checkbox" id="termsAccepted" required />
-                                                    <label class="form-check-label" for="termsAccepted">
-                                                        @(isRtl ? "أوافق على الشروط و الأحكام" : "I accept the terms and conditions")
-                                                    </label>
+
+                                                <div id="onlineUserSection" style="display:none;">
+                                                    <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
+                                                        <i class="fas fa-user-lock text-purple-1"></i>
+                                                        @(isRtl ? "إنشاء حساب أونلاين" : "Create Online Account")
+                                                    </h5>
+                                                    <div class="mb-3">
+                                                        <label for="username" class="form-label">
+                                                            @(isRtl ? "اسم المستخدم" : "Username") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="username" maxlength="40" autocomplete="off" />
+                                                        <div id="userError" class="text-danger mt-2"></div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="password" class="form-label">
+                                                            @(isRtl ? "كلمة المرور" : "Password") <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="password" class="form-control" id="password" maxlength="40" />
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div id="onlineRegistrationSection" style="display:none;">
-                                                <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                    <i class="fas fa-check-circle text-success"></i>
-                                                    @(isRtl ? "إكمال التسجيل الأونلاين" : "Complete Online Registration")
-                                                </h4>
-                                                <div class="alert alert-success">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    @(isRtl ? "جاهز لإكمال التسجيل." : "Ready to complete your online registration.")
+                                            <!-- STEP 5: Confirmation -->
+                                            <div class="form-step" id="step5Content">
+                                                <div id="offlineSummarySection">
+                                                    <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                        <i class="fas fa-check-circle text-success"></i>
+                                                        @(isRtl ? "تأكيد البيانات" : "Confirmation")
+                                                    </h4>
+                                                    <div class="alert alert-success">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        @(isRtl ? "راجع بياناتك قبل الإرسال." : "Review your information before submitting.")
+                                                    </div>
+                                                    <div id="registrationSummary"></div>
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox" id="termsAccepted" required />
+                                                        <label class="form-check-label" for="termsAccepted">
+                                                            @(isRtl ? "أوافق على الشروط و الأحكام" : "I accept the terms and conditions")
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                                <button type="button" class="btn-theme-success w-100" id="completeOnlineBtn">
-                                                    <i class="fas fa-cloud-download-alt"></i>
-                                                    @(isRtl ? "إكمال التسجيل الأونلاين" : "Finish Online Registration")
+
+                                                <div id="onlineRegistrationSection" style="display:none;">
+                                                    <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
+                                                        <i class="fas fa-check-circle text-success"></i>
+                                                        @(isRtl ? "إكمال التسجيل الأونلاين" : "Complete Online Registration")
+                                                    </h4>
+                                                    <div class="alert alert-success">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        @(isRtl ? "جاهز لإكمال التسجيل." : "Ready to complete your online registration.")
+                                                    </div>
+                                                    <button type="button" class="btn-theme-success w-100" id="completeOnlineBtn">
+                                                        <i class="fas fa-cloud-download-alt"></i>
+                                                        @(isRtl ? "إكمال التسجيل الأونلاين" : "Finish Online Registration")
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Navigation Buttons -->
+                                            <div class="navigation-buttons">
+                                                <button type="button" class="btn-theme-secondary" id="prevBtn" style="display:none;">
+                                                    <i class="fas fa-arrow-right"></i>
+                                                    @(isRtl ? "السابق" : "Previous")
+                                                </button>
+                                                <div class="flex-grow-1"></div>
+                                                <button type="button" class="btn-theme" id="nextBtn">
+                                                    @(isRtl ? "التالي" : "Next")
+                                                    <i class="fas @(isRtl ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                                                </button>
+                                                <button type="button" class="btn-theme-success" id="submitBtn" style="display:none;">
+                                                    <i class="fas fa-check"></i>
+                                                    @(isRtl ? "تأكيد التسجيل" : "Complete Registration")
                                                 </button>
                                             </div>
-                                        </div>
 
-                                        <!-- Navigation Buttons -->
-                                        <div class="navigation-buttons">
-                                            <button type="button" class="btn-theme-secondary" id="prevBtn" style="display:none;">
-                                                <i class="fas fa-arrow-right"></i>
-                                                @(isRtl ? "السابق" : "Previous")
-                                            </button>
-                                            <div class="flex-grow-1"></div>
-                                            <button type="button" class="btn-theme" id="nextBtn">
-                                                @(isRtl ? "التالي" : "Next")
-                                                <i class="fas @(isRtl ? "fa-arrow-left" : "fa-arrow-right")"></i>
-                                            </button>
-                                            <button type="button" class="btn-theme-success" id="submitBtn" style="display:none;">
-                                                <i class="fas fa-check"></i>
-                                                @(isRtl ? "تأكيد التسجيل" : "Complete Registration")
-                                            </button>
-                                        </div>
+                                            <div class="security-note">
+                                                <i class="fas fa-lock me-1"></i>
+                                                @(isRtl ? "بياناتك آمنة و مشفرة." : "Your data is secure and protected.")
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <!-- END: Boxed Form Content -->
 
-                                        <div class="security-note">
-                                            <i class="fas fa-lock me-1"></i>
-                                            @(isRtl ? "بياناتك آمنة و مشفرة." : "Your data is secure and protected.")
-                                        </div>
-                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -877,19 +933,16 @@
 
     <!-- Core JS Dependencies (Match theme; add GSAP if main.js depends) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"></script>
-    <!-- Add plugins only if your main.js / animations use them -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script> -->
     <!-- Vendor bundle and theme scripts -->
     <script src="/js/vendors.js"></script>
     <script src="~/js/main.js"></script>
     <script src="/AWS/js/language-switcher.js"></script>
     <script src="/AWS/js/auth-layout-fix.js"></script>
-
+    <script src="~/aws/js/enhanced-hover-effects.js"></script>
     <!-- Registration Logic -->
     <script src="~/js/StudentRegistration.js"></script>
 
-    <!-- SweetAlert2 (used for some confirmations maybe) -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>

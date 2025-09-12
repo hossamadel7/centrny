@@ -35,13 +35,19 @@
     function notify(type, message, timeout = 6000) {
         const id = 'alert-' + Date.now();
         const html = `<div id="${id}" class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="${t('Close', 'Close')}"></button>
-        </div>`;
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="${t('Close', 'Close')}"></button>
+    </div>`;
         $('#alertHost').append(html);
+
         if (timeout) {
             setTimeout(() => {
-                $('#' + id).alert('close');
+                const el = document.getElementById(id);
+                if (el) {
+                    // Bootstrap 5 native API (no jQuery plugin)
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+                    bsAlert.close();
+                }
             }, timeout);
         }
     }

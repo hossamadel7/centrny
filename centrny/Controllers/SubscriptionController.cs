@@ -21,27 +21,45 @@ namespace centrny.Controllers
 
         // --- SESSION HELPERS ---
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
+
+        /// <summary>
+        /// Returns (userCode, groupCode, rootCode).
+        /// rootCode may be null if the host is not registered in Roots table.
+        /// </summary>
         private (int? userCode, int? groupCode, int? rootCode) GetSessionContext()
         {
+            // Host WITHOUT port (important for matching stored root domain)
+            var host = HttpContext.Request.Host.Host?.Replace("www.", "") ?? string.Empty;
+
+            var root = _context.Roots
+                .AsNoTracking()
+                .FirstOrDefault(r => r.RootDomain == host);
+
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode
+                root?.RootCode  // null-safe
             );
         }
-      
+
         public IActionResult Index()
         {
-         
             return View();
         }
 
         [HttpGet]
         public async Task<IActionResult> GetSubscriptions()
         {
-            
             var (userCode, groupCode, rootCode) = GetSessionContext();
-         
+            if (!rootCode.HasValue)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Root domain not registered or not found."
+                });
+            }
+
             var subs = await _context.SubscriptionPlans
                 .Where(e => e.RootCode == rootCode.Value && e.IsActive)
                 .OrderByDescending(e => e.InsertTime)
@@ -74,8 +92,12 @@ namespace centrny.Controllers
         public async Task<IActionResult> GetSubscription(int id)
         {
             var (userCode, groupCode, rootCode) = GetSessionContext();
+            if (!rootCode.HasValue)
+                return Json(new { success = false, message = "Root not found." });
 
-            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(sp => sp.SubPlanCode == id && sp.RootCode == rootCode);
+            var plan = await _context.SubscriptionPlans
+                .FirstOrDefaultAsync(sp => sp.SubPlanCode == id && sp.RootCode == rootCode.Value);
+
             if (plan == null)
                 return NotFound();
 
@@ -101,21 +123,18 @@ namespace centrny.Controllers
             });
         }
 
+        [HttpGet]
         public async Task<IActionResult> GetYears()
         {
-            var (userCode, groupCode, rootCode) = GetSessionContext();
-          
-            var years = await (
-                from year in _context.Years               
-                where year.RootCode == rootCode.Value
-                select new
-                {
-                    year.YearCode,
-                    year.YearName
-                }
-            )
-            .OrderBy(y => y.YearName)
-            .ToListAsync();
+            var (_, _, rootCode) = GetSessionContext();
+            if (!rootCode.HasValue)
+                return Json(Array.Empty<object>());
+
+            var years = await _context.Years
+                .Where(y => y.RootCode == rootCode.Value)
+                .OrderBy(y => y.YearName)
+                .Select(y => new { y.YearCode, y.YearName })
+                .ToListAsync();
 
             return Json(years);
         }
@@ -123,8 +142,9 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubjects(int yearCode)
         {
-            var (userCode, groupCode, rootCode) = GetSessionContext();
-            
+            var (_, _, rootCode) = GetSessionContext();
+            if (!rootCode.HasValue)
+                return Json(Array.Empty<object>());
 
             var subjects = await (
                 from s in _context.Subjects
@@ -133,7 +153,10 @@ namespace centrny.Controllers
                       t.YearCode == yearCode &&
                       t.IsActive
                 select new { s.SubjectCode, s.SubjectName }
-            ).Distinct().OrderBy(s => s.SubjectName).ToListAsync();
+            )
+            .Distinct()
+            .OrderBy(s => s.SubjectName)
+            .ToListAsync();
 
             return Json(subjects);
         }
@@ -141,13 +164,14 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchStudentsByPhone(string phone)
         {
-            var (userCode, groupCode, rootCode) = GetSessionContext();
-          
+            var (_, _, rootCode) = GetSessionContext();
+            if (!rootCode.HasValue)
+                return Json(new { success = true, students = new object[0] });
+
             var students = await (
                 from s in _context.Students
                 join y in _context.Years on s.YearCode equals y.YearCode
-                where s.StudentPhone == phone && s.IsActive
-                where y.RootCode == rootCode.Value
+                where s.StudentPhone == phone && s.IsActive && y.RootCode == rootCode.Value
                 select new
                 {
                     studentCode = s.StudentCode,
@@ -163,39 +187,49 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> BuyStudentPlan([FromBody] BuyStudentPlanDto dto)
         {
-           
             if (dto == null || dto.SubscriptionPlanCode == 0 || dto.StudentCode == 0)
                 return BadRequest("Invalid data.");
 
-            var (userCode, groupCode, rootCode) = GetSessionContext();
+            var (userCode, _, rootCode) = GetSessionContext();
+            if (!rootCode.HasValue)
+                return Json(new { success = false, message = "Root not found." });
 
-            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.SubPlanCode == dto.SubscriptionPlanCode && p.IsActive && p.RootCode==rootCode);
+            var plan = await _context.SubscriptionPlans
+                .FirstOrDefaultAsync(p => p.SubPlanCode == dto.SubscriptionPlanCode && p.IsActive && p.RootCode == rootCode.Value);
+
             if (plan == null)
                 return Json(new { success = false, message = "Plan not found." });
 
-            var student = await _context.Students.FirstOrDefaultAsync(s => s.StudentCode == dto.StudentCode && s.IsActive && s.IsActive && s.RootCode == rootCode);
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentCode == dto.StudentCode && s.IsActive && s.RootCode == rootCode.Value);
+
             if (student == null)
                 return Json(new { success = false, message = "Student not found." });
 
-            var year = await _context.Years.FirstOrDefaultAsync(y => y.YearCode == student.YearCode && y.RootCode == rootCode);
+            var year = await _context.Years
+                .FirstOrDefaultAsync(y => y.YearCode == student.YearCode && y.RootCode == rootCode.Value);
+
             if (year == null)
                 return Json(new { success = false, message = "Student year not found." });
 
-            var eduYearCode = await _context.EduYears.Where(ey => ey.RootCode == rootCode && ey.IsActive)
-                .Select(ey => ey.EduCode)
-                .FirstOrDefaultAsync();
+            var eduYearCode = await _context.EduYears
+     .Where(ey => ey.RootCode == rootCode.Value && ey.IsActive)
+     .Select(ey => (int?)ey.EduCode)   // cast to nullable
+     .FirstOrDefaultAsync();
 
-            DateOnly subDate = DateOnly.FromDateTime(DateTime.Today);
-            DateOnly expiryDate = subDate.AddMonths((int)plan.ExpiryMonths);
+            if (!eduYearCode.HasValue)
+                return Json(new { success = false, message = "Educational year not configured." });
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var expiryDate = today.AddMonths((int)plan.ExpiryMonths);
 
             var studentPlan = new StudentPlan
             {
                 SubscriptionPlanCode = plan.SubPlanCode,
                 StudentCode = student.StudentCode,
                 EduYearCode = (int)eduYearCode,
-                SubDate = subDate,
+                SubDate = today,
                 IsActive = true,
-                InsertUser = userCode.Value,
+                InsertUser = userCode ?? 0,
                 InsertTime = DateTime.Now,
                 LastInsertUser = null,
                 LastInsertTime = null,
@@ -213,12 +247,13 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateSubscriptionDto dto)
         {
-           
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubPlanName) || dto.Subjects == null || dto.Subjects.Count == 0)
                 return BadRequest("Invalid data.");
 
-            var (userCode, groupCode, rootCode) = GetSessionContext();
-          
+            var (userCode, _, rootCode) = GetSessionContext();
+            if (!rootCode.HasValue || !userCode.HasValue)
+                return Unauthorized();
+
             int totalCount = dto.Subjects.Sum(s => s.Count);
 
             var plan = new SubscriptionPlan
@@ -259,17 +294,18 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] EditSubscriptionDto dto)
         {
-          
             if (dto == null || string.IsNullOrWhiteSpace(dto.SubPlanName) || dto.Subjects == null || dto.Subjects.Count == 0)
                 return BadRequest("Invalid data.");
 
-            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(sp => sp.SubPlanCode == dto.SubPlanCode);
-            if (plan == null)
-                return NotFound("Subscription plan not found.");
-
-            var (userCode, groupCode, rootCode) = GetSessionContext();
+            var (userCode, _, rootCode) = GetSessionContext();
             if (!userCode.HasValue)
                 return Unauthorized();
+
+            var plan = await _context.SubscriptionPlans
+                .FirstOrDefaultAsync(sp => sp.SubPlanCode == dto.SubPlanCode && sp.RootCode == rootCode);
+
+            if (plan == null)
+                return NotFound("Subscription plan not found.");
 
             plan.SubPlanName = dto.SubPlanName;
             plan.Price = dto.Price;
@@ -279,7 +315,10 @@ namespace centrny.Controllers
             plan.LastUpdateUser = userCode.Value;
             plan.LastUpdateTime = DateTime.Now;
 
-            var oldSubjects = await _context.PlanSubjects.Where(ps => ps.SubscribtionPlanCode == plan.SubPlanCode && ps.IsActive).ToListAsync();
+            var oldSubjects = await _context.PlanSubjects
+                .Where(ps => ps.SubscribtionPlanCode == plan.SubPlanCode && ps.IsActive)
+                .ToListAsync();
+
             foreach (var old in oldSubjects)
             {
                 old.IsActive = false;
@@ -310,23 +349,27 @@ namespace centrny.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete([FromBody] DeleteSubscriptionDto dto)
         {
-          
             if (dto == null || dto.SubPlanCode == 0)
                 return BadRequest("Invalid data.");
 
-            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(sp => sp.SubPlanCode == dto.SubPlanCode);
-            if (plan == null)
-                return NotFound("Subscription plan not found.");
-
-            var (userCode, groupCode, rootCode) = GetSessionContext();
+            var (userCode, _, rootCode) = GetSessionContext();
             if (!userCode.HasValue)
                 return Unauthorized();
+
+            var plan = await _context.SubscriptionPlans
+                .FirstOrDefaultAsync(sp => sp.SubPlanCode == dto.SubPlanCode && sp.RootCode == rootCode);
+
+            if (plan == null)
+                return NotFound("Subscription plan not found.");
 
             plan.IsActive = false;
             plan.LastUpdateUser = userCode.Value;
             plan.LastUpdateTime = DateTime.Now;
 
-            var planSubjects = await _context.PlanSubjects.Where(ps => ps.SubscribtionPlanCode == dto.SubPlanCode && ps.IsActive).ToListAsync();
+            var planSubjects = await _context.PlanSubjects
+                .Where(ps => ps.SubscribtionPlanCode == dto.SubPlanCode && ps.IsActive)
+                .ToListAsync();
+
             foreach (var subject in planSubjects)
             {
                 subject.IsActive = false;
@@ -340,7 +383,6 @@ namespace centrny.Controllers
         }
 
         // DTOs
-
         public class CreateSubscriptionDto
         {
             public string SubPlanName { get; set; }

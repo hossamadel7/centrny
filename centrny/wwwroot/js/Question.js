@@ -340,8 +340,8 @@ function saveQuestionWithAnswers() {
                 showValidationMessage(result.message || getJsString('failedToSaveQuestion') || 'Failed to save question', 'error');
             }
         },
-        error: function (xhr, status, error) {
-            console.error('Save error:', error);
+        error: function (xhr) {
+            console.error('Save error:', xhr);
             let errorMessage = getJsString('errorSavingQuestion') || 'An error occurred while saving. Please try again.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
@@ -579,7 +579,7 @@ function setupEventHandlers() {
         $('[name="ChapterCode"]').val(chapterCode);
         $('[name="TeacherCode"]').val(window.userTeacherCode || '');
         $('[name="YearCode"]').val(selectedYearCode || '');
-        $('#addLessonModal').show();
+        showModal('#addLessonModal'); // UPDATED
     });
 
     $(document).on('click', '.chapter-header', function () {
@@ -641,33 +641,27 @@ function setupEventHandlers() {
         loadQuestionsForLesson(selectedLessonCode, currentPage + 1);
     });
 
-    // =========================
     // SHOW ANSWERS BUTTON HANDLER
-    // =========================
     $(document).on('click', '.show-answers-btn', function () {
         const $btn = $(this);
         const questionCode = $btn.data('question');
         const $answersContainer = $('#answers-' + questionCode);
 
-        // Toggle display
         if ($answersContainer.is(':visible')) {
             $answersContainer.slideUp();
             $btn.removeClass('active');
             return;
         }
 
-        // If already loaded, just show/hide
         if ($answersContainer.data('loaded')) {
             $answersContainer.slideDown();
             $btn.addClass('active');
             return;
         }
 
-        // Show loading state
         $answersContainer.html('<div style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> ' + (getJsString('loadingAnswers') || 'Loading answers...') + '</div>').slideDown();
         $btn.addClass('active');
 
-        // Fetch answers from server
         $.get('/Question/GetAnswersByQuestion', { questionCode: questionCode }, function (answers) {
             let html = '';
             if (answers && answers.length > 0) {
@@ -775,7 +769,7 @@ $('#addLessonForm').on('submit', function (e) {
         if (resp.success) {
             $('#addLessonMsg').css('color', 'green').text(getJsString('saved') || 'Lesson added!').show();
             setTimeout(() => {
-                $('#addLessonModal').hide();
+                hideModal('#addLessonModal'); // UPDATED
                 if (selectedSubjectCode && selectedYearCode) {
                     loadLessonHierarchy(selectedSubjectCode, selectedYearCode);
                 }
@@ -799,7 +793,7 @@ $('#addChapterForm').on('submit', function (e) {
         if (resp.success) {
             $('#addChapterMsg').css('color', 'green').text(getJsString('saved') || 'Chapter added!').show();
             setTimeout(() => {
-                $('#addChapterModal').hide();
+                hideModal('#addChapterModal'); // UPDATED
                 if (selectedSubjectCode && selectedYearCode) {
                     loadLessonHierarchy(selectedSubjectCode, selectedYearCode);
                 }
@@ -859,7 +853,6 @@ function populateYears(selectedYearCode) {
         let html = '<option value="">' + (getJsString('selectOption') || '-- Select --') + '</option>';
         data.forEach(x => html += `<option value="${x.yearCode}">${x.yearName}</option>`);
         $('#addChapterForm select[name="YearCode"]').html(html);
-        // Auto-select year if provided
         if (selectedYearCode) {
             $('#addChapterForm select[name="YearCode"]').val(selectedYearCode);
         }
@@ -868,7 +861,7 @@ function populateYears(selectedYearCode) {
 
 // Optional: Hide modals on overlay click (UX improvement)
 $('.modal-background').on('click', function (e) {
-    if (e.target === this) $(this).hide();
+    if (e.target === this) hideModal(this); // UPDATED
 });
 
 // =========================
@@ -882,7 +875,7 @@ $(document).on('click', '#addChapterBtn', function () {
     populateTeachers();
     populateSubjects();
     populateYears(lastSelectedYearCode); // Pass selected year to modal
-    $('#addChapterModal').show();
+    showModal('#addChapterModal'); // UPDATED
 });
 
 $(document).ready(function () {
