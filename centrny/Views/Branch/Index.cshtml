@@ -15,7 +15,6 @@
 }
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
-<p>CurrentUICulture: @System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName</p>
 <head>
     <meta charset="utf-8" />
     <title>@ViewData["Title"]</title>
@@ -31,7 +30,18 @@
     <link rel="stylesheet" href="/css/Hamody.css" />
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.27/dist/sweetalert2.min.css" />
+
     <style>
+        /* Mitigate missing icomoon font 404s by providing a local fallback.
+                   For a permanent fix, add the actual fonts to wwwroot/fonts/ or adjust vendors.css paths. */
+        @@font -face {
+            font-family: 'icomoon';
+            src: local('Arial');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
             --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
@@ -125,7 +135,6 @@
             margin-right: 0 !important;
         }
 
-        /* Custom branch card longer and prettier */
         .branch-card {
             min-width: 350px;
             width: 95%;
@@ -159,6 +168,7 @@
     <script>
         window.userId = @userCode;
     </script>
+
     <div id="js-localization"
          data-title-manage-branches="@Localizer["Title_ManageBranches"]"
          data-label-select-root="@Localizer["Label_SelectRoot"]"
@@ -356,7 +366,7 @@
             </div>
         </div>
     </div>
-    <!-- Add/Edit Hall Modal -->
+    <!-- Add/Edit Hall Modals -->
     <div class="modal fade" id="addHallModal" tabindex="-1" aria-labelledby="addHallModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -412,9 +422,16 @@
             </div>
         </div>
     </div>
+
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.27/dist/sweetalert2.all.min.js"></script>
+
     @section Scripts {
+        <!-- jQuery must load before Branch.js -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <!-- Bootstrap 5 bundle for Modal API -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Branch page script -->
         <script>
             const userRootCode = @userRootCode;
             const userName = '@userName';

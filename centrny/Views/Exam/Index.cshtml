@@ -27,7 +27,18 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     }
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css" />
+
     <style>
+        /* Prevent missing icomoon font 404s by shadowing the font-face with a local fallback */
+        @@font -face {
+            font-family: 'icomoon';
+            src: local('Arial');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         html[dir="rtl"] .exam-index-card,
         html[dir="rtl"] .gradient-table,
         html[dir="rtl"] .exam-index-table,
@@ -158,96 +169,90 @@
         }
 
         /* FIXED: Mobile responsive styles */
-       @@media (max-width: 576px) {
-            .table-card, .exam-index-table, .gradient-table
-
-        {
-            padding: .5rem !important;
-            margin: .5rem !important;
-            max-width: 100vw !important;
-            min-width: 0 !important;
-            width: 100% !important;
-        }
-
-        .table-responsive {
-            width: 100vw !important;
-            max-width: 100vw !important;
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
-
-        .exam-index-table th, .exam-index-table td,
-        .gradient-table th, .gradient-table td {
-            font-size: 0.92rem !important;
-            padding: 0.25rem 0.2rem !important;
-            white-space: nowrap !important;
-            min-width: 90px !important;
-            max-width: 150px !important;
-            word-break: break-word;
-        }
-
-            .exam-index-table th:last-child, .exam-index-table td:last-child,
-            .gradient-table th:last-child, .gradient-table td:last-child {
-                min-width: 110px !important;
-                max-width: 180px !important;
-            }
-
-                /* Stack action buttons vertically on mobile */
-                .exam-index-table td:last-child .d-flex,
-                .gradient-table td:last-child .d-flex {
-                    flex-direction: column !important;
-                    gap: .32rem !important;
-                    align-items: stretch !important;
-                }
-
-        .btn-table, .modern-btn {
-            width: 100% !important;
-            margin-bottom: .2rem !important;
-            font-size: 0.94rem !important;
-            padding: 0.5rem 0 !important;
-            justify-content: center !important;
-        }
-
-        /* Allow table to scroll horizontally */
-        .gradient-table, .exam-index-table {
-            min-width: 700px !important;
-            width: auto !important;
-        }
-
-        .table-responsive {
-            overflow-x: auto !important;
-        }
-
-        /* Mobile expand button styling */
-        .show-details-btn {
-            border-radius: 50% !important;
-            width: 35px !important;
-            height: 35px !important;
-            padding: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-
-        .exam-header-block h2 {
-            font-size: 1.8rem;
-        }
-
-        .exam-filters {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 0.5rem !important;
-        }
-
-            .exam-filters label {
-                margin-bottom: 0.25rem;
-            }
-
-            .exam-filters select {
-                max-width: 100% !important;
+        @@media (max-width: 576px) {
+            .table-card, .exam-index-table, .gradient-table {
+                padding: .5rem !important;
+                margin: .5rem !important;
+                max-width: 100vw !important;
+                min-width: 0 !important;
                 width: 100% !important;
             }
 
+            .table-responsive {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .exam-index-table th, .exam-index-table td,
+            .gradient-table th, .gradient-table td {
+                font-size: 0.92rem !important;
+                padding: 0.25rem 0.2rem !important;
+                white-space: nowrap !important;
+                min-width: 90px !important;
+                max-width: 150px !important;
+                word-break: break-word;
+            }
+
+                .exam-index-table th:last-child, .exam-index-table td:last-child,
+                .gradient-table th:last-child, .gradient-table td:last-child {
+                    min-width: 110px !important;
+                    max-width: 180px !important;
+                }
+                    /* Stack action buttons vertically on mobile */
+                    .exam-index-table td:last-child .d-flex,
+                    .gradient-table td:last-child .d-flex {
+                        flex-direction: column !important;
+                        gap: .32rem !important;
+                        align-items: stretch !important;
+                    }
+
+            .btn-table, .modern-btn {
+                width: 100% !important;
+                margin-bottom: .2rem !important;
+                font-size: 0.94rem !important;
+                padding: 0.5rem 0 !important;
+                justify-content: center !important;
+            }
+            /* Allow table to scroll horizontally */
+            .gradient-table, .exam-index-table {
+                min-width: 700px !important;
+                width: auto !important;
+            }
+
+            .table-responsive {
+                overflow-x: auto !important;
+            }
+            /* Mobile expand button styling */
+            .show-details-btn {
+                border-radius: 50% !important;
+                width: 35px !important;
+                height: 35px !important;
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            .exam-header-block h2 {
+                font-size: 1.8rem;
+            }
+
+            .exam-filters {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.5rem !important;
+            }
+
+                .exam-filters label {
+                    margin-bottom: 0.25rem;
+                }
+
+                .exam-filters select {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                }
         }
     </style>
 </head>
@@ -674,9 +679,18 @@
     </div>
 
     @section Scripts {
-        <script src="~/js/Exam.js"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css" />
+        <!-- jQuery first (no integrity to avoid SRI mismatches blocking the script) -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+        <!-- Bootstrap JS bundle (required for bootstrap.Modal) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+        <!-- Dragula (drag and drop for questions management) -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
+
+        <!-- Exam page script -->
+        <script src="~/js/Exam.js"></script>
+
         <script>
             window.examPageData = {
                 isCenterUser: @Json.Serialize(isCenter),

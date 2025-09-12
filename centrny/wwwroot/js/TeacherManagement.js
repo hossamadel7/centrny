@@ -1,5 +1,91 @@
 ﻿console.log("TeacherManagement.js loaded");
 
+/* Ensure Bootstrap CSS exists and modal/backdrop sit above theme */
+(function ensureBootstrapCssAndZIndex() {
+    try {
+        const hasBootstrapCss =
+            document.querySelector('link[href*="bootstrap"][href$=".css"]') ||
+            document.querySelector('link[href*="bootstrap.min.css"]');
+        if (!hasBootstrapCss) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+            document.head.prepend(link);
+        }
+        if (!document.getElementById('teacher-mgmt-modal-zfix')) {
+            const style = document.createElement('style');
+            style.id = 'teacher-mgmt-modal-zfix';
+            style.textContent = `
+                .modal { z-index: 10850 !important; }
+                .modal-backdrop { z-index: 10840 !important; }
+            `;
+            document.head.appendChild(style);
+        }
+        // Optional: silence noisy font 404s if your theme references icomoon via vendors.css
+        if (!document.getElementById('icomoon-fallback')) {
+            const s = document.createElement('style');
+            s.id = 'icomoon-fallback';
+            s.textContent = `
+                @font-face {
+                    font-family: 'icomoon';
+                    src: local('Arial');
+                    font-weight: normal;
+                    font-style: normal;
+                    font-display: swap;
+                }
+            `;
+            document.head.appendChild(s);
+        }
+    } catch (_) { }
+})();
+
+/* Safe modal helpers for Bootstrap 5 / jQuery fallback */
+function safeShowModalById(id) {
+    try {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+            const Ctor = window.bootstrap.Modal;
+            let instance = (typeof Ctor.getOrCreateInstance === 'function')
+                ? Ctor.getOrCreateInstance(el)
+                : (typeof Ctor.getInstance === 'function' ? Ctor.getInstance(el) : null);
+            if (!instance) instance = new Ctor(el);
+            if (instance && typeof instance.show === 'function') { instance.show(); return; }
+        }
+        if (typeof window.$ !== 'undefined' && typeof window.$(el).modal === 'function') {
+            window.$(el).modal('show'); return;
+        }
+        // Last resort
+        el.style.display = 'block';
+        document.body.classList.add('modal-open');
+    } catch (e) {
+        console && console.debug && console.debug('safeShowModalById error:', e);
+    }
+}
+function safeHideModalById(id) {
+    try {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+            const Ctor = window.bootstrap.Modal;
+            let instance = (typeof Ctor.getOrCreateInstance === 'function')
+                ? Ctor.getOrCreateInstance(el)
+                : (typeof Ctor.getInstance === 'function' ? Ctor.getInstance(el) : null);
+            if (!instance) instance = new Ctor(el);
+            if (instance && typeof instance.hide === 'function') { instance.hide(); return; }
+        }
+        if (typeof window.$ !== 'undefined' && typeof window.$(el).modal === 'function') {
+            window.$(el).modal('hide'); return;
+        }
+        el.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    } catch (e) {
+        console && console.debug && console.debug('safeHideModalById error:', e);
+    }
+}
+
 // SweetAlert2 helpers
 function swalSuccess(msg) {
     Swal.fire({
@@ -149,7 +235,7 @@ $(function () {
     $(document).on('click', '#openAddTeacher', function () {
         $('#teacherForm')[0].reset();
         resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
-        $('#addTeacherModal').modal('show');
+        safeShowModalById('addTeacherModal');
     });
 
     $('#teacherForm').on('submit', function (e) {
@@ -173,7 +259,7 @@ $(function () {
             contentType: 'application/json',
             data: JSON.stringify(teacherData),
             success: function (res) {
-                $('#addTeacherModal').modal('hide');
+                safeHideModalById('addTeacherModal');
                 loadTeachers(loggedInUserRootCode);
                 swalSuccess(successAddTeacher);
                 resetSubmitButton(addTeacherSubmitBtn, addTeacherText);
@@ -197,7 +283,7 @@ $(function () {
             $('#editTeacherPhone').val(teacher.teacherPhone);
             $('#editTeacherAddress').val(teacher.teacherAddress);
             resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
-            $('#editTeacherModal').modal('show');
+            safeShowModalById('editTeacherModal');
         }).fail(function () {
             swalError(errorNetwork);
         });
@@ -223,7 +309,7 @@ $(function () {
             contentType: 'application/json',
             data: JSON.stringify(teacherEdit),
             success: function (res) {
-                $('#editTeacherModal').modal('hide');
+                safeHideModalById('editTeacherModal');
                 loadTeachers(loggedInUserRootCode);
                 swalSuccess(successEditTeacher);
                 resetSubmitButton(editTeacherSubmitBtn, saveChangesText);
@@ -332,7 +418,7 @@ $(function () {
                                         for (let subject of subjects) {
                                             $subjectSelect.append($('<option>', { value: subject.subjectCode, text: subject.subjectName }));
                                         }
-                                        $('#addTeachSubjectModal').modal('show');
+                                        safeShowModalById('addTeachSubjectModal');
                                     },
                                     error: function () { swalError(errorNetwork); }
                                 });
@@ -378,7 +464,7 @@ $(function () {
             contentType: 'application/json',
             data: JSON.stringify(data),
             success: function (res) {
-                $('#addTeachSubjectModal').modal('hide');
+                safeHideModalById('addTeachSubjectModal');
                 $(`.show-subjects-btn[data-teacher="${currentTeacherCode}"]`).trigger('click');
                 swalSuccess(successAddTeachSubject);
                 resetSubmitButton(teachSubjectSubmitBtn, submitText);
