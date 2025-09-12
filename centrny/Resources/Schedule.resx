@@ -361,5 +361,38 @@
 	<data name="lblWarning" xml:space="preserve"><value>Warning!</value></data>
 	<data name="cancel" xml:space="preserve"><value>Cancel</value></data>
 	<data name="submit" xml:space="preserve"><value>Submit</value></data>
+	<!-- Conflict Detection Strings - English -->
+	<data name="Error_CheckingConflicts" xml:space="preserve">
+  <value>Error checking for conflicts</value>
+</data>
+	<data name="Conflict_Hall" xml:space="preserve">
+  <value>Hall conflict detected - this hall is already booked at this time</value>
+</data>
+	<data name="Conflict_Teacher" xml:space="preserve">
+  <value>Teacher conflict detected - this teacher is already scheduled at this time</value>
+</data>
+	<data name="Warning_YearOverlap" xml:space="preserve">
+  <value>Warning: Same year students have overlapping class with different teacher</value>
+</data>
+
+	<!-- Additional conflict-related strings -->
+	<data name="Conflict_TimeOverlap" xml:space="preserve">
+  <value>Time overlap detected with existing schedule</value>
+</data>
+	<data name="Msg_ConflictResolution" xml:space="preserve">
+  <value>Please adjust the time or select different resources to resolve conflicts</value>
+</data>
+	<data name="Lbl_ConflictsWith" xml:space="preserve">
+  <value>Conflicts with</value>
+</data>
+	<data name="Msg_CheckingConflicts" xml:space="preserve">
+  <value>Checking for schedule conflicts...</value>
+</data>
+	<data name="Lbl_ConflictDetails" xml:space="preserve">
+  <value>Conflict Details</value>
+</data>
+	<data name="Msg_NoConflictsFound" xml:space="preserve">
+  <value>No scheduling conflicts detected</value>
+</data>
 	<data name="errorNetwork" xml:space="preserve"><value>Network error occurred</value></data>
 </root>

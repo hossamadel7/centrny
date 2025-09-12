@@ -57,8 +57,7 @@ namespace centrny.Controllers
             return (
                 GetSessionInt("UserCode"),
                 GetSessionInt("GroupCode"),
-    _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,
-    GetSessionString("Username")
+                _context.Roots.Where(x => x.RootDomain == HttpContext.Request.Host.Host.ToString().Replace("www.", "")).FirstOrDefault().RootCode,GetSessionString("Username")
             );
         }
         private bool IsCurrentUserTeacher()
@@ -286,6 +285,8 @@ namespace centrny.Controllers
             }
         }
 
+        
+
         [HttpGet]
         public async Task<IActionResult> GetBranchesForCenter(int centerCode)
         {
@@ -419,7 +420,7 @@ namespace centrny.Controllers
 
         public async Task<IActionResult> Calendar()
         {
-           
+
             var (rootCode, rootName, isCenter, branchName) = await GetUserContext();
             int? groupBranchCode = await GetCurrentUserGroupBranchCode();
 
@@ -1187,6 +1188,9 @@ namespace centrny.Controllers
             return View(schedule);
         }
 
+
+
+
         [HttpGet]
         public async Task<IActionResult> GetYearsForFilter()
         {
@@ -1247,7 +1251,7 @@ namespace centrny.Controllers
                 }
 
                 // If no years found through the above methods, get all years for the root
-               
+
                 _logger.LogInformation("Found {Count} years for user root {RootCode}", years.Count, userRootCode);
 
                 return Json(new { success = true, years = years });
@@ -1431,6 +1435,125 @@ namespace centrny.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CheckScheduleConflicts([FromBody] ScheduleConflictModel model)
+        {
+            try
+            {
+                var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
+
+                if (!userRootCode.HasValue)
+                    return Json(new { success = false, error = "Unable to determine your root assignment." });
+
+                model.RootCode = userRootCode.Value;
+
+                // Parse times
+                if (!TimeOnly.TryParse(model.StartTime, out TimeOnly startTime) ||
+                    !TimeOnly.TryParse(model.EndTime, out TimeOnly endTime))
+                {
+                    return Json(new { success = false, error = "Invalid time format." });
+                }
+
+                if (startTime >= endTime)
+                {
+                    return Json(new { success = false, error = "End time must be after start time." });
+                }
+
+                if (IsCurrentUserTeacher())
+                {
+                    var teacherCode = await GetCurrentUserTeacherCode();
+                    if (teacherCode.HasValue)
+                    {
+                        model.TeacherCode = teacherCode.Value;
+                    }
+                }
+
+                // Convert TimeOnly to DateTime with base date for comparison
+                var baseDate = new DateTime(2000, 1, 1);
+                var scheduleStartTime = baseDate.Add(startTime.ToTimeSpan());
+                var scheduleEndTime = baseDate.Add(endTime.ToTimeSpan());
+
+                int? editingScheduleCode = model.ScheduleCode;
+
+                // 1. Hall Conflict - same hall, same day of week, overlapping times
+                bool hallConflict = false;
+                if (model.HallCode.HasValue && model.HallCode > 0)
+                {
+                    hallConflict = await _context.Schedules
+                        .AsNoTracking()
+                        .Where(s => s.HallCode == model.HallCode &&
+                                   s.DayOfWeek == model.DayOfWeek &&
+                                   s.RootCode == userRootCode.Value &&
+                                   s.StartTime.HasValue && s.EndTime.HasValue &&
+                                   (s.StartTime < scheduleEndTime && s.EndTime > scheduleStartTime) &&
+                                   (!editingScheduleCode.HasValue || s.ScheduleCode != editingScheduleCode.Value))
+                        .AnyAsync();
+                }
+
+                // 2. Teacher Conflict - same teacher, same day of week, overlapping times
+                bool teacherConflict = false;
+                if (model.TeacherCode.HasValue && model.TeacherCode > 0)
+                {
+                    teacherConflict = await _context.Schedules
+                        .AsNoTracking()
+                        .Where(s => s.TeacherCode == model.TeacherCode &&
+                                   s.DayOfWeek == model.DayOfWeek &&
+                                   s.RootCode == userRootCode.Value &&
+                                   s.StartTime.HasValue && s.EndTime.HasValue &&
+                                   (s.StartTime < scheduleEndTime && s.EndTime > scheduleStartTime) &&
+                                   (!editingScheduleCode.HasValue || s.ScheduleCode != editingScheduleCode.Value))
+                        .AnyAsync();
+                }
+
+                // 3. Same Year Conflict - same educational year + branch, same day of week, overlapping times with different teacher
+                bool sameYearConflict = false;
+                string conflictingTeacherName = null;
+
+                if (model.EduYearCode.HasValue && model.EduYearCode > 0 &&
+                    model.BranchCode.HasValue && model.BranchCode > 0)
+                {
+                    var yearConflicts = await _context.Schedules
+                        .Include(s => s.TeacherCodeNavigation)
+                        .Where(s => s.EduYearCode == model.EduYearCode &&
+                                   s.BranchCode == model.BranchCode &&
+                                   s.DayOfWeek == model.DayOfWeek &&
+                                   s.RootCode == userRootCode.Value &&
+                                   s.StartTime.HasValue && s.EndTime.HasValue &&
+                                   (s.StartTime < scheduleEndTime && s.EndTime > scheduleStartTime) &&
+                                   (!editingScheduleCode.HasValue || s.ScheduleCode != editingScheduleCode.Value))
+                        .ToListAsync();
+
+                    if (yearConflicts.Any(s => s.TeacherCode != model.TeacherCode))
+                    {
+                        sameYearConflict = true;
+                        conflictingTeacherName = string.Join(", ", yearConflicts
+                            .Where(s => s.TeacherCode != model.TeacherCode)
+                            .Select(s => s.TeacherCodeNavigation?.TeacherName ?? "Unknown Teacher")
+                            .Distinct());
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    hallConflict,
+                    teacherConflict,
+                    sameYearConflict,
+                    conflictingTeacherName
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking schedule conflicts for user {Username}",
+                    User.Identity?.Name);
+                return Json(new
+                {
+                    success = false,
+                    error = $"Error checking conflicts: {ex.Message}"
+                });
+            }
+        }
+
         private async Task PopulateDropDowns(Schedule schedule = null)
         {
             var (userRootCode, rootName, isCenter, branchName) = await GetUserContext();
@@ -1542,7 +1665,7 @@ namespace centrny.Controllers
         public IActionResult GetByRootCode(int rootCode) =>
             Ok(_context.EduYears.AsNoTracking().Where(e => e.RootCode == rootCode && e.IsActive).Select(e => new { e.EduCode, e.EduName }).ToList());
 
-       
+
         [HttpGet]
         public IActionResult GetYearsForSubjectTeacher(int teacherCode, int subjectCode) =>
             Ok(_context.Teaches
@@ -1644,6 +1767,19 @@ namespace centrny.Controllers
         {
             return isCenter == true ? "#00a085" : "#d63031";
         }
+    }
+
+    public class ScheduleConflictModel
+    {
+        public string DayOfWeek { get; set; } = string.Empty;
+        public string StartTime { get; set; } = string.Empty;
+        public string EndTime { get; set; } = string.Empty;
+        public int? TeacherCode { get; set; }
+        public int? HallCode { get; set; }
+        public int? EduYearCode { get; set; }
+        public int? BranchCode { get; set; }
+        public int RootCode { get; set; }
+        public int? ScheduleCode { get; set; }
     }
 
     public class ScheduleEventModel
