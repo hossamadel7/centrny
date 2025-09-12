@@ -5,6 +5,7 @@
     ViewData["Title"] = Localizer["Students"];
 }
 <link href="~/css/Hamody.css" rel="stylesheet" />
+
 <style>
     .subject-text {
         font-weight: bold;
@@ -49,12 +50,22 @@
         background: #f7f7f7;
         font-size: 1.1em;
     }
+
     /* Subscribed badge styling */
     .badge.bg-success {
         background: #00b894 !important;
         color: #fff !important;
         font-weight: 600;
         margin-left: 4px;
+    }
+
+    /* Prevent missing icomoon font 404s by overriding font-face to local */
+    @@font -face {
+        font-family: 'icomoon';
+        src: local('Arial');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
     }
 </style>
 
@@ -227,6 +238,15 @@
 </div>
 
 @section Scripts {
+    <!-- jQuery must be first. Removed integrity to avoid SRI mismatch that blocks the script. -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Bootstrap 5 bundle (Popper included). If your layout already includes Bootstrap JS, you can remove this line. -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chart.js once -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Student page script -->
     <script src="~/js/Student.js"></script>
 }

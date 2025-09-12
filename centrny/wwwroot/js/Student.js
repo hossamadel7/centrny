@@ -1,17 +1,127 @@
-﻿function getJsString(key) {
+﻿/* Student Learn page script (jQuery-based) with safe Bootstrap modal helpers */
+/* Works with Bootstrap 4 (jQuery plugin) and Bootstrap 5 (JS bundle API) */
+
+'use strict';
+
+/* ---------------- Ensure Bootstrap CSS exists and modal z-index is above theme ---------------- */
+(function ensureBootstrapCssAndZIndex() {
+    try {
+        // If no bootstrap css is linked, inject it so .modal gets hidden by default and styled properly
+        const hasBootstrapCss =
+            document.querySelector('link[href*="bootstrap"][href$=".css"]') ||
+            document.querySelector('link[href*="bootstrap.min.css"]');
+
+        if (!hasBootstrapCss) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+            // Prepend so theme overrides can still win where intended
+            document.head.prepend(link);
+        }
+
+        // Raise modal/backdrop z-index to sit over dashboard theme overlays
+        if (!document.getElementById('student-learn-modal-zfix')) {
+            const style = document.createElement('style');
+            style.id = 'student-learn-modal-zfix';
+            style.textContent = `
+                .modal { z-index: 10850 !important; }
+                .modal-backdrop { z-index: 10840 !important; }
+            `;
+            document.head.appendChild(style);
+        }
+    } catch (_) { }
+})();
+
+/* ---------------- Localization helpers ---------------- */
+function getJsString(key) {
     const el = document.getElementById('js-localization');
     return el ? (el.getAttribute('data-' + key) || '') : '';
 }
 
-function localizeFiltersAndButtons() {
+function localizeFiltersAndButtons($) {
     $('#yearFilter').empty().append($('<option>', { value: '', text: getJsString('all-years') }));
     $('#subjectFilter').empty().append($('<option>', { value: '', text: getJsString('all-subjects') }));
     $('#searchBtn').text(getJsString('search'));
     $('#searchInput').attr('placeholder', getJsString('search-placeholder'));
 }
 
-/* ---------------- Main Script ---------------- */
-$(function () {
+/* ---------------- Safe Bootstrap modal helpers (v4/v5) ---------------- */
+function safeShowModalById(id) {
+    try {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // Bootstrap 5 API path
+        if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+            const Ctor = window.bootstrap.Modal;
+            let instance = (typeof Ctor.getOrCreateInstance === 'function')
+                ? Ctor.getOrCreateInstance(el)
+                : (typeof Ctor.getInstance === 'function' ? Ctor.getInstance(el) : null);
+            if (!instance) instance = new Ctor(el);
+            if (instance && typeof instance.show === 'function') { instance.show(); return; }
+        }
+
+        // Bootstrap 4 jQuery plugin path
+        if (typeof window.$ !== 'undefined' && typeof window.$(el).modal === 'function') {
+            window.$(el).modal('show');
+            return;
+        }
+
+        // Final fallback: toggle visibility (rudimentary) if no Bootstrap JS loaded
+        el.style.display = 'block';
+        document.body.classList.add('modal-open');
+    } catch (e) {
+        if (window.console && console.debug) console.debug('safeShowModalById error:', e);
+    }
+}
+
+function safeHideModalById(id) {
+    try {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // Bootstrap 5 API path
+        if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+            const Ctor = window.bootstrap.Modal;
+            let instance = (typeof Ctor.getOrCreateInstance === 'function')
+                ? Ctor.getOrCreateInstance(el)
+                : (typeof Ctor.getInstance === 'function' ? Ctor.getInstance(el) : null);
+            if (!instance) instance = new Ctor(el);
+            if (instance && typeof instance.hide === 'function') { instance.hide(); return; }
+        }
+
+        // Bootstrap 4 jQuery plugin path
+        if (typeof window.$ !== 'undefined' && typeof window.$(el).modal === 'function') {
+            window.$(el).modal('hide');
+            return;
+        }
+
+        // Last resort
+        el.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    } catch (e) {
+        if (window.console && console.debug) console.debug('safeHideModalById error:', e);
+    }
+}
+
+/* ---------------- Boot function to ensure jQuery is loaded ---------------- */
+(function boot() {
+    if (typeof window.jQuery === 'undefined') {
+        // Wait for DOM and check again (in case jQuery is injected later in layout)
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof window.jQuery === 'undefined') {
+                console.error('Student.js requires jQuery. Please include jQuery before this script.');
+                return;
+            }
+            init(window.jQuery);
+        });
+    } else {
+        init(window.jQuery);
+    }
+})();
+
+/* ---------------- Main Script (requires jQuery) ---------------- */
+function init($) {
 
     let currentPage = 1;
     let pageSize = 10;
@@ -23,7 +133,7 @@ $(function () {
     window._lastStudentStatsStudentCode = null;
     window._lastStudentStatsYearCode = null;
 
-    localizeFiltersAndButtons();
+    localizeFiltersAndButtons($);
 
     /* ---------- Utilities ---------- */
     function formatTime(t) {
@@ -116,7 +226,7 @@ $(function () {
                             html += `<td rowspan="${rowCount}">${student.yearName || ''}</td>`;
                         }
 
-                        // NEW: Show subscribed badge if subj.isSubscribed is true
+                        // Show subscribed badge if subj.isSubscribed is true
                         let subjText = `<span class="badge">${subj.subjectName || ''}</span>`;
                         if (subj.isSubscribed) {
                             subjText += ` <span class="badge bg-success ms-1">${getJsString('subscribed') || 'Subscribed'}</span>`;
@@ -273,8 +383,8 @@ $(function () {
     /* ---------- Add Subject Flow ---------- */
     $(document).on('click', '.addSubjectBtn', function () {
         const studentCode = $(this).data('studentcode');
-        const yearCode = $(this).data('yearcode');
-        openAddSubjectModal(studentCode, yearCode);
+        theYearCode = $(this).data('yearcode');
+        openAddSubjectModal(studentCode, theYearCode);
     });
 
     function openAddSubjectModal(studentCode, yearCode) {
@@ -294,7 +404,7 @@ $(function () {
                 $('#addSubjectModal select[name=ScheduleCode]').empty().append($('<option>', { value: '', text: getJsString('choose-schedule') }));
                 $('#addSubjectModal input[name=IsOnline]').prop('checked', false);
 
-                $('#addSubjectModal').modal('show');
+                safeShowModalById('addSubjectModal');
             })
             .fail(xhr => logAjaxError('[AddLearnFormData] failed', xhr));
     }
@@ -358,7 +468,7 @@ $(function () {
         $.post('/StudentLearn/AddLearn', $(this).serialize())
             .done(function (res) {
                 if (res && res.success) {
-                    $('#addSubjectModal').modal('hide');
+                    safeHideModalById('addSubjectModal');
                     loadTable(currentPage);
                 } else {
                     alert((res && res.message) || getJsString('failed-to-add'));
@@ -397,7 +507,7 @@ $(function () {
                 html += '</form>';
 
                 $('#editLearnModalBody').html(html);
-                $('#editLearnModal').modal('show');
+                safeShowModalById('editLearnModal');
             })
             .fail(xhr => logAjaxError('[GetStudentSubjectsForYear] failed', xhr));
     });
@@ -407,7 +517,7 @@ $(function () {
         $.post('/StudentLearn/UpdateStudentSchedules', $(this).serialize())
             .done(function (res) {
                 if (res && res.success) {
-                    $('#editLearnModal').modal('hide');
+                    safeHideModalById('editLearnModal');
                     loadTable(currentPage);
                 } else {
                     alert((res && res.message) || getJsString('failed-to-update'));
@@ -463,7 +573,7 @@ $(function () {
                         </form>`;
 
                 $('#editLearnModalBody').html(html);
-                $('#editLearnModal').modal('show');
+                safeShowModalById('editLearnModal');
             })
             .fail(xhr => logAjaxError('[GetEditLearnFormData] failed', xhr));
     });
@@ -497,7 +607,7 @@ $(function () {
         $.post('/StudentLearn/EditLearn', $(this).serialize())
             .done(function (res) {
                 if (res && res.success) {
-                    $('#editLearnModal').modal('hide');
+                    safeHideModalById('editLearnModal');
                     loadTable(currentPage);
                 } else {
                     alert((res && res.message) || getJsString('failed-to-update'));
@@ -538,7 +648,7 @@ $(function () {
     });
 
     function showStudentStatisticsModal(studentCode, yearCode, subjectCode) {
-        $('#studentStatsModal').modal('show');
+        safeShowModalById('studentStatsModal');
         $('#studentStatsModalBody').html('<div class="text-center"><span class="loader"></span> Loading...</div>');
         let isExamFilter = $('#studentStatsTypeFilter').val();
         if (isExamFilter === "") isExamFilter = null;
@@ -685,4 +795,4 @@ $(function () {
     loadTable(currentPage);
 
     window.studentLearnReload = function () { loadTable(currentPage); };
-});
+}
