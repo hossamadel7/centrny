@@ -1,7 +1,6 @@
 ﻿@using Microsoft.Extensions.Localization
 @using System.Globalization
 @inject IStringLocalizerFactory LocalizerFactory
-@using centrny.Controllers
 @model StudentProfileViewModel
 @{
     var Localizer = LocalizerFactory.Create("Student", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
@@ -9,7 +8,7 @@
     var isArabic = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ar";
     var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var htmlDir = isArabic ? "rtl" : "ltr";
-    Layout=null;
+    Layout = null;
 }
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
@@ -18,18 +17,17 @@
     <title>@ViewData["Title"]</title>
     @if (isArabic)
     {
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
     }
     else
     {
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     }
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/student-profile.css" rel="stylesheet" />
     <link href="~/css/studentData.css" rel="stylesheet" />
 </head>
 <body>
-    <!-- JS Localization keys -->
     <div id="js-localization"
          data-student-profile="@Localizer["StudentProfile"]"
          data-academic-year="@Localizer["AcademicYear"]"
@@ -61,19 +59,21 @@
          data-na="@Localizer["NA"]" />
     <div class="container-fluid student-profile-page">
         <div class="profile-container">
-            <!-- Profile Header -->
             <div class="profile-header">
                 <div class="container">
                     <div class="row align-items-center justify-content-center g-4">
                         <div class="col-12 main-profile text-center">
                             <div class="profile-avatar"><i class="fas fa-user-graduate"></i></div>
                             <h1 class="profile-name">@Model.StudentName</h1>
-                            <p class="profile-subtitle">@Model.YearName @(!string.IsNullOrEmpty(Model.LevelName) ? $"- {Model.LevelName}" : "") <span id="student-label"></span></p>
+                            <p class="profile-subtitle">
+                                @Model.YearName
+                                @(!string.IsNullOrEmpty(Model.LevelName) ? $"- {Model.LevelName}" : "")
+                                <span id="student-label"></span>
+                            </p>
                             <div class="profile-status">
                                 <i class="fas @(Model.IsActive ? "fa-check-circle" : "fa-times-circle")"></i>
                                 <span id="status-label"></span>
                             </div>
-                            <!-- 4 Info Cards in a Single Row -->
                             <div class="row justify-content-center mt-4">
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
@@ -81,7 +81,7 @@
                                             <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
                                             <div class="card-text">
                                                 <span id="academic-year-label"></span>
-                                                <div class="card-value">@(!string.IsNullOrEmpty(Model.YearName) ? Model.YearName : "")</div>
+                                                <div class="card-value">@Model.YearName</div>
                                             </div>
                                         </div>
                                     </div>
@@ -92,7 +92,7 @@
                                             <div class="card-icon"><i class="fas fa-building"></i></div>
                                             <div class="card-text">
                                                 <span id="branch-label"></span>
-                                                <div class="card-value">@(!string.IsNullOrEmpty(Model.BranchName) ? Model.BranchName : "")</div>
+                                                <div class="card-value">@Model.BranchName</div>
                                             </div>
                                         </div>
                                     </div>
@@ -120,13 +120,13 @@
                                     </div>
                                 </div>
                             </div>
+                            <small id="debugItemKey" style="display:block;margin-top:8px;color:#888;"></small>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Student Data Content -->
+
             <div class="profile-content">
-                <!-- Upcoming Exams -->
                 <div class="section-card">
                     <div class="section-header">
                         <h2 class="section-title" id="upcoming-exams-title"></h2>
@@ -140,7 +140,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Attended Exams -->
+
                 <div class="section-card">
                     <div class="section-header">
                         <h2 class="section-title" id="attended-exams-title"></h2>
@@ -154,7 +154,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Assignments -->
+
                 <div class="section-card">
                     <div class="section-header">
                         <h2 class="section-title" id="assignments-title"></h2>
@@ -168,15 +168,18 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> <!-- /profile-content -->
         </div>
     </div>
+
+    <div id="alertContainer"></div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        // --- Localization Helper ---
+        console.log('Student profile script loaded');
+
         function getJsString(key) { return $('#js-localization').data(key); }
 
-        // --- Set all static and header labels on page load ---
         function setStudentLabels() {
             $('#academic-year-label').text(getJsString('academic-year'));
             $('#branch-label').text(getJsString('branch'));
@@ -192,29 +195,14 @@
             $('#status-label').text(getJsString('@(Model.IsActive ? "active-student" : "inactive-student")'));
         }
 
+        // Model ItemKey inserted by Razor
         const ITEM_KEY = '@Model.ItemKey';
+        console.log('ITEM_KEY raw value:', ITEM_KEY);
+        document.getElementById('debugItemKey').textContent = 'ItemKey: ' + (ITEM_KEY || '(empty)');
 
         let upcomingExamsData = [];
         let attendedExamsData = [];
         let assignmentsData = [];
-
-        function showAlert(message, type = 'info') {
-            const alertContainer = document.getElementById('alertContainer');
-            const alertClass = type === 'success' ? 'alert-success'
-                            : type === 'error' ? 'alert-error'
-                            : 'alert-info';
-            const iconClass = type === 'success' ? 'fa-check-circle'
-                           : type === 'error' ? 'fa-exclamation-triangle'
-                           : 'fa-info-circle';
-
-            alertContainer.innerHTML = `
-                <div class="alert-message ${alertClass}">
-                    <i class="fas ${iconClass}"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            setTimeout(() => { alertContainer.innerHTML = ''; }, 5000);
-        }
 
         function showError(containerId, key) {
             const container = document.getElementById(containerId);
@@ -235,20 +223,58 @@
             </div>`;
         }
 
-        // ---- Exams ----
+        // Normalization to handle PascalCase or camelCase
+        function normalizeArray(arr) {
+            if (!Array.isArray(arr)) return [];
+            return arr.map(o => ({
+                examCode: o.examCode ?? o.ExamCode ?? o.fileCode ?? o.FileCode ?? o.lessonCode ?? o.LessonCode ?? 0,
+                examName: o.examName ?? o.ExamName ?? o.displayName ?? o.DisplayName ?? o.lessonName ?? o.LessonName ?? '(Unnamed)',
+                subjectName: o.subjectName ?? o.SubjectName ?? '',
+                teacherName: o.teacherName ?? o.TeacherName ?? '',
+                attended: o.attended ?? o.Attended ?? false,
+                isDone: o.isDone ?? o.IsDone ?? false,
+                degree: o.degree ?? o.Degree ?? null,
+                examDegree: o.examDegree ?? o.ExamDegree ?? null,
+                examDate: o.examDate ?? o.ExamDate ?? o.insertTime ?? o.InsertTime ?? null,
+                raw: o
+            }));
+        }
+
+        async function safeFetchJson(url) {
+            console.log('Fetching:', url);
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                console.warn('Fetch failed', url, resp.status);
+                return null;
+            }
+            const data = await resp.json();
+            console.log('Data received from', url, data);
+            return data;
+        }
+
         async function loadUpcomingExams() {
+            if (!ITEM_KEY) {
+                showError('upcomingExamsGrid', 'failed-to-load-exams');
+                console.error('Missing ITEM_KEY; cannot load upcoming exams');
+                return;
+            }
             try {
-                const response = await fetch(`/Student/GetUpcomingExams/${ITEM_KEY}`);
-                const data = await response.json();
-                upcomingExamsData = data.filter(e => !e.attended);
+                const data = await safeFetchJson(`/Student/GetUpcomingExams/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('upcomingExamsGrid', 'failed-to-load-exams');
+                    return;
+                }
+                upcomingExamsData = normalizeArray(data);
                 renderUpcomingExams(upcomingExamsData);
-            } catch {
+            } catch (e) {
+                console.error('loadUpcomingExams error', e);
                 showError('upcomingExamsGrid', 'failed-to-load-exams');
             }
         }
+
         function renderUpcomingExams(exams) {
             const container = document.getElementById('upcomingExamsGrid');
-            if (!exams || exams.length === 0) {
+            if (!exams.length) {
                 container.innerHTML = renderEmptyState('fa-file-alt', 'no-upcoming-exams', 'no-upcoming-exams-msg');
                 return;
             }
@@ -267,33 +293,37 @@
                     <div style="margin-top: 1rem;">
                         ${
                             hideAttendBtn
-                            ? `<div class="alert-error" style="margin-top:10px;">This exam is closed and cannot be attended.</div>`
+                            ? `<div class="alert-error" style="margin-top:10px;">Closed.</div>`
                             : `<button class="attend-exam-btn" onclick="attendExam(${exam.examCode})">
                                  <i class="fas fa-play"></i> ${getJsString('attend-exam')}
                                </button>`
                         }
                     </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
-        function attendExam(examCode) {
-            const studentCode = '@Model.StudentCode';
-            window.location.href = `/StudentExam?studentCode=${studentCode}&examCode=${examCode}&itemKey=${ITEM_KEY}`;
-        }
+
         async function loadAttendedExams() {
+            if (!ITEM_KEY) {
+                showError('attendedExamsGrid', 'failed-to-load-exams');
+                return;
+            }
             try {
-                const response = await fetch(`/Student/GetAttendedExams/${ITEM_KEY}`);
-                const data = await response.json();
-                attendedExamsData = data;
-                renderAttendedExams(data);
+                const data = await safeFetchJson(`/Student/GetAttendedExams/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('attendedExamsGrid', 'failed-to-load-exams');
+                    return;
+                }
+                attendedExamsData = normalizeArray(data);
+                renderAttendedExams(attendedExamsData);
             } catch {
                 showError('attendedExamsGrid', 'failed-to-load-exams');
             }
         }
+
         function renderAttendedExams(exams) {
             const container = document.getElementById('attendedExamsGrid');
-            if (!exams || exams.length === 0) {
+            if (!exams.length) {
                 container.innerHTML = renderEmptyState('fa-check-double', 'no-attended-exams', 'no-attended-exams-msg');
                 return;
             }
@@ -306,67 +336,89 @@
                     <div class="exam-details">
                         <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
                         <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-star"></i> <span>${getJsString('degree')}: ${exam.degree ?? getJsString('na')} / ${exam.examDegree ?? getJsString('na')}</span></div>
+                        <div class="exam-detail"><i class="fas fa-star"></i>
+                            <span>${getJsString('degree')}: ${(exam.degree ?? getJsString('na'))} / ${(exam.examDegree ?? getJsString('na'))}</span>
+                        </div>
                         ${exam.examDate ? `<div class="exam-detail"><i class="fas fa-calendar"></i> <span>${exam.examDate}</span></div>` : ''}
                     </div>
                 </div>
             `).join('');
         }
-        // ---- Assignments ----
+
         async function loadAssignments() {
+            if (!ITEM_KEY) {
+                showError('assignmentsGrid', 'failed-to-load-assignments');
+                return;
+            }
             try {
-                const response = await fetch(`/Student/GetAssignments/${ITEM_KEY}`);
-                const data = await response.json();
-                assignmentsData = data;
-                renderAssignments(data);
+                const data = await safeFetchJson(`/Student/GetAssignments/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('assignmentsGrid', 'failed-to-load-assignments');
+                    return;
+                }
+                assignmentsData = normalizeArray(data);
+                renderAssignments(assignmentsData);
             } catch {
                 showError('assignmentsGrid', 'failed-to-load-assignments');
             }
         }
-        function renderAssignments(assignments) {
+
+        function renderAssignments(items) {
             const container = document.getElementById('assignmentsGrid');
-            if (!assignments || assignments.length === 0) {
+            if (!items.length) {
                 container.innerHTML = renderEmptyState('fa-tasks', 'no-assignments', 'no-assignments-msg');
                 return;
             }
-            container.innerHTML = assignments.map(assignment => {
-                const hideAttendBtn = assignment.isDone && !assignment.attended;
+            container.innerHTML = items.map(a => {
+                const hideAttendBtn = a.isDone && !a.attended;
                 return `
-                <div class="exam-card ${assignment.attended ? 'attended' : ''}">
+                <div class="exam-card ${a.attended ? 'attended' : ''}">
                     <div class="exam-header">
                         <div class="exam-icon"><i class="fas fa-tasks"></i></div>
-                        <h3 class="exam-name">${assignment.examName}</h3>
+                        <h3 class="exam-name">${a.examName}</h3>
                     </div>
                     <div class="exam-details">
-                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${assignment.subjectName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${assignment.teacherName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${a.subjectName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${a.teacherName}</span></div>
                     </div>
                     <div style="margin-top: 1rem;">
                         ${
-                            assignment.attended
+                            a.attended
                             ? `<button class="attend-exam-btn" disabled><i class="fas fa-check"></i> ${getJsString('attended')}</button>`
-                            : (
-                                hideAttendBtn
-                                ? `<div class="alert-error" style="margin-top:10px;">This assignment is closed and cannot be attended.</div>`
-                                : `<button class="attend-exam-btn" onclick="attendExam(${assignment.examCode})"><i class="fas fa-play"></i> ${getJsString('attend-assignment')}</button>`
-                            )
+                            : hideAttendBtn
+                                ? `<div class="alert-error" style="margin-top:10px;">Closed.</div>`
+                                : `<button class="attend-exam-btn" onclick="attendExam(${a.examCode})">
+                                     <i class="fas fa-play"></i> ${getJsString('attend-assignment')}
+                                   </button>`
                         }
                     </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
 
-        function setupEventListeners() {
-            // No input listeners needed here for split view
+        function attendExam(examCode) {
+            const studentCode = '@Model.StudentCode';
+            if (!examCode || examCode === 0) {
+                console.warn('Missing examCode, navigation blocked');
+                return;
+            }
+            window.location.href = `/StudentExam?studentCode=${studentCode}&examCode=${examCode}&itemKey=${ITEM_KEY}`;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired');
+            if (typeof $ === 'undefined') {
+                console.error('jQuery not loaded. Aborting.');
+                return;
+            }
             setStudentLabels();
+            if (!ITEM_KEY) {
+                console.error('ITEM_KEY is empty. No fetch calls will be made.');
+                return;
+            }
             loadUpcomingExams();
             loadAttendedExams();
             loadAssignments();
-            setupEventListeners();
         });
     </script>
 </body>

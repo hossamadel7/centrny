@@ -163,8 +163,8 @@ public partial class CenterContext : DbContext
             entity.ToTable("Attend", tb =>
                 {
                     tb.HasTrigger("AttendTrigger");
+                    tb.HasTrigger("TRG_Attend_AfterInsert_SubribedSTd");
                     tb.HasTrigger("Trigger_After_Insert_Update_Total_Amount");
-                    tb.HasTrigger("Trigger_UpdateRemainingCount");
                     tb.HasTrigger("Trigger_UpdateTotalAmount");
                     tb.HasTrigger("UpdateAttendDetails");
                     tb.HasTrigger("trg_Set_SessionPrice_Zero_On_Type2");
@@ -228,12 +228,9 @@ public partial class CenterContext : DbContext
             entity.ToTable("Branch");
 
             entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
-            entity.Property(e => e.Address)
-                .HasMaxLength(100)
-                .IsUnicode(false);
+            entity.Property(e => e.Address).HasMaxLength(50);
             entity.Property(e => e.BranchName)
                 .HasMaxLength(50)
-                .IsUnicode(false)
                 .HasColumnName("Branch_Name");
             entity.Property(e => e.CenterCode).HasColumnName("Center_Code");
             entity.Property(e => e.InsertTime)
@@ -1985,16 +1982,16 @@ public partial class CenterContext : DbContext
 
         modelBuilder.Entity<Teach>(entity =>
         {
-            entity.HasKey(e => new { e.TeacherCode, e.SubjectCode, e.EduYearCode, e.RootCode, e.YearCode }).HasName("PK_Teach_1");
+            entity.HasKey(e => new { e.TeacherCode, e.SubjectCode, e.EduYearCode, e.BranchCode, e.RootCode, e.YearCode }).HasName("PK_Teach_1");
 
             entity.ToTable("Teach", tb => tb.HasTrigger("Trigger_After_Insert_Update_Center_Values"));
 
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
             entity.Property(e => e.SubjectCode).HasColumnName("Subject_Code");
             entity.Property(e => e.EduYearCode).HasColumnName("Edu_Year_Code");
+            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.YearCode).HasColumnName("Year_Code");
-            entity.Property(e => e.BranchCode).HasColumnName("Branch_Code");
             entity.Property(e => e.CenterAmount).HasColumnName("Center_Amount");
             entity.Property(e => e.CenterPercentage).HasColumnName("Center_Percentage");
             entity.Property(e => e.InsertTime)
@@ -2013,6 +2010,7 @@ public partial class CenterContext : DbContext
 
             entity.HasOne(d => d.BranchCodeNavigation).WithMany(p => p.Teaches)
                 .HasForeignKey(d => d.BranchCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Teach_Branch");
 
             entity.HasOne(d => d.EduYearCodeNavigation).WithMany(p => p.Teaches)

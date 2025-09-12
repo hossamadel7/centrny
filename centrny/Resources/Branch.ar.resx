@@ -142,4 +142,28 @@
 	<data name="Button_DeleteCenter" xml:space="preserve">
     <value>حذف المركز</value>
   </data>
+	<data name="Label_BranchAddress" xml:space="preserve">
+  <value>عنوان الفرع</value>
+</data>
+	<data name="Label_BranchPhone" xml:space="preserve">
+  <value>هاتف الفرع</value>
+</data>
+	<data name="Label_BranchStartTime" xml:space="preserve">
+  <value>تاريخ بدء الفرع</value>
+</data>
+	<data name="ModalTitle_EditBranch" xml:space="preserve">
+  <value>تعديل الفرع</value>
+</data>
+	<data name="Alert_BranchUpdateSuccess" xml:space="preserve">
+  <value>تم تحديث الفرع بنجاح!</value>
+</data>
+	<data name="Alert_BranchUpdateFailed" xml:space="preserve">
+  <value>فشل في تحديث الفرع.</value>
+</data>
+	<data name="Alert_BranchUpdateError" xml:space="preserve">
+  <value>فشل في تحديث الفرع بسبب خطأ.</value>
+</data>
+	<data name="Button_DeleteBranch" xml:space="preserve">
+  <value>حذف الفرع</value>
+</data>
 </root>

@@ -74,13 +74,13 @@ function setBranchLabels() {
     $('#button-cancel-edit').text(getJsString('buttonCancel'));
     $('#button-save-changes').html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
 
-    $('#addCenterModalLabel')?.text(getJsString('modalTitleAddCenter'));
-    $('#label-center-name')?.text(getJsString('labelCenterName'));
-    $('#button-save-center')?.html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+    $('#addCenterModalLabel').text(getJsString('modalTitleAddCenter'));
+    $('#label-center-name').text(getJsString('labelCenterName'));
+    $('#button-save-center').html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
 
-    $('#addBranchModalLabel')?.text(getJsString('modalTitleAddBranch'));
-    $('#label-branch-name')?.text(getJsString('labelBranchName'));
-    $('#button-save-branch')?.html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
+    $('#addBranchModalLabel').text(getJsString('modalTitleAddBranch'));
+    $('#label-branch-name').text(getJsString('labelBranchName'));
+    $('#button-save-branch').html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
 
     $('#editBranchModalLabel').text(getJsString('modalTitleEditBranch'));
     $('#label-branch-name-edit').text(getJsString('labelBranchName'));
@@ -146,18 +146,19 @@ $(document).ready(function () {
 });
 
 async function loadRoots() {
-    const res = await fetch('/Branch/GetRootsIsCenterTrue');
+    const res = await fetch('/Branch/GetRootsIsCenterTrue', { cache: "reload" });
     const roots = await res.json();
     const dropdown = $('#rootDropdown');
     dropdown.html(`<option value="">${getJsString('dropdownSelectRootDefault')}</option>`);
     roots.forEach(root => {
         dropdown.append(`<option value="${root.rootCode}">${root.rootName}</option>`);
-        ownerNameByRoot[root.rootCode] = root.ownerName;
+        // API returns rootOwner, not ownerName
+        ownerNameByRoot[root.rootCode] = root.rootOwner;
     });
 }
 
 async function loadRootConfig(rootCode) {
-    const res = await fetch(`/Branch/GetRootConfig?rootCode=${rootCode}`);
+    const res = await fetch(`/Branch/GetRootConfig?rootCode=${rootCode}`, { cache: "reload" });
     if (!res.ok) { rootLimit = 0; isCenterUser = false; return; }
     const data = await res.json();
     rootLimit = data.no_Of_Center || 0;
@@ -167,9 +168,9 @@ async function loadRootConfig(rootCode) {
 
 async function loadCentersAndBranches(rootCode) {
     currentRootCode = rootCode;
-    const centerRes = await fetch(`/Branch/GetCentersByRoot?rootCode=${rootCode}`);
+    const centerRes = await fetch(`/Branch/GetCentersByRoot?rootCode=${rootCode}`, { cache: "reload" });
     const centers = await centerRes.json();
-    const branchRes = await fetch(`/Branch/GetBranchesByRootCode?rootCode=${rootCode}`);
+    const branchRes = await fetch(`/Branch/GetBranchesByRootCode?rootCode=${rootCode}`, { cache: "reload" });
     const branches = await branchRes.json();
 
     // Alignment for LTR/RTL
@@ -243,7 +244,7 @@ async function loadCentersAndBranches(rootCode) {
                                         <span>
                                             ${hall.hallName} <span class="badge bg-secondary">${hall.hallCapacity}</span>
                                         </span>
-                                        <span class="${hallActionClass}">
+                                        <span class="hall-actions">
                                             <button class="btn-table edit edit-hall-btn" data-hall-code="${hall.hallCode}" data-hall-name="${hall.hallName}" data-hall-capacity="${hall.hallCapacity}">
                                                 <i class="fas fa-pencil"></i>
                                             </button>
@@ -402,6 +403,29 @@ function openEditHallModal(btn) {
     myModal.show();
 }
 
+// Helper: safely hide a Bootstrap modal without throwing
+function safeHideModalById(id) {
+    try {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const hasBootstrap = typeof window.bootstrap !== 'undefined' && bootstrap.Modal;
+        if (hasBootstrap && typeof bootstrap.Modal.getInstance === 'function') {
+            const instance = bootstrap.Modal.getInstance(el);
+            if (instance) {
+                instance.hide();
+                return;
+            }
+        }
+        // Fallback to jQuery plugin if available
+        if (typeof $ !== 'undefined' && typeof $('#' + id).modal === 'function') {
+            $('#' + id).modal('hide');
+        }
+    } catch (e) {
+        // swallow UI errors
+        console && console.debug && console.debug('safeHideModalById error:', e);
+    }
+}
+
 async function submitAddHall() {
     const hallName = $('#HallName').val();
     const hallCapacity = parseInt($('#HallCapacity').val(), 10);
@@ -417,29 +441,32 @@ async function submitAddHall() {
     const originalText = '<i class="fas fa-plus"></i> ' + getJsString('buttonAddHall');
     submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
+    let res;
     try {
-        const res = await fetch('/Branch/AddHall', {
+        res = await fetch('/Branch/AddHall', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 hallName, hallCapacity, rootCode, branchCode
             })
         });
-
-        if (res.ok) {
-            var myModalEl = document.getElementById('addHallModal');
-            var modal = bootstrap.Modal.getInstance(myModalEl);
-            modal.hide();
-            await loadCentersAndBranches(currentRootCode);
-            swalSuccess(getJsString('alertHallAddSuccess'));
-        } else {
-            swalError(getJsString('alertHallAddFailed'));
-        }
     } catch (err) {
         swalError(getJsString('alertHallAddError'));
-    } finally {
         submitBtn.prop('disabled', false).html(originalText);
+        return;
     }
+
+    if (res.ok) {
+        safeHideModalById('addHallModal');
+        setTimeout(async () => {
+            await loadCentersAndBranches(currentRootCode);
+            swalSuccess(getJsString('alertHallAddSuccess'));
+        }, 250);
+    } else {
+        const text = await res.text();
+        swalError(text || getJsString('alertHallAddFailed'));
+    }
+    submitBtn.prop('disabled', false).html(originalText);
 }
 
 async function submitEditHall() {
@@ -451,39 +478,43 @@ async function submitEditHall() {
     const originalText = '<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges');
     submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
+    let res;
     try {
-        const res = await fetch('/Branch/EditHall', {
+        res = await fetch('/Branch/EditHall', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 hallCode, hallName, hallCapacity
             })
         });
-
-        if (res.ok) {
-            var myModalEl = document.getElementById('editHallModal');
-            var modal = bootstrap.Modal.getInstance(myModalEl);
-            modal.hide();
-            await loadCentersAndBranches(currentRootCode);
-            swalSuccess(getJsString('alertHallUpdateSuccess'));
-        } else {
-            swalError(getJsString('alertHallUpdateFailed'));
-        }
     } catch (err) {
         swalError(getJsString('alertHallUpdateError'));
-    } finally {
         submitBtn.prop('disabled', false).html(originalText);
+        return;
     }
+
+    if (res.ok) {
+        safeHideModalById('editHallModal');
+        setTimeout(async () => {
+            await loadCentersAndBranches(currentRootCode);
+            swalSuccess(getJsString('alertHallUpdateSuccess'));
+        }, 250);
+    } else {
+        const text = await res.text();
+        swalError(text || getJsString('alertHallUpdateFailed'));
+    }
+    submitBtn.prop('disabled', false).html(originalText);
 }
 
 async function deleteHall(hallCode) {
     try {
-        const res = await fetch(`/Branch/DeleteHall?hallCode=${hallCode}`, { method: 'DELETE' });
+        const res = await fetch(`/Branch/DeleteHall?hallCode=${hallCode}`, { method: 'DELETE', cache: "reload" });
         if (res.ok) {
             await loadCentersAndBranches(currentRootCode);
             swalSuccess(getJsString('alertHallDeleteSuccess'));
         } else {
-            swalError(getJsString('alertHallDeleteFailed'));
+            const text = await res.text();
+            swalError(text || getJsString('alertHallDeleteFailed'));
         }
     } catch (err) {
         swalError(getJsString('alertHallDeleteError'));
@@ -491,7 +522,7 @@ async function deleteHall(hallCode) {
 }
 
 async function fetchHalls(branchCode) {
-    const res = await fetch(`/Branch/GetHallsByBranch?branchCode=${branchCode}`);
+    const res = await fetch(`/Branch/GetHallsByBranch?branchCode=${branchCode}`, { cache: "reload" });
     if (!res.ok) return [];
     return await res.json();
 }
@@ -530,8 +561,10 @@ async function submitAddCenter() {
         });
         if (res.ok) {
             $('#addCenterModal').modal('hide');
-            await loadCentersAndBranches(currentRootCode);
-            swalSuccess(getJsString('alertCenterAddSuccess'));
+            setTimeout(async () => {
+                await loadCentersAndBranches(currentRootCode);
+                swalSuccess(getJsString('alertCenterAddSuccess'));
+            }, 250);
         } else {
             const text = await res.text();
             swalError(text || getJsString('alertCenterBranchLimit'));
@@ -577,8 +610,10 @@ async function submitAddBranch() {
         });
         if (res.ok) {
             $('#addBranchModal').modal('hide');
-            await loadCentersAndBranches(currentRootCode);
-            swalSuccess(getJsString('alertBranchAddSuccess'));
+            setTimeout(async () => {
+                await loadCentersAndBranches(currentRootCode);
+                swalSuccess(getJsString('alertBranchAddSuccess'));
+            }, 250);
         } else {
             const text = await res.text();
             swalError(text || getJsString('alertCenterBranchLimit'));
@@ -587,7 +622,27 @@ async function submitAddBranch() {
         submitBtn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + getJsString('buttonSave'));
     }
 }
+function updateBranchInDOM(branchCode, branchName, address, phone, startTime) {
+    // Find the edit button for this branch
+    var editBtn = $('.edit-branch-btn[data-branch-code="' + branchCode + '"]');
+    if (editBtn.length === 0) return; // Not found
 
+    // Update data attributes for edit modal
+    editBtn.attr('data-branch-name', branchName);
+    editBtn.attr('data-branch-address', address);
+    editBtn.attr('data-branch-phone', phone);
+    editBtn.attr('data-branch-starttime', startTime);
+
+    // Update branch name in DOM (update the first span inside .d-flex)
+    var branchLi = editBtn.closest('li.list-group-item.branch-card');
+    branchLi.find('> .d-flex > span').first().text(branchName);
+
+    // If you display address/phone/startTime in the branch card, update them here too
+    // Example:
+    // branchLi.find('.branch-address').text(address);
+    // branchLi.find('.branch-phone').text(phone);
+    // branchLi.find('.branch-starttime').text(startTime);
+}
 // --------- Edit Branch handler -------------
 async function submitEditBranch() {
     const branchCode = $('#editBranchCode').val();
@@ -603,8 +658,10 @@ async function submitEditBranch() {
     const submitBtn = $('#button-save-branch-edit');
     submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
+    // Network try/catch only
+    let res;
     try {
-        const res = await fetch('/Branch/EditBranch', {
+        res = await fetch('/Branch/EditBranch', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -615,19 +672,25 @@ async function submitEditBranch() {
                 StartTime: startTime
             })
         });
-
-        if (res.ok) {
-            var myModalEl = document.getElementById('editBranchModal');
-            var modal = bootstrap.Modal.getInstance(myModalEl);
-            modal.hide();
-            await loadCentersAndBranches(currentRootCode);
-            swalSuccess(getJsString('alertBranchUpdateSuccess'));
-        } else {
-            swalError(getJsString('alertBranchUpdateFailed'));
-        }
     } catch (err) {
+        // Real network error
         swalError(getJsString('alertBranchUpdateError'));
-    } finally {
         submitBtn.prop('disabled', false).html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
+        return;
     }
+
+    if (res.ok) {
+        // Update DOM first so user sees the change even if hiding the modal fails
+        updateBranchInDOM(branchCode, branchName, address, phone, startTime);
+
+        // Safely hide the modal without throwing
+        safeHideModalById('editBranchModal');
+
+        swalSuccess(getJsString('alertBranchUpdateSuccess'));
+    } else {
+        const text = await res.text();
+        swalError(text || getJsString('alertBranchUpdateFailed'));
+    }
+
+    submitBtn.prop('disabled', false).html('<i class="fas fa-pencil"></i> ' + getJsString('buttonSaveChanges'));
 }

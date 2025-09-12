@@ -142,4 +142,28 @@
 	<data name="Button_DeleteCenter" xml:space="preserve">
     <value>Delete Center</value>
   </data>
+<data name="Label_BranchAddress" xml:space="preserve"> 
+  <value>Branch Address</value>
+</data>
+<data name="Label_BranchPhone" xml:space="preserve">
+  <value>Branch Phone</value>
+</data>
+<data name="Label_BranchStartTime" xml:space="preserve">
+  <value>Branch Start Date</value>
+</data>
+<data name="ModalTitle_EditBranch" xml:space="preserve">
+  <value>Edit Branch</value>
+</data>
+<data name="Alert_BranchUpdateSuccess" xml:space="preserve">
+  <value>Branch updated successfully!</value>
+</data>
+<data name="Alert_BranchUpdateFailed" xml:space="preserve">
+  <value>Failed to update branch.</value>
+</data>
+<data name="Alert_BranchUpdateError" xml:space="preserve">
+  <value>Failed to update branch due to an error.</value>
+</data>
+<data name="Button_DeleteBranch" xml:space="preserve">
+  <value>Delete Branch</value>
+</data>
 </root>
