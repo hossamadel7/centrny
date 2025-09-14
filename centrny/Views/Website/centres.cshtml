@@ -137,21 +137,21 @@
                                     <div class="mobile-bg js-mobile-bg"></div>
 
                                     <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
-                                        <a href="login.cshtml" class="text-dark-1">Log in</a>
-                                        <a href="signup.cshtml" class="text-dark-1 ml-30">Sign Up</a>
+                                        <a href="StudentLogin" class="text-dark-1">Log in</a>
+                                        <a href="@ViewBag.RegisterUrl" class="text-dark-1 ml-30">Sign Up</a>
                                     </div>
 
                                     <div class="menu js-navList">
                                         <ul class="menu__nav text-dark-1 -is-active">
-                                            <a data-barba href="home.cshtml">Home</a>
+                                            <a data-barba href="home">Home</a>
 
-                                            <a data-barba href="about.cshtml">About</a>
+                                            <a data-barba href="about">About</a>
 
-                                            <a data-barba href="courses.cshtml">Courses</a>
+                                            <a data-barba href="courses">Courses</a>
 
-                                            <a data-barba href="centres.cshtml">Centres</a>
+                                            <a data-barba href="centres">Centers</a>
 
-                                            <a data-barba href="outstanding-students.cshtml">Outstanding Students</a>
+                                            <a data-barba href="outstanding-students">Outstanding Students</a>
                                         </ul>
                                     </div>
 
@@ -304,9 +304,9 @@
                                 </div>
 
                                 <div class="header-right__buttons d-flex items-center lg:d-none">
-                                    <a href="login.cshtml"
+                                    <a href="StudentLogin"
                                        class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">Log in</a>
-                                    <a href="signup.cshtml"
+                                    <a href="@ViewBag.RegisterUrl"
                                        class="button h-50 px-25 -outline-dark-1 -rounded text-dark-1 ml-20">Sign up</a>
                                 </div>
                             </div>
@@ -582,6 +582,7 @@
             crossorigin=""></script>
     <script src="/js/vendors.js"></script>
     <script src="/js/main.js"></script>
+    <script src="~/aws/js/language-switcher.js"></script>
     <script>
         // Initialize map
         document.addEventListener("DOMContentLoaded", function () {

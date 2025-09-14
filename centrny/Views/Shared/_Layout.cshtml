@@ -33,6 +33,9 @@
     <link rel="stylesheet" href="~/css/vendors.css">
     <link rel="stylesheet" href="~/css/main.css">
 
+    <!-- Allow per-page styles -->
+    @RenderSection("Styles", required: false)
+
     <!-- RTL overrides and Full-view behavior -->
     <style>
         :root {
@@ -114,21 +117,18 @@
         }
 
         /* Mobile: content should not reserve sidebar space */
-       @@media (max-width: 992px) {
-            [dir="rtl"] .dashboard__main
-
-        {
-            margin-right: 0 !important;
-        }
-        /* On small screens, when sidebar is visible it overlays from right */
-        [dir="rtl"] .dashboard__sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            height: 100vh;
-            z-index: 1040;
-        }
-
+        @@media (max-width: 992px) {
+            [dir="rtl"] .dashboard__main {
+                margin-right: 0 !important;
+            }
+            /* On small screens, when sidebar is visible it overlays from right */
+            [dir="rtl"] .dashboard__sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                height: 100vh;
+                z-index: 1040;
+            }
         }
     </style>
 </head>

@@ -100,9 +100,8 @@
 
 										<div
 											class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
-											<a href="login.html" class="text-dark-1">Log in</a>
-											<a href="signup.html" class="text-dark-1 ml-30"
-												>Sign Up</a
+											<a href="StudentLogin" class="text-dark-1">Log in</a>
+										<a href="@ViewBag.RegisterUrl" class="text-dark-1 ml-30">Sign Up</a
 											>
 										</div>
 
@@ -312,12 +311,11 @@
 								<div
 									class="header-right__buttons d-flex items-center lg:d-none">
 									<a
-										href="login.html"
+										href="StudentLogin"
 										class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20"
 										>Log in</a
 									>
-									<a
-										href="signup.html"
+								<a href="@ViewBag.RegisterUrl"
 										class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20"
 										>Sign up</a
 									>
@@ -2029,7 +2027,7 @@
 				</footer>
 			</div>
 		</main>
-
+    <script src="~/aws/js/language-switcher.js"></script>
 		<!-- JavaScript -->
 		<script
 			src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"

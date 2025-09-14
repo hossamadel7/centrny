@@ -72,7 +72,7 @@
 										<div
 											class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
 											<a href="studentlogin" class="text-white">تسجيل الدخول</a>
-										<a href="register/58" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
+										<a href="@ViewBag.RegisterUrl" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
 
 										</div>
 
@@ -267,11 +267,9 @@
 								<div
 									class="header-right__buttons d-flex items-center lg:d-none">
 									<a
-										href="studentlogin"
-										class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">تسجيل الدخول</a>
-									<a href="/register/58"
-										class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
-								</div>
+										href="studentlogin" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">تسجيل الدخول</a>
+								<a href="@ViewBag.RegisterUrl" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
+							</div>
 							</div>
 						</div>
 					</div>
@@ -1065,5 +1063,6 @@
 	<!-- GLightbox JS -->
 	<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 		<script src="../js/main.js"></script>
+    <script src="~/aws/js/language-switcher.js"></script>
 	</body>
 </html>

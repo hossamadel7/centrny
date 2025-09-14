@@ -1,32 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using centrny.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace centrny.Controllers
 {
-    // This controller is simplified to directly serve the existing lowercase Arabic view files you listed:
-    //
-    //   Views/Website/home-ar.cshtml
-    //   Views/Website/about-ar.cshtml
-    //   Views/Website/courses-ar.cshtml
-    //   Views/Website/centres-ar.cshtml
-    //   Views/Website/outstanding-students-ar.cshtml
-    //
-    // Supported URLs (examples):
-    //   /                -> home-ar.cshtml
-    //   /home            -> home-ar.cshtml
-    //   /home-ar         -> home-ar.cshtml
-    //   /about           -> about-ar.cshtml
-    //   /about-ar        -> about-ar.cshtml
-    //   /courses         -> courses-ar.cshtml
-    //   /centres         -> centres-ar.cshtml
-    //   /outstanding-students     -> outstanding-students-ar.cshtml
-    //   /outstanding-students-ar  -> outstanding-students-ar.cshtml
-    //
-    // If you later add login-ar.cshtml or signup-ar.cshtml, just add "login" / "signup" to the AllowedPages set.
-
     public class WebsiteController : Controller
     {
+        private readonly CenterContext _dbContext;
+
         private static readonly HashSet<string> AllowedPages = new(StringComparer.OrdinalIgnoreCase)
         {
             "home",
@@ -34,8 +18,13 @@ namespace centrny.Controllers
             "courses",
             "centres",
             "outstanding-students"
-            // add "login", "signup" here ONLY if you create login-ar.cshtml / signup-ar.cshtml
+            // add "login", "signup" here if you add those pages
         };
+
+        public WebsiteController(CenterContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
 
         [Route("")]
         [Route("{page}")]
@@ -46,18 +35,46 @@ namespace centrny.Controllers
 
             page = page.ToLowerInvariant();
 
-            // If the requested segment already ends with -ar, strip the suffix to get the base
-            if (page.EndsWith("-ar", StringComparison.Ordinal))
-                page = page[..^3]; // remove the last 3 chars "-ar"
+            bool isArabic = false;
+            string basePage = page;
 
-            if (!AllowedPages.Contains(page))
+            // If the requested segment ends with -ar, it's Arabic
+            if (page.EndsWith("-ar", StringComparison.Ordinal))
+            {
+                isArabic = true;
+                basePage = page[..^3]; // remove the last 3 chars "-ar"
+            }
+
+            if (!AllowedPages.Contains(basePage))
                 return NotFound(); // 404 if it's not one of the known slugs
 
-            // Our view file names follow: <slug>-ar.cshtml (all lowercase)
-            var viewName = $"{page}-ar";
+            // Serve the appropriate view
+            var viewName = isArabic ? $"{basePage}-ar" : basePage;
 
-            // This will look for: /Views/Website/{viewName}.cshtml  (e.g. home-ar.cshtml)
+            // === Domain/RootCode logic ===
+            string domain = Request.Host.Host.ToLower();
+
+            // Look up the root record by domain (case-insensitive)
+            int? rootCode = _dbContext.Roots
+                .AsNoTracking()
+                .Where(r => r.RootDomain.ToLower() == domain)
+                .Select(r => (int?)r.RootCode)
+                .FirstOrDefault();
+
+            // Pass the rootCode to the view via ViewBag (or ViewData)
+            ViewBag.RegisterUrl = !rootCode.HasValue ? "/register" : $"/register/{rootCode.Value}";
+
+            // This will look for: /Views/Website/{viewName}.cshtml
             return View(viewName);
+        }
+
+        private int? GetRootCodeForDomain(string domain)
+        {
+            return _dbContext.Roots
+                .AsNoTracking()
+                .Where(r => r.RootDomain.ToLower() == domain.ToLower())
+                .Select(r => (int?)r.RootCode)
+                .FirstOrDefault();
         }
     }
 }

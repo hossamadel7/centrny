@@ -44,7 +44,7 @@
                 <div class="row justify-between items-center">
                     <div class="col-auto">
                         <div class="header-left d-flex items-center">
-                            <a href="home.cshtml" class="brand-logo" aria-label="Ahmed Fadl">
+                            <a href="home." class="brand-logo" aria-label="Ahmed Fadl">
                                 <span class="brand-logo__letter">A</span><span class="brand-logo__sep">|</span><span class="brand-logo__letter">F</span>
                             </a>
                             <div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
@@ -53,7 +53,7 @@
 
                                     <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
                                         <a href="studentlogin" class="text-white">Log in</a>
-                                        <a href="register/58" ...>Sign up</a>
+                                        <a href="@ViewBag.RegisterUrl" class="button">sign up</a>
                                     </div>
 
                                     <div class="menu js-navList">
@@ -191,12 +191,12 @@
 
                             <div class="header-right__buttons d-flex items-center lg:d-none">
                                 <a href="studentlogin" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">Log in</a>
-                                <a href="register/58" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">Sign up</a>
+                                <a href="@ViewBag.RegisterUrl" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">Sign up</a>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> 
         </header>
 
         <div class="content-wrapper js-content-wrapper">
@@ -824,7 +824,7 @@
 
         </div>
     </main>
-
+    <script src="~/aws/js/language-switcher.js"></script>
     <!-- JavaScript -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
             integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="

@@ -56,7 +56,7 @@
                 <div class="row justify-between items-center">
                     <div class="col-auto">
                         <div class="header-left d-flex items-center">
-                            <a href="home.cshtml" class="brand-logo" aria-label="Ahmed Fadl">
+                            <a href="home" class="brand-logo" aria-label="Ahmed Fadl">
                                 <span class="brand-logo__letter">A</span><span class="brand-logo__sep">|</span><span class="brand-logo__letter">F</span>
                             </a>
                             <div class="header-menu js-mobile-menu-toggle pl-30 xl:pl-20">
@@ -64,21 +64,21 @@
                                     <div class="mobile-bg js-mobile-bg"></div>
 
                                     <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
-                                        <a href="login.cshtml" class="text-dark-1">Log in</a>
-                                        <a href="signup.cshtml" class="text-dark-1 ml-30">Sign Up</a>
+                                        <a href="StudentLogin" class="text-dark-1">Log in</a>
+                                        <a href="@ViewBag.RegisterUrl" class="text-dark-1">Sign up</a>
                                     </div>
 
                                     <div class="menu js-navList">
                                         <ul class="menu__nav -is-active">
-                                            <a data-barba href="home.cshtml">Home</a>
+                                            <a data-barba href="home">Home</a>
 
-                                            <a data-barba href="about.cshtml">About</a>
+                                            <a data-barba href="about">About</a>
 
-                                            <a data-barba href="courses.cshtml">Courses</a>
+                                            <a data-barba href="courses">Courses</a>
 
-                                            <a data-barba href="centres.cshtml">Centres</a>
+                                            <a data-barba href="centres">Centres</a>
 
-                                            <a data-barba href="outstanding-students.cshtml">Outstanding Students</a>
+                                            <a data-barba href="outstanding-students">Outstanding Students</a>
                                         </ul>
                                     </div>
 
@@ -153,7 +153,7 @@
                                                     <div class="col">
                                                         <div class="row x-gap-10 y-gap-10">
                                                             <div class="col-auto">
-                                                                <img src="/img/menus/cart/1.png" alt="image" />
+                                                                <img src="~/AWS/img/menus/cart/1.png" alt="image" />
                                                             </div>
 
                                                             <div class="col">
@@ -238,10 +238,10 @@
                             </div>
 
                             <div class="header-right__buttons d-flex items-center lg:d-none">
-                                <a href="login.cshtml"
+                                <a href="StudentLogin/index"
                                    class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">Log in</a>
-                                <a href="signup.cshtml"
-                                   class="button h-50 px-25 -outline-dark-1 -rounded text-dark-1 ml-20">Sign up</a>
+                                <a href="@ViewBag.RegisterUrl" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">Sign up</a>
+
                             </div>
                         </div>
                     </div>
@@ -256,7 +256,7 @@
                 <!-- Background Video -->
                 <div class="hero-video-background">
                     <video autoplay muted loop playsinline class="hero-video">
-                        <source src="/videos/big-revision.mp4" type="video/mp4" />
+                        <source src="~/AWS/videos/big-revision.mp4" type="video/mp4" />
                         Your browser does not support the video tag.
                     </video>
                     <div class="hero-video-overlay"></div>
@@ -492,7 +492,7 @@
                     </div>
                     <div class="row justify-center pt-60 lg:pt-50">
                         <div class="col-auto">
-                            <a href="centres.cshtml"
+                            <a href="centres"
                                class="button -icon -outline-dark-1 text-dark-1">
                                 <span>View All Centres</span>
                             </a>
@@ -616,7 +616,7 @@
 
                         <div class="row justify-center pt-60 lg:pt-50">
                             <div class="col-auto">
-                                <a href="courses.cshtml"
+                                <a href="courses"
                                    class="button -icon -outline-dark-1 text-dark-1">
                                     <span>View All Courses</span>
                                 </a>
@@ -701,7 +701,7 @@
 
                     <div class="row justify-center pt-60 lg:pt-50">
                         <div class="col-auto">
-                            <a href="outstanding-students.cshtml"
+                            <a href="outstanding-students"
                                class="button -icon -outline-dark-1 text-dark-1">
                                 <span>
                                     View Outstanding Students
@@ -730,7 +730,7 @@
 
                             <div class="d-flex justify-center x-gap-15 y-gap-15 pt-30 flex-wrap">
                                 <div>
-                                    <a href="login.cshtml"
+                                    <a href="StudentLogin/Index"
                                        class="button -md -outline-dark-1 text-white">
                                         Join Now
                                     </a>
@@ -784,7 +784,7 @@
             </footer>
         </div>
     </main>
-
+    <script src="~/aws/js/language-switcher.js"></script>
     <!-- JavaScript -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
             integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="

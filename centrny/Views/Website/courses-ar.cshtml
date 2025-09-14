@@ -46,7 +46,7 @@
                                     <div class="mobile-bg js-mobile-bg"></div>
                                     <div class="d-none xl:d-flex items-center px-20 py-20 border-bottom-light">
                                         <a href="studentlogin" class="text-dark-1">تسجيل الدخول</a>
-                                        <a href=""register/58"" class="text-dark-1 ml-30">إنشاء حساب</a>
+                                        <a href="@ViewBag.RegisterUrl" class="text-dark-1 ml-30">إنشاء حساب</a>
                                     </div>
                                     <div class="menu js-navList">
                                         <ul class="menu__nav -is-active">
@@ -151,7 +151,7 @@
                             </div>
                             <div class="header-right__buttons d-flex items-center lg:d-none">
                                 <a href="studentlogin" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">تسجيل الدخول</a>
-                                <a href="register/58" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
+                                <a href="@ViewBag.RegisterUrl" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">إنشاء حساب</a>
                             </div>
                         </div>
                     </div>
@@ -384,7 +384,7 @@
         </div>
         </div>
     </main>
-
+    <script src="~/aws/js/language-switcher.js"></script>
     <script src="/js/vendors.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     <script src="/js/main.js"></script>
