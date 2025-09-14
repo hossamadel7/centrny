@@ -879,7 +879,7 @@ namespace centrny.Controllers
                         // Get default values from schedule for required fields
                         var teacherCode = schedule.TeacherCode ?? await GetDefaultTeacherForRoot(rootCode);
                         var subjectCode = schedule.SubjectCode ?? await GetDefaultSubjectForRoot(rootCode);
-                        var hallCode = schedule.HallCode ?? await GetDefaultHallForRoot(rootCode);
+                        var hallCode = schedule.HallCode;
                         var branchCode = await GetDefaultBranchForRoot(rootCode);
                         var eduYearCode = schedule.EduYearCode ?? await GetDefaultEduYearForRoot(rootCode);
 

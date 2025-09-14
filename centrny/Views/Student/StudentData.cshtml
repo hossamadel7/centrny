@@ -168,8 +168,24 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2 class="section-title" id="videos-title">Available Videos</h2>
+                    </div>
+                    <div class="section-content">
+                        <div id="videosGrid" class="exams-grid">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                                <span id="loading-videos-label">Loading videos...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div> <!-- /profile-content -->
         </div>
+
+
     </div>
 
     <div id="alertContainer"></div>
@@ -177,6 +193,65 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         console.log('Student profile script loaded');
+
+                // Add these variables at the top
+        let videosData = [];
+
+        // Add video loading function
+        async function loadVideos() {
+            if (!ITEM_KEY) {
+                showError('videosGrid', 'failed-to-load-videos');
+                return;
+            }
+            try {
+                const data = await safeFetchJson(`/Student/GetStudentVideos/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('videosGrid', 'failed-to-load-videos');
+                    return;
+                }
+                videosData = Array.isArray(data) ? data : [];
+                renderVideos(videosData);
+            } catch {
+                showError('videosGrid', 'failed-to-load-videos');
+            }
+        }
+
+               function renderVideos(videos) {
+            const container = document.getElementById('videosGrid');
+            if (!videos.length) {
+                container.innerHTML = renderEmptyState('fa-video', 'no-videos', 'no-videos-msg');
+                return;
+            }
+            container.innerHTML = videos.map(v => `
+                <div class="exam-card video-card" onclick="watchVideo(${v.fileCode})">
+                    <div class="exam-header">
+                        <div class="exam-icon"><i class="fas fa-video"></i></div>
+                        <h3 class="exam-name">${v.displayName}</h3>
+                    </div>
+                    <div class="exam-details">
+                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${v.subjectName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${v.teacherName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-bookmark"></i> <span>${v.lessonName}</span></div>
+                        ${v.durationFormatted ? `<div class="exam-detail"><i class="fas fa-clock"></i> <span>${v.durationFormatted}</span></div>` : ''}
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="attend-exam-btn" onclick="event.stopPropagation(); watchVideo(${v.fileCode})">
+                            <i class="fas fa-play"></i> Watch Video
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function watchVideo(fileCode) {
+            if (!fileCode) {
+                console.warn('Missing fileCode, navigation blocked');
+                return;
+            }
+            window.location.href = `/Student/WatchVideo/${ITEM_KEY}/${fileCode}`;
+        }
+
+ 
 
         function getJsString(key) { return $('#js-localization').data(key); }
 
@@ -419,6 +494,7 @@
             loadUpcomingExams();
             loadAttendedExams();
             loadAssignments();
+            loadVideos();
         });
     </script>
 </body>

@@ -610,6 +610,8 @@ namespace centrny.Controllers
             return Json(attendanceTypes);
         }
 
+
+
         // Helper for discount type code
         private async Task<int> GetDiscountTypeCode()
         {
@@ -1520,7 +1522,7 @@ namespace centrny.Controllers
                 .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
                            f.IsActive &&
                            (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
-                           (f.FileType == 0 || f.FileType == 1)) // Files or Videos
+                           (f.FileType == 4 || f.FileType == 5)) // Files or Videos
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.SubjectCodeNavigation)
                 .Include(f => f.LessonCodeNavigation)
@@ -1573,6 +1575,165 @@ namespace centrny.Controllers
             }).ToList();
 
             return Json(result);
+        }
+
+
+        [HttpGet]
+        [Route("Student/GetStudentVideos/{item_key}")]
+        public async Task<IActionResult> GetStudentVideos(string item_key)
+        {
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return Json(new { error = "Student not found." });
+
+            // Get all classes the student has actually attended
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>());
+
+            // Get lessons linked to attended classes
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>());
+
+            // Get video files that admin has marked as accessible (IsOnlineLesson = true)
+            var videoFiles = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                           f.IsActive &&
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) && 
+                           f.FileType == 1) // Videos only
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new
+                {
+                    fileCode = f.FileCode,  // camelCase
+                    displayName = f.DisplayName ?? "Unknown Video",  // camelCase
+                    videoProvider = f.VideoProvider,
+                    videoProviderName = f.VideoProvider == 0 ? "YouTube" :
+                      f.VideoProvider == 1 ? "Bunny CDN" : "Unknown",
+                    duration = f.Duration,
+                    durationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
+                    sortOrder = f.SortOrder,
+                    insertTime = f.InsertTime,
+                    lessonCode = f.LessonCode,
+                    lessonName = f.LessonCodeNavigation.LessonName,
+                    subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
+                })
+                .ToListAsync();
+
+            return Json(videoFiles);
+        }
+
+        [HttpGet]
+        [Route("Student/WatchVideo/{item_key}/{fileCode}")]
+        public async Task<IActionResult> WatchVideo(string item_key, int fileCode)
+        {
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return NotFound("Student not found.");
+
+            // Verify student has access to this video
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .ToListAsync();
+
+            var hasAccess = await _context.Files
+                .Where(f => f.FileCode == fileCode &&
+                           f.IsActive &&
+                           f.FileType == 1 &&
+                           f.IsOnlineLesson == false) // Admin granted access
+                .Join(_context.Classes.Where(c => attendedClassCodes.Contains(c.ClassCode)),
+                      f => f.LessonCode,
+                      c => c.ClassLessonCode,
+                      (f, c) => f)
+                .AnyAsync();
+
+            if (!hasAccess)
+                return Forbid("Access denied to this video.");
+
+            var videoFile = await _context.Files
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .FirstOrDefaultAsync(f => f.FileCode == fileCode);
+
+            if (videoFile == null)
+                return NotFound("Video not found.");
+
+            ViewBag.Student = student;
+            ViewBag.VideoFile = videoFile;
+            ViewBag.ItemKey = item_key;
+
+            return View("WatchVideo", videoFile);
+        }
+
+
+        [HttpGet]
+        [Route("Student/GetSecureVideoUrl")]
+        public async Task<IActionResult> GetSecureVideoUrl(int fileCode, string itemKey)
+        {
+            var student = await GetStudentByItemKey(itemKey);
+            if (student == null)
+                return Unauthorized("Student not found");
+
+            // Verify student has access to this video
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .ToListAsync();
+
+            var videoFile = await _context.Files
+                .Where(f => f.FileCode == fileCode &&
+                           f.IsActive &&
+                           f.FileType == 1 &&
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null))
+                .Join(_context.Classes.Where(c => attendedClassCodes.Contains(c.ClassCode)),
+                      f => f.LessonCode,
+                      c => c.ClassLessonCode,
+                      (f, c) => f)
+                .Include(f => f.LessonCodeNavigation)
+                .FirstOrDefaultAsync();
+
+            if (videoFile == null)
+                return NotFound("Video not found or access denied");
+
+            // Decrypt the video URL (same logic as LessonContentController)
+            var originalUrl = DecryptString(videoFile.FileLocation);
+            var expiryHours = videoFile.LessonCodeNavigation?.LessonExpireDays.HasValue == true
+                ? videoFile.LessonCodeNavigation.LessonExpireDays.Value * 24
+                : 24;
+
+            return Json(new
+            {
+                secureUrl = originalUrl,
+                displayName = videoFile.DisplayName,
+                duration = videoFile.Duration?.ToString(@"hh\:mm\:ss"),
+                provider = videoFile.VideoProvider == 0 ? "YouTube" : "Bunny CDN",
+                expiryTime = DateTime.Now.AddHours(expiryHours)
+            });
+        }
+
+        // Add the decrypt method to StudentController
+        private string DecryptString(string encryptedText)
+        {
+            var data = Convert.FromBase64String(encryptedText);
+            return System.Text.Encoding.UTF8.GetString(data);
         }
 
         [HttpGet]
