@@ -88,6 +88,7 @@ async function loadAllStudentData() {
         console.error('Error loading student data:', error);
         showGlobalError('Failed to load student data. Please refresh the page.');
     }
+    await Promise.all([loadUpcomingClasses(), loadStudentSubjects(), loadStudentVideos()]);
 }
 
 // Load student assignments from attended lesson files
@@ -925,6 +926,58 @@ function showSubjectDetails(subjectCode) {
         console.log('Show subject details:', subject);
     }
 }
+
+// Add this to the existing JavaScript in Profile.cshtml
+
+let videosData = [];
+
+async function loadStudentVideos() {
+    try {
+        const r = await fetch(`/Student/GetStudentVideos/${ITEM_KEY}`);
+        videosData = await r.json();
+        renderVideos(videosData);
+    } catch {
+        showError('videosGrid', 'failed-to-load-videos');
+    }
+}
+
+function renderVideos(videos) {
+    const container = document.getElementById('videosGrid');
+    if (!container) return;
+    if (!videos || videos.length === 0) {
+        container.innerHTML = renderEmptyState('fa-video', 'no-videos-found', 'no-videos-found-msg');
+        return;
+    }
+    container.innerHTML = videos.map(v => videoCardHtml(v)).join('');
+}
+
+function videoCardHtml(v) {
+    return `
+        <div class="video-card" onclick="watchVideo(${v.fileCode})">
+            <div class="video-thumbnail">
+                <i class="fas fa-play-circle"></i>
+                <div class="video-duration">${v.durationFormatted || ''}</div>
+            </div>
+            <div class="video-header">
+                <div class="video-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3 class="video-name">${escapeHtml(v.displayName)}</h3>
+            </div>
+            <div class="video-details">
+                ${subjectDetail('fa-book', v.subjectName)}
+                ${subjectDetail('fa-chalkboard-teacher', v.teacherName)}
+                ${subjectDetail('fa-bookmark', v.lessonName)}
+                ${subjectDetail('fa-globe', v.videoProviderName)}
+            </div>
+        </div>`;
+}
+
+function watchVideo(fileCode) {
+    window.location.href = `/Student/WatchVideo/${ITEM_KEY}/${fileCode}`;
+}
+
+
 
 function showScheduleDetails(subjectCode) {
     const subject = studentProfileData.subjects.find(s => s.subjectCode == subjectCode);

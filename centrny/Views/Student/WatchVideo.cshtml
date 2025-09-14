@@ -1,0 +1,346 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.VideoFile.DisplayName - Video Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: #0f0f0f;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .video-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: #fff;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+            .video-meta span {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+        .video-player-wrapper {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-player {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #333;
+            border-top: 3px solid #ff0000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            0%
+
+        {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        .back-button {
+            position: absolute;
+            top: 1rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+            .back-button:hover {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                text-decoration: none;
+            }
+
+        .video-error {
+            text-align: center;
+            padding: 2rem;
+            color: #ff4444;
+        }
+
+            .video-error i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .video-header
+
+        {
+            padding: 1rem;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+        }
+
+        .video-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .back-button {
+            top: 0.5rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        }
+
+        /* Hide YouTube branding and controls we don't want */
+        .video-player-wrapper::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <div class="video-header">
+            <h1 class="video-title">@ViewBag.VideoFile.DisplayName</h1>
+            <div class="video-meta">
+                <span>
+                    <i class="fas fa-book"></i>
+                    @ViewBag.VideoFile.LessonCodeNavigation.SubjectCodeNavigation.SubjectName
+                </span>
+                <span>
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    @ViewBag.VideoFile.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
+                </span>
+                <span>
+                    <i class="fas fa-bookmark"></i>
+                    @ViewBag.VideoFile.LessonCodeNavigation.LessonName
+                </span>
+                @if (ViewBag.VideoFile.Duration != null)
+                {
+                    <span>
+                        <i class="fas fa-clock"></i>
+                        @ViewBag.VideoFile.Duration.Value.ToString(@"hh\:mm\:ss")
+                    </span>
+                }
+            </div>
+            <a href="/Student/@ViewBag.ItemKey" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Profile
+            </a>
+        </div>
+
+        <div class="video-player-wrapper">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+            </div>
+
+            <div id="videoContainer"></div>
+
+            <div class="video-error" id="videoError" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Unable to Load Video</h3>
+                <p>There was an error loading the video. Please try again later.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoData = {
+            fileCode: @ViewBag.VideoFile.FileCode,
+            videoProvider: @ViewBag.VideoFile.VideoProvider,
+            displayName: '@Html.Raw(Html.Encode(ViewBag.VideoFile.DisplayName))',
+            itemKey: '@ViewBag.ItemKey'
+        };
+
+        async function loadVideo() {
+            try {
+                // Get secure video URL from backend
+                const response = await fetch(`/Student/GetSecureVideoUrl?fileCode=${videoData.fileCode}&itemKey=${videoData.itemKey}`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to get video URL');
+                }
+
+                const videoInfo = await response.json();
+                const container = document.getElementById('videoContainer');
+
+                if (videoData.videoProvider === 0) { // YouTube
+                    // Extract YouTube video ID from URL
+                    const videoId = extractYouTubeId(videoInfo.secureUrl);
+                    if (videoId) {
+                        createYouTubeEmbed(container, videoId);
+                    } else {
+                        throw new Error('Invalid YouTube URL');
+                    }
+                } else if (videoData.videoProvider === 1) { // Bunny CDN
+                    createBunnyCDNPlayer(container, videoInfo.secureUrl);
+                } else {
+                    throw new Error('Unsupported video provider');
+                }
+
+                // Hide loading spinner
+                document.getElementById('loadingSpinner').style.display = 'none';
+
+            } catch (error) {
+                console.error('Error loading video:', error);
+                showVideoError();
+            }
+        }
+
+        function extractYouTubeId(url) {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length === 11) ? match[7] : null;
+        }
+
+        function createYouTubeEmbed(container, videoId) {
+            // Create clean YouTube embed without suggested videos, branding, etc.
+            const iframe = document.createElement('iframe');
+            iframe.className = 'video-player';
+            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?` +
+                        'autoplay=1&' +           // Auto start
+                        'rel=0&' +                // No related videos at end
+                        'showinfo=0&' +           // Hide video title
+                        'modestbranding=1&' +     // Minimal YouTube branding
+                        'fs=1&' +                 // Allow fullscreen
+                        'cc_load_policy=0&' +     // No captions by default
+                        'iv_load_policy=3&' +     // Hide annotations
+                        'disablekb=0&' +          // Allow keyboard controls
+                        'playsinline=1&' +        // Inline play on mobile
+                        'controls=1&' +           // Show player controls
+                        'start=0';                // Start from beginning
+
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+            iframe.setAttribute('allowfullscreen', '');
+
+            container.appendChild(iframe);
+
+            // Track video access
+            trackVideoAccess();
+        }
+
+        function createBunnyCDNPlayer(container, videoUrl) {
+            const video = document.createElement('video');
+            video.className = 'video-player';
+            video.controls = true;
+            video.autoplay = true;
+            video.preload = 'metadata';
+            video.src = videoUrl;
+
+            video.addEventListener('loadstart', () => {
+                trackVideoAccess();
+            });
+
+            video.addEventListener('error', () => {
+                showVideoError();
+            });
+
+            container.appendChild(video);
+        }
+
+        function showVideoError() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('videoError').style.display = 'block';
+        }
+
+        async function trackVideoAccess() {
+            try {
+                await fetch('/Student/TrackVideoAccess', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        itemKey: videoData.itemKey,
+                        fileCode: videoData.fileCode,
+                        accessTime: new Date().toISOString()
+                    })
+                });
+            } catch (error) {
+                console.error('Error tracking video access:', error);
+            }
+        }
+
+        // Handle escape key to go back
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.location.href = `/Student/${videoData.itemKey}`;
+            }
+        });
+
+        // Load video when page is ready
+        document.addEventListener('DOMContentLoaded', loadVideo);
+    </script>
+</body>
+</html>
