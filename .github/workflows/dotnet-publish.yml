@@ -3,7 +3,7 @@ name: Build and Publish .NET 9 App
 on:
   push:
     branches:
-      - Session-test-2   # trigger only on this branch
+      - Session-test-2   
 
 jobs:
   build-and-publish:
