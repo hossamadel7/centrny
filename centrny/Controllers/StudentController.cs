@@ -1501,6 +1501,87 @@ namespace centrny.Controllers
 
             return Json(examResults);
         }
+        [HttpGet]
+        [Route("Student/GetLatestStudentDownloads/{item_key}")]
+        public async Task<IActionResult> GetLatestStudentDownloads(string item_key)
+        {
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return Json(new List<object>());
+
+            // Get the last attended class
+            var lastAttend = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .OrderByDescending(a => a.AttendDate)
+                .FirstOrDefaultAsync();
+
+            if (lastAttend == null)
+                return Json(new List<object>());
+
+            var lastClass = await _context.Classes.FirstOrDefaultAsync(c => c.ClassCode == lastAttend.ClassId);
+            if (lastClass == null || !lastClass.ClassLessonCode.HasValue)
+                return Json(new List<object>());
+
+            var lessonCode = lastClass.ClassLessonCode.Value;
+
+            // Get all FileType=2 files for this lesson (PDFs)
+            var pdfFiles = await _context.Files
+                .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 2)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new {
+                    fileCode = f.FileCode,
+                    displayName = f.DisplayName ?? "Downloadable File",
+                    fileLocation = f.FileLocation,
+                    insertTime = f.InsertTime,
+                    lessonName = f.LessonCodeNavigation.LessonName,
+                    subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
+                })
+                .ToListAsync();
+
+            return Json(pdfFiles);
+        }
+        [HttpGet]
+        [Route("Student/GetLatestStudentVideos/{item_key}")]
+        public async Task<IActionResult> GetLatestStudentVideos(string item_key)
+        {
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return Json(new List<object>());
+
+            // Get the last attended class
+            var lastAttend = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .OrderByDescending(a => a.AttendDate)
+                .FirstOrDefaultAsync();
+
+            if (lastAttend == null)
+                return Json(new List<object>());
+
+            var lastClass = await _context.Classes.FirstOrDefaultAsync(c => c.ClassCode == lastAttend.ClassId);
+            if (lastClass == null || !lastClass.ClassLessonCode.HasValue)
+                return Json(new List<object>());
+
+            var lessonCode = lastClass.ClassLessonCode.Value;
+
+            // Get all FileType=1 files for this lesson (Videos)
+            var videoFiles = await _context.Files
+                .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 1)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new {
+                    fileCode = f.FileCode,
+                    displayName = f.DisplayName ?? "Video",
+                    fileLocation = f.FileLocation,
+                    insertTime = f.InsertTime,
+                    lessonName = f.LessonCodeNavigation.LessonName,
+                    subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
+                    duration = f.Duration
+                })
+                .ToListAsync();
+
+            return Json(videoFiles);
+        }
 
         [HttpGet]
         [Route("Student/GetStudentDownloads/{item_key}")]
