@@ -13,8 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          persist-credentials: true   # allow pushing back
-          fetch-depth: 0              # full history so we can commit
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
@@ -22,14 +22,13 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore centrny.sln
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build centrny.sln --configuration Release --no-restore
 
       - name: Publish to folder
-        run: dotnet publish ./centrny.csproj -c Release -o publish
-        # 🔑 replace ./centrny.csproj with correct path if needed
+        run: dotnet publish centrny.sln -c Release -o publish
 
       - name: Commit and push publish output
         run: |
