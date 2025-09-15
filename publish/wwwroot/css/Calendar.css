@@ -1,0 +1,596 @@
+﻿/* ENHANCED CALENDAR CSS WITH MODERN DESIGN AND FILTER SECTION */
+
+/* --- CSS Variables for Consistent Theming --- */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-gradient-horizontal: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --info-gradient: linear-gradient(135deg, #3498db 0%, #74b9ff 100%);
+    --danger-gradient: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+    --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --border-radius: 12px;
+    --border-radius-lg: 18px;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
+    --bg-light: #f8f9fa;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --border-color: #e2e8f0;
+}
+
+/* --- Simplified Background --- */
+body, .schedule-page {
+    background: #f5f7fa;
+    min-height: 100vh;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.calendar-page,
+.calendar-container {
+    background: #fff;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    margin: 1.5rem auto;
+    padding: 2rem;
+    max-width: 1400px;
+    position: relative;
+}
+
+/* --- Simplified Page Header --- */
+.page-header {
+    text-align: center;
+    background: #fff;
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+    .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        color: #667eea;
+    }
+
+    .page-header p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin: 0;
+        font-weight: 400;
+    }
+
+/* --- Enhanced Filter Section --- */
+.filter-section {
+    background: #fff;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    border-left: 4px solid #667eea;
+}
+
+    .filter-section .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .filter-section .form-select {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+
+        .filter-section .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+        }
+
+        .filter-section .form-select:hover {
+            border-color: #a0aec0;
+        }
+
+/* --- Active Filters Display --- */
+.active-filters {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+    .active-filters .badge {
+        background: var(--primary-gradient) !important;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+        .active-filters .badge .btn-close {
+            background: none;
+            border: none;
+            font-size: 0.6rem;
+            opacity: 0.8;
+            padding: 0;
+            margin: 0;
+        }
+
+            .active-filters .badge .btn-close:hover {
+                opacity: 1;
+            }
+
+/* --- Fixed Controls Section --- */
+.controls-section {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    background: #fff;
+    padding: 0.8rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+}
+
+/* --- Simplified Button System --- */
+.btn-modern, .floating-add-btn, .add-schedule-btn, .btn {
+    font-weight: 500 !important;
+    border-radius: var(--border-radius) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: var(--shadow) !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4em !important;
+    padding: 0.6rem 1rem !important;
+    background: var(--primary-gradient) !important;
+    white-space: nowrap !important;
+}
+
+    .btn-modern.btn-success, .floating-add-btn, .add-schedule-btn {
+        background: var(--success-gradient) !important;
+    }
+
+    .btn-modern.btn-info {
+        background: var(--info-gradient) !important;
+    }
+
+.btn-outline-secondary {
+    background: #fff !important;
+    color: var(--text-secondary) !important;
+    border: 2px solid var(--border-color) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+    .btn-outline-secondary:hover {
+        background: #f8f9fa !important;
+        border-color: #a0aec0 !important;
+        color: var(--text-primary) !important;
+    }
+
+.btn-modern:hover, .btn-modern:focus, .btn:hover, .add-schedule-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.btn-modern:active {
+    transform: translateY(0) !important;
+}
+
+/* --- Enhanced Floating Add Button --- */
+.floating-add-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    padding: 1rem !important;
+    font-size: 1.2rem !important;
+    border-radius: 50% !important;
+    background: var(--success-gradient) !important;
+    box-shadow: 0 6px 20px rgba(17, 153, 142, 0.3) !important;
+    animation: none;
+}
+
+    .floating-add-btn:hover {
+        transform: translateY(-2px) scale(1.05) !important;
+        box-shadow: 0 8px 25px rgba(17, 153, 142, 0.4) !important;
+    }
+
+/* --- Simplified Weekly Grid --- */
+.weekly-template-grid {
+    background: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.week-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    background: var(--primary-gradient);
+    color: #fff;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+}
+
+/* --- Clean Days Grid --- */
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: visible;
+}
+
+.day-column {
+    background: #fff;
+    padding: 1rem 0.8rem 1.5rem 0.8rem;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+}
+
+    .day-column:hover {
+        background: #f8f9ff;
+    }
+
+.day-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+    color: var(--text-primary);
+    padding: 0.6rem;
+    background: #f8f9ff;
+    border-radius: var(--border-radius);
+}
+
+/* --- Simplified Schedule Events --- */
+.schedule-event {
+    background: #f8f9ff;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #667eea;
+    border-radius: var(--border-radius);
+    margin: 0.5rem 0;
+    padding: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .schedule-event:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+        border-color: #667eea;
+    }
+
+    .schedule-event .event-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        margin-bottom: 0.3rem;
+    }
+
+    .schedule-event .event-time {
+        font-weight: 500;
+        font-size: 0.8rem;
+        color: #667eea;
+        margin-bottom: 0.2rem;
+    }
+
+    .schedule-event .event-details {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .schedule-event .event-year {
+        font-size: 0.8rem;
+        color: #667eea;
+        margin-bottom: 0.2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        margin-top: 0.3rem;
+    }
+
+/* --- Enhanced Empty Day State --- */
+.empty-day {
+    text-align: center;
+    padding: 1.5rem 0.8rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-style: italic;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+    .empty-day::before {
+        content: '📅';
+        font-size: 1.5rem;
+        margin-bottom: 0.3rem;
+        opacity: 0.5;
+    }
+
+/* --- Enhanced Add Schedule Button --- */
+.add-schedule-btn {
+    margin: 0.8rem auto 0 auto;
+    padding: 0.6rem !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    box-shadow: 0 3px 10px rgba(17, 153, 142, 0.3) !important;
+    position: relative;
+    font-size: 0.9rem !important;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+    .add-schedule-btn:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4) !important;
+    }
+
+/* --- Enhanced Loading Animation --- */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    z-index: 100;
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(102, 126, 234, 0.2);
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- Enhanced Modal Styling --- */
+.modal-content {
+    border: none !important;
+    border-radius: var(--border-radius-lg) !important;
+    box-shadow: var(--shadow-lg) !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    overflow: hidden !important;
+}
+
+.modal-header {
+    background: var(--primary-gradient) !important;
+    color: white !important;
+    border: none !important;
+    padding: 1.5rem 2rem !important;
+    position: relative !important;
+}
+
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='m0 40l40-40h-40v40zm40 0v-40h-40l40 40z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+.modal-title {
+    font-weight: 700 !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.modal-body {
+    padding: 2.5rem !important;
+    background: #fff !important;
+}
+
+.modal-footer {
+    background: #f8f9ff !important;
+    border: none !important;
+    padding: 1.5rem 2rem !important;
+}
+
+/* --- Enhanced Toast Styling --- */
+.toast-container {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 9999;
+    min-width: 350px;
+}
+
+.toast {
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    backdrop-filter: blur(10px) !important;
+    margin-bottom: 1rem !important;
+}
+
+/* --- Schedule Count Display --- */
+.schedule-count {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #2d3748;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+    .schedule-count.many-results {
+        background: linear-gradient(135deg, #e6fffa 0%, #f0fff4 100%);
+        border: 1px solid #81e6d9;
+    }
+
+    .schedule-count.few-results {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+        border: 1px solid #f6d55c;
+    }
+
+    .schedule-count.no-results {
+        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+        border: 1px solid #fc8181;
+    }
+
+/* --- Responsive Design --- */
+@media (max-width: 1200px) {
+    .days-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .days-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .calendar-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+
+    .floating-add-btn {
+        bottom: 2rem;
+        right: 2rem;
+    }
+
+    .filter-section .row {
+        flex-direction: column;
+    }
+
+    .filter-section .col-md-3 {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .days-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .controls-section {
+        justify-content: center;
+    }
+}
+
+/* --- Advanced Hover Effects --- */
+.day-column::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(102, 126, 234, 0.05) 50%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.day-column:hover::after {
+    opacity: 1;
+}
+
+/* --- Smooth Scrollbar --- */
+.days-grid::-webkit-scrollbar {
+    height: 8px;
+}
+
+.days-grid::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
+
+.days-grid::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 4px;
+}
+
+    .days-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--info-gradient);
+    }
+/* --- Custom Action Button Colors to Match Screenshot --- */
+.btn-edit {
+    background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+        color: #fff !important;
+    border: none !important;
+    box-shadow: var(--shadow);
+}
+
+    .btn-edit:hover, .btn-edit:focus {
+        background: linear-gradient(90deg, #38a7d8 0%, #43c6ec 100%) !important;
+    }
+
+.btn-delete {
+    background: #f56b6b !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: var(--shadow);
+}
+
+    .btn-delete:hover, .btn-delete:focus {
+        background: #d63c3c !important;
+    }

@@ -1,0 +1,150 @@
+﻿:root {
+    --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+    --primary-color: #6c5ce7;
+    --bg-white: #fff;
+    --border-radius-lg: 28px;
+    --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18), 0 4px 16px rgba(0,0,0,0.13);
+}
+
+body {
+    background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    color: #2d3436;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.schedule-page {
+    background: var(--bg-white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 2.7rem 2.3rem;
+    margin: 2.5rem auto;
+    max-width: 1154px;
+    width: 100%;
+}
+
+.questions-header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2.2rem;
+    padding: 2rem 0 1.2rem 0;
+    background: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+    .questions-header h2 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.3rem;
+        background: var(--primary-gradient-horizontal);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+.schedule-card {
+    background: var(--bg-white);
+    border-radius: 22px;
+    box-shadow: 0 2px 24px rgba(108, 92, 231, 0.14);
+    padding: 24px 22px 18px 22px;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.23s;
+}
+
+    .schedule-card:hover {
+        box-shadow: 0 8px 36px rgba(108, 92, 231, 0.22);
+        transform: translateY(-2px);
+    }
+
+.schedule-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.wallet-code {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.2em;
+}
+
+.schedule-card-body {
+    margin-bottom: 15px;
+}
+
+.schedule-card-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modern-btn {
+    font-weight: 600 !important;
+    padding: 0.65rem 1.3rem !important;
+    border-radius: 18px !important;
+    border: none !important;
+    color: #fff !important;
+    background: var(--primary-gradient) !important;
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5em !important;
+    transition: transform 0.16s, box-shadow 0.16s !important;
+}
+
+    .modern-btn:hover {
+        transform: scale(1.05) !important;
+        box-shadow: var(--shadow-lg) !important;
+    }
+
+    .modern-btn.edit-btn {
+        background: linear-gradient(135deg, #00b894 0%, #55a3ff 100%) !important;
+    }
+
+.badge {
+    font-size: 0.99em;
+    font-weight: 700;
+    border-radius: 16px;
+    padding: 0.25em 1em;
+    color: #fff;
+    background: var(--primary-gradient);
+}
+
+.schedule-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-right: 4px;
+}
+
+.card-icon {
+    color: #55a3ff;
+    font-size: 1.05em;
+    margin-right: 6px;
+}
+
+.h-100 {
+    height: 100% !important;
+}
+
+.filter-panel {
+    background: #f8f9fa;
+    border-radius: 18px;
+    padding: 1.3rem 2rem;
+    margin-bottom: 1.2rem;
+    border: 1.5px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .schedule-page {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .questions-header h2 {
+        font-size: 1.8rem;
+    }
+}
