@@ -1,5 +1,4 @@
-﻿
-function getJsString(key) {
+﻿function getJsString(key) {
     const el = document.getElementById('js-localization');
     return el ? (el.getAttribute('data-' + key) || '') : '';
 }
@@ -20,18 +19,18 @@ $(function () {
     let studentSearchTimeout = null;
     let lastStudentSearchVal = '';
 
+    // For stats modal filter
+    window._lastStudentStatsStudentCode = null;
+    window._lastStudentStatsYearCode = null;
+
     localizeFiltersAndButtons();
 
     /* ---------- Utilities ---------- */
     function formatTime(t) {
         if (!t) return '';
-        // Accepts "HH:mm:ss", "HH:mm", ISO or Date
         if (typeof t === 'string') {
-            // Already HH:mm
             if (/^\d{2}:\d{2}$/.test(t)) return t;
-            // HH:mm:ss
             if (/^\d{2}:\d{2}:\d{2}$/.test(t)) return t.substring(0, 5);
-            // Try parse date
             const d = new Date(t);
             if (!isNaN(d.getTime())) {
                 return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -87,7 +86,6 @@ $(function () {
 
     function renderGroupedTable(data) {
         let html = '<div class="table-card w-100 p-0" style="box-shadow:none;">';
-        // RESPONSIVE WRAPPER (only new part)
         html += '<div class="learn-responsive-wrapper">';
         html += '<table class="gradient-table">';
         html += `<thead><tr>
@@ -113,7 +111,8 @@ $(function () {
                         html += '<tr>';
                         if (sIdx === 0) {
                             html += `<td rowspan="${rowCount}">${idx + 1 + ((currentPage - 1) * pageSize)}</td>`;
-                            html += `<td rowspan="${rowCount}" class="bold-rendered">${student.studentName || ''}</td>`;
+                            html += `<td rowspan="${rowCount}" class="bold-rendered student-stats-trigger" style="cursor:pointer;color:#007bff;" 
+                                data-studentcode="${student.studentCode}" data-yearcode="${student.yearCode}">${student.studentName || ''}</td>`;
                             html += `<td rowspan="${rowCount}">${student.yearName || ''}</td>`;
                         }
 
@@ -207,7 +206,7 @@ $(function () {
     });
 
     /* ---------- Autocomplete Student Search ---------- */
-    $('#studentFilter').parent().remove(); // remove legacy if exists
+    $('#studentFilter').parent().remove();
 
     $('#searchInput').on('input', function () {
         const val = $(this).val();
@@ -440,7 +439,6 @@ $(function () {
                         </select>
                     </div>`;
                 } else {
-                    // Provide hidden teacher if not center
                     html += `<input type="hidden" name="TeacherCode" value="${res.selectedTeacher}"/>`;
                 }
 
@@ -454,7 +452,6 @@ $(function () {
                     </select>
                 </div>`;
 
-                // Insert form wrapper to allow submit using existing hidden form
                 html = `<form id="editLearnFormInner">${html}
                         <div class="text-end">
                            <button type="submit" class="modern-btn edit-btn" style="margin-top:8px;">
@@ -469,7 +466,6 @@ $(function () {
             .fail(xhr => logAjaxError('[GetEditLearnFormData] failed', xhr));
     });
 
-    // On-the-fly teacher change inside single edit: refresh schedules
     $(document).on('change', '#editLearnModalBody select[name=TeacherCode]', function () {
         const teacherCode = $(this).val();
         const subjectCode = $('#editLearnModalBody input[name=SubjectCode]').val();
@@ -494,7 +490,6 @@ $(function () {
             .fail(xhr => logAjaxError('[Teacher change -> GetSchedules] failed', xhr));
     });
 
-    // Single edit submit
     $(document).on('submit', '#editLearnFormInner', function (e) {
         e.preventDefault();
         $.post('/StudentLearn/EditLearn', $(this).serialize())
@@ -509,10 +504,183 @@ $(function () {
             .fail(xhr => logAjaxError('[EditLearn] failed', xhr));
     });
 
-    /* ---------- Initial Load ---------- */
+    /* ---------- Student Statistics Modal ---------- */
+    if ($('#studentStatsModal').length === 0) {
+        $('body').append(`
+        <div class="modal fade" id="studentStatsModal" tabindex="-1" role="dialog" aria-labelledby="studentStatsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="studentStatsModalLabel">Student Statistics</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="studentStatsModalBody"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>`);
+    }
+
+    $(document).on('click', '.student-stats-trigger', function () {
+        const studentCode = $(this).data('studentcode');
+        const yearCode = $(this).data('yearcode');
+        window._lastStudentStatsStudentCode = studentCode;
+        window._lastStudentStatsYearCode = yearCode;
+        showStudentStatisticsModal(studentCode, yearCode, "");
+    });
+
+    function showStudentStatisticsModal(studentCode, yearCode, subjectCode) {
+        $('#studentStatsModal').modal('show');
+        $('#studentStatsModalBody').html('<div class="text-center"><span class="loader"></span> Loading...</div>');
+        let isExamFilter = $('#studentStatsTypeFilter').val();
+        if (isExamFilter === "") isExamFilter = null;
+        else isExamFilter = (isExamFilter === "true");
+
+        $.get('/StudentLearn/GetStudentStatistics', {
+            studentCode: studentCode,
+            yearCode: yearCode,
+            subjectCode: subjectCode || null,
+            isExamFilter: isExamFilter
+        }).done(function (res) {
+            if (!res || !res.subjects || res.subjects.length === 0) {
+                $('#studentStatsModalBody').html('<div class="alert alert-warning">No statistics found.</div>');
+                return;
+            }
+
+            let subjectOptions = '<option value="">All Subjects</option>';
+            res.subjects.forEach(sub => {
+                subjectOptions += `<option value="${sub.subjectCode}">${sub.subjectName}</option>`;
+            });
+
+            let filterHtml = `
+    <div class="mb-3 d-flex" style="gap:15px;">
+        <div>
+            <label><b>Type:</b></label>
+            <select id="studentStatsTypeFilter" class="form-control" style="max-width:200px;display:inline-block;margin-left:10px;">
+                <option value="">All</option>
+                <option value="true">Exams Only</option>
+                <option value="false">Assignments Only</option>
+            </select>
+        </div>
+        <div>
+            <label><b>Filter by Subject:</b></label>
+            <select id="studentStatsSubjectFilter" class="form-control" style="max-width:300px;display:inline-block;margin-left:10px;">
+                ${subjectOptions}
+            </select>
+        </div>
+    </div>
+`;
+
+            let statsHtml = '';
+            res.subjects.forEach(sub => {
+                statsHtml += `
+                    <div class="card mb-3">
+                        <div class="card-header fw-bold">${sub.subjectName}</div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <h5>Attendance</h5>
+                                    <p><strong>Rate:</strong> ${sub.attendance.rate.toFixed(1)}%</p>
+                                    <div>
+                                        <canvas id="attGraph${sub.subjectCode}" height="80"></canvas>
+                                    </div>
+                                    <table class="table table-sm mt-2">
+                                        <thead>
+                                            <tr>
+                                                <th>Class</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                          ${sub.attendance.list.map(c => `<tr>
+    <td>${c.className}</td>
+    <td>${c.classDate}</td>
+    <td>${c.classTime}</td>
+    <td class="${c.status === 'Attended' ? 'text-success' : 'text-danger'}">${c.status}</td>
+</tr>`).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Exams</h5>
+                                    <p><strong>Avg Mark:</strong> ${sub.exams.attended > 0 ? sub.exams.avgMark.toFixed(2) : 'N/A'}</p>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                               <th>Exam</th>
+                                               <th>Date</th>
+                                               <th>Status</th>
+                                               <th>Student Degree</th>
+                                               <th>Exam Degree</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                          ${sub.exams.list.map(e => `<tr>
+    <td>${e.examName}</td>
+    <td>${e.examDate}</td>
+    <td class="${e.status === 'Attended' ? 'text-success' : 'text-danger'}">${e.status}</td>
+    <td>${e.studentDegree !== undefined && e.studentDegree !== null ? e.studentDegree : '-'}</td>
+    <td>${e.examDegree !== undefined && e.examDegree !== null ? e.examDegree : '-'}</td>
+</tr>`).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            $('#studentStatsModalBody').html(filterHtml + statsHtml);
+
+            if (window.Chart) {
+                res.subjects.forEach(sub => {
+                    let ctx = document.getElementById('attGraph' + sub.subjectCode);
+                    if (ctx) {
+                        new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Attended', 'Missed'],
+                                datasets: [{
+                                    data: [sub.attendance.attended, sub.attendance.missed],
+                                    backgroundColor: ['#00b894', '#d63031'],
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                legend: { display: true, position: 'bottom' }
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    $(document).on('change', '#studentStatsSubjectFilter', function () {
+        const subjectCode = $(this).val();
+        const studentCode = window._lastStudentStatsStudentCode;
+        const yearCode = window._lastStudentStatsYearCode;
+        showStudentStatisticsModal(studentCode, yearCode, subjectCode);
+    });
+
+    $(document).on('change', '#studentStatsTypeFilter', function () {
+        const subjectCode = $('#studentStatsSubjectFilter').val();
+        const studentCode = window._lastStudentStatsStudentCode;
+        const yearCode = window._lastStudentStatsYearCode;
+        showStudentStatisticsModal(studentCode, yearCode, subjectCode);
+    });
+
     loadFilters();
     loadTable(currentPage);
 
-    // Expose for debugging
     window.studentLearnReload = function () { loadTable(currentPage); };
 });
