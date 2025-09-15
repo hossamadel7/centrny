@@ -168,7 +168,7 @@ namespace centrny.Controllers
                             YearName = learn.StudentCodeNavigation.YearCodeNavigation?.YearName ?? "N/A",
                             IsAttended = attendance != null,
                             AttendanceTime = attendance?.AttendDate.ToString("HH:mm"),
-                            ScheduleCode =learn.ScheduleCode??0,
+                            ScheduleCode = learn.ScheduleCode??0,
                             EnrolledSubjectName = learn.SubjectCodeNavigation?.SubjectName ?? "N/A"
                         });
                     }
@@ -239,56 +239,24 @@ namespace centrny.Controllers
 
                 var student = item.StudentCodeNavigation;
 
-                // Check for exact schedule match first
-                var exactEnrollmentCheck = await _context.Learns
-                    .Include(l => l.ScheduleCodeNavigation)
+                // Verify student is enrolled in this class by checking Learn table with schedule ID matching
+                var enrollmentCheck = await _context.Learns
                     .FirstOrDefaultAsync(l =>
                         l.StudentCode == student.StudentCode &&
                         l.SubjectCode == classEntity.SubjectCode &&
                         l.TeacherCode == classEntity.TeacherCode &&
                         l.IsActive &&
-                        l.ScheduleCode == classEntity.ScheduleCode);
+                        (l.ScheduleCode == classEntity.ScheduleCode ||
+                         (classEntity.YearCode.HasValue && l.YearCode == classEntity.YearCode)));
 
-                // Check for different schedule enrollment
-                var differentScheduleEnrollment = await _context.Learns
-                    .Include(l => l.ScheduleCodeNavigation)
-                    .FirstOrDefaultAsync(l =>
-                        l.StudentCode == student.StudentCode &&
-                        l.SubjectCode == classEntity.SubjectCode &&
-                        l.TeacherCode == classEntity.TeacherCode &&
-                        l.IsActive &&
-                        l.ScheduleCode != classEntity.ScheduleCode);
-
-                // If no enrollment at all (neither exact nor different schedule)
-                if (exactEnrollmentCheck == null && differentScheduleEnrollment == null)
+                if (enrollmentCheck == null)
                 {
-                    _logger.LogWarning("Student {StudentCode} is not enrolled in class {ClassCode}.",
+                    _logger.LogWarning("Student {StudentCode} is not enrolled in class {ClassCode}. Schedule validation failed.",
                         student.StudentCode, request.ClassCode);
                     return Json(new
                     {
                         success = false,
-                        error = $"Student {student.StudentName} is not enrolled in this class."
-                    });
-                }
-
-                // If different schedule and not confirmed yet
-                if (exactEnrollmentCheck == null && differentScheduleEnrollment != null && !request.ConfirmScheduleOverride)
-                {
-                    var studentScheduleName = differentScheduleEnrollment.ScheduleCodeNavigation?.ScheduleName ?? "Unknown Schedule";
-                    var classScheduleName = classEntity.ScheduleCodeNavigation?.ScheduleName ?? "Unknown Schedule";
-
-                    _logger.LogInformation("Schedule mismatch for student {StudentCode}: enrolled in {StudentSchedule}, class is {ClassSchedule}",
-                        student.StudentCode, studentScheduleName, classScheduleName);
-
-                    return Json(new
-                    {
-                        success = false,
-                        requiresConfirmation = true,
-                        confirmationMessage = $"Student {student.StudentName} is enrolled in [{studentScheduleName}] but this class is [{classScheduleName}].",
-                        studentName = student.StudentName,
-                        studentSchedule = studentScheduleName,
-                        classSchedule = classScheduleName,
-                        itemKey = request.ItemKey
+                        error = $"Student {student.StudentName} is not enrolled in this class or schedule does not match."
                     });
                 }
 
@@ -305,28 +273,22 @@ namespace centrny.Controllers
                     });
                 }
 
-                // Create attendance record (use class's schedule code)
+                // Create attendance record
                 var attendance = new Attend
                 {
                     TeacherCode = classEntity.TeacherCode,
-                    ScheduleCode = classEntity.ScheduleCode, // Always use class's schedule code
+                    ScheduleCode = classEntity.ScheduleCode,
                     ClassId = request.ClassCode,
+                    HallId = classEntity.HallCode,
                     StudentId = student.StudentCode,
                     AttendDate = DateTime.Now,
                     SessionPrice = classEntity.ClassPrice ?? 0,
                     RootCode = student.RootCode,
-                    Type = request.AttendanceType ?? 1
+                    Type = request.AttendanceType ?? 1 // Default to regular attendance
                 };
 
                 _context.Attends.Add(attendance);
                 await _context.SaveChangesAsync();
-
-                // Log if this was a schedule override
-                if (exactEnrollmentCheck == null && differentScheduleEnrollment != null)
-                {
-                    _logger.LogInformation("Schedule override attendance: Student {StudentCode} from schedule {StudentSchedule} attended class {ClassCode} with schedule {ClassSchedule}",
-                        student.StudentCode, differentScheduleEnrollment.ScheduleCode, request.ClassCode, classEntity.ScheduleCode);
-                }
 
                 _logger.LogInformation("Successfully marked attendance for student {StudentCode} in class {ClassCode}",
                     student.StudentCode, request.ClassCode);
@@ -337,8 +299,7 @@ namespace centrny.Controllers
                     message = $"Attendance marked successfully for {student.StudentName}",
                     studentName = student.StudentName,
                     studentCode = student.StudentCode,
-                    attendanceTime = attendance.AttendDate.ToString("HH:mm"),
-                    wasScheduleOverride = exactEnrollmentCheck == null && differentScheduleEnrollment != null
+                    attendanceTime = attendance.AttendDate.ToString("HH:mm")
                 });
             }
             catch (Exception ex)
@@ -347,6 +308,7 @@ namespace centrny.Controllers
                 return Json(new { success = false, error = "An error occurred while marking attendance." });
             }
         }
+
         /// <summary>
         /// GET: LiveAttendance/GetClassStudents/{classCode} - AJAX endpoint to get updated student list
         /// </summary>
@@ -494,7 +456,5 @@ namespace centrny.Controllers
         public int ClassCode { get; set; }
 
         public int? AttendanceType { get; set; }
-
-        public bool ConfirmScheduleOverride { get; set; } = false; // New property
     }
 }

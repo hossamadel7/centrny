@@ -1,23 +1,23 @@
 ﻿@model centrny.Controllers.ClassDetailViewModel
 @{
     ViewData["Title"] = "Live Attendance - " + Model.ClassName;
-    
+
     // Calculate statistics without lambda expressions
     var totalStudents = Model.Students.Count;
     var attendedStudents = 0;
     var absentStudents = 0;
-    foreach(var student in Model.Students)
+    foreach (var student in Model.Students)
     {
-        if(student.IsAttended) 
+        if (student.IsAttended)
             attendedStudents++;
-        else 
+        else
             absentStudents++;
     }
     var attendancePercentage = totalStudents > 0 ? (double)attendedStudents / totalStudents * 100 : 0;
-    
+
     // Sort students manually
     var sortedStudents = new List<centrny.Controllers.ClassStudentViewModel>();
-    foreach(var student in Model.Students)
+    foreach (var student in Model.Students)
     {
         sortedStudents.Add(student);
     }
@@ -143,12 +143,12 @@
                         </div>
                     </div>
                     <div class="progress mt-3" style="height: 8px;">
-                        <div class="progress-bar bg-success" 
-                             role="progressbar" 
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
                              style="width: @attendancePercentage%"
                              id="attendanceProgress"
-                             aria-valuenow="@attendancePercentage" 
-                             aria-valuemin="0" 
+                             aria-valuenow="@attendancePercentage"
+                             aria-valuemin="0"
                              aria-valuemax="100">
                         </div>
                     </div>
@@ -254,7 +254,7 @@
                         </p>
                         <div id="scanStatus" class="mt-2"></div>
                     </div>
-                    
+
                     <!-- Manual Input Section -->
                     <div class="manual-input-section">
                         <h6 class="text-muted mb-2">
@@ -262,9 +262,9 @@
                             Having trouble scanning? Enter manually:
                         </h6>
                         <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="manualItemKey" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="manualItemKey"
                                    placeholder="Enter student item key"
                                    maxlength="50">
                             <button class="btn btn-outline-success" type="button" id="manualAttendBtn">
@@ -302,270 +302,212 @@
     </div>
 </div>
 
-<!-- Schedule Confirmation Toast -->
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1201;">
-    <div id="scheduleConfirmToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
-        <div class="toast-header bg-warning text-dark">
-            <i class="mdi mdi-alert-circle me-2"></i>
-            <strong class="me-auto">Schedule Mismatch</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            <div id="scheduleConfirmMessage"></div>
-            <div class="mt-3 d-flex gap-2">
-                <button type="button" class="btn btn-success btn-sm" id="confirmScheduleBtn">
-                    <i class="mdi mdi-check me-1"></i>Yes, Mark Present
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="cancelScheduleBtn">
-                    <i class="mdi mdi-close me-1"></i>Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-.table-success {
-    background-color: rgba(25, 135, 84, 0.1) !important;
-}
-
-#reader {
-    border: 2px solid #007bff;
-    border-radius: 10px;
-    overflow: hidden;
-    min-height: 350px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f8f9fa;
-    position: relative;
-}
-
-.manual-input-section {
-    border-top: 1px solid #dee2e6;
-    margin-top: 20px;
-    padding-top: 20px;
-}
-
-.attendance-time {
-    font-weight: 500;
-    color: #28a745;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
-}
-
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.table th {
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
-
-.modal-content {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-@@media (max-width: 768px) {
-    .col-xl-4 {
-        margin-bottom: 1rem;
+    .table-success {
+        background-color: rgba(25, 135, 84, 0.1) !important;
     }
-}
+
+    #reader {
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        overflow: hidden;
+        min-height: 350px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        position: relative;
+    }
+
+    .manual-input-section {
+        border-top: 1px solid #dee2e6;
+        margin-top: 20px;
+        padding-top: 20px;
+    }
+
+    .attendance-time {
+        font-weight: 500;
+        color: #28a745;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    @@media (max-width: 768px) {
+        .col-xl-4 {
+            margin-bottom: 1rem;
+        }
+    }
 </style>
 
 <!-- QR Scanner Library -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
 <!-- Replace your current script loading section with this improved version -->
-
 <!-- QR Scanner Library with Multiple Fallbacks -->
 <!-- Replace your QR Scanner script section with this ZXing implementation -->
 
 <script>
-// ZXing library loader with multiple fallbacks
-function loadZXingLibrary() {
-    return new Promise((resolve, reject) => {
-        // Check if already loaded
-        if (typeof ZXing !== 'undefined') {
-            console.log('ZXing already available');
-            resolve();
-            return;
-        }
-
-  const zxingSources = [
-    'https://unpkg.com/@@zxing/library@latest/umd/index.min.js',
-    'https://cdn.jsdelivr.net/npm/@@zxing/library@latest/umd/index.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.20.0/index.min.js',
-    'https://cdn.skypack.dev/@@zxing/library@latest',
-    'https://esm.sh/@@zxing/library@latest'
-];
-
-        let currentIndex = 0;
-
-        function tryLoadZXing() {
-            if (currentIndex >= zxingSources.length) {
-                reject(new Error('All ZXing sources failed to load'));
+    // ZXing library loader with multiple fallbacks
+    function loadZXingLibrary() {
+        return new Promise((resolve, reject) => {
+            // Check if already loaded
+            if (typeof ZXing !== 'undefined') {
+                console.log('ZXing already available');
+                resolve();
                 return;
             }
 
-            const script = document.createElement('script');
-            script.src = zxingSources[currentIndex];
-            
-            console.log(`Attempting to load ZXing from: ${zxingSources[currentIndex]}`);
-            
-            script.onload = function() {
-                console.log('ZXing script loaded from:', zxingSources[currentIndex]);
-                
-                // Wait for library initialization
-                setTimeout(() => {
-                    if (typeof ZXing !== 'undefined') {
-                        console.log('ZXing library ready!');
-                        resolve();
-                    } else {
-                        console.log('ZXing script loaded but library not available, trying next...');
-                        currentIndex++;
-                        tryLoadZXing();
-                    }
-                }, 1000);
-            };
+      const zxingSources = [
+        'https://unpkg.com/@@zxing/library@latest/umd/index.min.js',
+        'https://cdn.jsdelivr.net/npm/@@zxing/library@latest/umd/index.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.20.0/index.min.js',
+        'https://cdn.skypack.dev/@@zxing/library@latest',
+        'https://esm.sh/@@zxing/library@latest'
+    ];
 
-            script.onerror = function() {
-                console.error('Failed to load ZXing from:', zxingSources[currentIndex]);
-                script.remove();
-                currentIndex++;
-                tryLoadZXing();
-            };
+            let currentIndex = 0;
 
-            document.head.appendChild(script);
-        }
+            function tryLoadZXing() {
+                if (currentIndex >= zxingSources.length) {
+                    reject(new Error('All ZXing sources failed to load'));
+                    return;
+                }
 
-        tryLoadZXing();
-    });
-}
+                const script = document.createElement('script');
+                script.src = zxingSources[currentIndex];
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Loading ZXing library...');
-    
-    loadZXingLibrary()
-        .then(() => {
-            console.log('ZXing library loaded successfully!');
-            setTimeout(initializeEventListeners, 500);
-        })
-        .catch((error) => {
-            console.error('Failed to load ZXing library:', error);
-            // Initialize without QR scanning capability
-            setTimeout(initializeEventListeners, 500);
+                console.log(`Attempting to load ZXing from: ${zxingSources[currentIndex]}`);
+
+                script.onload = function() {
+                    console.log('ZXing script loaded from:', zxingSources[currentIndex]);
+
+                    // Wait for library initialization
+                    setTimeout(() => {
+                        if (typeof ZXing !== 'undefined') {
+                            console.log('ZXing library ready!');
+                            resolve();
+                        } else {
+                            console.log('ZXing script loaded but library not available, trying next...');
+                            currentIndex++;
+                            tryLoadZXing();
+                        }
+                    }, 1000);
+                };
+
+                script.onerror = function() {
+                    console.error('Failed to load ZXing from:', zxingSources[currentIndex]);
+                    script.remove();
+                    currentIndex++;
+                    tryLoadZXing();
+                };
+
+                document.head.appendChild(script);
+            }
+
+            tryLoadZXing();
         });
-});
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Loading ZXing library...');
+
+        loadZXingLibrary()
+            .then(() => {
+                console.log('ZXing library loaded successfully!');
+                setTimeout(initializeEventListeners, 500);
+            })
+            .catch((error) => {
+                console.error('Failed to load ZXing library:', error);
+                // Initialize without QR scanning capability
+                setTimeout(initializeEventListeners, 500);
+            });
+    });
 </script>
 
 <script>
-// Global variables
-var qrScanner = null;
-var isScanning = false;
-var classCode = @Html.Raw(Json.Serialize(Model.ClassCode));
-var initTimeout = null;
-var zxingLoaded = false;
-var videoElement = null;
-var codeReader = null;
+    // Global variables
+    var qrScanner = null;
+    var isScanning = false;
+    var classCode = @Html.Raw(Json.Serialize(Model.ClassCode));
+    var initTimeout = null;
+    var zxingLoaded = false;
+    var videoElement = null;
+    var codeReader = null;
 
-console.log('Initializing page with class code:', classCode);
+    console.log('Initializing page with class code:', classCode);
 
-function initializeEventListeners() {
-    try {
-        // Check if ZXing is loaded
-        zxingLoaded = (typeof ZXing !== 'undefined');
-        console.log('ZXing loaded status:', zxingLoaded);
+    function initializeEventListeners() {
+        try {
+            // Check if ZXing is loaded
+            zxingLoaded = (typeof ZXing !== 'undefined');
+            console.log('ZXing loaded status:', zxingLoaded);
 
-        // Modal event listeners
-        var qrModal = document.getElementById('qrScannerModal');
-        if (qrModal) {
-            qrModal.addEventListener('shown.bs.modal', function () {
-                console.log('Modal shown, initializing ZXing scanner...');
-                setTimeout(initializeZXingScanner, 300);
-            });
+            // Modal event listeners
+            var qrModal = document.getElementById('qrScannerModal');
+            if (qrModal) {
+                qrModal.addEventListener('shown.bs.modal', function () {
+                    console.log('Modal shown, initializing ZXing scanner...');
+                    setTimeout(initializeZXingScanner, 300);
+                });
 
-            qrModal.addEventListener('hidden.bs.modal', function () {
-                console.log('Modal hidden, stopping ZXing scanner...');
-                stopZXingScanner();
-            });
-        }
-
-        // Button event listeners
-        var liveAttendBtn = document.getElementById('liveAttendBtn');
-        if (liveAttendBtn) {
-            liveAttendBtn.addEventListener('click', function() {
-                console.log('Live attend button clicked');
-                var modal = new bootstrap.Modal(document.getElementById('qrScannerModal'));
-                modal.show();
-            });
-        }
-
-        var refreshBtn = document.getElementById('refreshStudents');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', refreshStudentsList);
-        }
-
-        var switchCameraBtn = document.getElementById('switchCamera');
-        if (switchCameraBtn) {
-            switchCameraBtn.addEventListener('click', switchZXingCamera);
-        }
-
-        var manualBtn = document.getElementById('manualAttendBtn');
-        if (manualBtn) {
-            manualBtn.addEventListener('click', handleManualInput);
-        }
-        
-        var manualInput = document.getElementById('manualItemKey');
-        if (manualInput) {
-            manualInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    handleManualInput();
-                }
-            });
-        }
-
-           var confirmBtn = document.getElementById('confirmScheduleBtn');
-            var cancelBtn = document.getElementById('cancelScheduleBtn');
-            var confirmToast = document.getElementById('scheduleConfirmToast');
-
-            if (confirmBtn) {
-                confirmBtn.addEventListener('click', function() {
-                    var itemKey = confirmToast.getAttribute('data-item-key');
-                    if (itemKey) {
-                        // Hide the confirmation toast
-                        var toast = bootstrap.Toast.getInstance(confirmToast);
-                        if (toast) toast.hide();
-
-                        // Process attendance with confirmation
-                        processAttendance(itemKey, true);
-                    }
+                qrModal.addEventListener('hidden.bs.modal', function () {
+                    console.log('Modal hidden, stopping ZXing scanner...');
+                    stopZXingScanner();
                 });
             }
 
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function() {
-                    var toast = bootstrap.Toast.getInstance(confirmToast);
-                    if (toast) toast.hide();
+            // Button event listeners
+            var liveAttendBtn = document.getElementById('liveAttendBtn');
+            if (liveAttendBtn) {
+                liveAttendBtn.addEventListener('click', function() {
+                    console.log('Live attend button clicked');
+                    var modal = new bootstrap.Modal(document.getElementById('qrScannerModal'));
+                    modal.show();
+                });
+            }
 
-                    updateScanStatus('Attendance cancelled by user', 'text-info');
+            var refreshBtn = document.getElementById('refreshStudents');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', refreshStudentsList);
+            }
 
-                    // Resume scanning
-                    setTimeout(function() {
-                        if (codeReader) {
-                            isScanning = true;
-                            updateScanStatus('Ready for next scan', 'text-info');
-                        }
-                    }, 1000);
+            var switchCameraBtn = document.getElementById('switchCamera');
+            if (switchCameraBtn) {
+                switchCameraBtn.addEventListener('click', switchZXingCamera);
+            }
+
+            var manualBtn = document.getElementById('manualAttendBtn');
+            if (manualBtn) {
+                manualBtn.addEventListener('click', handleManualInput);
+            }
+
+            var manualInput = document.getElementById('manualItemKey');
+            if (manualInput) {
+                manualInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        handleManualInput();
+                    }
                 });
             }
 
@@ -577,365 +519,345 @@ function initializeEventListeners() {
         } catch (error) {
             console.error('Error initializing event listeners:', error);
         }
-}
-
-function initializeZXingScanner() {
-    var readerDiv = document.getElementById('reader');
-    if (!readerDiv) {
-        updateScanStatus('Scanner container not found', 'text-danger');
-        return;
     }
 
-    // Clear any existing timeout
-    if (initTimeout) {
-        clearTimeout(initTimeout);
-    }
+    function initializeZXingScanner() {
+        var readerDiv = document.getElementById('reader');
+        if (!readerDiv) {
+            updateScanStatus('Scanner container not found', 'text-danger');
+            return;
+        }
 
-    // Check if ZXing is loaded
-    if (!zxingLoaded || typeof ZXing === 'undefined') {
-        console.log('ZXing library not available, showing manual input');
-        updateScanStatus('QR Scanner library not available. Using manual input only.', 'text-warning');
-        showManualOnlyInterface();
-        return;
-    }
-
-    // Show loading interface
-    readerDiv.innerHTML = `
-        <div class="text-center p-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Starting ZXing scanner...</p>
-            <button class="btn btn-outline-secondary btn-sm mt-2" onclick="skipToManualInput()">
-                Use Manual Input Instead
-            </button>
-        </div>
-    `;
-    
-    updateScanStatus('Requesting camera access...', 'text-info');
-
-    // Set timeout for initialization
-    initTimeout = setTimeout(function() {
-        console.log('ZXing scanner initialization timeout');
-        showManualOnlyInterface();
-        updateScanStatus('Scanner startup timeout. Using manual input.', 'text-warning');
-    }, 15000);
-
-    try {
-        // Check browser support
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        // Clear any existing timeout
+        if (initTimeout) {
             clearTimeout(initTimeout);
-            updateScanStatus('Camera not supported in this browser. Using manual input.', 'text-warning');
+        }
+
+        // Check if ZXing is loaded
+        if (!zxingLoaded || typeof ZXing === 'undefined') {
+            console.log('ZXing library not available, showing manual input');
+            updateScanStatus('QR Scanner library not available. Using manual input only.', 'text-warning');
             showManualOnlyInterface();
             return;
         }
 
-        // Initialize ZXing code reader
-        codeReader = new ZXing.BrowserQRCodeReader();
-        
-        // Create video element for ZXing
+        // Show loading interface
         readerDiv.innerHTML = `
-            <video id="zxing-video" style="width: 100%; max-height: 400px; border-radius: 10px;"></video>
-            <div class="mt-2 text-center">
-                <div style="border: 3px solid #00ff00; width: 250px; height: 250px; position: absolute; 
-                            top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                            border-radius: 15px; pointer-events: none; z-index: 10;"></div>
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Starting ZXing scanner...</p>
+                <button class="btn btn-outline-secondary btn-sm mt-2" onclick="skipToManualInput()">
+                    Use Manual Input Instead
+                </button>
             </div>
         `;
 
-        videoElement = document.getElementById('zxing-video');
+        updateScanStatus('Requesting camera access...', 'text-info');
 
-        // Get available cameras
-        codeReader.listVideoInputDevices().then(function(videoInputDevices) {
-            if (videoInputDevices.length === 0) {
+        // Set timeout for initialization
+        initTimeout = setTimeout(function() {
+            console.log('ZXing scanner initialization timeout');
+            showManualOnlyInterface();
+            updateScanStatus('Scanner startup timeout. Using manual input.', 'text-warning');
+        }, 15000);
+
+        try {
+            // Check browser support
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 clearTimeout(initTimeout);
-                updateScanStatus('No camera devices found', 'text-danger');
+                updateScanStatus('Camera not supported in this browser. Using manual input.', 'text-warning');
                 showManualOnlyInterface();
                 return;
             }
 
-            console.log('Available cameras:', videoInputDevices);
-            
-            // Try to find back camera first
-            var selectedDeviceId = videoInputDevices[0].deviceId;
-            for (var i = 0; i < videoInputDevices.length; i++) {
-                if (videoInputDevices[i].label.toLowerCase().includes('back') || 
-                    videoInputDevices[i].label.toLowerCase().includes('rear') ||
-                    videoInputDevices[i].label.toLowerCase().includes('environment')) {
-                    selectedDeviceId = videoInputDevices[i].deviceId;
-                    break;
+            // Initialize ZXing code reader
+            codeReader = new ZXing.BrowserQRCodeReader();
+
+            // Create video element for ZXing
+            readerDiv.innerHTML = `
+                <video id="zxing-video" style="width: 100%; max-height: 400px; border-radius: 10px;"></video>
+                <div class="mt-2 text-center">
+                    <div style="border: 3px solid #00ff00; width: 250px; height: 250px; position: absolute;
+                                top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                border-radius: 15px; pointer-events: none; z-index: 10;"></div>
+                </div>
+            `;
+
+            videoElement = document.getElementById('zxing-video');
+
+            // Get available cameras
+            codeReader.listVideoInputDevices().then(function(videoInputDevices) {
+                if (videoInputDevices.length === 0) {
+                    clearTimeout(initTimeout);
+                    updateScanStatus('No camera devices found', 'text-danger');
+                    showManualOnlyInterface();
+                    return;
                 }
-            }
 
-            console.log('Using camera:', selectedDeviceId);
+                console.log('Available cameras:', videoInputDevices);
 
-            // Start decoding
-            codeReader.decodeFromVideoDevice(selectedDeviceId, 'zxing-video', function(result, err) {
-                if (result) {
-                    console.log('=== ZXing QR CODE DETECTED ===');
-                    console.log('Raw result:', result);
-                    console.log('Text content:', result.text);
-                    console.log('=============================');
-                    
-                    if (isScanning) {
-                        handleZXingQRScan(result.text);
+                // Try to find back camera first
+                var selectedDeviceId = videoInputDevices[0].deviceId;
+                for (var i = 0; i < videoInputDevices.length; i++) {
+                    if (videoInputDevices[i].label.toLowerCase().includes('back') ||
+                        videoInputDevices[i].label.toLowerCase().includes('rear') ||
+                        videoInputDevices[i].label.toLowerCase().includes('environment')) {
+                        selectedDeviceId = videoInputDevices[i].deviceId;
+                        break;
                     }
                 }
-                
-                if (err && !(err instanceof ZXing.NotFoundException)) {
-                    console.error('ZXing decode error:', err);
-                }
-            }).then(function() {
-                clearTimeout(initTimeout);
-                updateScanStatus('ZXing scanner ready! Position QR code in the green box', 'text-success');
-                isScanning = true;
-                
-                // Show switch camera button if multiple cameras
-                if (videoInputDevices.length > 1) {
-                    var switchBtn = document.getElementById('switchCamera');
-                    if (switchBtn) {
-                        switchBtn.style.display = 'inline-block';
+
+                console.log('Using camera:', selectedDeviceId);
+
+                // Start decoding
+                codeReader.decodeFromVideoDevice(selectedDeviceId, 'zxing-video', function(result, err) {
+                    if (result) {
+                        console.log('=== ZXing QR CODE DETECTED ===');
+                        console.log('Raw result:', result);
+                        console.log('Text content:', result.text);
+                        console.log('=============================');
+
+                        if (isScanning) {
+                            handleZXingQRScan(result.text);
+                        }
                     }
-                }
-                
-            }).catch(function(err) {
-                clearTimeout(initTimeout);
-                console.error('ZXing scanner error:', err);
-                handleZXingScannerError(err);
-            });
 
-        }).catch(function(err) {
-            clearTimeout(initTimeout);
-            console.error('Error getting camera devices:', err);
-            handleZXingScannerError(err);
-        });
-
-    } catch (error) {
-        clearTimeout(initTimeout);
-        handleZXingScannerError(error);
-    }
-}
-
-function handleZXingQRScan(scannedText) {
-    if (!isScanning) {
-        console.log('Scanner not active, ignoring scan');
-        return;
-    }
-    
-    console.log('=== PROCESSING ZXING QR SCAN ===');
-    console.log('Scanned text:', scannedText);
-    console.log('Text length:', scannedText.length);
-    console.log('===============================');
-    
-    // Temporarily stop scanning to prevent duplicates
-    isScanning = false;
-    updateScanStatus('QR detected! Processing...', 'text-warning');
-    
-    var itemKey = extractItemKey(scannedText);
-    console.log('Extracted item key:', itemKey);
-    
-    if (!itemKey) {
-        console.log('No valid item key found in QR code');
-        updateScanStatus('Invalid QR code format. Expected student profile QR or item key.', 'text-danger');
-        
-        // Show what was scanned for debugging
-        setTimeout(function() {
-            updateScanStatus(`Debug: Scanned "${scannedText.substring(0, 50)}${scannedText.length > 50 ? '...' : ''}"`, 'text-muted');
-        }, 2000);
-        
-        // Resume scanning
-        setTimeout(function() {
-            isScanning = true;
-            updateScanStatus('Ready to scan again', 'text-info');
-        }, 4000);
-        return;
-    }
-
-    console.log('Processing attendance for item key:', itemKey);
-    processAttendance(itemKey);
-}
-
-function switchZXingCamera() {
-    if (!codeReader || !isScanning) {
-        updateScanStatus('Scanner not active', 'text-warning');
-        return;
-    }
-
-    updateScanStatus('Switching camera...', 'text-info');
-    
-    // Stop current scanning
-    stopZXingScanner();
-    
-    // Restart with different camera
-    setTimeout(function() {
-        codeReader.listVideoInputDevices().then(function(videoInputDevices) {
-            if (videoInputDevices.length > 1) {
-                // Simple switch to next camera (you can make this more sophisticated)
-                var currentDevice = videoInputDevices[0];
-                var nextDevice = videoInputDevices[1];
-                
-                console.log('Switching to camera:', nextDevice.label);
-                
-                codeReader.decodeFromVideoDevice(nextDevice.deviceId, 'zxing-video', function(result, err) {
-                    if (result && isScanning) {
-                        handleZXingQRScan(result.text);
-                    }
                     if (err && !(err instanceof ZXing.NotFoundException)) {
                         console.error('ZXing decode error:', err);
                     }
                 }).then(function() {
+                    clearTimeout(initTimeout);
+                    updateScanStatus('ZXing scanner ready! Position QR code in the green box', 'text-success');
                     isScanning = true;
-                    updateScanStatus('Camera switched successfully', 'text-success');
+
+                    // Show switch camera button if multiple cameras
+                    if (videoInputDevices.length > 1) {
+                        var switchBtn = document.getElementById('switchCamera');
+                        if (switchBtn) {
+                            switchBtn.style.display = 'inline-block';
+                        }
+                    }
+
                 }).catch(function(err) {
-                    console.error('Error switching camera:', err);
-                    updateScanStatus('Failed to switch camera', 'text-danger');
+                    clearTimeout(initTimeout);
+                    console.error('ZXing scanner error:', err);
+                    handleZXingScannerError(err);
                 });
-            }
-        });
-    }, 500);
-}
 
-function stopZXingScanner() {
-    console.log('Stopping ZXing scanner...');
-    isScanning = false;
-    
-    // Clear timeout
-    if (initTimeout) {
-        clearTimeout(initTimeout);
-        initTimeout = null;
-    }
-    
-    // Stop ZXing code reader
-    if (codeReader) {
-        try {
-            codeReader.reset();
-            console.log('ZXing scanner stopped successfully');
-        } catch (error) {
-            console.error('Error stopping ZXing scanner:', error);
-        }
-        codeReader = null;
-    }
-    
-    // Hide switch camera button
-    var switchBtn = document.getElementById('switchCamera');
-    if (switchBtn) {
-        switchBtn.style.display = 'none';
-    }
-    
-    updateScanStatus('Scanner stopped', 'text-muted');
-}
-
-function handleZXingScannerError(error) {
-    console.error('ZXing scanner error:', error);
-    
-    var errorMessage = '';
-    var errorStr = error.toString().toLowerCase();
-    
-    if (errorStr.includes('permission') || errorStr.includes('notallowed')) {
-        errorMessage = 'Camera permission denied. Please allow camera access.';
-    } else if (errorStr.includes('notfound') || errorStr.includes('device')) {
-        errorMessage = 'No camera found on this device.';
-    } else if (errorStr.includes('notsupported')) {
-        errorMessage = 'Camera not supported in this browser.';
-    } else if (errorStr.includes('notreadable')) {
-        errorMessage = 'Camera is being used by another application.';
-    } else {
-        errorMessage = 'Camera initialization failed.';
-    }
-    
-    updateScanStatus(errorMessage + ' Using manual input instead.', 'text-warning');
-    showManualOnlyInterface();
-}
-
-function showManualOnlyInterface() {
-    var readerDiv = document.getElementById('reader');
-    if (readerDiv) {
-        readerDiv.innerHTML = `
-            <div class="alert alert-info text-center">
-                <i class="mdi mdi-information-outline me-2"></i>
-                <strong>Camera Not Available</strong><br>
-                Please use the manual input section below to mark attendance.
-            </div>
-        `;
-    }
-    
-    // Hide switch camera button
-    var switchBtn = document.getElementById('switchCamera');
-    if (switchBtn) {
-        switchBtn.style.display = 'none';
-    }
-    
-    // Focus on manual input
-    setTimeout(function() {
-        var manualInput = document.getElementById('manualItemKey');
-        if (manualInput) {
-            manualInput.focus();
-        }
-    }, 500);
-}
-
-function skipToManualInput() {
-    if (initTimeout) {
-        clearTimeout(initTimeout);
-    }
-    updateScanStatus('Switched to manual input mode', 'text-info');
-    showManualOnlyInterface();
-}
-
-function extractItemKey(scannedText) {
-    console.log('=== EXTRACTING ITEM KEY ===');
-    console.log('Input:', scannedText);
-    
-    var itemKey = '';
-    
-    // Method 1: Check for student profile URL pattern
-    if (scannedText.includes('/student/')) {
-        console.log('Found /student/ pattern');
-        var parts = scannedText.split('/student/');
-        if (parts.length > 1) {
-            itemKey = parts[1].split('?')[0].split('#')[0].split('/')[0];
-            console.log('Extracted from URL:', itemKey);
-        }
-    }
-    // Method 2: Check if it looks like a direct item key (alphanumeric, reasonable length)
-    else if (/^[A-Za-z0-9]{10,50}$/.test(scannedText.trim())) {
-        itemKey = scannedText.trim();
-        console.log('Treating as direct item key:', itemKey);
-    }
-    // Method 3: Try to extract any long alphanumeric string
-    else {
-        var matches = scannedText.match(/[A-Za-z0-9]{15,}/g);
-        if (matches && matches.length > 0) {
-            itemKey = matches[0];
-            console.log('Extracted long alphanumeric string:', itemKey);
-        }
-    }
-    
-    console.log('Final item key:', itemKey);
-    console.log('=========================');
-    
-    return itemKey;
-}
-
-
-    // Add event listeners for confirmation buttons
-        function showScheduleConfirmationToast(message, itemKey) {
-        var confirmMessage = document.getElementById('scheduleConfirmMessage');
-        var confirmToast = document.getElementById('scheduleConfirmToast');
-
-        if (confirmMessage && confirmToast) {
-            confirmMessage.innerHTML = '<strong>' + message + '</strong><br><small class="text-muted">Do you want to mark this student as present anyway?</small>';
-
-            // Store item key for confirmation
-            confirmToast.setAttribute('data-item-key', itemKey);
-
-            var toast = new bootstrap.Toast(confirmToast, {
-                autohide: false // Don't auto-hide, wait for user response
+            }).catch(function(err) {
+                clearTimeout(initTimeout);
+                console.error('Error getting camera devices:', err);
+                handleZXingScannerError(err);
             });
-            toast.show();
+
+        } catch (error) {
+            clearTimeout(initTimeout);
+            handleZXingScannerError(error);
         }
     }
 
+    function handleZXingQRScan(scannedText) {
+        if (!isScanning) {
+            console.log('Scanner not active, ignoring scan');
+            return;
+        }
+
+        console.log('=== PROCESSING ZXING QR SCAN ===');
+        console.log('Scanned text:', scannedText);
+        console.log('Text length:', scannedText.length);
+        console.log('===============================');
+
+        // Temporarily stop scanning to prevent duplicates
+        isScanning = false;
+        updateScanStatus('QR detected! Processing...', 'text-warning');
+
+        var itemKey = extractItemKey(scannedText);
+        console.log('Extracted item key:', itemKey);
+
+        if (!itemKey) {
+            console.log('No valid item key found in QR code');
+            updateScanStatus('Invalid QR code format. Expected student profile QR or item key.', 'text-danger');
+
+            // Show what was scanned for debugging
+            setTimeout(function() {
+                updateScanStatus(`Debug: Scanned "${scannedText.substring(0, 50)}${scannedText.length > 50 ? '...' : ''}"`, 'text-muted');
+            }, 2000);
+
+            // Resume scanning
+            setTimeout(function() {
+                isScanning = true;
+                updateScanStatus('Ready to scan again', 'text-info');
+            }, 4000);
+            return;
+        }
+
+        console.log('Processing attendance for item key:', itemKey);
+        processAttendance(itemKey);
+    }
+
+    function switchZXingCamera() {
+        if (!codeReader || !isScanning) {
+            updateScanStatus('Scanner not active', 'text-warning');
+            return;
+        }
+
+        updateScanStatus('Switching camera...', 'text-info');
+
+        // Stop current scanning
+        stopZXingScanner();
+
+        // Restart with different camera
+        setTimeout(function() {
+            codeReader.listVideoInputDevices().then(function(videoInputDevices) {
+                if (videoInputDevices.length > 1) {
+                    // Simple switch to next camera (you can make this more sophisticated)
+                    var currentDevice = videoInputDevices[0];
+                    var nextDevice = videoInputDevices[1];
+
+                    console.log('Switching to camera:', nextDevice.label);
+
+                    codeReader.decodeFromVideoDevice(nextDevice.deviceId, 'zxing-video', function(result, err) {
+                        if (result && isScanning) {
+                            handleZXingQRScan(result.text);
+                        }
+                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                            console.error('ZXing decode error:', err);
+                        }
+                    }).then(function() {
+                        isScanning = true;
+                        updateScanStatus('Camera switched successfully', 'text-success');
+                    }).catch(function(err) {
+                        console.error('Error switching camera:', err);
+                        updateScanStatus('Failed to switch camera', 'text-danger');
+                    });
+                }
+            });
+        }, 500);
+    }
+
+    function stopZXingScanner() {
+        console.log('Stopping ZXing scanner...');
+        isScanning = false;
+
+        // Clear timeout
+        if (initTimeout) {
+            clearTimeout(initTimeout);
+            initTimeout = null;
+        }
+
+        // Stop ZXing code reader
+        if (codeReader) {
+            try {
+                codeReader.reset();
+                console.log('ZXing scanner stopped successfully');
+            } catch (error) {
+                console.error('Error stopping ZXing scanner:', error);
+            }
+            codeReader = null;
+        }
+
+        // Hide switch camera button
+        var switchBtn = document.getElementById('switchCamera');
+        if (switchBtn) {
+            switchBtn.style.display = 'none';
+        }
+
+        updateScanStatus('Scanner stopped', 'text-muted');
+    }
+
+    function handleZXingScannerError(error) {
+        console.error('ZXing scanner error:', error);
+
+        var errorMessage = '';
+        var errorStr = error.toString().toLowerCase();
+
+        if (errorStr.includes('permission') || errorStr.includes('notallowed')) {
+            errorMessage = 'Camera permission denied. Please allow camera access.';
+        } else if (errorStr.includes('notfound') || errorStr.includes('device')) {
+            errorMessage = 'No camera found on this device.';
+        } else if (errorStr.includes('notsupported')) {
+            errorMessage = 'Camera not supported in this browser.';
+        } else if (errorStr.includes('notreadable')) {
+            errorMessage = 'Camera is being used by another application.';
+        } else {
+            errorMessage = 'Camera initialization failed.';
+        }
+
+        updateScanStatus(errorMessage + ' Using manual input instead.', 'text-warning');
+        showManualOnlyInterface();
+    }
+
+    function showManualOnlyInterface() {
+        var readerDiv = document.getElementById('reader');
+        if (readerDiv) {
+            readerDiv.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <i class="mdi mdi-information-outline me-2"></i>
+                    <strong>Camera Not Available</strong><br>
+                    Please use the manual input section below to mark attendance.
+                </div>
+            `;
+        }
+
+        // Hide switch camera button
+        var switchBtn = document.getElementById('switchCamera');
+        if (switchBtn) {
+            switchBtn.style.display = 'none';
+        }
+
+        // Focus on manual input
+        setTimeout(function() {
+            var manualInput = document.getElementById('manualItemKey');
+            if (manualInput) {
+                manualInput.focus();
+            }
+        }, 500);
+    }
+
+    function skipToManualInput() {
+        if (initTimeout) {
+            clearTimeout(initTimeout);
+        }
+        updateScanStatus('Switched to manual input mode', 'text-info');
+        showManualOnlyInterface();
+    }
+
+    function extractItemKey(scannedText) {
+        console.log('=== EXTRACTING ITEM KEY ===');
+        console.log('Input:', scannedText);
+
+        var itemKey = '';
+
+        // Method 1: Check for student profile URL pattern
+        if (scannedText.includes('/student/')) {
+            console.log('Found /student/ pattern');
+            var parts = scannedText.split('/student/');
+            if (parts.length > 1) {
+                itemKey = parts[1].split('?')[0].split('#')[0].split('/')[0];
+                console.log('Extracted from URL:', itemKey);
+            }
+        }
+        // Method 2: Check if it looks like a direct item key (alphanumeric, reasonable length)
+        else if (/^[A-Za-z0-9]{10,50}$/.test(scannedText.trim())) {
+            itemKey = scannedText.trim();
+            console.log('Treating as direct item key:', itemKey);
+        }
+        // Method 3: Try to extract any long alphanumeric string
+        else {
+            var matches = scannedText.match(/[A-Za-z0-9]{15,}/g);
+            if (matches && matches.length > 0) {
+                itemKey = matches[0];
+                console.log('Extracted long alphanumeric string:', itemKey);
+            }
+        }
+
+        console.log('Final item key:', itemKey);
+        console.log('=========================');
+
+        return itemKey;
+    }
 
     function handleManualInput() {
         var itemKey = document.getElementById('manualItemKey').value.trim();
@@ -945,15 +867,14 @@ function extractItemKey(scannedText) {
         }
 
         console.log('Processing manual item key:', itemKey);
-        processAttendance(itemKey, false); // Use same processAttendance function
+        processAttendance(itemKey);
         document.getElementById('manualItemKey').value = '';
     }
 
-    function processAttendance(itemKey, confirmOverride = false) {
+    function processAttendance(itemKey) {
         console.log('=== PROCESSING ATTENDANCE ===');
         console.log('Item Key:', itemKey);
         console.log('Class Code:', classCode);
-        console.log('Confirm Override:', confirmOverride);
         console.log('============================');
 
         updateScanStatus('Sending to server...', 'text-warning');
@@ -961,8 +882,7 @@ function extractItemKey(scannedText) {
         var requestData = {
             itemKey: itemKey,
             classCode: classCode,
-            attendanceType: 1,
-            confirmScheduleOverride: confirmOverride
+            attendanceType: 1
         };
 
         fetch('@Url.Action("ScanQRAttendance", "LiveAttendance")', {
@@ -984,13 +904,8 @@ function extractItemKey(scannedText) {
             console.log('=====================');
 
             if (data.success) {
-                var successMessage = data.message || 'Attendance marked successfully';
-                if (data.wasScheduleOverride) {
-                    successMessage += ' (Schedule Override)';
-                }
-
                 updateScanStatus('Success: ' + data.studentName + ' marked present!', 'text-success');
-                showSuccessToast(successMessage, data.studentName, data.attendanceTime);
+                showSuccessToast(data.message || 'Attendance marked successfully', data.studentName, data.attendanceTime);
 
                 // Refresh the students list
                 setTimeout(function() {
@@ -1003,18 +918,6 @@ function extractItemKey(scannedText) {
                             updateScanStatus('Ready for next scan', 'text-success');
                         }
                     }, 2000);
-                }, 1000);
-
-            } else if (data.requiresConfirmation) {
-                // Show schedule confirmation toast
-                showScheduleConfirmationToast(data.confirmationMessage, data.itemKey);
-
-                // Resume scanning for next QR code
-                setTimeout(function() {
-                    if (codeReader) {
-                        isScanning = true;
-                        updateScanStatus('Ready for next scan', 'text-info');
-                    }
                 }, 1000);
 
             } else {
@@ -1041,109 +944,110 @@ function extractItemKey(scannedText) {
             }, 3000);
         });
     }
-function updateScanStatus(message, className) {
-    var statusElement = document.getElementById('scanStatus');
-    if (statusElement) {
-        statusElement.innerHTML = '<div class="' + className + '"><small>' + message + '</small></div>';
-    }
-}
 
-function refreshStudentsList() {
-    fetch('@Url.Action("GetClassStudents", "LiveAttendance")?classCode=' + encodeURIComponent(classCode))
-        .then(function(response) {
-            if (!response.ok) throw new Error('Failed to fetch students');
-            return response.json();
-        })
-        .then(function(data) {
-            if (data.success) {
-                updateStudentsTable(data.students);
-                updateStats(data.students);
-                console.log('Students list refreshed');
-            }
-        })
-        .catch(function(error) {
-            console.error('Failed to refresh students:', error);
+    function updateScanStatus(message, className) {
+        var statusElement = document.getElementById('scanStatus');
+        if (statusElement) {
+            statusElement.innerHTML = '<div class="' + className + '"><small>' + message + '</small></div>';
+        }
+    }
+
+    function refreshStudentsList() {
+        fetch('@Url.Action("GetClassStudents", "LiveAttendance")?classCode=' + encodeURIComponent(classCode))
+            .then(function(response) {
+                if (!response.ok) throw new Error('Failed to fetch students');
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    updateStudentsTable(data.students);
+                    updateStats(data.students);
+                    console.log('Students list refreshed');
+                }
+            })
+            .catch(function(error) {
+                console.error('Failed to refresh students:', error);
+            });
+    }
+
+    function updateStudentsTable(students) {
+        var tbody = document.getElementById('studentsTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        students.sort(function(a, b) {
+            return a.studentName.localeCompare(b.studentName);
         });
-}
 
-function updateStudentsTable(students) {
-    var tbody = document.getElementById('studentsTableBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    students.sort(function(a, b) { 
-        return a.studentName.localeCompare(b.studentName); 
-    });
-    
-    students.forEach(function(student) {
-        var rowClass = student.isAttended ? 'table-success' : '';
-        var icon = student.isAttended ? 'mdi-check-circle text-success' : 'mdi-clock-outline text-muted';
-        var statusBadge = student.isAttended ? 
-            '<span class="badge bg-success">Present</span>' : 
-            '<span class="badge bg-secondary">Absent</span>';
-        var attendanceTime = student.attendanceTime || '-';
-        
-        var row = 
-            '<tr id="student-' + student.studentCode + '" class="' + rowClass + '">' +
-                '<td>' +
-                    '<div class="d-flex align-items-center">' +
-                        '<i class="mdi ' + icon + ' me-2"></i>' +
-                        '<strong>' + student.studentName + '</strong>' +
-                    '</div>' +
-                '</td>' +
-                '<td>' + (student.studentPhone || '-') + '</td>' +
-                '<td>' + (student.studentParentPhone || '-') + '</td>' +
-                '<td>' + (student.branchName || '-') + '</td>' +
-                '<td>' + (student.yearName || '-') + '</td>' +
-                '<td>' + statusBadge + '</td>' +
-                '<td><span class="attendance-time">' + attendanceTime + '</span></td>' +
-            '</tr>';
-        
-        tbody.insertAdjacentHTML('beforeend', row);
-    });
-}
+        students.forEach(function(student) {
+            var rowClass = student.isAttended ? 'table-success' : '';
+            var icon = student.isAttended ? 'mdi-check-circle text-success' : 'mdi-clock-outline text-muted';
+            var statusBadge = student.isAttended ?
+                '<span class="badge bg-success">Present</span>' :
+                '<span class="badge bg-secondary">Absent</span>';
+            var attendanceTime = student.attendanceTime || '-';
 
-function updateStats(students) {
-    var totalStudents = students.length;
-    var attendedStudents = students.filter(function(s) { return s.isAttended; }).length;
-    var absentStudents = totalStudents - attendedStudents;
-    var attendancePercentage = totalStudents > 0 ? (attendedStudents / totalStudents * 100) : 0;
-    
-    var totalElement = document.getElementById('totalStudents');
-    var attendedElement = document.getElementById('attendedStudents');
-    var absentElement = document.getElementById('absentStudents');
-    var progressBar = document.getElementById('attendanceProgress');
-    var percentageElement = document.getElementById('attendancePercentage');
-    
-    if (totalElement) totalElement.textContent = totalStudents;
-    if (attendedElement) attendedElement.textContent = attendedStudents;
-    if (absentElement) absentElement.textContent = absentStudents;
-    
-    if (progressBar) {
-        progressBar.style.width = attendancePercentage + '%';
-        progressBar.setAttribute('aria-valuenow', attendancePercentage);
-    }
-    
-    if (percentageElement) {
-        percentageElement.textContent = Math.round(attendancePercentage * 10) / 10 + '% Attendance';
-    }
-}
+            var row =
+                '<tr id="student-' + student.studentCode + '" class="' + rowClass + '">' +
+                    '<td>' +
+                        '<div class="d-flex align-items-center">' +
+                            '<i class="mdi ' + icon + ' me-2"></i>' +
+                            '<strong>' + student.studentName + '</strong>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td>' + (student.studentPhone || '-') + '</td>' +
+                    '<td>' + (student.studentParentPhone || '-') + '</td>' +
+                    '<td>' + (student.branchName || '-') + '</td>' +
+                    '<td>' + (student.yearName || '-') + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td><span class="attendance-time">' + attendanceTime + '</span></td>' +
+                '</tr>';
 
-function showSuccessToast(message, studentName, attendanceTime) {
-    var toastMessage = document.getElementById('toastMessage');
-    var toastElement = document.getElementById('attendanceSuccessToast');
-    
-    if (toastMessage && toastElement) {
-        toastMessage.innerHTML = 
-            '<strong>' + studentName + '</strong> has been marked as present.<br>' +
-            '<small class="text-muted">Time: ' + (attendanceTime || 'Now') + '</small>';
-        
-        var toast = new bootstrap.Toast(toastElement, {
-            autohide: true,
-            delay: 4000
+            tbody.insertAdjacentHTML('beforeend', row);
         });
-        toast.show();
     }
-}
+
+    function updateStats(students) {
+        var totalStudents = students.length;
+        var attendedStudents = students.filter(function(s) { return s.isAttended; }).length;
+        var absentStudents = totalStudents - attendedStudents;
+        var attendancePercentage = totalStudents > 0 ? (attendedStudents / totalStudents * 100) : 0;
+
+        var totalElement = document.getElementById('totalStudents');
+        var attendedElement = document.getElementById('attendedStudents');
+        var absentElement = document.getElementById('absentStudents');
+        var progressBar = document.getElementById('attendanceProgress');
+        var percentageElement = document.getElementById('attendancePercentage');
+
+        if (totalElement) totalElement.textContent = totalStudents;
+        if (attendedElement) attendedElement.textContent = attendedStudents;
+        if (absentElement) absentElement.textContent = absentStudents;
+
+        if (progressBar) {
+            progressBar.style.width = attendancePercentage + '%';
+            progressBar.setAttribute('aria-valuenow', attendancePercentage);
+        }
+
+        if (percentageElement) {
+            percentageElement.textContent = Math.round(attendancePercentage * 10) / 10 + '% Attendance';
+        }
+    }
+
+    function showSuccessToast(message, studentName, attendanceTime) {
+        var toastMessage = document.getElementById('toastMessage');
+        var toastElement = document.getElementById('attendanceSuccessToast');
+
+        if (toastMessage && toastElement) {
+            toastMessage.innerHTML =
+                '<strong>' + studentName + '</strong> has been marked as present.<br>' +
+                '<small class="text-muted">Time: ' + (attendanceTime || 'Now') + '</small>';
+
+            var toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 4000
+            });
+            toast.show();
+        }
+    }
 </script>
