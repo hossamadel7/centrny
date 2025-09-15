@@ -358,6 +358,7 @@ namespace centrny.Controllers
                             isAttended = attendance != null,
                             AttendanceTime = attendance?.AttendDate.ToString("HH:mm"),
                         };
+
                     })
                     .OrderBy(s => s.studentName)
                     .ToList();
