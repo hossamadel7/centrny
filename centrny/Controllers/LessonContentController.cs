@@ -571,64 +571,95 @@ namespace centrny.Controllers
 
             try
             {
+                // Fetch all files linked to this lesson
                 var filesData = await _context.Files
-                    .Where(f => f.LessonCode == lessonCode && f.RootCode == rootCode.Value && f.IsActive)
+                    .Where(f => f.LessonCode == lessonCode
+                        && f.RootCode == rootCode.Value
+                        && f.IsActive)
                     .ToListAsync();
 
+                // Separate exam/assignment links (Files that have ExamCode)
+                var examFileLinks = filesData
+                    .Where(f => f.ExamCode.HasValue)
+                    .ToList();
+
+                var examCodes = examFileLinks
+                    .Select(f => f.ExamCode.Value)
+                    .Distinct()
+                    .ToList();
+
+                // Get all exams for these codes
                 var examsData = await _context.Exams
-                    .Where(e => e.LessonCode == lessonCode && e.IsActive == true)
+                    .Where(e => examCodes.Contains(e.ExamCode) && e.IsActive == true)
                     .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { Exam = e, Teacher = t })
                     .Where(et => et.Teacher.RootCode == rootCode.Value)
                     .Select(et => et.Exam)
                     .ToListAsync();
 
-                var files = filesData.Select(f => new
+                // Map exams and assignments by file (for sortOrder, etc.)
+                var examItems = examFileLinks.Select(f =>
                 {
-                    itemCode = f.FileCode,
-                    displayName = f.DisplayName ?? "Unknown",
-                    itemType = f.FileType == 1 ? "Video" : "File",
-                    fileType = f.FileType,
-                    sortOrder = f.SortOrder,
-                    videoProvider = f.VideoProvider,
-                    videoProviderName = f.VideoProvider == 0 ? "YouTube" :
-                                        f.VideoProvider == 1 ? "Bunny CDN" :
-                                        f.FileType == 1 ? "Unknown Provider" : null,
-                    fileExtension = f.FileExtension ?? "",
-                    fileSizeBytes = f.FileSizeBytes,
-                    fileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
-                    duration = f.Duration,
-                    durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
-                    contentType = "content",
-                    isOnlineLesson = f.IsOnlineLesson, // Added this property
-                    examDegree = (string)null,
-                    examTimer = (string)null,
-                    isOnline = (bool?)null,
-                    isDone = (bool?)null
-                }).ToList();
+                    var exam = examsData.FirstOrDefault(e => e.ExamCode == f.ExamCode);
+                    if (exam == null) return null;
 
-                var exams = examsData.Select(e => new
-                {
-                    itemCode = e.ExamCode,
-                    displayName = e.ExamName ?? "Unknown Exam",
-                    itemType = "Exam",
-                    fileType = 3,
-                    sortOrder = e.SortOrder ?? 999,
-                    videoProvider = (int?)null,
-                    videoProviderName = (string)null,
-                    fileExtension = (string)null,
-                    fileSizeBytes = (long?)null,
-                    fileSizeFormatted = (string)null,
-                    duration = (TimeSpan?)null,
-                    durationFormatted = (string)null,
-                    contentType = "exam",
-                    isOnlineLesson = (bool?)null, // Exams don't have this property, so null
-                    examDegree = e.ExamDegree,
-                    examTimer = e.ExamTimer.ToString(@"HH\:mm"),
-                    isOnline = e.IsOnline,
-                    isDone = e.IsDone
-                }).ToList();
+                    return new
+                    {
+                        itemCode = f.FileCode, // Use File's code for uniqueness in content list
+                        displayName = exam.ExamName ?? "Unknown Exam",
+                        itemType = exam.IsExam ? "Exam" : "Assignment",
+                        fileType = 3, // For both exams and assignments, keep 3 or set as needed
+                        sortOrder = f.SortOrder ,
+                        videoProvider = (int?)null,
+                        videoProviderName = (string)null,
+                        fileExtension = (string)null,
+                        fileSizeBytes = (long?)null,
+                        fileSizeFormatted = (string)null,
+                        duration = (TimeSpan?)null,
+                        durationFormatted = (string)null,
+                        contentType = exam.IsExam ? "exam" : "assignment",
+                        isOnlineLesson = (bool?)null,
+                        examDegree = exam.ExamDegree,
+                        examTimer = exam.ExamTimer.ToString(@"HH\:mm"),
+                        isOnline = exam.IsOnline,
+                        isDone = exam.IsDone
+                    };
+                }).Where(x => x != null).ToList();
 
-                var allContent = files.Cast<object>().Concat(exams.Cast<object>()).ToList();
+                // Other files (videos, regular files)
+                var normalFiles = filesData
+                    .Where(f => !f.ExamCode.HasValue)
+                    .Select(f => new
+                    {
+                        itemCode = f.FileCode,
+                        displayName = f.DisplayName ?? "Unknown",
+                        itemType = f.FileType == 1 ? "Video" : "File",
+                        fileType = f.FileType,
+                        sortOrder = f.SortOrder,
+                        videoProvider = f.VideoProvider,
+                        videoProviderName = f.VideoProvider == 0 ? "YouTube" :
+                                            f.VideoProvider == 1 ? "Bunny CDN" :
+                                            f.FileType == 1 ? "Unknown Provider" : null,
+                        fileExtension = f.FileExtension ?? "",
+                        fileSizeBytes = f.FileSizeBytes,
+                        fileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
+                        duration = f.Duration,
+                        durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
+                        contentType = "content",
+                        isOnlineLesson = f.IsOnlineLesson,
+                        examDegree = (string)null,
+                        examTimer = (string)null,
+                        isOnline = (bool?)null,
+                        isDone = (bool?)null
+                    }).ToList();
+
+                var allContent = normalFiles.Cast<object>().Concat(examItems.Cast<object>())
+                    .OrderBy(x =>
+                    {
+                        var prop = x.GetType().GetProperty("sortOrder");
+                        return prop?.GetValue(x) ?? 999;
+                    })
+                    .ToList();
+
                 return Json(allContent);
             }
             catch (Exception ex)
@@ -638,7 +669,7 @@ namespace centrny.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAvailableExams(int lessonCode)
+        public async Task<IActionResult> GetAvailableExams(int lessonCode, bool? isExam = null)
         {
             var rootCode = GetSessionInt("RootCode");
             if (rootCode == null) return Unauthorized();
@@ -650,8 +681,14 @@ namespace centrny.Controllers
                     .Select(e => e.ExamCode)
                     .ToListAsync();
 
-                var availableExams = await _context.Exams
-                    .Where(e => e.IsActive == true && !linkedExamCodes.Contains(e.ExamCode))
+                var examsQuery = _context.Exams
+                    .Where(e => e.IsActive == true && !linkedExamCodes.Contains(e.ExamCode));
+
+                // Only filter by IsExam if specified
+                if (isExam.HasValue)
+                    examsQuery = examsQuery.Where(e => e.IsExam == isExam);
+
+                var availableExams = await examsQuery
                     .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { Exam = e, Teacher = t })
                     .Where(et => et.Teacher.RootCode == rootCode.Value)
                     .Select(et => new
@@ -673,7 +710,6 @@ namespace centrny.Controllers
                 return Json(new List<object>());
             }
         }
-
         [HttpPost]
         public async Task<IActionResult> LinkExamToLesson([FromBody] LinkExamDto dto)
         {
@@ -696,12 +732,46 @@ namespace centrny.Controllers
                 exam.LastUpdateUser = GetSessionInt("UserCode") ?? 1;
                 exam.LastUpdateTime = DateTime.Now;
 
+                bool isAssignment = exam.IsExam == false;
+
+                int assignmentMinutes = 0;
+                if (exam.ExamTimer != null)
+                    assignmentMinutes = exam.ExamTimer.Hour * 60 + exam.ExamTimer.Minute;
+
+                int fileType = isAssignment ? (assignmentMinutes > 0 ? 4 : 5) : 3;
+
+                bool fileExists = await _context.Files.AnyAsync(f =>
+                    f.LessonCode == dto.LessonCode &&
+                    f.FileType == fileType &&
+                    f.DisplayName == exam.ExamName);
+
+                if (!fileExists)
+                {
+                    var file = new centrny.Models.File
+                    {
+                        LessonCode = dto.LessonCode,
+                        RootCode = rootCode.Value,
+                        InsertUser = GetSessionInt("UserCode") ?? 1,
+                        InsertTime = DateTime.Now,
+                        FileType = fileType,
+                        DisplayName = exam.ExamName,
+                        SortOrder = dto.SortOrder,
+                        IsActive = true,
+                         ExamCode = exam.ExamCode // <-- Link to Exams table
+                    };
+                    _context.Files.Add(file);
+                }
+
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true });
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(500, "Error linking exam to lesson");
+                var msg = ex.Message;
+                if (ex.InnerException != null)
+                    msg += " | INNER: " + ex.InnerException.Message;
+
+                return StatusCode(500, $"Error linking exam to lesson: {msg}");
             }
         }
 

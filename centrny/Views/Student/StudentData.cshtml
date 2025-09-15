@@ -17,11 +17,11 @@
     <title>@ViewData["Title"]</title>
     @if (isArabic)
     {
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet" />
     }
     else
     {
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
     }
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/student-profile.css" rel="stylesheet" />
@@ -56,7 +56,12 @@
          data-attend-assignment="@Localizer["AttendAssignment"]"
          data-attend-exam="@Localizer["AttendExam"]"
          data-degree="@Localizer["Degree"]"
-         data-na="@Localizer["NA"]" />
+         data-na="@Localizer["NA"]"
+         data-downloads-title="Downloadable Files"
+         data-loading-downloads-label="Loading files..."
+         data-no-downloads="No Files"
+         data-no-downloads-msg="There are no downloadable files available."
+         data-failed-to-load-downloads="Failed to load downloadable files." />
     <div class="container-fluid student-profile-page">
         <div class="profile-container">
             <div class="profile-header">
@@ -182,10 +187,25 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Downloadable Files Section -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2 class="section-title" id="downloads-title">Downloadable Files</h2>
+                    </div>
+                    <div class="section-content">
+                        <div id="downloadsGrid" class="exams-grid">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                                <span id="loading-downloads-label">Loading files...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Downloadable Files Section -->
+
             </div> <!-- /profile-content -->
         </div>
-
-
     </div>
 
     <div id="alertContainer"></div>
@@ -194,10 +214,10 @@
     <script>
         console.log('Student profile script loaded');
 
-                // Add these variables at the top
         let videosData = [];
+        let downloadsData = [];
 
-        // Add video loading function
+        // -- Videos --
         async function loadVideos() {
             if (!ITEM_KEY) {
                 showError('videosGrid', 'failed-to-load-videos');
@@ -216,7 +236,7 @@
             }
         }
 
-               function renderVideos(videos) {
+        function renderVideos(videos) {
             const container = document.getElementById('videosGrid');
             if (!videos.length) {
                 container.innerHTML = renderEmptyState('fa-video', 'no-videos', 'no-videos-msg');
@@ -251,7 +271,51 @@
             window.location.href = `/Student/WatchVideo/${ITEM_KEY}/${fileCode}`;
         }
 
- 
+        // -- Downloads --
+        async function loadDownloads() {
+            if (!ITEM_KEY) {
+                showError('downloadsGrid', 'failed-to-load-downloads');
+                return;
+            }
+            try {
+                const data = await safeFetchJson(`/Student/GetStudentDownloads/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('downloadsGrid', 'failed-to-load-downloads');
+                    return;
+                }
+                downloadsData = Array.isArray(data) ? data : [];
+                renderDownloads(downloadsData);
+            } catch {
+                showError('downloadsGrid', 'failed-to-load-downloads');
+            }
+        }
+
+        function renderDownloads(files) {
+            const container = document.getElementById('downloadsGrid');
+            if (!files.length) {
+                container.innerHTML = renderEmptyState('fa-download', 'no-downloads', 'no-downloads-msg');
+                return;
+            }
+            container.innerHTML = files.map(f => `
+                <div class="exam-card download-card">
+                    <div class="exam-header">
+                        <div class="exam-icon"><i class="fas fa-download"></i></div>
+                        <h3 class="exam-name">${f.displayName}</h3>
+                    </div>
+                    <div class="exam-details">
+                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${f.subjectName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${f.teacherName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-bookmark"></i> <span>${f.lessonName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-calendar"></i> <span>${f.insertTime ? f.insertTime : ''}</span></div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <a class="attend-exam-btn" href="${f.fileLocation}" download target="_blank">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
 
         function getJsString(key) { return $('#js-localization').data(key); }
 
@@ -267,10 +331,11 @@
             $('#loading-attended-exams-label').text(getJsString('loading-attended-exams'));
             $('#assignments-title').text(getJsString('assignments'));
             $('#loading-assignments-label').text(getJsString('loading-assignments'));
+            $('#downloads-title').text(getJsString('downloads-title'));
+            $('#loading-downloads-label').text(getJsString('loading-downloads-label'));
             $('#status-label').text(getJsString('@(Model.IsActive ? "active-student" : "inactive-student")'));
         }
 
-        // Model ItemKey inserted by Razor
         const ITEM_KEY = '@Model.ItemKey';
         console.log('ITEM_KEY raw value:', ITEM_KEY);
         document.getElementById('debugItemKey').textContent = 'ItemKey: ' + (ITEM_KEY || '(empty)');
@@ -298,7 +363,6 @@
             </div>`;
         }
 
-        // Normalization to handle PascalCase or camelCase
         function normalizeArray(arr) {
             if (!Array.isArray(arr)) return [];
             return arr.map(o => ({
@@ -495,6 +559,7 @@
             loadAttendedExams();
             loadAssignments();
             loadVideos();
+            loadDownloads();
         });
     </script>
 </body>

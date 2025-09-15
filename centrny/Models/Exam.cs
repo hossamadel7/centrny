@@ -53,6 +53,8 @@ public partial class Exam
 
     public virtual ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
 
+    public virtual ICollection<File> Files { get; set; } = new List<File>();
+
     public virtual User InsertUserNavigation { get; set; } = null!;
 
     public virtual User? LastUpdateUserNavigation { get; set; }

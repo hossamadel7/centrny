@@ -1442,7 +1442,7 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             if (!attendedClassCodes.Any())
-                return Json(new List<object>()); // No attended classes, return empty
+                return Json(new List<object>());
 
             // Get lessons linked to attended classes
             var attendedLessonCodes = await _context.Classes
@@ -1452,25 +1452,36 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             if (!attendedLessonCodes.Any())
-                return Json(new List<object>()); // No lessons linked to attended classes
+                return Json(new List<object>());
 
-            // Get exam files (FileType 3, IsOnlineLesson = false)
+            // Get exam files with ExamCode (FileType 3)
             var examFiles = await _context.Files
                 .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
                            f.IsActive &&
                            (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
-                           f.FileType == 3) // Exams only
+                           f.FileType == 3 &&
+                           f.ExamCode.HasValue)
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.SubjectCodeNavigation)
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.TeacherCodeNavigation)
-                .OrderByDescending(f => f.InsertTime)
-                .Select(f => new
+                .ToListAsync();
+
+            var examCodes = examFiles.Select(f => f.ExamCode.Value).Distinct().ToList();
+
+            var examsData = await _context.Exams
+                .Where(e => examCodes.Contains(e.ExamCode) && e.IsActive == true)
+                .ToListAsync();
+
+            var examResults = examFiles.Select(f =>
+            {
+                var exam = examsData.FirstOrDefault(e => e.ExamCode == f.ExamCode);
+                return new
                 {
-                    ExamCode = f.FileCode, // Using FileCode as ExamCode for consistency
-                    ExamName = f.DisplayName ?? "Unknown Exam",
+                    ExamCode = exam?.ExamCode ?? f.FileCode,
+                    ExamName = exam?.ExamName ?? f.DisplayName ?? "Unknown Exam",
                     FileCode = f.FileCode,
-                    DisplayName = f.DisplayName,
+                    DisplayName = exam?.ExamName ?? f.DisplayName,
                     FileType = f.FileType,
                     FileTypeName = "Exam",
                     SortOrder = f.SortOrder,
@@ -1480,13 +1491,86 @@ namespace centrny.Controllers
                     LessonName = f.LessonCodeNavigation.LessonName,
                     SubjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
                     TeacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
-                    // Additional exam-specific fields that might be useful
-                    Duration = f.Duration,
-                    DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null
+                    Duration = exam?.ExamTimer,
+                    DurationFormatted = exam?.ExamTimer != null ? exam.ExamTimer.ToString(@"hh\:mm") : null,
+                    ExamDegree = exam?.ExamDegree,
+                    IsOnline = exam?.IsOnline,
+                    IsDone = exam?.IsDone
+                };
+            }).ToList();
+
+            return Json(examResults);
+        }
+
+        [HttpGet]
+        [Route("Student/GetStudentDownloads/{item_key}")]
+        public async Task<IActionResult> GetStudentDownloads(string item_key)
+        {
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return Json(new { error = "Student not found." });
+
+            // Get all classes the student has attended
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>());
+
+            // Get lessons linked to attended classes
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>());
+
+            // Get downloadable files (FileType == 2)
+            var downloadableFiles = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                            f.IsActive &&
+                            f.FileType == 2)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .OrderByDescending(f => f.InsertTime)
+                .Select(f => new
+                {
+                    fileCode = f.FileCode,
+                    displayName = f.DisplayName ?? "Downloadable File",
+                    fileLocation = f.FileLocation,
+                    insertTime = f.InsertTime,
+                    lessonName = f.LessonCodeNavigation.LessonName,
+                    subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
                 })
                 .ToListAsync();
 
-            return Json(examFiles);
+            return Json(downloadableFiles);
+        }
+        [HttpGet]
+        [Route("Student/DownloadFile/{fileCode}")]
+        public async Task<IActionResult> DownloadFile(int fileCode)
+        {
+            var file = await _context.Files.FirstOrDefaultAsync(f => f.FileCode == fileCode);
+            if (file == null || file.FileType != 2)
+                return NotFound();
+
+            // If stored as absolute/relative path on disk:
+            var filePath = Path.Combine("C:\\YourFilesFolder", file.FileLocation.Replace("/", "\\").Replace("\\", Path.DirectorySeparatorChar.ToString()));
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var contentType = "application/octet-stream";
+            var fileName = file.DisplayName ?? Path.GetFileName(filePath);
+            return PhysicalFile(filePath, contentType, fileName);
         }
 
         [HttpGet]
@@ -1517,61 +1601,58 @@ namespace centrny.Controllers
             if (!attendedLessonCodes.Any())
                 return Json(new List<object>()); // No lessons linked to attended classes
 
-            // Get assignment files (FileType 0 or 1, IsOnlineLesson = false)
+            // Get assignment files (FileType 4 or 5, IsOnlineLesson = false)
             var assignmentFiles = await _context.Files
                 .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
-                           f.IsActive &&
-                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
-                           (f.FileType == 4 || f.FileType == 5)) // Files or Videos
+                            f.IsActive &&
+                            (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
+                            (f.FileType == 4 || f.FileType == 5) &&
+                            f.ExamCode.HasValue) // Use only files linked to an Exam/Assignment
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.SubjectCodeNavigation)
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.TeacherCodeNavigation)
                 .OrderByDescending(f => f.InsertTime)
-                .Select(f => new
-                {
-                    FileCode = f.FileCode,
-                    DisplayName = f.DisplayName ?? "Unknown File",
-                    FileType = f.FileType,
-                    FileTypeName = f.FileType == 1 ? "Video" : "File",
-                    FileExtension = f.FileExtension,
-                    FileSizeBytes = f.FileSizeBytes, // Keep as raw bytes
-                    Duration = f.Duration,
-                    DurationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
-                    VideoProvider = f.VideoProvider,
-                    VideoProviderName = f.VideoProvider == 0 ? "YouTube" :
-                                      f.VideoProvider == 1 ? "Bunny CDN" : "Unknown",
-                    SortOrder = f.SortOrder,
-                    InsertTime = f.InsertTime,
-                    IsActive = f.IsActive,
-                    LessonCode = f.LessonCode,
-                    LessonName = f.LessonCodeNavigation.LessonName,
-                    SubjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
-                    TeacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
-                })
                 .ToListAsync();
 
-            // Format file sizes after the query
-            var result = assignmentFiles.Select(f => new
+            var assignmentExamCodes = assignmentFiles.Select(f => f.ExamCode.Value).Distinct().ToList();
+
+            // Get all assignments/exams data for those codes
+            var assignmentsData = await _context.Exams
+                .Where(e => assignmentExamCodes.Contains(e.ExamCode) && e.IsActive == true)
+                .ToListAsync();
+
+            // Get student assignment submissions (if you track them in StudentExams)
+            var attendedAssignmentCodes = await _context.StudentExams
+                .Where(se => se.StudentCode == student.StudentCode && assignmentExamCodes.Contains(se.ExamCode) && se.IsActive == true)
+                .Select(se => se.ExamCode)
+                .ToListAsync();
+
+            // Compose result
+            var result = assignmentFiles.Select(f =>
             {
-                f.FileCode,
-                f.DisplayName,
-                f.FileType,
-                f.FileTypeName,
-                f.FileExtension,
-                f.FileSizeBytes,
-                FileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
-                f.Duration,
-                f.DurationFormatted,
-                f.VideoProvider,
-                f.VideoProviderName,
-                f.SortOrder,
-                f.InsertTime,
-                f.IsActive,
-                f.LessonCode,
-                f.LessonName,
-                f.SubjectName,
-                f.TeacherName
+                var assignment = assignmentsData.FirstOrDefault(a => a.ExamCode == f.ExamCode);
+                bool attended = attendedAssignmentCodes.Contains(f.ExamCode.Value);
+
+                return new
+                {
+                    examCode = f.ExamCode.Value, // <-- This is the assignment/exam code, NOT FileCode
+                    examName = assignment?.ExamName ?? f.DisplayName ?? "Unknown Assignment",
+                    fileCode = f.FileCode,
+                    displayName = assignment?.ExamName ?? f.DisplayName,
+                    fileType = f.FileType,
+                    fileTypeName = f.FileType == 4 ? "Assignment" : "Assignment Video",
+                    duration = f.Duration,
+                    durationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
+                    sortOrder = f.SortOrder,
+                    insertTime = f.InsertTime,
+                    isActive = f.IsActive,
+                    lessonCode = f.LessonCode,
+                    lessonName = f.LessonCodeNavigation.LessonName,
+                    subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                    teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
+                    attended = attended
+                };
             }).ToList();
 
             return Json(result);
@@ -1740,16 +1821,140 @@ namespace centrny.Controllers
         [Route("Student/GetUpcomingExams/{item_key}")]
         public async Task<IActionResult> GetUpcomingExams(string item_key)
         {
-            // Redirect to existing method or implement specific logic for upcoming exams
-            return await GetStudentExams(item_key);
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return Json(new { error = "Student not found." });
+
+            // Only exclude exams that have a StudentExam with IsActive == true (submitted)
+            var submittedExamCodes = await _context.StudentExams
+                .Where(se => se.StudentCode == student.StudentCode && se.IsActive == true)
+                .Select(se => se.ExamCode)
+                .Distinct()
+                .ToListAsync();
+
+            // Get all lessons the student attended (as before)
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == student.StudentCode)
+                .Select(a => a.ClassId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedClassCodes.Any())
+                return Json(new List<object>());
+
+            var attendedLessonCodes = await _context.Classes
+                .Where(c => attendedClassCodes.Contains(c.ClassCode) && c.ClassLessonCode.HasValue)
+                .Select(c => c.ClassLessonCode.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (!attendedLessonCodes.Any())
+                return Json(new List<object>());
+
+            // All exam links for these lessons
+            var examFileLinks = await _context.Files
+                .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
+                            f.IsActive &&
+                            f.FileType == 3 &&
+                            f.ExamCode.HasValue)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .ToListAsync();
+
+            var allExamCodes = examFileLinks.Select(f => f.ExamCode.Value).Distinct().ToList();
+
+            // Remove only submitted (IsActive == true) exams
+            var upcomingExamCodes = allExamCodes.Except(submittedExamCodes).ToList();
+
+            if (!upcomingExamCodes.Any())
+                return Json(new List<object>());
+
+            var exams = await _context.Exams
+                .Where(e => upcomingExamCodes.Contains(e.ExamCode) && e.IsActive == true)
+                .ToListAsync();
+
+            // Also, check if there's a StudentExam row with IsActive == false for resume logic
+            var inProgressExamCodes = await _context.StudentExams
+                .Where(se => se.StudentCode == student.StudentCode && se.IsActive == false)
+                .Select(se => se.ExamCode)
+                .Distinct()
+                .ToListAsync();
+
+            var upcomingExams = exams.Select(exam =>
+            {
+                var file = examFileLinks.FirstOrDefault(f => f.ExamCode == exam.ExamCode);
+                bool isInProgress = inProgressExamCodes.Contains(exam.ExamCode);
+
+                return new
+                {
+                    ExamCode = exam.ExamCode,
+                    ExamName = exam.ExamName,
+                    ExamDegree = exam.ExamDegree,
+                    ExamTimer = exam.ExamTimer != null ? exam.ExamTimer.ToString(@"hh\:mm") : null,
+                    SubjectName = file?.LessonCodeNavigation?.SubjectCodeNavigation?.SubjectName,
+                    TeacherName = file?.LessonCodeNavigation?.TeacherCodeNavigation?.TeacherName,
+                    LessonName = file?.LessonCodeNavigation?.LessonName,
+                    IsInProgress = isInProgress // for UI, to show "Resume" instead of "Attend"
+                };
+            }).ToList();
+
+            return Json(upcomingExams);
         }
 
         [HttpGet]
         [Route("Student/GetAttendedExams/{item_key}")]
         public async Task<IActionResult> GetAttendedExams(string item_key)
         {
-            // Redirect to existing method or implement specific logic for attended exams
-            return await GetStudentExams(item_key);
+            var student = await GetStudentByItemKey(item_key);
+            if (student == null)
+                return Json(new { error = "Student not found." });
+
+            var attendedExamEntries = await _context.StudentExams
+                .Where(se => se.StudentCode == student.StudentCode)
+                .ToListAsync();
+
+            if (!attendedExamEntries.Any())
+                return Json(new List<object>());
+
+            var examCodes = attendedExamEntries.Select(se => se.ExamCode).Distinct().ToList();
+
+            // Only fetch real exams (IsExam == true)
+            var exams = await _context.Exams
+                .Where(e => examCodes.Contains(e.ExamCode) && e.IsActive == true && e.IsExam)
+                .ToListAsync();
+
+            var fileLinks = await _context.Files
+                .Where(f => f.ExamCode.HasValue && examCodes.Contains(f.ExamCode.Value))
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .ToListAsync();
+
+            var attendedExams = attendedExamEntries
+                .Where(se => exams.Any(e => e.ExamCode == se.ExamCode))
+                .Select(se =>
+                {
+                    var exam = exams.FirstOrDefault(e => e.ExamCode == se.ExamCode);
+                    var file = fileLinks.FirstOrDefault(f => f.ExamCode == se.ExamCode);
+
+                    return new
+                    {
+                        examCode = se.ExamCode,
+                        examName = exam?.ExamName ?? "Unknown Exam",
+                        degree = se.StudentResult,
+                        examDegree = exam?.ExamDegree,
+                        percentage = se.StudentPercentage,
+                        examDate = se.InsertTime,
+                        subjectName = file?.LessonCodeNavigation?.SubjectCodeNavigation?.SubjectName,
+                        teacherName = file?.LessonCodeNavigation?.TeacherCodeNavigation?.TeacherName,
+                        lessonName = file?.LessonCodeNavigation?.LessonName
+                    };
+                }).ToList();
+
+            return Json(attendedExams);
         }
 
         [HttpGet]

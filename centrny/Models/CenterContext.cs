@@ -720,6 +720,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.DisplayName)
                 .HasMaxLength(200)
                 .HasColumnName("Display_Name");
+            entity.Property(e => e.ExamCode).HasColumnName("Exam_Code");
             entity.Property(e => e.FileExtension)
                 .HasMaxLength(20)
                 .HasColumnName("File_Extension");
@@ -746,6 +747,10 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.RootCode).HasColumnName("Root_code");
             entity.Property(e => e.SortOrder).HasColumnName("Sort_Order");
             entity.Property(e => e.VideoProvider).HasColumnName("Video_Provider");
+
+            entity.HasOne(d => d.ExamCodeNavigation).WithMany(p => p.Files)
+                .HasForeignKey(d => d.ExamCode)
+                .HasConstraintName("FK_File_Exam");
 
             entity.HasOne(d => d.LessonCodeNavigation).WithMany(p => p.Files)
                 .HasForeignKey(d => d.LessonCode)

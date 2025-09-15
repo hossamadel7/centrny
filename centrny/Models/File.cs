@@ -7,11 +7,13 @@ public partial class File
 {
     public int FileCode { get; set; }
 
-    public string FileLocation { get; set; } = null!;
+    public string? FileLocation { get; set; }
 
     public int RootCode { get; set; }
 
     public int LessonCode { get; set; }
+
+    public int? ExamCode { get; set; }
 
     public int InsertUser { get; set; }
 
@@ -34,6 +36,8 @@ public partial class File
     public bool IsActive { get; set; }
 
     public bool? IsOnlineLesson { get; set; }
+
+    public virtual Exam? ExamCodeNavigation { get; set; }
 
     public virtual Lesson LessonCodeNavigation { get; set; } = null!;
 
