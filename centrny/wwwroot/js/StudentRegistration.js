@@ -19,6 +19,11 @@ function ensureScrollEnabled() {
     document.documentElement.style.overflowY = 'auto';
     document.body.style.overflowY = 'auto';
 }
+function getSingleTeacher(teachers) {
+    if (!teachers.length) return null;
+    const code = teachers[0].teacherCode;
+    return teachers.every(t => t.teacherCode === code) ? teachers[0] : null;
+}
 
 function setupEventListeners() {
     document.querySelectorAll('input[name="Mode"]').forEach(radio => {
@@ -346,6 +351,11 @@ async function loadTeachersForSubjects() {
         console.error('Failed to load teachers:', error);
         availableTeachers = [];
     }
+    if (availableTeachers.length === 1) {
+        window.rootSingleTeacher = availableTeachers[0];
+    } else {
+        window.rootSingleTeacher = null;
+    }
 }
 
 async function loadScheduleForSubjectTeacher(subjectCode, teacherCode) {
@@ -442,53 +452,58 @@ function renderSubjects() {
         availableSubjects.forEach(subject => {
             const isSelected = selectedSubjects.some(s => s.subjectCode === subject.subjectCode);
             const subjectTeachers = availableTeachers.filter(t => t.subjectCode === subject.subjectCode);
+            const singleTeacher = getSingleTeacher(subjectTeachers);
 
             html += `
-            <div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${subject.subjectCode}">
-                <div class="subject-header">
-                    <h5 class="subject-title"><i class="fas fa-book me-2"></i>${subject.subjectName}</h5>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox"
-                               id="subject_${subject.subjectCode}"
-                               ${isSelected ? 'checked' : ''}
-                               onchange="toggleSubject(${subject.subjectCode}, '${subject.subjectName}')">
-                    </div>
-                </div>
-                <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
-                    <label class="form-label small mb-2">${'Select Teacher'}</label>`;
+    <div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${subject.subjectCode}">
+        <div class="subject-header">
+            <h5 class="subject-title"><i class="fas fa-book me-2"></i>${subject.subjectName}</h5>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox"
+                       id="subject_${subject.subjectCode}"
+                       ${isSelected ? 'checked' : ''}
+                       onchange="toggleSubject(${subject.subjectCode}, '${subject.subjectName}')">
+            </div>
+        </div>
+        <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
+    `;
 
-            if (subjectTeachers.length > 0) {
-                subjectTeachers.forEach(teacher => {
-                    const selectedSubject = selectedSubjects.find(s => s.subjectCode === subject.subjectCode);
-                    const isTeacherSelected = selectedSubject && selectedSubject.teacherCode === teacher.teacherCode;
-
-                    html += `
-                    <div class="teacher-option ${isTeacherSelected ? 'selected' : ''}"
-                         onclick="selectTeacher(${subject.subjectCode}, '${subject.subjectName}', ${teacher.teacherCode}, '${teacher.teacherName}', ${teacher.yearCode}, ${teacher.eduYearCode})">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio"
-                                   name="teacher_${subject.subjectCode}"
-                                   value="${teacher.teacherCode}"
-                                   id="teacher_${subject.subjectCode}_${teacher.teacherCode}"
-                                   ${isTeacherSelected ? 'checked' : ''}>
-                            <label class="form-check-label">
-                                <strong>${teacher.teacherName}</strong><br>
-                                <small class="text-muted">${teacher.teacherPhone || 'N/A'}</small>
-                            </label>
-                        </div>
-                    </div>`;
-                });
+            // Hide teacher selection if all teach records are for the same teacher
+            if (singleTeacher) {
+                html += `<span class="text-muted small">Assigned teacher: <strong>${singleTeacher.teacherName}</strong></span>`;
             } else {
-                html += '<p class="text-muted small mb-0">No teachers available.</p>';
-            }
+                html += `<label class="form-label small mb-2">Select Teacher</label>`;
+                if (subjectTeachers.length > 0) {
+                    subjectTeachers.forEach(teacher => {
+                        const selectedSubject = selectedSubjects.find(s => s.subjectCode === subject.subjectCode);
+                        const isTeacherSelected = selectedSubject && selectedSubject.teacherCode === teacher.teacherCode;
 
+                        html += `
+                <div class="teacher-option ${isTeacherSelected ? 'selected' : ''}"
+                     onclick="selectTeacher(${subject.subjectCode}, '${subject.subjectName}', ${teacher.teacherCode}, '${teacher.teacherName}', ${teacher.yearCode}, ${teacher.eduYearCode})">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                               name="teacher_${subject.subjectCode}"
+                               value="${teacher.teacherCode}"
+                               id="teacher_${subject.subjectCode}_${teacher.teacherCode}"
+                               ${isTeacherSelected ? 'checked' : ''}>
+                        <label class="form-check-label">
+                            <strong>${teacher.teacherName}</strong><br>
+                            <small class="text-muted">${teacher.teacherPhone || 'N/A'}</small>
+                        </label>
+                    </div>
+                </div>`;
+                    });
+                } else {
+                    html += '<p class="text-muted small mb-0">No teachers available.</p>';
+                }
+            }
             html += `</div></div>`;
         });
 
         container.innerHTML = html;
     });
 }
-
 // SUBJECT / TEACHER / SCHEDULE SELECTION HANDLERS
 window.toggleSubject = function (subjectCode, subjectName) {
     const checkbox = document.getElementById(`subject_${subjectCode}`);
@@ -510,6 +525,24 @@ window.toggleSubject = function (subjectCode, subjectName) {
         }
         subjectCard.classList.add('selected');
         if (teachersDiv) teachersDiv.classList.remove('d-none');
+
+        // Auto-select if all teach records for subject map to one teacher
+        const subjectTeachers = availableTeachers.filter(t => t.subjectCode === subjectCode);
+        const singleTeacher = getSingleTeacher(subjectTeachers);
+        if (singleTeacher) {
+            window.selectTeacher(
+                subjectCode,
+                subjectName,
+                singleTeacher.teacherCode,
+                singleTeacher.teacherName,
+                singleTeacher.yearCode,
+                singleTeacher.eduYearCode
+            );
+            // Automatically move to next step
+            setTimeout(() => {
+                changeStep(1);
+            }, 300);
+        }
     } else {
         selectedSubjects = selectedSubjects.filter(s => s.subjectCode !== subjectCode);
         subjectCard.classList.remove('selected');
@@ -519,7 +552,6 @@ window.toggleSubject = function (subjectCode, subjectName) {
 
     updateSelectedSubjectsSummary();
 };
-
 window.selectTeacher = function (subjectCode, subjectName, teacherCode, teacherName, yearCode, eduYearCode) {
     const radio = document.getElementById(`teacher_${subjectCode}_${teacherCode}`);
     if (radio) radio.checked = true;

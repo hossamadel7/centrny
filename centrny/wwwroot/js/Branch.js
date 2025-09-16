@@ -330,20 +330,32 @@
                         </button>`;
                         }
 
+                        // Disable edit button for "Online" or "Online management"
+                        const isOnlineBranch = ["online", "online management"].includes((branch.branchName || '').trim().toLowerCase());
+                        let editBranchBtnHtml;
+                        if (isOnlineBranch) {
+                            const titleMsg = getJsString('alertBranchEditNotAllowed') || 'This branch cannot be edited';
+                            editBranchBtnHtml = `<button class="btn-table edit edit-branch-btn" disabled title="${titleMsg}">
+                                <i class="fas fa-pencil"></i>
+                            </button>`;
+                        } else {
+                            editBranchBtnHtml = `<button class="btn-table edit edit-branch-btn"
+                                data-branch-code="${branch.branchCode}"
+                                data-branch-name="${branch.branchName}"
+                                data-branch-address="${branch.address || ''}"
+                                data-branch-phone="${branch.phone || ''}"
+                                data-branch-starttime="${branch.startTime || ''}">
+                                <i class="fas fa-pencil"></i>
+                            </button>`;
+                        }
+
                         // Get all branch props for edit modal, add as data attributes
                         branchList.append(`
                         <li class="list-group-item branch-card d-flex flex-column align-items-start">
                             <div class="d-flex align-items-center" style="width:100%;">
                                 <span style="flex:1;text-align:left;">${branch.branchName}</span>
                                 <span class="${branchActionClass}">
-                                    <button class="btn-table edit edit-branch-btn"
-                                        data-branch-code="${branch.branchCode}"
-                                        data-branch-name="${branch.branchName}"
-                                        data-branch-address="${branch.address || ''}"
-                                        data-branch-phone="${branch.phone || ''}"
-                                        data-branch-starttime="${branch.startTime || ''}">
-                                        <i class="fas fa-pencil"></i>
-                                    </button>
+                                    ${editBranchBtnHtml}
                                     <button class="btn-table delete delete-branch-btn"
                                         data-branch-code="${branch.branchCode}">
                                         <i class="fas fa-trash"></i>
@@ -401,6 +413,14 @@
 
         // Edit Branch button - now opens modal with details
         $('.edit-branch-btn').off().on('click', function () {
+            // Guard: prevent editing "Online" branches or disabled buttons
+            const isDisabled = $(this).is(':disabled') || $(this).attr('disabled') !== undefined;
+            const nameAttr = ($(this).attr('data-branch-name') || '').trim().toLowerCase();
+            if (isDisabled || ["online", "online management"].includes(nameAttr)) {
+                swalInfo(getJsString('alertBranchEditNotAllowed') || 'This branch cannot be edited.');
+                return;
+            }
+
             $('#editBranchCode').val($(this).attr('data-branch-code'));
             $('#editBranchName').val($(this).attr('data-branch-name'));
             $('#editBranchAddress').val($(this).attr('data-branch-address'));

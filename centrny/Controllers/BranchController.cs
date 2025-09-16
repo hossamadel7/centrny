@@ -226,6 +226,25 @@ namespace centrny.Controllers
                     ((rootCode == c.RootCode && rootCode != 1) || (rootCode != c.RootCode && rootCode == 1)));
                 if (branch == null) return NotFound("Branch not found");
 
+                // --- BEGIN: PROTECTED BRANCH LOGIC ---
+                var protectedNames = new[] { "online", "online management" };
+                string branchNameCurrent = (branch.BranchName ?? "").Trim().ToLowerInvariant();
+                string branchNameNew = (dto.BranchName ?? "").Trim().ToLowerInvariant();
+
+                // Forbid editing branches whose current name is protected
+                if (protectedNames.Contains(branchNameCurrent))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Editing this branch is not permitted.");
+                }
+
+                // Optional: Forbid renaming any branch to protected names
+                if (protectedNames.Contains(branchNameNew)
+                    && !string.Equals(dto.BranchName?.Trim(), branch.BranchName?.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Renaming to this name is not permitted.");
+                }
+                // --- END: PROTECTED BRANCH LOGIC ---
+
                 DateOnly parsedStartTime;
                 try
                 {

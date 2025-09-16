@@ -389,8 +389,40 @@ namespace centrny.Controllers
 
             return Json(new { success = true, eduYears });
         }
+
         [HttpGet]
-  
+        public async Task<IActionResult> GetClassById(int id)
+        {
+            var (userCode, groupCode, rootCode, username) = GetSessionContext();
+            var cls = await _context.Classes
+                .Where(c => c.ClassCode == id && c.RootCode == rootCode)
+                .Select(c => new {
+                    c.ClassCode,
+                    c.ClassName,
+                    c.ClassStartTime,
+                    c.ClassEndTime,
+                    c.ClassDate,
+                    c.TeacherCode,
+                    c.SubjectCode,
+                    c.BranchCode,
+                    c.HallCode,
+                    c.EduYearCode,
+                    c.YearCode,
+                    c.ClassPrice,
+                    c.NoOfStudents,
+                    c.ClassLessonCode,
+                    // Add these navigation properties:
+                    CenterCode = c.BranchCodeNavigation.CenterCode,
+                    BranchName = c.BranchCodeNavigation.BranchName,
+                })
+                .FirstOrDefaultAsync();
+
+            if (cls == null)
+                return Json(new { error = "Class not found." });
+
+            return Json(cls);
+        }
+        [HttpGet]
         public async Task<IActionResult> GetCentersForUserRoot()
         {
             var (userCode, groupCode, rootCode, username) = GetSessionContext();
