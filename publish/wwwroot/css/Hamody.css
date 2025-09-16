@@ -1,0 +1,1091 @@
+﻿:root {
+    --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+    --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+    --success-gradient: linear-gradient(135deg, #00b894 0%, #55a3ff 100%);
+    --danger-gradient: linear-gradient(135deg, #e17055 0%, #fd79a8 100%);
+    --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+    --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    --primary-color: #6c5ce7;
+    --success-color: #00b894;
+    --danger-color: #e17055;
+    --warning-color: #f39c12;
+    --info-color: #74b9ff;
+    --text-dark: #2d3436;
+    --text-muted: #636e72;
+    --bg-light: #f8f9fa;
+    --bg-white: #ffffff;
+    --border-color: #e9ecef;
+    --shadow: 0 4px 24px rgba(108, 92, 231, 0.12), 0 1px 8px rgba(0,0,0,0.07);
+    --shadow-lg: 0 8px 36px rgba(108, 92, 231, 0.18), 0 4px 16px rgba(0,0,0,0.13);
+    --shadow-glow: 0 0 0 8px #a29bfe44;
+    --shadow-card: 0 2px 24px #a29bfe22;
+    --border-radius: 18px;
+    --border-radius-lg: 28px;
+    --transition: all 0.35s cubic-bezier(.4,0,.2,1);
+    --glass-bg: rgba(255,255,255,0.90);
+    --glass-blur: blur(18px);
+}
+
+/* Universal font & box model */
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-sizing: border-box;
+}
+
+/* Background */
+body {
+    background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    color: var(--text-dark);
+}
+
+/* Main container/panel */
+.daily-container, .table-card {
+    background: var(--bg-white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg), var(--shadow-card);
+    padding: 2.7rem 2.3rem;
+    margin: 2.5rem auto;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Large, rounded gradient header block */
+.questions-header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2.2rem;
+    padding: 2rem 0 1.2rem 0;
+    background: var(--primary-gradient-light);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(108,92,231,0.11);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+    .questions-header h2 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.3rem;
+        letter-spacing: -.01em;
+        background: var(--primary-gradient-horizontal);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .questions-header i {
+        margin-right: 12px;
+        color: #4f8cff;
+    }
+
+@media (max-width: 900px) {
+    .questions-header h2 {
+        font-size: 1.6rem;
+    }
+}
+
+/* Filter card above table */
+.filter-panel {
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.3rem 2rem;
+    margin-bottom: 1.2rem;
+    border: 1.5px solid #e9ecef;
+    font-size: 1.09rem;
+    width: 100%;
+}
+
+/* Drop-down styling */
+select.modern-input.styled-select, #branchSelect {
+    background: var(--primary-gradient-light);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10);
+    font-weight: 500;
+    font-size: 1em;
+    padding: 8px 11px;
+    border: 1.5px solid #e0e0e0;
+    transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+    select.modern-input.styled-select:focus, #branchSelect:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px #a29bfe44;
+    }
+
+/* Table card for spacing and centering */
+.table-card {
+    background: var(--bg-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    padding: 2rem;
+    margin-top: 1.7rem;
+    margin-bottom: 2rem;
+    width: 98vw;
+    max-width: 1400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Data table: single gradient header row */
+.gradient-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 16px rgba(108, 92, 231, 0.12);
+    overflow: hidden;
+    margin-bottom: 1.7rem;
+    text-align: center;
+}
+
+    .gradient-table thead tr {
+        background: var(--primary-gradient-horizontal);
+    }
+
+    .gradient-table th {
+        background: transparent !important;
+        color: #fff !important;
+        font-size: 1.16rem;
+        font-weight: 700;
+        border: none;
+        padding: 1.05em 1.3em;
+        letter-spacing: .01em;
+        text-align: center;
+    }
+
+    .gradient-table td {
+        padding: 1em 1.3em;
+        border-bottom: 1.5px solid #e1e1e1;
+        font-size: 1 em;
+        font-weight: bold;
+        color: var(--text-dark);
+        text-align: center;
+    }
+
+/* Hall name sticky column fix: always show dark text on white */
+.reservation-table th.sticky-col {
+    background: var(--bg-white) !important;
+    color: var(--text-dark) !important;
+    font-weight: bold;
+}
+
+/* Table action buttons */
+.btn-table, .modern-btn {
+    font-weight: 600 !important;
+    padding: 0.65rem 1.3rem !important;
+    border-radius: var(--border-radius) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    margin-right: 0.4rem !important;
+    transition: transform 0.16s, box-shadow 0.16s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5em !important;
+    background: var(--primary-gradient) !important;
+}
+
+    .btn-table.edit, .modern-btn.edit-btn {
+        background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+    }
+
+    .btn-table.delete, .modern-btn.delete-btn {
+        background: var(--danger-gradient) !important;
+    }
+
+    .btn-table:hover, .btn-table:focus, .modern-btn:hover, .modern-btn:focus {
+        box-shadow: var(--shadow-lg) !important;
+        transform: scale(1.05) !important;
+    }
+
+/* Badges */
+.badge {
+    display: inline-block;
+    font-size: 0.92em;
+    font-weight: 600;
+    border-radius: 16px;
+    padding: 0.25em 1em;
+    color: #fff;
+    background: var(--primary-gradient);
+    margin-right: 0.2em;
+    box-shadow: 0 1px 8px #a29bfe22;
+    letter-spacing: .01em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .daily-container, .table-card {
+        margin: 1rem;
+        padding: 1rem;
+        max-width: 98vw;
+    }
+
+    .root-header h1, .page-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .gradient-table th, .gradient-table td {
+        font-size: 0.96em;
+        padding: 0.7em 0.4em;
+    }
+}
+
+/* Modals */
+.modal-content {
+    border-radius: var(--border-radius) !important;
+    border: none !important;
+    box-shadow: var(--shadow-lg) !important;
+    background: var(--glass-bg) !important;
+    animation: modalUpFade 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes modalUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    background: var(--primary-gradient) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    box-shadow: var(--shadow);
+}
+
+.modal-title {
+    font-weight: 700 !important;
+}
+
+.modal-body {
+    padding: 2rem !important;
+}
+
+.form-group {
+    margin-bottom: 17px;
+}
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 7px;
+        display: inline-block;
+        color: var(--text-dark);
+    }
+
+/* Modern input and textarea styling */
+input[type="text"], input[type="number"], input[type="date"], input[type="time"], select {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 7px;
+    font-size: 1em;
+    font-weight: 500;
+    background: #fafbff;
+    margin-bottom: 3px;
+}
+
+    input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, input[type="time"]:focus, select:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px #a29bfe44;
+    }
+
+/* Empty states */
+.empty-lessons, .empty-chapters, .empty-questions, .empty-answers {
+    padding: 20px;
+    color: #888;
+    text-align: center;
+}
+
+/* Bold rendered data */
+.bold-rendered, .reservation-slot .fw-bold {
+    font-weight: bold !important;
+}
+/* EduYear Page: Remove all inline CSS and make it global */
+.eduyear-table-container {
+    width: 100%;
+}
+
+#eduyear-message {
+    margin-top: 20px;
+    color: #b33c3c;
+    font-weight: 600;
+}
+
+.levels-years-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.level-box {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 18px;
+    padding: 24px 18px 16px 18px;
+    box-shadow: var(--shadow-lg, 0 1px 5px rgba(180,180,180,0.12));
+    min-width: 300px;
+    max-width: 460px;
+    flex: 1 1 320px;
+    margin-bottom: 36px;
+}
+
+.level-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #e2e2e2;
+    padding-bottom: 3px;
+}
+
+.years-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+
+    .years-table th, .years-table td {
+        border: 1px solid #e0e0e0;
+        padding: 6px 10px;
+        text-align: left;
+    }
+
+    .years-table th {
+        background: #ececec;
+        font-weight: 700;
+    }
+
+.action-btn {
+    background: var(--primary-gradient);
+    border: none;
+    color: #fff;
+    padding: 6px 16px;
+    margin-right: 4px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95em;
+    box-shadow: 0 1px 8px #a29bfe22;
+    letter-spacing: .01em;
+    transition: box-shadow 0.12s, transform 0.12s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+}
+
+    .action-btn.edit-year-btn {
+        background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%);
+    }
+
+    .action-btn.delete-year-btn {
+        background: var(--danger-gradient);
+    }
+
+    .action-btn:hover, .action-btn:focus {
+        box-shadow: var(--shadow-lg);
+        transform: scale(1.07);
+        outline: none;
+    }
+
+.modern-btn, .btn-table {
+    font-weight: 600 !important;
+    padding: 0.65rem 1.3rem !important;
+    border-radius: var(--border-radius) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.10) !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    margin-right: 0.4rem !important;
+    transition: transform 0.16s, box-shadow 0.16s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5em !important;
+    background: var(--primary-gradient) !important;
+}
+
+    .modern-btn.add-level-btn, .btn-table.add {
+        background: var(--primary-gradient) !important;
+    }
+
+    .modern-btn.edit-btn, .btn-table.edit {
+        background: linear-gradient(135deg, #55a3ff 0%, #00b894 100%) !important;
+    }
+
+    .modern-btn.delete-btn, .btn-table.delete {
+        background: var(--danger-gradient) !important;
+    }
+
+    .modern-btn:hover, .modern-btn:focus, .btn-table:hover, .btn-table:focus {
+        box-shadow: var(--shadow-lg) !important;
+        transform: scale(1.05) !important;
+    }
+
+/* Modal overlay and modal box for EduYear modals */
+.modal-overlay {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(36, 38, 59, 0.55) !important;
+    z-index: 1200 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-box {
+    background: var(--bg-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    min-width: 320px;
+    max-width: 410px;
+    padding: 28px 28px 18px 28px;
+    position: relative;
+}
+
+    .modal-box .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 16px;
+    }
+
+.form-group {
+    margin-bottom: 17px;
+}
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 7px;
+        display: inline-block;
+        color: var(--text-dark);
+    }
+
+/* Modern input and textarea styling */
+input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 7px;
+    font-size: 1em;
+    font-weight: 500;
+    background: #fafbff;
+    margin-bottom: 3px;
+}
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px #a29bfe44;
+    }
+
+/* Modern textarea styling for question content */
+textarea.modern-input,
+#question-content {
+    width: 100%;
+    min-height: 85px;
+    font-size: 1.13em;
+    border-radius: 12px;
+    border: 1.5px solid #e0e0e0;
+    background: #fafbff;
+    padding: 10px 14px;
+    resize: vertical;
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.06);
+    margin-top: 6px;
+    transition: border-color 0.18s;
+}
+
+    textarea.modern-input:focus,
+    #question-content:focus {
+        border-color: var(--primary-color, #6c5ce7);
+        outline: none;
+    }
+
+/* Icon-only action buttons for questions */
+.question-actions .btn-table.edit,
+.question-actions .btn-table.delete {
+    min-width: 38px;
+    padding: 8px 0 !important;
+    justify-content: center !important;
+    gap: 0 !important;
+}
+
+    .question-actions .btn-table.edit span,
+    .question-actions .btn-table.delete span {
+        display: none !important;
+    }
+
+/* Bold rendered data */
+#freeItemCount,
+.badge,
+.rendered-value,
+.bold-rendered,
+.qr-code-cell {
+    font-weight: bold !important;
+}
+
+/* Make all rendered data bold in all views */
+.chapter-header span:not(.chapter-icon):not(:last-child),
+.lesson-title,
+.question-content,
+.question-row .question-content,
+.answers-list .answer-content,
+.answers-list .answer-istrue,
+.answer-row .answer-content,
+#user-root-info-box b,
+#freeItemCount,
+#chapters-container .chapter-block,
+#chapters-container .lesson-block,
+#chapters-container .question-row,
+#chapters-container .answers-list,
+#question-search-results b,
+#question-search-results .question-content,
+#eduyear-body td,
+#levels-years-container .years-table td,
+.bold-rendered,
+.rendered-value {
+    font-weight: bold !important;
+}
+
+/* Table cell data in case any tables are used in the future */
+.gradient-table td,
+.table td,
+.years-table td {
+    font-weight: bold;
+}
+
+/* Ensure info boxes, badges, and counters are bold */
+.badge,
+#freeItemCount {
+    font-weight: bold !important;
+}
+
+/* Optionally, for all data cells in custom structures */
+.chapter-block .chapter-header span,
+.lesson-header .lesson-title,
+.question-row .question-content,
+.answer-row .answer-content,
+.answer-row .answer-istrue {
+    font-weight: bold !important;
+}
+
+/* Modal background overlay for "flow up" animation */
+.modal-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(30, 30, 30, 0.45);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.25s;
+}
+
+@media (max-width: 600px) {
+    .modal-content {
+        max-width: 95vw;
+        padding: 16px 8px;
+    }
+}
+
+.reservation-horizontal-card {
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(44, 62, 80, 0.09);
+    border: 1px solid #eef2f7;
+    transition: box-shadow 0.2s;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.card-horizontal-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.card-title-row {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.teacher-name {
+    color: #1a73e8;
+    font-weight: 600;
+}
+
+.description {
+    font-size: 1rem;
+    color: #444;
+}
+
+.card-details-row {
+    font-size: 1rem;
+    gap: 1.2rem;
+    margin-bottom: 0.2rem;
+}
+
+.price {
+    background: #e9fbe8 !important;
+    color: #1c9942 !important;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.time {
+    background: #e5f1fb !important;
+    color: #1a73e8 !important;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+
+    .btn-edit:hover {
+        background: #d1f0ff;
+        color: #005cb2;
+    }
+
+
+
+    .btn-delete:hover {
+        background: #ffeaea;
+        color: #9e2727;
+    }
+.subject-table-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.gradient-table {
+    margin: 0 auto;
+    min-width: 700px;
+    max-width: 900px;
+    width: auto; /* THIS IS IMPORTANT */
+}
+.subject-btn-row {
+    display: flex;
+    gap: 0.5em;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+.subject-table-container {
+    overflow-x: auto;
+}
+
+.gradient-table {
+    min-width: 900px;
+}
+/* Modern style for Exam filter dropdowns (Year, Subject, Type)
+   Only affects #filterYear, #filterSubject, #filterExamType */
+
+#filterYear,
+#filterSubject,
+#filterExamType {
+    background: var(--primary-gradient-light);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 2px 12px rgba(108, 92, 231, 0.11);
+    font-weight: 600;
+    font-size: 1.11em;
+    padding: 10px 18px;
+    border: 2px solid #c3cfe2;
+    color: var(--primary-color);
+    transition: border-color 0.18s, box-shadow 0.18s;
+    outline: none;
+    margin-right: 0.7rem;
+    margin-bottom: 0.1rem;
+    min-width: 160px;
+    max-width: 260px;
+    appearance: none;
+    cursor: pointer;
+}
+
+#filterYear {
+    min-width: 180px;
+}
+
+#filterSubject {
+    min-width: 180px;
+}
+
+#filterExamType {
+    min-width: 140px;
+}
+
+/* Custom down arrow for all three selects */
+#filterYear,
+#filterSubject,
+#filterExamType {
+    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='18' viewBox='0 0 20 20' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M5.516 8.548a.75.75 0 0 1 1.06 0l3.424 3.425 3.424-3.425a.75.75 0 1 1 1.06 1.06l-3.953 3.954a.75.75 0 0 1-1.06 0l-3.953-3.954a.75.75 0 0 1 0-1.06z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 18px 18px;
+}
+
+    /* Focus and hover effects */
+    #filterYear:focus, #filterYear:hover,
+    #filterSubject:focus, #filterSubject:hover,
+    #filterExamType:focus, #filterExamType:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px #a29bfe44;
+        background: var(--primary-gradient-light);
+        color: #2d3436;
+    }
+
+    #filterYear option,
+    #filterSubject option,
+    #filterExamType option {
+        color: #2d3436;
+        font-weight: 500;
+        background: #fafbff;
+    }
+
+/* Responsive: smaller on mobile */
+@media (max-width: 600px) {
+    #filterYear,
+    #filterSubject,
+    #filterExamType {
+        font-size: 1em;
+        min-width: 120px;
+        padding: 8px 10px;
+        margin-bottom: 0.5rem;
+    }
+}
+/* Exam Table Pagination Styling */
+#exam-pagination nav {
+    margin-top: 18px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: center;
+}
+
+#exam-pagination .pagination {
+    background: var(--primary-gradient-light, #f6f7fb);
+    border-radius: 2em;
+    padding: 0.5em 1.2em;
+    box-shadow: 0 2px 12px rgba(108,92,231,0.08);
+}
+
+#exam-pagination .page-item {
+    margin: 0 3px;
+}
+
+#exam-pagination .page-link {
+    border: none;
+    background: transparent;
+    color: var(--primary-color, #6c5ce7);
+    font-weight: 600;
+    font-size: 1.05em;
+    padding: 0.5em 1em;
+    border-radius: 1.5em;
+    transition: background 0.18s, color 0.18s;
+}
+
+    #exam-pagination .page-link:hover,
+    #exam-pagination .page-link:focus {
+        background: var(--primary-gradient, linear-gradient(90deg,#6c5ce7,#a29bfe));
+        color: #fff;
+        text-decoration: none;
+    }
+
+#exam-pagination .page-item.active .page-link {
+    background: var(--primary-gradient-horizontal, linear-gradient(90deg,#6c5ce7,#00b894));
+    color: #fff;
+    box-shadow: 0 0 0 2px #a29bfe55;
+}
+
+#exam-pagination .page-item.disabled .page-link {
+    color: #b2bec3;
+    background: #f1f2f6;
+    cursor: not-allowed;
+}
+
+#exam-pagination .pagination-sm .page-link {
+    font-size: 0.97em;
+    padding: 0.38em 0.95em;
+}
+
+/* Responsive for mobile */
+@media (max-width: 600px) {
+    #exam-pagination .pagination {
+        padding: 0.3em 0.5em;
+    }
+
+    #exam-pagination .page-link {
+        font-size: 0.95em;
+        padding: 0.35em 0.6em;
+    }
+}
+#questionsModal .modal-content {
+    background: linear-gradient(135deg, #e0eafc, #cfdef3 90%);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(60, 90, 120, 0.12);
+    border: none;
+}
+
+#questionsModal .modal-header {
+    background: linear-gradient(90deg, #7faaff, #baf3e7 80%);
+    color: #2d3436;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 2px 12px rgba(60, 90, 120, 0.09);
+}
+
+#questionsModal .modal-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -.01em;
+}
+
+.questions-section {
+    background: #f7fbfe;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(60, 90, 120, 0.08);
+    padding: 16px;
+    margin-bottom: 14px;
+}
+
+.questions-list .list-group-item {
+    background: #ffffff;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    border: none;
+    box-shadow: 0 1px 6px rgba(120, 160, 200, 0.06);
+}
+
+.chapter-header, .lesson-header {
+    background: transparent !important;
+    color: #22647b !important;
+}
+
+.question-item {
+    transition: box-shadow 0.18s;
+}
+
+    .question-item:hover {
+        box-shadow: 0 2px 12px rgba(60, 90, 120, 0.10);
+        background: #e0eafc !important;
+    }
+
+#questionsModal .modal-footer {
+    background: #f0f4fa;
+    border-radius: 0 0 18px 18px;
+}
+
+input.question-degree {
+    background: #ebf6fa !important;
+    border: 1px solid #dde6ed !important;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    background: #deeef7;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #baf3e7;
+    border-radius: 8px;
+}
+/* Expenses view filter styles - uniquely scoped to .expenses-filters-container */
+
+/* === Expenses View DataTable Filter Styling (only applies to .expenses-view) === */
+
+.expenses-view #expensesTable_wrapper .dataTables_length,
+.expenses-view #expensesTable_wrapper .dataTables_filter {
+    background: #f7fafc;
+    padding: 0.8rem 1rem 0.8rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.06);
+    display: inline-block;
+}
+
+    .expenses-view #expensesTable_wrapper .dataTables_filter label,
+    .expenses-view #expensesTable_wrapper .dataTables_length label {
+        font-weight: 500;
+        color: #3c4858;
+        margin-right: 0.5rem;
+    }
+
+    .expenses-view #expensesTable_wrapper .dataTables_filter input[type="search"],
+    .expenses-view #expensesTable_wrapper .dataTables_length select {
+        border-radius: 0.35rem;
+        border: 1px solid #dedede;
+        padding: 0.25rem 0.75rem;
+        margin-left: 0.5rem;
+        font-size: 1rem;
+        color: #333;
+        background: #fff;
+        transition: border 0.2s;
+        outline: none;
+    }
+
+        .expenses-view #expensesTable_wrapper .dataTables_filter input[type="search"]:focus,
+        .expenses-view #expensesTable_wrapper .dataTables_length select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 2px #cfe2ff;
+        }
+
+.financial-view .gradient-table tfoot tr {
+    background: #181818 !important; /* solid black */
+}
+
+.financial-view .gradient-table tfoot th,
+.financial-view .gradient-table tfoot td {
+    background: transparent !important;
+    color: #fff !important;
+    font-size: 1.12rem;
+    font-weight: 700;
+    border: none !important;
+    text-align: center;
+}
+
+/* Remove Bootstrap .table-secondary background for tfoot */
+.financial-view .gradient-table tfoot.table-secondary tr,
+.financial-view .gradient-table tfoot.table-secondary th,
+.financial-view .gradient-table tfoot.table-secondary td {
+    background: transparent !important;
+}
+@media (max-width: 600px) {
+    .table-card {
+        padding: 0.4rem;
+        margin: 0.4rem;
+        max-width: 100vw;
+        min-width: 0;
+    }
+    .table-responsive {
+        width: 100vw;
+        max-width: 100vw;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .gradient-table {
+        min-width: 680px;
+        font-size: 0.87em;
+    }
+    .gradient-table th,
+    .gradient-table td {
+        padding: 0.4em 0.3em;
+        font-size: 0.85em;
+        white-space: nowrap;
+    }
+    .gradient-table td .d-flex {
+        flex-direction: column !important;
+        gap: 0.3em !important;
+        align-items: stretch !important;
+    }
+    .gradient-table .badge {
+        padding: 0.15em 0.6em;
+        font-size: 0.82em;
+    }
+}
+
+/* ...existing styles above... */
+
+/* --- Responsive Exam Table & Actions --- */
+@media (max-width: 576px) {
+    .table-card,
+    .exam-index-table,
+    .gradient-table {
+        padding: .5rem !important;
+        margin: .5rem !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    .table-responsive {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .exam-index-table th, .exam-index-table td,
+    .gradient-table th, .gradient-table td {
+        font-size: 0.92rem !important;
+        padding: 0.25rem 0.2rem !important;
+        white-space: nowrap !important;
+        min-width: 90px !important;
+        max-width: 150px !important;
+        word-break: break-word;
+    }
+
+        .exam-index-table th:last-child, .exam-index-table td:last-child,
+        .gradient-table th:last-child, .gradient-table td:last-child {
+            min-width: 110px !important;
+            max-width: 180px !important;
+        }
+            /* Stack action buttons vertically on mobile */
+            .exam-index-table td:last-child .d-flex,
+            .gradient-table td:last-child .d-flex {
+                flex-direction: column !important;
+                gap: .32rem !important;
+                align-items: stretch !important;
+            }
+
+    .btn-table, .modern-btn {
+        width: 100% !important;
+        margin-bottom: .2rem !important;
+        font-size: 0.94rem !important;
+        padding: 0.5rem 0 !important;
+        justify-content: center !important;
+    }
+    /* Allow table to scroll horizontally */
+    .gradient-table, .exam-index-table {
+        min-width: 700px !important;
+        width: auto !important;
+    }
+
+    .table-responsive {
+        overflow-x: auto !important;
+    }
+}

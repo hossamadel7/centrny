@@ -1,0 +1,39 @@
+name: Build and Publish .NET 9 App
+
+on:
+  push:
+    branches:
+      - Session-test-2   
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore centrny.sln
+
+      - name: Build
+        run: dotnet build centrny.sln --configuration Release --no-restore
+
+      - name: Publish to folder
+        run: dotnet publish centrny.sln -c Release -o publish
+
+      - name: Commit and push publish output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f publish
+          git commit -m "Publish output from build [skip ci]" || echo "No changes to commit"
+          git push origin Session-test-2

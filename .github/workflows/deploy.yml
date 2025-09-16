@@ -2,7 +2,7 @@ name: Build and Deploy .NET 9 App via FTP
 
 on:
   push:
-    branches: [ "session-test-2" ]   # your branch name
+    branches: [ "Session-test-2" ]   # your branch name
 
 jobs:
   build:

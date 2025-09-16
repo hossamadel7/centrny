@@ -219,7 +219,6 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Student not found" });
                 }
 
-                // Get current enrollments (Learn records)
                 var enrollments = await _context.Learns
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.TeacherCodeNavigation)
