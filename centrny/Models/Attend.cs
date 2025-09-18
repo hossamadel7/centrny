@@ -11,6 +11,8 @@ public partial class Attend
 
     public int StudentId { get; set; }
 
+    public bool? IsHisSchedule { get; set; }
+
     public int? HallId { get; set; }
 
     public int? ScheduleCode { get; set; }

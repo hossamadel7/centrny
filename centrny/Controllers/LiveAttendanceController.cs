@@ -23,20 +23,36 @@ namespace centrny.Controllers
             _logger = logger;
         }
 
+        // Helper: Get RootCode from current domain
+        private int GetUserRootCode()
+        {
+            var host = HttpContext.Request.Host.Host.ToString().Replace("www.", "");
+            var root = _context.Roots.FirstOrDefault(x => x.RootDomain == host);
+            return root?.RootCode ?? 0;
+        }
+
         /// <summary>
-        /// GET: LiveAttendance - Show all currently running classes
+        /// GET: LiveAttendance - Show all currently running classes, only for user's root
         /// </summary>
         public async Task<IActionResult> Index()
         {
             try
             {
+                var rootCode = GetUserRootCode();
+                if (rootCode == 0)
+                {
+                    TempData["Error"] = "Unable to determine your center (root). Please contact support.";
+                    return View(new List<RunningClassViewModel>());
+                }
+
                 var currentTime = DateTime.Now;
                 var today = DateOnly.FromDateTime(currentTime);
 
-                // Get all classes running today within the time window (1 hour before start until class ends)
+                // Only classes for correct root
                 var runningClasses = await _context.Classes
                     .Where(c => c.ClassDate.HasValue && c.ClassDate == today &&
-                               c.ClassStartTime.HasValue && c.ClassEndTime.HasValue)
+                               c.ClassStartTime.HasValue && c.ClassEndTime.HasValue &&
+                               c.RootCode == rootCode)
                     .Include(c => c.SubjectCodeNavigation)
                     .Include(c => c.TeacherCodeNavigation)
                     .Include(c => c.HallCodeNavigation)
@@ -66,9 +82,7 @@ namespace centrny.Controllers
                     // Get enrolled students count for this class
                     var enrolledCount = await _context.Learns
                         .Where(l => l.IsActive &&
-                                   l.SubjectCode == c.SubjectCode &&
-                                   l.TeacherCode == c.TeacherCode &&
-                                   (l.ScheduleCode == c.ScheduleCode || l.YearCode == c.YearCode))
+                                   l.ScheduleCode == c.ScheduleCode)
                         .CountAsync();
 
                     // Get attended students count
@@ -105,16 +119,23 @@ namespace centrny.Controllers
         }
 
         /// <summary>
-        /// GET: LiveAttendance/ClassDetail/{classCode} - Show students enrolled in a specific class
+        /// GET: LiveAttendance/ClassDetail/{classCode} - Show students enrolled in a specific class, only for user's root
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> ClassDetail(int classCode)
         {
             try
             {
-                // Get class details
+                var rootCode = GetUserRootCode();
+                if (rootCode == 0)
+                {
+                    TempData["Error"] = "Unable to determine your center (root). Please contact support.";
+                    return RedirectToAction("Index");
+                }
+
+                // Get class details, filtered by root
                 var classEntity = await _context.Classes
-                    .Where(c => c.ClassCode == classCode)
+                    .Where(c => c.ClassCode == classCode && c.RootCode == rootCode)
                     .Include(c => c.SubjectCodeNavigation)
                     .Include(c => c.TeacherCodeNavigation)
                     .Include(c => c.HallCodeNavigation)
@@ -124,17 +145,14 @@ namespace centrny.Controllers
 
                 if (classEntity == null)
                 {
-                    TempData["Error"] = "Class not found.";
+                    TempData["Error"] = "Class not found or not available in your center.";
                     return RedirectToAction("Index");
                 }
 
                 // Get all students enrolled in this class by matching schedule ID in Learn table
                 var enrolledStudents = await _context.Learns
                     .Where(l => l.IsActive &&
-                               l.SubjectCode == classEntity.SubjectCode &&
-                               l.TeacherCode == classEntity.TeacherCode &&
-                               (l.ScheduleCode == classEntity.ScheduleCode ||
-                                (classEntity.YearCode.HasValue && l.YearCode == classEntity.YearCode)))
+                                l.ScheduleCode == classEntity.ScheduleCode)
                     .Include(l => l.StudentCodeNavigation)
                         .ThenInclude(s => s.BranchCodeNavigation)
                     .Include(l => l.StudentCodeNavigation)
@@ -147,7 +165,7 @@ namespace centrny.Controllers
                 // Get attendance records for this class
                 var attendanceRecords = await _context.Attends
                     .Where(a => a.ClassId == classCode)
-                    .Select(a => new { a.StudentId, a.AttendDate })
+                    .Select(a => new { a.StudentId, a.AttendDate, a.IsHisSchedule })
                     .ToListAsync();
 
                 var studentViewModels = new List<ClassStudentViewModel>();
@@ -168,8 +186,9 @@ namespace centrny.Controllers
                             YearName = learn.StudentCodeNavigation.YearCodeNavigation?.YearName ?? "N/A",
                             IsAttended = attendance != null,
                             AttendanceTime = attendance?.AttendDate.ToString("HH:mm"),
-                            ScheduleCode = learn.ScheduleCode??0,
-                            EnrolledSubjectName = learn.SubjectCodeNavigation?.SubjectName ?? "N/A"
+                            ScheduleCode = learn.ScheduleCode ?? 0,
+                            EnrolledSubjectName = learn.SubjectCodeNavigation?.SubjectName ?? "N/A",
+                            IsHisSchedule = attendance?.IsHisSchedule ?? true
                         });
                     }
                 }
@@ -200,13 +219,20 @@ namespace centrny.Controllers
         }
 
         /// <summary>
-        /// POST: LiveAttendance/ScanQRAttendance - Process QR code scan and mark attendance
+        /// POST: LiveAttendance/ScanQRAttendance - Process QR code scan and mark attendance, only for user's root.
+        /// Handles forced attendance (out-of-schedule) logic, setting IsHisSchedule column accordingly.
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> ScanQRAttendance([FromBody] QRAttendanceRequest request)
         {
             try
             {
+                var rootCode = GetUserRootCode();
+                if (rootCode == 0)
+                {
+                    return Json(new { success = false, error = "Unable to determine your center/root. Please contact support." });
+                }
+
                 _logger.LogInformation("Processing QR attendance scan for item key: {ItemKey} in class: {ClassCode}",
                     request.ItemKey, request.ClassCode);
 
@@ -216,14 +242,14 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = string.Join(", ", errors) });
                 }
 
-                // Get class details
+                // Get class details, filtered by root
                 var classEntity = await _context.Classes
                     .Include(c => c.ScheduleCodeNavigation)
-                    .FirstOrDefaultAsync(c => c.ClassCode == request.ClassCode);
+                    .FirstOrDefaultAsync(c => c.ClassCode == request.ClassCode && c.RootCode == rootCode);
 
                 if (classEntity == null)
                 {
-                    return Json(new { success = false, error = "Class not found." });
+                    return Json(new { success = false, error = "Class not found or not available in your center." });
                 }
 
                 // Get student from item key
@@ -239,25 +265,28 @@ namespace centrny.Controllers
 
                 var student = item.StudentCodeNavigation;
 
-                // Verify student is enrolled in this class by checking Learn table with schedule ID matching
+                // Strict schedule check: student must have Learn record with matching schedule
                 var enrollmentCheck = await _context.Learns
                     .FirstOrDefaultAsync(l =>
                         l.StudentCode == student.StudentCode &&
-                        l.SubjectCode == classEntity.SubjectCode &&
-                        l.TeacherCode == classEntity.TeacherCode &&
                         l.IsActive &&
-                        (l.ScheduleCode == classEntity.ScheduleCode ||
-                         (classEntity.YearCode.HasValue && l.YearCode == classEntity.YearCode)));
+                        l.ScheduleCode == classEntity.ScheduleCode);
 
-                if (enrollmentCheck == null)
+                bool isHisSchedule = enrollmentCheck != null;
+
+                // If not enrolled, handle forced attendance option
+                if (!isHisSchedule)
                 {
-                    _logger.LogWarning("Student {StudentCode} is not enrolled in class {ClassCode}. Schedule validation failed.",
-                        student.StudentCode, request.ClassCode);
-                    return Json(new
+                    if (!request.IsForcedAttendance)
                     {
-                        success = false,
-                        error = $"Student {student.StudentName} is not enrolled in this class or schedule does not match."
-                    });
+                        return Json(new
+                        {
+                            success = false,
+                            error = $"Student {student.StudentName} is not enrolled in this class or schedule does not match.",
+                            canForce = true // Tell frontend confirmation is possible
+                        });
+                    }
+                    // else: proceed, mark as forced attendance
                 }
 
                 // Check if already attended
@@ -273,7 +302,7 @@ namespace centrny.Controllers
                     });
                 }
 
-                // Create attendance record
+                // Create attendance record, set IsHisSchedule flag
                 var attendance = new Attend
                 {
                     TeacherCode = classEntity.TeacherCode,
@@ -284,7 +313,8 @@ namespace centrny.Controllers
                     AttendDate = DateTime.Now,
                     SessionPrice = classEntity.ClassPrice ?? 0,
                     RootCode = student.RootCode,
-                    Type = request.AttendanceType ?? 1 // Default to regular attendance
+                    Type = request.AttendanceType ?? 1,
+                    IsHisSchedule = isHisSchedule
                 };
 
                 _context.Attends.Add(attendance);
@@ -296,10 +326,11 @@ namespace centrny.Controllers
                 return Json(new
                 {
                     success = true,
-                    message = $"Attendance marked successfully for {student.StudentName}",
+                    message = $"Attendance marked successfully for {student.StudentName}" + (isHisSchedule ? "" : " (Out of Schedule)"),
                     studentName = student.StudentName,
                     studentCode = student.StudentCode,
-                    attendanceTime = attendance.AttendDate.ToString("HH:mm")
+                    attendanceTime = attendance.AttendDate.ToString("HH:mm"),
+                    isHisSchedule = attendance.IsHisSchedule
                 });
             }
             catch (Exception ex)
@@ -309,60 +340,107 @@ namespace centrny.Controllers
             }
         }
 
-        /// <summary>
-        /// GET: LiveAttendance/GetClassStudents/{classCode} - AJAX endpoint to get updated student list
-        /// </summary>
+        // Add/Update this method in your controller
         [HttpGet]
-        public async Task<IActionResult> GetClassStudents(int classCode)
+        public async Task<IActionResult> GetClassStudents(int classCode, int page = 1, int pageSize = 10)
         {
             try
             {
+                var rootCode = GetUserRootCode();
+                if (rootCode == 0)
+                    return Json(new { success = false, error = "Unable to determine your center/root. Please contact support." });
+
                 // Get class details
                 var classEntity = await _context.Classes
-                    .FirstOrDefaultAsync(c => c.ClassCode == classCode);
+                    .FirstOrDefaultAsync(c => c.ClassCode == classCode && c.RootCode == rootCode);
 
                 if (classEntity == null)
-                {
-                    return Json(new { success = false, error = "Class not found." });
-                }
+                    return Json(new { success = false, error = "Class not found or not available in your center." });
 
-                // Get enrolled students with their attendance status
+                // Enrolled students
                 var enrolledStudents = await _context.Learns
-                    .Where(l => l.IsActive &&
-                               l.SubjectCode == classEntity.SubjectCode &&
-                               l.TeacherCode == classEntity.TeacherCode &&
-                               (l.ScheduleCode == classEntity.ScheduleCode ||
-                                (classEntity.YearCode.HasValue && l.YearCode == classEntity.YearCode)))
+                    .Where(l => l.IsActive && l.ScheduleCode == classEntity.ScheduleCode)
                     .Include(l => l.StudentCodeNavigation)
                         .ThenInclude(s => s.BranchCodeNavigation)
                     .Include(l => l.StudentCodeNavigation)
                         .ThenInclude(s => s.YearCodeNavigation)
                     .ToListAsync();
 
-                // Get current attendance records
+                // Attendance records
                 var attendanceRecords = await _context.Attends
                     .Where(a => a.ClassId == classCode)
-                    .Select(a => new { a.StudentId, a.AttendDate })
+                    .Include(a => a.Student)
+                        .ThenInclude(s => s.BranchCodeNavigation)
+                    .Include(a => a.Student)
+                        .ThenInclude(s => s.YearCodeNavigation)
                     .ToListAsync();
 
-                var students = enrolledStudents
-                    .Where(l => l.StudentCodeNavigation != null)
-                    .Select(l =>
+                // Build dict: key = StudentId, value = student info
+                var studentDict = new Dictionary<int, dynamic>();
+                foreach (var l in enrolledStudents)
+                {
+                    var attendance = attendanceRecords.FirstOrDefault(a => a.StudentId == l.StudentCode);
+                    studentDict[l.StudentCode] = new
                     {
-                        var attendance = attendanceRecords.FirstOrDefault(a => a.StudentId == l.StudentCode);
-                        return new
-                        {
-                            studentCode = l.StudentCode,
-                            studentName = l.StudentCodeNavigation.StudentName,
-                            studentPhone = l.StudentCodeNavigation.StudentPhone,
-                            isAttended = attendance != null,
-                            AttendanceTime = attendance?.AttendDate.ToString("HH:mm"),
-                        };
-                    })
-                    .OrderBy(s => s.studentName)
-                    .ToList();
+                        studentCode = l.StudentCode,
+                        studentName = l.StudentCodeNavigation.StudentName,
+                        studentPhone = l.StudentCodeNavigation.StudentPhone,
+                        studentParentPhone = l.StudentCodeNavigation.StudentFatherPhone,
+                        branchName = l.StudentCodeNavigation.BranchCodeNavigation?.BranchName ?? "N/A",
+                        yearName = l.StudentCodeNavigation.YearCodeNavigation?.YearName ?? "N/A",
+                        isAttended = attendance != null,
+                        AttendanceTime = attendance?.AttendDate.ToString("HH:mm"),
+                        isHisSchedule = attendance?.IsHisSchedule ?? true
+                    };
+                }
 
-                return Json(new { success = true, students = students });
+                // Add attended students who are not enrolled (forced/out-of-schedule)
+                foreach (var a in attendanceRecords)
+                {
+                    if (!studentDict.ContainsKey(a.StudentId) && a.Student != null)
+                    {
+                        studentDict[a.StudentId] = new
+                        {
+                            studentCode = a.StudentId,
+                            studentName = a.Student.StudentName,
+                            studentPhone = a.Student.StudentPhone,
+                            studentParentPhone = a.Student.StudentFatherPhone,
+                            branchName = a.Student.BranchCodeNavigation?.BranchName ?? "N/A",
+                            yearName = a.Student.YearCodeNavigation?.YearName ?? "N/A",
+                            isAttended = true,
+                            AttendanceTime = a.AttendDate.ToString("HH:mm"),
+                            isHisSchedule = a.IsHisSchedule
+                        };
+                    }
+                }
+
+                // Sort and paginate
+                var allStudents = studentDict.Values.OrderBy(s => s.studentName).ToList();
+                var totalStudents = allStudents.Count;
+                var pagedStudents = allStudents.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+                // Stats
+                var totalEnrolled = enrolledStudents.Count;
+                var attendedOnSchedule = allStudents.Count(s => s.isAttended && s.isHisSchedule);
+                var attendedOutOfSchedule = allStudents.Count(s => s.isAttended && !s.isHisSchedule);
+                var totalAttended = allStudents.Count(s => s.isAttended);
+                var totalAbsent = totalEnrolled - attendedOnSchedule;
+                var totalPages = (int)Math.Ceiling((double)totalStudents / pageSize);
+
+                return Json(new
+                {
+                    success = true,
+                    students = pagedStudents,
+                    page,
+                    pageSize,
+                    totalPages,
+                    totalStudents,
+                    totalEnrolled,
+                    attendedOnSchedule,
+                    attendedOutOfSchedule,
+                    totalAttended,
+                    totalAbsent
+                });
             }
             catch (Exception ex)
             {
@@ -443,6 +521,7 @@ namespace centrny.Controllers
         public string? AttendanceTime { get; set; }
         public int ScheduleCode { get; set; }
         public string EnrolledSubjectName { get; set; } = string.Empty;
+        public bool IsHisSchedule { get; set; } = true; // For forced/out-of-schedule attendance badge
     }
 
     // ==================== REQUEST MODELS ====================
@@ -456,5 +535,6 @@ namespace centrny.Controllers
         public int ClassCode { get; set; }
 
         public int? AttendanceType { get; set; }
+        public bool IsForcedAttendance { get; set; } = false; // Frontend confirmation
     }
 }

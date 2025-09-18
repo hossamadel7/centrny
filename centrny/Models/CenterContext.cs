@@ -180,6 +180,7 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Attend_Date");
             entity.Property(e => e.HallId).HasColumnName("Hall_Id");
+            entity.Property(e => e.IsHisSchedule).HasColumnName("IsHisSChedule");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.ScheduleCode).HasColumnName("Schedule_Code");
             entity.Property(e => e.SessionPrice)

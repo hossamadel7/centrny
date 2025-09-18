@@ -3,223 +3,287 @@
     ViewData["Title"] = "Live Attendance - Running Classes";
 }
 
+<!-- Link the shared modern stylesheet -->
+<link rel="stylesheet" href="~/css/LiveAttendance.css" />
+
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-title-box d-flex align-items-center justify-content-between">
-                <h4 class="mb-0">Live Attendance - Running Classes</h4>
-                <div class="page-title-right">
-                    <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
-                        <li class="breadcrumb-item active">Live Attendance</li>
-                    </ol>
+    <!-- Modern Header with Gradient Background -->
+    <div class="la-hero-section">
+        <div class="la-hero-content">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="la-hero-text">
+                    <h1 class="la-hero-title">
+                        <i class="mdi mdi-account-clock la-hero-icon"></i>
+                        Live Attendance
+                    </h1>
+                    <p class="la-hero-subtitle">Track student attendance in real-time</p>
+                </div>
+                <div class="la-hero-actions">
+                    <div class="la-status-badge">
+                        <i class="mdi mdi-circle la-pulse-dot"></i>
+                        <span>Live</span>
+                    </div>
+                    <div class="la-last-updated">
+                        <i class="mdi mdi-clock-outline"></i>
+                        Updated <span id="lastUpdated">@DateTime.Now.ToString("HH:mm:ss")</span>
+                    </div>
+                    <button class="btn btn-outline-light btn-sm la-refresh-btn" id="refreshClasses">
+                        <i class="mdi mdi-refresh"></i>
+                        <span>Refresh</span>
+                    </button>
                 </div>
             </div>
         </div>
+        <div class="la-hero-pattern"></div>
     </div>
 
+    <!-- Alert Section -->
     @if (TempData["Error"] != null)
     {
-        <div class="row">
-            <div class="col-12">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="mdi mdi-alert-circle-outline me-2"></i>
-                    @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="la-alert-container">
+            <div class="alert alert-danger la-alert" role="alert">
+                <i class="mdi mdi-alert-circle-outline"></i>
+                <div>
+                    <strong>Error</strong>
+                    <p>@TempData["Error"]</p>
                 </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         </div>
     }
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0">
-                            <i class="mdi mdi-account-clock me-2"></i>
-                            Currently Running Classes
-                        </h4>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-primary me-2">
-                                <i class="mdi mdi-clock-outline me-1"></i>
-                                Last Updated: <span id="lastUpdated">@DateTime.Now.ToString("HH:mm:ss")</span>
-                            </span>
-                            <button class="btn btn-outline-primary btn-sm" id="refreshClasses">
-                                <i class="mdi mdi-refresh"></i> Refresh
-                            </button>
+    <!-- Main Content -->
+    <div class="la-content-section">
+        @if (Model == null || !Model.Any())
+        {
+            <!-- Empty State -->
+            <div class="la-empty-state">
+                <div class="la-empty-icon">
+                    <i class="mdi mdi-clock-outline"></i>
+                </div>
+                <h3>No Classes Running</h3>
+                <p>Classes will appear here when they're within 1 hour of start time or currently ongoing.</p>
+                <button class="btn btn-primary la-cta-button" onclick="window.location.reload();">
+                    <i class="mdi mdi-refresh"></i>
+                    Check for Classes
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Stats Overview -->
+            <div class="la-stats-overview">
+                <div class="la-stats-grid">
+                    <div class="la-stat-card">
+                        <div class="la-stat-icon la-stat-icon-primary">
+                            <i class="mdi mdi-google-classroom"></i>
+                        </div>
+                        <div class="la-stat-content">
+                            <div class="la-stat-number">@Model.Count</div>
+                            <div class="la-stat-label">Active Classes</div>
+                        </div>
+                    </div>
+                    <div class="la-stat-card">
+                        <div class="la-stat-icon la-stat-icon-success">
+                            <i class="mdi mdi-account-group"></i>
+                        </div>
+                        <div class="la-stat-content">
+                            <div class="la-stat-number">@Model.Sum(x => x.EnrolledStudentsCount)</div>
+                            <div class="la-stat-label">Total Students</div>
+                        </div>
+                    </div>
+                    <div class="la-stat-card">
+                        <div class="la-stat-icon la-stat-icon-info">
+                            <i class="mdi mdi-account-check"></i>
+                        </div>
+                        <div class="la-stat-content">
+                            <div class="la-stat-number">@Model.Sum(x => x.AttendedStudentsCount)</div>
+                            <div class="la-stat-label">Present Today</div>
+                        </div>
+                    </div>
+                    <div class="la-stat-card">
+                        <div class="la-stat-icon la-stat-icon-warning">
+                            <i class="mdi mdi-chart-line"></i>
+                        </div>
+                        <div class="la-stat-content">
+                            <div class="la-stat-number">
+                                @{
+                                    var totalEnrolled = Model.Sum(x => x.EnrolledStudentsCount);
+                                    var totalAttended = Model.Sum(x => x.AttendedStudentsCount);
+                                    var overallPercentage = totalEnrolled > 0 ? Math.Round((double)totalAttended / totalEnrolled * 100, 1) : 0;
+                                }
+                                @overallPercentage%
+                            </div>
+                            <div class="la-stat-label">Attendance Rate</div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    @if (Model == null || !Model.Any())
+            </div>
+
+            <!-- Classes Grid -->
+            <div class="la-classes-section">
+                <div class="la-section-header">
+                    <h2>Running Classes</h2>
+                    <p>Click on any class to start live attendance tracking</p>
+                </div>
+
+                <div class="la-classes-grid" id="classesContainer">
+                    @foreach (var classItem in Model)
                     {
-                        <div class="text-center py-5">
-                            <i class="mdi mdi-clock-outline text-muted" style="font-size: 4rem;"></i>
-                            <h5 class="text-muted mt-3">No Classes Running Currently</h5>
-                            <p class="text-muted">Classes appear here when they are within 1 hour of start time or currently ongoing.</p>
-                            <button class="btn btn-primary" onclick="window.location.reload();">
-                                <i class="mdi mdi-refresh me-1"></i> Check for Classes
-                            </button>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="row" id="classesContainer">
-                            @foreach (var classItem in Model)
-                            {
-                                <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-                                    <div class="card border-left-primary shadow-sm h-100">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                <h5 class="card-title text-primary mb-1">@classItem.ClassName</h5>
-                                                <span class="badge bg-success">
-                                                    <i class="mdi mdi-clock-check me-1"></i>Running
-                                                </span>
-                                            </div>
+                        <div class="la-class-card" data-class-id="@classItem.ClassCode">
+                            <div class="la-class-header">
+                                <div class="la-class-badge">
+                                    <i class="mdi mdi-play-circle"></i>
+                                    <span>Live</span>
+                                </div>
+                                <div class="la-class-menu">
+                                    <i class="mdi mdi-dots-vertical"></i>
+                                </div>
+                            </div>
 
-                                            <div class="class-info mb-3">
-                                                <div class="row g-2">
-                                                    <div class="col-12">
-                                                        <small class="text-muted">
-                                                            <i class="mdi mdi-book-open me-1"></i>Subject:
-                                                        </small>
-                                                        <div class="fw-medium">@classItem.SubjectName</div>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <small class="text-muted">
-                                                            <i class="mdi mdi-account-tie me-1"></i>Teacher:
-                                                        </small>
-                                                        <div class="fw-medium">@classItem.TeacherName</div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <small class="text-muted">
-                                                            <i class="mdi mdi-door me-1"></i>Hall:
-                                                        </small>
-                                                        <div class="fw-medium">@classItem.HallName</div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <small class="text-muted">
-                                                            <i class="mdi mdi-office-building me-1"></i>Branch:
-                                                        </small>
-                                                        <div class="fw-medium">@classItem.BranchName</div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <small class="text-muted">
-                                                            <i class="mdi mdi-clock-start me-1"></i>Start:
-                                                        </small>
-                                                        <div class="fw-medium text-info">@classItem.StartTime</div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <small class="text-muted">
-                                                            <i class="mdi mdi-clock-end me-1"></i>End:
-                                                        </small>
-                                                        <div class="fw-medium text-warning">@classItem.EndTime</div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <div class="la-class-content">
+                                <div class="la-class-title-section">
+                                    <h3 class="la-class-name">@classItem.ClassName</h3>
+                                    <p class="la-class-subject">
+                                        <i class="mdi mdi-book-open-variant"></i>
+                                        @classItem.SubjectName
+                                    </p>
+                                </div>
 
-                                            <div class="attendance-stats mb-3">
-                                                <div class="row text-center">
-                                                    <div class="col-6">
-                                                        <div class="border-end">
-                                                            <h4 class="text-primary mb-1">@classItem.EnrolledStudentsCount</h4>
-                                                            <small class="text-muted">Enrolled</small>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <h4 class="text-success mb-1">@classItem.AttendedStudentsCount</h4>
-                                                        <small class="text-muted">Attended</small>
-                                                    </div>
-                                                </div>
-                                                <div class="progress mt-2" style="height: 5px;">
-                                                    @{
-                                                        var attendancePercentage = classItem.EnrolledStudentsCount > 0
-                                                        ? (double)classItem.AttendedStudentsCount / classItem.EnrolledStudentsCount * 100
-                                                        : 0;
-                                                    }
-                                                    <div class="progress-bar bg-success"
-                                                         role="progressbar"
-                                                         style="width: @attendancePercentage%"
-                                                         aria-valuenow="@attendancePercentage"
-                                                         aria-valuemin="0"
-                                                         aria-valuemax="100">
-                                                    </div>
-                                                </div>
-                                                <div class="text-center mt-1">
-                                                    <small class="text-muted">@Math.Round(attendancePercentage, 1)% Attendance</small>
-                                                </div>
-                                            </div>
-
-                                            <div class="text-center">
-                                                <a href="@Url.Action("ClassDetail", new { classCode = classItem.ClassCode })"
-                                                   class="btn btn-primary w-100">
-                                                    <i class="mdi mdi-qrcode-scan me-1"></i>
-                                                    Open Live Attendance
-                                                </a>
-                                            </div>
+                                <div class="la-class-details">
+                                    <div class="la-class-detail-row">
+                                        <div class="la-class-detail">
+                                            <i class="mdi mdi-account-tie"></i>
+                                            <span>@classItem.TeacherName</span>
+                                        </div>
+                                        <div class="la-class-detail">
+                                            <i class="mdi mdi-map-marker"></i>
+                                            <span>@classItem.HallName</span>
+                                        </div>
+                                    </div>
+                                    <div class="la-class-detail-row">
+                                        <div class="la-class-detail">
+                                            <i class="mdi mdi-office-building"></i>
+                                            <span>@classItem.BranchName</span>
+                                        </div>
+                                        <div class="la-class-time">
+                                            <i class="mdi mdi-clock"></i>
+                                            <span>@classItem.StartTime - @classItem.EndTime</span>
                                         </div>
                                     </div>
                                 </div>
-                            }
+
+                                <div class="la-attendance-section">
+                                    <div class="la-attendance-header">
+                                        <span class="la-attendance-title">Attendance</span>
+                                        <span class="la-attendance-ratio">
+                                            @classItem.AttendedStudentsCount / @classItem.EnrolledStudentsCount
+                                        </span>
+                                    </div>
+
+                                    <div class="la-attendance-progress">
+                                        @{
+                                            var attendancePercentage = classItem.EnrolledStudentsCount > 0
+                                            ? (double)classItem.AttendedStudentsCount / classItem.EnrolledStudentsCount * 100
+                                            : 0;
+                                        }
+                                        <div class="la-progress-track">
+                                            <div class="la-progress-fill"
+                                                 style="width: @attendancePercentage%"
+                                                 data-percentage="@Math.Round(attendancePercentage, 1)">
+                                            </div>
+                                        </div>
+                                        <div class="la-attendance-percentage">
+                                            @Math.Round(attendancePercentage, 1)%
+                                        </div>
+                                    </div>
+
+                                    <div class="la-attendance-stats">
+                                        <div class="la-attendance-stat la-stat-present">
+                                            <div class="la-stat-dot"></div>
+                                            <span>@classItem.AttendedStudentsCount Present</span>
+                                        </div>
+                                        <div class="la-attendance-stat la-stat-absent">
+                                            <div class="la-stat-dot"></div>
+                                            <span>@(classItem.EnrolledStudentsCount - classItem.AttendedStudentsCount) Absent</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="la-class-footer">
+                                <a href="@Url.Action("ClassDetail", new { classCode = classItem.ClassCode })"
+                                   class="la-class-cta">
+                                    <i class="mdi mdi-qrcode-scan"></i>
+                                    <span>Start Live Attendance</span>
+                                    <i class="mdi mdi-arrow-right"></i>
+                                </a>
+                            </div>
                         </div>
                     }
                 </div>
             </div>
-        </div>
+        }
     </div>
 </div>
 
-<style>
-    .border-left-primary {
-        border-left: 0.25rem solid #007bff !important;
-    }
-
-    .card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.12) !important;
-        }
-
-    .class-info {
-        font-size: 0.9rem;
-    }
-
-    .attendance-stats h4 {
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-
-
-    .progress {
-        background-color: #f1f1f1;
-    }
-
-    @@media (max-width: 768px) {
-        .col-xl-4 {
-            margin-bottom: 1rem;
-        }
-    }
-</style>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto-refresh every 30 seconds
-        setInterval(function() {
-            window.location.reload();
-        }, 30000);
-
-        // Manual refresh button
-        document.getElementById('refreshClasses').addEventListener('click', function() {
-            window.location.reload();
+        // Animate class cards on load
+        const cards = document.querySelectorAll('.la-class-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
         });
 
-        // Update last updated time
+        // Auto-refresh every 30 seconds with smooth transition
+        let refreshInterval = setInterval(function() {
+            document.body.classList.add('la-refreshing');
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }, 30000);
+
+        // Manual refresh button with loading state
+        var refreshBtn = document.getElementById('refreshClasses');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                this.classList.add('la-loading');
+                this.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i><span>Refreshing...</span>';
+
+                clearInterval(refreshInterval);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            });
+        }
+
+        // Update last updated time with animation
         setInterval(function() {
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+            var el = document.getElementById('lastUpdated');
+            if (el) {
+                el.style.opacity = '0.5';
+                setTimeout(() => {
+                    el.textContent = new Date().toLocaleTimeString();
+                    el.style.opacity = '1';
+                }, 200);
+            }
         }, 1000);
+
+        // Add hover effects to class cards
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
     });
 </script>

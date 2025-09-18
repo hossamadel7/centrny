@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using centrny.Attributes;
 
 namespace centrny1.Controllers
 {
-    [Authorize]
+    [RequirePageAccess("Root")]
+ 
     public class RootController : Controller
     {
         private readonly CenterContext _context;
