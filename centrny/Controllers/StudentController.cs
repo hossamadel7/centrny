@@ -446,13 +446,14 @@ namespace centrny.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, error = "Invalid request payload." });
 
-            var allowedGroups = new[] { "Admins", "Attendance Officers" };
+            // Get the root code for the branch
+            var branch = await _context.Branches.FirstOrDefaultAsync(b => b.BranchCode == req.BranchCode);
+            var targetRootCode = branch?.RootCode ?? 0;
 
             var users = await (
                 from u in _context.Users
                 join g in _context.Groups on u.GroupCode equals g.GroupCode
-                where  allowedGroups.Contains(g.GroupName)
-                 //g.BranchCode == req.BranchCode &&
+                where g.RootCode == targetRootCode // Only match RootCode, ignore branch and group name
                 select new
                 {
                     u.UserCode,
@@ -460,8 +461,8 @@ namespace centrny.Controllers
                     u.Username,
                     u.GroupCode,
                     g.GroupName,
-                    g.BranchCode,   // int
-                    g.RootCode      // int
+                    g.BranchCode,
+                    g.RootCode
                 }
             ).ToListAsync();
 
@@ -476,10 +477,9 @@ namespace centrny.Controllers
                     if (user.BranchCode != null)
                         HttpContext.Session.SetInt32("BranchCode", (int)user.BranchCode);
                     else
-                        HttpContext.Session.Remove("BranchCode"); // or set to 0 if you prefer: SetInt32("BranchCode", 0);
+                        HttpContext.Session.Remove("BranchCode");
                     HttpContext.Session.SetInt32("RootCode", user.RootCode);
 
-                    // (Claims optional—kept for consistency)
                     var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
@@ -2125,10 +2125,10 @@ namespace centrny.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
             if (user == null) return false;
 
-            // Ignore branchCode: only check for group in the root
+            // Allow any group with the same rootCode to mark attendance
             var group = await _context.Groups
-                .Where(g => g.GroupCode == user.GroupCode && g.RootCode == rootCode)
-                .FirstOrDefaultAsync(g => g.GroupName == "Admins" || g.GroupName == "Attendance Officers");
+                .FirstOrDefaultAsync(g => g.GroupCode == user.GroupCode && g.RootCode == rootCode);
+
             return group != null;
         }
 

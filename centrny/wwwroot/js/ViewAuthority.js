@@ -12,6 +12,7 @@ function setLabels() {
     $('#groups-header').text(getJsString('groupsHeader'));
     $('#pages-header').text(getJsString('pagesHeader'));
     $('#button-add-selected-pages').text(getJsString('buttonAddSelectedPages'));
+    $('#addSelectedPagesBtn').text(getJsString('buttonAddSelectedPages')); // Always set label
     $('#permissions-set').text(getJsString('permissionsSet'));
     $('#label-insert').text(getJsString('labelInsert'));
     $('#label-update').text(getJsString('labelUpdate'));
@@ -105,7 +106,11 @@ $(document).ready(function () {
                     });
                 }
                 infoForms.style.display = "";
-                if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "none";
+                if (addSelectedPagesBtn) {
+                    addSelectedPagesBtn.style.display = "none";
+                    addSelectedPagesBtn.disabled = true;
+                    addSelectedPagesBtn.textContent = getJsString('buttonAddSelectedPages');
+                }
             });
     });
 
@@ -116,7 +121,11 @@ $(document).ready(function () {
             selectedGroup = e.target.getAttribute('data-code');
             selectedGroupName = e.target.getAttribute('data-name');
             filterAvailablePages();
-            if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "";
+            if (addSelectedPagesBtn) {
+                addSelectedPagesBtn.style.display = "";
+                addSelectedPagesBtn.disabled = false;
+                addSelectedPagesBtn.textContent = getJsString('buttonAddSelectedPages');
+            }
             selectedPages = [];
             permissionForm.style.display = "none";
             loadExistingGroupPagesTable();
@@ -142,7 +151,10 @@ $(document).ready(function () {
         var availablePages = allPages.filter(p => !takenPageCodes.includes(p.pageCode));
         if (availablePages.length === 0) {
             pagesList.innerHTML = `<li class="list-group-item text-muted">${getJsString('noPagesAvailable')}</li>`;
-            if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "none";
+            if (addSelectedPagesBtn) {
+                addSelectedPagesBtn.style.display = "none";
+                addSelectedPagesBtn.disabled = true;
+            }
         } else {
             availablePages.forEach(p => {
                 var li = document.createElement('li');
@@ -152,7 +164,11 @@ $(document).ready(function () {
                 </label>`;
                 pagesList.appendChild(li);
             });
-            if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "";
+            if (addSelectedPagesBtn) {
+                addSelectedPagesBtn.style.display = "";
+                addSelectedPagesBtn.disabled = false;
+                addSelectedPagesBtn.textContent = getJsString('buttonAddSelectedPages');
+            }
         }
         selectedPages = [];
         permissionForm.style.display = "none";
@@ -174,10 +190,6 @@ $(document).ready(function () {
             canInsert.checked = false;
             canUpdate.checked = false;
             canDelete.checked = false;
-            permissionForm.style.display = "";
-            permissionForm.style.display = "";
-            permissionForm.style.display = "";
-            permissionForm.style.display = "";
             permissionForm.style.display = "block";
         });
     }
@@ -272,7 +284,10 @@ $(document).ready(function () {
                             rootSelect.dispatchEvent(new Event('change'));
                         }
                         loadExistingGroupPagesTable();
-                        if (addSelectedPagesBtn) addSelectedPagesBtn.style.display = "none";
+                        if (addSelectedPagesBtn) {
+                            addSelectedPagesBtn.style.display = "none";
+                            addSelectedPagesBtn.disabled = true;
+                        }
                     } else {
                         alert(getJsString('alertSaveFailed'));
                     }

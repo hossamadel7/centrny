@@ -1,4 +1,9 @@
-﻿let selectedRootCode = null;
+﻿// Ensure that jQuery is loaded before this script runs
+if (typeof $ === 'undefined') {
+    throw new Error('jQuery is not loaded. Please include jQuery before user-roles.js.');
+}
+
+let selectedRootCode = null;
 let isUsernameTaken = false;
 let loggedInUserCode = window.loggedInUserCode || 1; // Set this globally on login for group/user creation
 

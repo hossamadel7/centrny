@@ -2,6 +2,9 @@
     ViewData["Title"] = "Security";
     Layout = "_Layout";
 }
+<!-- Bootstrap CSS (NO integrity/crossorigin for local/testing) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <link rel="stylesheet" href="~/css/Hamody.css" />
 
 <div class="security-header mb-0">
@@ -187,5 +190,10 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/Security.js"></script>
+    <!-- jQuery (required by your JS and Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap Bundle JS (NO integrity/crossorigin for local/testing) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Your JS file (make sure it's the correct/fixed one, e.g. user-roles.js) -->
+    <script src="~/js/security.js"></script>
 }
