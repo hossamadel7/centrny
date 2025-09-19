@@ -13,22 +13,26 @@ namespace centrny.Controllers
         RequirePIN,      // Student needs to enter PIN
         AccessDenied     // Student cannot access (PIN owned by another student)
     }
+
     public class LessonContentController : Controller
     {
+        private readonly ILogger<LessonContentController> _logger;
         private readonly CenterContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly FileUploadSettings _fileUploadSettings;
 
 
-        public LessonContentController(
-            CenterContext context,
-            IWebHostEnvironment webHostEnvironment,
-            IOptions<FileUploadSettings> fileUploadSettings)
+        public LessonContentController(ILogger<LessonContentController> logger,
+     CenterContext context,
+     IWebHostEnvironment webHostEnvironment,
+     IOptions<FileUploadSettings> fileUploadSettings)
         {
+            _logger = logger; // ✅ add this line
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _fileUploadSettings = fileUploadSettings.Value;
         }
+
 
         // --- SESSION HELPERS ---
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
@@ -571,14 +575,13 @@ namespace centrny.Controllers
 
             try
             {
-                // Fetch all files linked to this lesson
                 var filesData = await _context.Files
                     .Where(f => f.LessonCode == lessonCode
                         && f.RootCode == rootCode.Value
                         && f.IsActive)
                     .ToListAsync();
 
-                // Separate exam/assignment links (Files that have ExamCode)
+                // Files that link to an exam/assignment
                 var examFileLinks = filesData
                     .Where(f => f.ExamCode.HasValue)
                     .ToList();
@@ -588,7 +591,6 @@ namespace centrny.Controllers
                     .Distinct()
                     .ToList();
 
-                // Get all exams for these codes
                 var examsData = await _context.Exams
                     .Where(e => examCodes.Contains(e.ExamCode) && e.IsActive == true)
                     .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { Exam = e, Teacher = t })
@@ -596,7 +598,7 @@ namespace centrny.Controllers
                     .Select(et => et.Exam)
                     .ToListAsync();
 
-                // Map exams and assignments by file (for sortOrder, etc.)
+                // Build exam/assignment items with explicit examCode and fileCode
                 var examItems = examFileLinks.Select(f =>
                 {
                     var exam = examsData.FirstOrDefault(e => e.ExamCode == f.ExamCode);
@@ -604,11 +606,17 @@ namespace centrny.Controllers
 
                     return new
                     {
-                        itemCode = f.FileCode, // Use File's code for uniqueness in content list
+                        // keep existing itemCode for backward-compat (it was FileCode)
+                        itemCode = f.FileCode,
+                        // explicit identifiers
+                        fileCode = f.FileCode,
+                        examCode = exam.ExamCode,
+
                         displayName = exam.ExamName ?? "Unknown Exam",
                         itemType = exam.IsExam ? "Exam" : "Assignment",
-                        fileType = 3, // For both exams and assignments, keep 3 or set as needed
-                        sortOrder = f.SortOrder ,
+                        fileType = 3,
+                        // prefer exam.SortOrder, fallback to file.SortOrder
+                        sortOrder = exam.SortOrder ?? f.SortOrder,
                         videoProvider = (int?)null,
                         videoProviderName = (string)null,
                         fileExtension = (string)null,
@@ -617,20 +625,20 @@ namespace centrny.Controllers
                         duration = (TimeSpan?)null,
                         durationFormatted = (string)null,
                         contentType = exam.IsExam ? "exam" : "assignment",
-                        isOnlineLesson = (bool?)null,
                         examDegree = exam.ExamDegree,
-                        examTimer = exam.ExamTimer.ToString(@"HH\:mm"),
+                        examTimer = exam.ExamTimer.ToString(@"HH\\:mm"),
                         isOnline = exam.IsOnline,
                         isDone = exam.IsDone
                     };
                 }).Where(x => x != null).ToList();
 
-                // Other files (videos, regular files)
+                // Other files (videos, regular files) — add fileCode explicitly
                 var normalFiles = filesData
                     .Where(f => !f.ExamCode.HasValue)
                     .Select(f => new
                     {
-                        itemCode = f.FileCode,
+                        itemCode = f.FileCode, // keep for backward-compat
+                        fileCode = f.FileCode, // explicit
                         displayName = f.DisplayName ?? "Unknown",
                         itemType = f.FileType == 1 ? "Video" : "File",
                         fileType = f.FileType,
@@ -643,7 +651,7 @@ namespace centrny.Controllers
                         fileSizeBytes = f.FileSizeBytes,
                         fileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
                         duration = f.Duration,
-                        durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
+                        durationFormatted = f.Duration?.ToString(@"hh\\:mm\\:ss"),
                         contentType = "content",
                         isOnlineLesson = f.IsOnlineLesson,
                         examDegree = (string)null,
@@ -667,7 +675,6 @@ namespace centrny.Controllers
                 return StatusCode(500, $"Error loading lesson content: {ex.Message}");
             }
         }
-
         [HttpGet]
         public async Task<IActionResult> GetAvailableExams(int lessonCode, bool? isExam = null)
         {
@@ -1039,7 +1046,7 @@ namespace centrny.Controllers
 
                 if (existingAttend != null)
                 {
-                    
+
                     existingAttend.InsertTime = DateTime.Now;
                     Console.WriteLine($"📈 Incremented views to {existingAttend.Views} for existing attendance record");
                 }
@@ -1071,16 +1078,45 @@ namespace centrny.Controllers
             }
         }
 
+       
+
+        [HttpGet]
+        public IActionResult GetSessionStudentCode()
+        {
+            try
+            {
+                Console.WriteLine("GetSessionStudentCode called");
+
+                var studentCode = GetSessionInt("StudentCode");
+                Console.WriteLine($"StudentCode from session: {studentCode}");
+
+                if (!studentCode.HasValue)
+                {
+                    Console.WriteLine("StudentCode is null, returning error");
+                    return Json(new { error = "Student not found in session" });
+                }
+
+                Console.WriteLine($"Returning studentCode: {studentCode.Value}");
+                return Json(new { studentCode = studentCode.Value });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetSessionStudentCode: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return Json(new { error = "Failed to get student info from session" });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> ViewLesson(int lessonCode, string pinCode)
         {
-            Console.WriteLine($"🎓 ViewLesson access attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            Console.WriteLine($"   - LessonCode: {lessonCode}");
-            Console.WriteLine($"   - PinCode: {pinCode}");
 
             var sessionPin = HttpContext.Session.GetString("ValidatedPin");
             var sessionLesson = HttpContext.Session.GetInt32("AccessibleLesson");
             var sessionAccessTime = HttpContext.Session.GetString("AccessGrantedAt");
+            var studentCode = GetSessionInt("StudentCode");
+            var rootCode = GetSessionInt("RootCode");
+            var username = GetSessionString("StudentUsername");
 
             if (sessionPin != pinCode || sessionLesson != lessonCode)
             {
@@ -1090,7 +1126,6 @@ namespace centrny.Controllers
 
             try
             {
-                var rootCode = GetSessionInt("RootCode");
 
                 var lesson = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)

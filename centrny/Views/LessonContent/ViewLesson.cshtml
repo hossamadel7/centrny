@@ -650,198 +650,145 @@
             `;
         }
 
-        function renderCleanContentList() {
-            console.log('🎨 Rendering content list in database sort order');
+               function renderCleanContentList() {
             const container = document.getElementById('unifiedContentContainer');
+            if (!container) return;
 
-            if (!container) {
-                console.error('❌ Container unifiedContentContainer not found!');
-                return;
-            }
-
-            // Filter out items with invalid itemCodes
+            // Type-aware validity
             const validContent = lessonContent.filter(item => {
-                const itemCode = item.itemCode || item.fileCode;
-                if (!itemCode || itemCode <= 0) {
-                    console.warn(`⚠️ Skipping item with invalid itemCode: ${itemCode}`, item);
-                    return false;
+                const isExam = item.fileType === 3;
+                if (isExam) {
+                    const examCode = Number(item.examCode);
+                    const ok = !!examCode && examCode > 0;
+                    if (!ok) console.warn('Skipping exam without valid examCode', item);
+                    return ok;
+                } else {
+                    const fileCode = Number(item.fileCode ?? item.itemCode);
+                    const ok = !!fileCode && fileCode > 0;
+                    if (!ok) console.warn('Skipping file/video without valid fileCode/itemCode', item);
+                    return ok;
                 }
-                return true;
             });
 
-            // Sort ONLY by sortOrder from database - respect teacher's arrangement
-            const sortedContent = validContent.sort((a, b) => {
-                const sortA = a.sortOrder || 999;
-                const sortB = b.sortOrder || 999;
-                return sortA - sortB;
-            });
-
-            console.log('📋 Content sorted by database sort order:', sortedContent);
-
-            if (sortedContent.length === 0) {
-                showEmptyContent();
-                return;
-            }
+            const sortedContent = validContent.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+            if (sortedContent.length === 0) { showEmptyContent(); return; }
 
             let html = '';
             let videoIndex = 0;
 
             sortedContent.forEach((item, index) => {
                 const isVideo = item.fileType === 1;
-                const isFile = item.fileType === 0 || item.fileType === 2;
-                const isExam = item.fileType === 3;
+                const isExam  = item.fileType === 3;
+                const isFile  = !isVideo && !isExam;
 
-                const itemVideoIndex = isVideo ? videoIndex : -1;
+                const itemVideoIndex = isVideo ? videoIndex++ : -1;
 
-                if (isVideo) {
-                    videoIndex++;
-                }
-
-                // Get item code (could be fileCode or itemCode)
-                const itemCode = item.itemCode || item.fileCode;
-                if (!itemCode || itemCode <= 0) {
-                    console.error(`❌ Item has invalid itemCode: ${itemCode}`, item);
+                // Choose correct identifier for actions
+                const actionCode = isExam ? Number(item.examCode) : Number(item.fileCode ?? item.itemCode);
+                if (!actionCode || actionCode <= 0) {
+                    console.warn('Skipping item with invalid action code', item);
                     return;
                 }
 
-                // Determine item type for styling and functionality
                 let itemClass, iconHtml, badgeClass, badgeText, actionButton;
-
                 if (isVideo) {
                     itemClass = 'video-item';
                     iconHtml = '<i class="fas fa-play-circle" style="color: #e74c3c;"></i>';
                     badgeClass = 'video-badge';
                     badgeText = `Video ${itemVideoIndex + 1}`;
                     actionButton = `<button class="play-btn" onclick="event.stopPropagation(); changeVideo(${itemVideoIndex});">
-                                     <i class="fas fa-play me-1"></i>Play Video
-                                   </button>`;
+                                      <i class="fas fa-play me-1"></i>Play Video
+                                    </button>`;
                 } else if (isExam) {
                     itemClass = 'exam-item';
                     iconHtml = '<i class="fas fa-clipboard-check" style="color: #f39c12;"></i>';
                     badgeClass = 'exam-badge';
                     badgeText = 'Exam';
-                    actionButton = `<button class="exam-btn" onclick="event.stopPropagation(); openExam(${itemCode});">
-                                     <i class="fas fa-pencil-alt me-1"></i>Take Exam
-                                   </button>`;
+                    actionButton = `<button class="exam-btn" onclick="event.stopPropagation(); openExam(${actionCode});">
+                                      <i class="fas fa-pencil-alt me-1"></i>Take Exam
+                                    </button>`;
                 } else {
                     itemClass = 'file-item';
                     iconHtml = '<i class="fas fa-file-alt" style="color: #3498db;"></i>';
                     badgeClass = 'file-badge';
                     badgeText = 'Document';
-                    actionButton = `<button class="download-btn" onclick="event.stopPropagation(); downloadFile(${itemCode});">
-                                     <i class="fas fa-download me-1"></i>Download File
-                                   </button>`;
+                    actionButton = `<button class="download-btn" onclick="event.stopPropagation(); downloadFile(${actionCode});">
+                                      <i class="fas fa-download me-1"></i>Download File
+                                    </button>`;
                 }
 
-                // Content metadata
-                let metaInfo = '';
-                if (isVideo) {
-                    metaInfo = `${item.videoProviderName || 'Unknown Provider'}${item.durationFormatted ? ` • Duration: ${item.durationFormatted}` : ''}`;
-                } else if (isExam) {
-                    metaInfo = `${item.examTimer ? `Duration: ${item.examTimer}` : ''}${item.examDegree ? ` • Total: ${item.examDegree} marks` : ''}`;
-                } else {
-                    metaInfo = `${item.fileExtension || ''}${item.fileSizeFormatted ? ` • Size: ${item.fileSizeFormatted}` : ''}`;
-                }
+                const metaInfo = isVideo
+                    ? `${item.videoProviderName || 'Unknown Provider'}${item.durationFormatted ? ` • Duration: ${item.durationFormatted}` : ''}`
+                    : isExam
+                    ? `${item.examTimer ? `Duration: ${item.examTimer}` : ''}${item.examDegree ? ` • Total: ${item.examDegree} marks` : ''}`
+                    : `${item.fileExtension || ''}${item.fileSizeFormatted ? ` • Size: ${item.fileSizeFormatted}` : ''}`;
 
                 html += `
                     <div class="content-item ${itemClass}"
                          ${isVideo ? `data-video-index="${itemVideoIndex}" onclick="changeVideo(${itemVideoIndex})"` : ''}
-                         data-item-code="${itemCode}"
+                         ${isExam ? `data-exam-code="${actionCode}"` : `data-file-code="${actionCode}"`}
                          data-item-type="${item.itemType}"
                          style="animation-delay: ${index * 0.1}s;">
                         <div class="d-flex align-items-start">
-                            <div class="content-icon">
-                                ${iconHtml}
-                            </div>
+                            <div class="content-icon">${iconHtml}</div>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">
-                                            <span class="content-badge ${badgeClass}">
-                                                ${badgeText}
-                                            </span>
+                                            <span class="content-badge ${badgeClass}">${badgeText}</span>
                                             ${item.displayName || 'Untitled'}
                                         </h6>
-                                        <div class="content-meta">
-                                            ${metaInfo}
-                                        </div>
+                                        <div class="content-meta">${metaInfo}</div>
                                     </div>
                                 </div>
-                                <div class="content-actions">
-                                    ${actionButton}
-                                </div>
+                                <div class="content-actions">${actionButton}</div>
                             </div>
                         </div>
                     </div>
                 `;
             });
 
-            console.log('📝 Generated HTML length:', html.length);
             container.innerHTML = html;
-            console.log('✅ Content rendered successfully in database sort order');
         }
 
         async function changeVideo(videoIndex) {
             const videos = lessonContent.filter(item => item.fileType === 1);
-
-            console.log('🎬 Changing to video index:', videoIndex, 'Total videos:', videos.length);
-
-            if (videoIndex < 0 || videoIndex >= videos.length) {
-                console.log('❌ Invalid video index');
-                return;
-            }
+            if (videoIndex < 0 || videoIndex >= videos.length) return;
 
             const video = videos[videoIndex];
             currentVideoIndex = videoIndex;
 
             try {
-                const videoCode = video.itemCode || video.fileCode;
+                // Prefer fileCode; fallback to itemCode for backward-compat
+                const videoCode = Number(video.fileCode ?? video.itemCode);
                 const response = await fetch(`/LessonContent/GetSecureVideoUrl?fileCode=${videoCode}&pinCode=${currentPinCode}`);
-
                 if (!response.ok) {
                     const error = await response.text();
                     alert(error || 'Unable to load video');
                     return;
                 }
-
                 const videoData = await response.json();
-                console.log('🎥 Video data received:', videoData);
-
-                // Load video based on provider
                 loadVideo(videoData);
 
-                // Update current video info
                 document.getElementById('currentVideoTitle').textContent = videoData.displayName;
                 document.getElementById('currentVideoInfo').textContent = `${videoData.provider} ${videoData.duration ? `• ${videoData.duration}` : ''}`;
 
-                // Show video controls
                 document.getElementById('videoControls').style.display = 'block';
-
-                // Update navigation buttons
                 document.getElementById('prevVideoBtn').disabled = videoIndex === 0;
                 document.getElementById('nextVideoBtn').disabled = videoIndex === videos.length - 1;
 
-                // Highlight current video in list
-                document.querySelectorAll('[data-video-index]').forEach(item => {
-                    item.classList.remove('current-video-info');
-                });
+                document.querySelectorAll('[data-video-index]').forEach(i => i.classList.remove('current-video-info'));
                 const currentItem = document.querySelector(`[data-video-index="${videoIndex}"]`);
-                if (currentItem) {
-                    currentItem.classList.add('current-video-info');
-                    currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                if (currentItem) currentItem.classList.add('current-video-info');
 
-                // Start watch time tracking
                 startWatchTracking(videoCode);
-
             } catch (error) {
-                console.error('❌ Error loading video:', error);
+                console.error('Error loading video:', error);
                 alert('Error loading video. Please try again.');
             }
         }
-
-        function openExam(examCode) {
-            console.log('📝 Opening exam with code:', examCode);
+                   async function openExam(examCode) {
+            console.log('Opening exam with code:', examCode);
 
             if (!examCode || examCode <= 0) {
                 alert('Invalid exam selected');
@@ -853,22 +800,51 @@
                 return;
             }
 
-            // Find the exam in our content
-            const exam = lessonContent.find(item => (item.itemCode || item.fileCode) === examCode && item.fileType === 3);
-            if (exam) {
-                const message = `Exam: ${exam.displayName}\n` +
-                               `Duration: ${exam.examTimer || 'Not specified'}\n` +
-                               `Total Marks: ${exam.examDegree || 'Not specified'}\n` +
-                               `Type: ${exam.isOnline ? 'Online' : 'Offline'}`;
+            try {
+                // Get student code from session
+                const studentResponse = await fetch('/LessonContent/GetSessionStudentCode');
+                const studentData = await studentResponse.json();
 
-                if (confirm(message + '\n\nWould you like to start this exam?')) {
-                    // Redirect to exam taking interface
-                    const examUrl = `/Exam/TakeExam?examCode=${examCode}&pinCode=${encodeURIComponent(currentPinCode)}`;
-                    console.log('🔗 Opening exam URL:', examUrl);
-                    window.open(examUrl, '_blank');
+                if (studentData.error || !studentData.studentCode) {
+                    alert('Unable to get student information: ' + (studentData.error || 'Unknown error'));
+                    return;
                 }
-            } else {
-                alert('Exam not found');
+
+                const studentCode = studentData.studentCode;
+
+                // Step 1: Validate exam eligibility
+                const examResponse = await fetch(`/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`);
+                const examData = await examResponse.json();
+
+                if (examData.error) {
+                    alert('Cannot access exam: ' + examData.error);
+                    return;
+                }
+
+                if (examData.alreadyTaken) {
+                    alert('You have already taken this exam.');
+                    return;
+                }
+
+                // Step 2: Show exam confirmation
+                const message = `Exam: ${examData.examName}\n` +
+                               `Subject: ${examData.subjectName}\n` +
+                               `Teacher: ${examData.teacherName}\n` +
+                               `Duration: ${examData.examTimer ? examData.examTimer.toString() : 'Not specified'}\n` +
+                               `Type: ${examData.isExam ? 'Exam' : 'Assignment'}`;
+
+                if (!confirm(message + '\n\nWould you like to start this exam?')) {
+                    return;
+                }
+
+                // Step 3: Use the correct URL format with query parameters
+                const examUrl = `/StudentExam?studentCode=${studentCode}&examCode=${examCode}`;
+                console.log('Opening exam URL:', examUrl);
+                window.open(examUrl, '_blank');
+
+            } catch (error) {
+                console.error('Error in openExam:', error);
+                alert('Unable to start exam. Please refresh the page and try again.');
             }
         }
 
