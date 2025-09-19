@@ -33,65 +33,65 @@
     <style>
         /* CRITICAL: Add step indicator styles */
 
-.wizard-steps .step {
-    width: 44px !important;
-    height: 44px !important;
-    border-radius: 50% !important;
-    background: #ece9f6 !important;
-    color: #6e59a4 !important;
-    font-weight: 700 !important;
-    font-size: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 2px solid #d5cdec !important;
-    transition: .25s !important;
-    position: relative !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
+        .wizard-steps .step {
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 50% !important;
+            background: #ece9f6 !important;
+            color: #6e59a4 !important;
+            font-weight: 700 !important;
+            font-size: 16px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: 2px solid #d5cdec !important;
+            transition: .25s !important;
+            position: relative !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
 
-.wizard-steps .step.active {
-    background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
-    color: #fff !important;
-    border-color: #6e59a4 !important;
-    box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
-}
+            .wizard-steps .step.active {
+                background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+                color: #fff !important;
+                border-color: #6e59a4 !important;
+                box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
+            }
 
-/* Fix form layout - ensure proper Bootstrap columns */
-.row {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    margin-right: -0.75rem !important;
-    margin-left: -0.75rem !important;
-}
+        /* Fix form layout - ensure proper Bootstrap columns */
+        .row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            margin-right: -0.75rem !important;
+            margin-left: -0.75rem !important;
+        }
 
-.col-md-6 {
-    flex: 0 0 50% !important;
-    max-width: 50% !important;
-    padding-right: 0.75rem !important;
-    padding-left: 0.75rem !important;
-    position: relative !important;
-}
+        .col-md-6 {
+            flex: 0 0 50% !important;
+            max-width: 50% !important;
+            padding-right: 0.75rem !important;
+            padding-left: 0.75rem !important;
+            position: relative !important;
+        }
 
-@@media (max-width: 767.98px) {
-    .col-md-6 {
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-    }
-}
+        @@media (max-width: 767.98px) {
+            .col-md-6 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+        }
 
-/* Ensure form wrapper doesn't interfere */
-.form-box-wrapper {
-    display: block !important;
-}
+        /* Ensure form wrapper doesn't interfere */
+        .form-box-wrapper {
+            display: block !important;
+        }
 
-.form-step-header {
-    width: 100% !important;
-    clear: both !important;
-    display: block !important;
-    margin-bottom: 1.5rem !important;
-}
+        .form-step-header {
+            width: 100% !important;
+            clear: both !important;
+            display: block !important;
+            margin-bottom: 1.5rem !important;
+        }
         /* Fix for step indicators - ensure horizontal display */
         .wizard-steps {
             display: flex !important;
