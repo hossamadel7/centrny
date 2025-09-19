@@ -1,0 +1,782 @@
+﻿/* Card container mimicking signup.html panel */
+.registration-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+    padding: 50px;
+    position: relative;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 992px) {
+    .registration-card {
+        padding: 28px 24px;
+        margin: 0 15px;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .registration-card {
+        padding: 20px 16px;
+        margin: 0 10px;
+        border-radius: 10px;
+    }
+}
+
+.registration-title {
+    font-size: 30px;
+    line-height: 1.3;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .registration-title {
+        font-size: 24px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .registration-title {
+        font-size: 20px;
+    }
+}
+
+.muted-intro {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    .muted-intro {
+        text-align: center;
+        font-size: 13px;
+    }
+}
+
+
+/* Form layout */
+.form-step {
+    display: none;
+    animation: fadeStep .35s ease;
+}
+
+    .form-step.active {
+        display: block;
+    }
+
+@keyframes fadeStep {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+label.form-label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #2d2d2d;
+    font-size: 14px;
+}
+
+@media (max-width: 576px) {
+    label .form-label {
+        font-size: 13px;
+    }
+}
+
+.form-control,
+.form-select {
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: .25s;
+    font-size: 14px;
+    min-height: 48px; /* Better touch targets */
+}
+
+@media (max-width: 576px) {
+    .form-control, .form-select {
+        padding: 14px 12px;
+        font-size: 16px; /* Prevent zoom on iOS */
+        min-height: 52px;
+    }
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #6e59a4;
+    box-shadow: 0 0 0 .15rem rgba(110,89,164,0.25);
+}
+
+.form-check-input:checked {
+    background-color: #6e59a4;
+    border-color: #6e59a4;
+}
+
+/* Mobile: Stack form columns */
+@media (max-width: 768px) {
+    .row .col-md-6 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Instruction box */
+.instructions {
+    background: #f6f7fb;
+    border: 1px solid #e4e6ef;
+    border-radius: 14px;
+    padding: 18px 20px 15px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 576px) {
+    .instructions {
+        padding: 15px 16px 12px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+    }
+}
+
+.instructions h5 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #6e59a4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 576px) {
+    .instructions h5 {
+        font-size: 14px;
+    }
+}
+
+.instructions ul {
+    margin: 0;
+    padding-inline-start: 20px;
+    font-size: 13px;
+}
+
+@media (max-width: 576px) {
+    .instructions ul {
+        font-size: 12px;
+        padding-inline-start: 16px;
+    }
+}
+
+.instructions li {
+    margin-bottom: 6px;
+    color: #555;
+}
+
+/* Subject selections */
+.subject-selection {
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    background: #fff;
+    transition: .25s;
+}
+
+@media (max-width: 576px) {
+    .subject-selection {
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+    }
+}
+
+.subject-selection:hover {
+    border-color: #6e59a4;
+    box-shadow: 0 4px 12px rgba(110,89,164,.15);
+}
+
+.subject-selection.selected {
+    background: #f4f0ff;
+    border-color: #6e59a4;
+}
+
+.teacher-option {
+    border: 1px solid #dcdce3;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    transition: .18s;
+    cursor: pointer;
+    background: #fff;
+}
+
+@media (max-width: 576px) {
+    .teacher-option {
+        padding: 12px 10px;
+        border-radius: 6px;
+    }
+}
+
+.teacher-option:hover {
+    background: #f3f0fa;
+    border-color: #6e59a4;
+}
+
+.teacher-option.selected {
+    background: #ebe5fa;
+    border-color: #6e59a4;
+    box-shadow: inset 0 0 0 2px #6e59a4;
+}
+
+/* Schedule placeholder styling if needed */
+#scheduleSelection > .schedule-item {
+    border: 1px solid #e3e6ee;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+    transition: .25s;
+    cursor: pointer;
+}
+
+@media (max-width: 576px) {
+    #scheduleSelection > .schedule-item {
+        padding: 12px 10px;
+        border-radius: 8px;
+    }
+}
+
+#scheduleSelection > .schedule-item:hover {
+    border-color: #6e59a4;
+    background: #f7f4ff;
+}
+
+#scheduleSelection > .schedule-item.selected {
+    border-color: #6e59a4;
+    background: #efe9ff;
+    box-shadow: inset 0 0 0 2px #6e59a4;
+}
+
+/* Alerts (unify with theme) */
+.alert {
+    border-radius: 12px;
+    border: 1px solid transparent;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+@media (max-width: 576px) {
+    .alert {
+        padding: 12px 14px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+}
+
+.alert-info {
+    background: #f0f6ff;
+    border-color: #c2defd;
+    color: #2e4a66;
+}
+
+.alert-success {
+    background: #e5fff2;
+    border-color: #b9f3d7;
+    color: #14633c;
+}
+
+.alert-danger {
+    background: #ffe9ea;
+    border-color: #ffc5ca;
+    color: #892029;
+}
+
+.navigation-buttons {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .navigation-buttons {
+        flex-direction: column-reverse;
+        gap: 12px;
+        margin-top: 30px;
+    }
+}
+
+@media (max-width: 576px) {
+    .navigation-buttons {
+        gap: 10px;
+        margin-top: 25px;
+    }
+}
+
+.btn-theme,
+.btn-theme-secondary,
+.btn-theme-success {
+    border: none;
+    border-radius: 10px;
+    padding: 14px 26px;
+    font-size: 15px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: .25s;
+    background: linear-gradient(135deg,#6e59a4,#8e76d9);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    min-height: 48px;
+}
+
+@media (max-width: 768px) {
+    .btn-theme, .btn-theme-secondary, .btn-theme-success {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+        padding: 16px 20px;
+        min-height: 52px;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-theme, .btn-theme-secondary, .btn-theme-success {
+        font-size: 14px;
+        padding: 16px 18px;
+        min-height: 50px;
+    }
+}
+
+.btn-theme:hover {
+    box-shadow: 0 6px 18px rgba(110,89,164,.4);
+    transform: translateY(-2px);
+}
+
+.btn-theme-secondary {
+    background: #f1eff7;
+    color: #4b3b7f;
+}
+
+    .btn-theme-secondary:hover {
+        background: #e4e0f0;
+    }
+
+.btn-theme-success {
+    background: linear-gradient(135deg,#2fa772,#53d392);
+}
+
+    .btn-theme-success:hover {
+        box-shadow: 0 6px 16px rgba(47,167,114,.45);
+        transform: translateY(-2px);
+    }
+
+#registrationSummary {
+    background: #faf9fd;
+    border: 1px solid #e2deee;
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-size: 14px;
+}
+
+@media (max-width: 576px) {
+    #registrationSummary {
+        padding: 15px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+}
+
+.security-note {
+    margin-top: 25px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    opacity: .85;
+}
+
+@media (max-width: 576px) {
+    .security-note {
+        font-size: 11px;
+        margin-top: 20px;
+    }
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17,16,29,.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.loading-spinner {
+    background: #fff;
+    padding: 34px 36px;
+    border-radius: 18px;
+    text-align: center;
+    min-width: 260px;
+    box-shadow: 0 10px 32px rgba(0,0,0,.25);
+}
+
+@media (max-width: 576px) {
+    .loading-spinner {
+        padding: 24px 20px;
+        min-width: 200px;
+        margin: 0 20px;
+        border-radius: 12px;
+    }
+}
+
+.loading-spinner p {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #4b3b7f;
+    font-weight: 600;
+}
+
+@media (max-width: 576px) {
+    .loading-spinner p {
+        font-size: 13px;
+    }
+}
+
+/* Hide spinner container (Bootstrap compatibility fallback) */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: .35em;
+}
+
+/* Minor utility overrides */
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.text-purple-1 {
+    color: #6e59a4;
+}
+
+/* Form box wrapper */
+.form-box-wrapper {
+    background: #ffffff;
+    border: 1px solid #e4e6ef;
+    border-radius: 18px;
+    padding: 30px 30px 38px;
+    max-width: 860px;
+    margin: 0 auto 10px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+}
+
+@media (max-width: 768px) {
+    .form-box-wrapper {
+        padding: 22px 18px 30px;
+        border-radius: 14px;
+        margin: 0 15px 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-box-wrapper {
+        padding: 18px 16px 25px;
+        border-radius: 10px;
+        margin: 0 10px 10px;
+    }
+}
+
+/* Purple NEXT button - FIXED */
+#nextBtn {
+    background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
+}
+
+    #nextBtn:hover {
+        background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+        color: #fff !important;
+        box-shadow: 0 6px 18px rgba(110,89,164,.4) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    #nextBtn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
+    }
+
+/* Fix form step headings */
+.form-box-wrapper .form-step h4 {
+    margin-top: 0;
+}
+
+@media (max-width: 576px) {
+    .form-box-wrapper .form-step h4 {
+        font-size: 16px;
+    }
+}
+
+/* Header mobile responsiveness */
+.header__container {
+    padding: 15px 20px;
+}
+
+@media (max-width: 768px) {
+    .header__container {
+        padding: 12px 15px;
+    }
+}
+
+.header-right__buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+@media (max-width: 992px) {
+    .header-right__buttons {
+        display: none;
+    }
+}
+
+.language-switcher {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 576px) {
+    .language-switcher {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
+
+.language-switcher:hover {
+    background: rgba(110, 89, 164, 0.1);
+}
+
+/* Hide decorative sidebar on mobile and tablets */
+@media (max-width: 1200px) {
+    .form-page__img {
+        display: none !important;
+    }
+
+    .form-page__content {
+        padding: 30px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-page__content {
+        padding: 20px 0;
+    }
+}
+
+/* Better touch targets for radio buttons and checkboxes */
+.form-check {
+    padding-left: 1.8em;
+}
+
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.15em;
+}
+
+@media (max-width: 576px) {
+    .form-check {
+        padding-left: 2em;
+        margin-bottom: 0.8rem;
+    }
+
+    .form-check-input {
+        width: 1.4em;
+        height: 1.4em;
+        margin-top: 0.1em;
+    }
+}
+
+/* Gender options mobile layout */
+.gender-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+@media (max-width: 576px) {
+    .gender-options {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* Fix form step header separation */
+.form-step-header {
+    width: 100%;
+    clear: both;
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+    .form-step-header h4 {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+/* Ensure proper Bootstrap grid behavior */
+.form-step .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -0.75rem;
+    margin-left: -0.75rem;
+}
+
+.form-step .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    position: relative;
+    width: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .form-step .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+
+
+.row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+}
+
+.col-md-6 {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+    padding: 0 0.75rem !important;
+}
+
+@media (max-width: 768px) {
+    .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Horizontal wizard steps with strong overrides */
+.registration-card .wizard-steps {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px;
+    margin: 16px 0 24px;
+    flex-wrap: wrap; /* wrap on tablets/medium */
+    width: 100%;
+}
+
+    /* Step circles */
+    .registration-card .wizard-steps .step {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        background: #ece9f6 !important;
+        color: #6e59a4 !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: 2px solid #d5cdec !important;
+        transition: .25s !important;
+        position: relative !important;
+        line-height: 1 !important;
+        overflow: hidden;
+    }
+
+        .registration-card .wizard-steps .step.active {
+            background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+            color: #fff !important;
+            border-color: #6e59a4 !important;
+            box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
+        }
+
+        /* Optional: show localized digits from data attributes (no JS needed) */
+        .registration-card .wizard-steps .step::before {
+            content: attr(data-en);
+        }
+
+[dir="rtl"] .registration-card .wizard-steps .step::before {
+    content: attr(data-ar);
+}
+
+/* Optional: small connector between steps */
+.registration-card .wizard-steps .step + .step {
+    position: relative;
+}
+
+    .registration-card .wizard-steps .step + .step::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        inset-inline-start: -10px; /* works in LTR/RTL */
+        width: 12px;
+        height: 2px;
+        background: #d5cdec;
+        border-radius: 2px;
+    }
+
+/* Mobile: keep in a single horizontal row with touch scroll */
+@media (max-width: 576px) {
+    .registration-card .wizard-steps {
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important; /* prevent wrapping */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
+        padding: 8px 4px;
+        gap: 10px;
+    }
+
+        .registration-card .wizard-steps .step {
+            width: 40px !important;
+            height: 40px !important;
+            flex: 0 0 40px; /* fixed size in scroll row */
+        }
+
+            .registration-card .wizard-steps .step + .step::before {
+                width: 8px;
+                inset-inline-start: -6px;
+            }
+        /* Nice thin scrollbar (optional) */
+        .registration-card .wizard-steps::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .registration-card .wizard-steps::-webkit-scrollbar-thumb {
+            background: rgba(110,89,164,.35);
+            border-radius: 3px;
+        }
+}
