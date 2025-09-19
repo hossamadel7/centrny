@@ -1,37 +1,42 @@
-name: Build and Deploy .NET 9 App via FTP
+name: Build and Publish .NET 9 App
 
 on:
   push:
-    branches: [ "Session-test-2" ]   # your branch name
+    branches:
+      - Session-test-2   # trigger only on this branch
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true   # allow pushing back
+          fetch-depth: 0              # full history so we can commit
 
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore
-        run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore centrny.sln
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build centrny.sln --configuration Release --no-restore
 
-      - name: Publish
-        run: dotnet publish -c Release -o ./publish
+      - name: Publish (self-contained like Visual Studio)
+        run: dotnet publish centrny.sln -c Release -o publish `
+              -r win-x64 `
+              --self-contained true `
+              /p:PublishTrimmed=false
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./publish/
-          server-dir: /inetpub/wwwroot/   # Change if your IIS site root is different
-          dangerous-clean-slate: true    # replace everything each deploy
+      - name: Commit and push publish output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f publish
+          git commit -m "Publish output from build [skip ci]" || echo "No changes to commit"
+          git push origin Session-test-2
