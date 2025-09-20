@@ -3,7 +3,7 @@ name: Build and Publish .NET 9 App
 on:
   push:
     branches:
-      - Pre-Prod    # run when pushing to main branch 
+      - Pre-Prod   # run when pushing to Pre-Prod branch
 
 jobs:
   build-and-publish:
@@ -19,13 +19,15 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore centrny.sln
+        run: dotnet restore centrny/centrny.csproj
 
       - name: Build
-        run: dotnet build centrny.sln --configuration Release --no-restore
+        run: dotnet build centrny/centrny.csproj --configuration Release --no-restore
 
-      - name: Publish (same as VS profile)
-        run:  dotnet publish centrny.sln -c Release /p:PublishProfile=FolderProfile
+      - name: Publish (using VS FolderProfile)
+        run: dotnet publish centrny/centrny.csproj -c Release `
+              /p:PublishProfile=FolderProfile `
+              -o publish
 
       - name: Upload publish folder as artifact (named Clasrio)
         uses: actions/upload-artifact@v4
