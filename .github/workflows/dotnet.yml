@@ -1,0 +1,34 @@
+name: Build and Publish .NET 9 App
+
+on:
+  push:
+    branches:
+      - Pre-Prod   # run when pushing to main branch
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore centrny.sln
+
+      - name: Build
+        run: dotnet build centrny.sln --configuration Release --no-restore
+
+      - name: Publish (same as VS profile)
+        run: dotnet publish centrny.sln -c Release -o publish
+
+      - name: Upload publish folder as artifact (named Clasrio)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clasrio
+          path: publish/
