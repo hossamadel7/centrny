@@ -1,11 +1,12 @@
-name: Build and Deploy .NET 9 App via FTP
+name: Build and Publish .NET 9 App
 
 on:
   push:
-    branches: [ "Session-test-2" ]   # your branch name
+    branches:
+      - Pre-Prod
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: windows-latest
 
     steps:
@@ -17,21 +18,17 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore
-        run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore centrny.sln
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build centrny.sln --configuration Release --no-restore
 
-      - name: Publish
-        run: dotnet publish -c Release -o ./publish
+      - name: Publish (same as VS profile)
+        run: dotnet publish centrny.sln -c Release -o publish
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Upload publish folder as artifact (named Clasrio)
+        uses: actions/upload-artifact@v4
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./publish/
-          server-dir: /inetpub/wwwroot/   # Change if your IIS site root is different
-          dangerous-clean-slate: true    # replace everything each deploy
+          name: Clasrio
+          path: publish/
