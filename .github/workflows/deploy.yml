@@ -24,10 +24,18 @@ jobs:
       - name: Build
         run: dotnet build centrny/centrny.csproj --configuration Release --no-restore
 
-      - name: Publish (using VS FolderProfile)
-        run: dotnet publish centrny/centrny.csproj -c Release `
-              /p:PublishProfile=FolderProfile `
-              -o publish
+      - name: Publish (force include Views like VS)
+        run: dotnet publish centrny/centrny.csproj `
+              -c Release `
+              -o publish `
+              /p:DeleteExistingFiles=false `
+              /p:ExcludeApp_Data=false `
+              /p:LaunchSiteAfterPublish=false `
+              /p:WebPublishMethod=FileSystem `
+              /p:PublishProvider=FileSystem `
+              /p:MvcRazorCompileOnPublish=false `
+              /p:PreserveCompilationContext=true `
+              /p:CopyRefAssembliesToPublishDirectory=false
 
       - name: Upload publish folder as artifact (named Clasrio)
         uses: actions/upload-artifact@v4
