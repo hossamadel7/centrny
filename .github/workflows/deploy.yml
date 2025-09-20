@@ -3,7 +3,7 @@ name: Build and Publish .NET 9 App
 on:
   push:
     branches:
-      - Pre-Prod  
+      - Pre-Prod
 
 jobs:
   build-and-publish:
