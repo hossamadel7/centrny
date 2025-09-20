@@ -3,41 +3,43 @@ name: Build and Publish .NET 9 App
 on:
   push:
     branches:
-      - Pre-Prod   # run when pushing to Pre-Prod branch
+      - Pre-Prod
 
 jobs:
   build-and-publish:
     runs-on: windows-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-
+          
       - name: Restore dependencies
         run: dotnet restore centrny/centrny.csproj
-
+        
       - name: Build
         run: dotnet build centrny/centrny.csproj --configuration Release --no-restore
-
-      - name: Publish (force include Views like VS)
-        run: dotnet publish centrny/centrny.csproj `
-              -c Release `
-              -o publish `
-              /p:DeleteExistingFiles=false `
-              /p:ExcludeApp_Data=false `
-              /p:LaunchSiteAfterPublish=false `
-              /p:WebPublishMethod=FileSystem `
-              /p:PublishProvider=FileSystem `
-              /p:MvcRazorCompileOnPublish=false `
-              /p:PreserveCompilationContext=true `
-              /p:CopyRefAssembliesToPublishDirectory=false
-
-      - name: Upload publish folder as artifact (named Clasrio)
+        
+      - name: Publish with all files
+        run: dotnet publish centrny/centrny.csproj --configuration Release --output publish --no-build --verbosity normal /p:PublishSingleFile=false /p:IncludeAllContentForSelfExtract=true /p:CopyAllFilesToSingleBundleDirectory=true
+        
+      - name: Ensure all content files are copied
+        run: |
+          if (Test-Path "centrny/Views") { Copy-Item -Path "centrny/Views" -Destination "publish/Views" -Recurse -Force }
+          if (Test-Path "centrny/wwwroot") { Copy-Item -Path "centrny/wwwroot" -Destination "publish/wwwroot" -Recurse -Force }
+          if (Test-Path "centrny/Areas") { Copy-Item -Path "centrny/Areas" -Destination "publish/Areas" -Recurse -Force }
+          if (Test-Path "centrny/App_Data") { Copy-Item -Path "centrny/App_Data" -Destination "publish/App_Data" -Recurse -Force }
+          Copy-Item -Path "centrny/appsettings*.json" -Destination "publish/" -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "centrny/web.config" -Destination "publish/" -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "centrny/*.config" -Destination "publish/" -Force -ErrorAction SilentlyContinue
+          Get-ChildItem -Path "centrny/" -Include "*.txt", "*.md", "*.xml", "*.json", "*.yml", "*.yaml" -File | Copy-Item -Destination "publish/" -Force -ErrorAction SilentlyContinue
+        shell: powershell
+        
+      - name: Upload publish folder as artifact
         uses: actions/upload-artifact@v4
         with:
           name: Clasrio
