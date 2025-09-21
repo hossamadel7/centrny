@@ -39,7 +39,32 @@
     <!-- RTL overrides and Full-view behavior -->
     <style>
         :root {
+            --body-color: @(Context.Session.GetString("RootBodyColor") ?? "#fff");
+            --button-color: @(Context.Session.GetString("RootButtonColor") ?? "#007bff");
+            --body-font-color: @(Context.Session.GetString("RootBodyFont") ?? "#000");
+            --button-font-color: @(Context.Session.GetString("RootButtonFontColor") ?? "#000");
+            --button-font-color2: @(Context.Session.GetString("RootButtonFontColor2") ?? "#fff");
+            --background-color: @(Context.Session.GetString("RootBackgroundColor") ?? "#eee");
+           
             --sidebar-width: 280px;
+        }
+
+        .site-background {
+            background-color: var(--background-color) !important;
+        }
+
+        .site-body {
+            background-color: var(--body-color) !important;
+            color: var(--body-font-color) !important;
+        }
+
+        .btn1, btn2 {
+            background-color: var(--button-color) !important;
+            color: var(--button-font-color) !important;
+        }
+
+        .btn2 { 
+            color: var(--button-font-color2) !important;
         }
 
         /* Place sidebar on the right in RTL */
@@ -217,8 +242,8 @@
                             }
                         </div>
                     </div>
-                    <div class="dashboard__main">
-                        <div class="dashboard__content bg-light-4">
+                    <div class="dashboard__main site-background">
+                        <div class="dashboard__content bg-light-4 site-body">
                             @RenderBody()
                         </div>
                     </div>

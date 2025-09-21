@@ -12,6 +12,7 @@
     var htmlLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var htmlDir = isArabic ? "rtl" : "ltr";
     var userCode = (int)ViewBag.UserCode;
+    var rootcolor = ViewBag.getroot;
 }
 <!DOCTYPE html>
 <html lang="@htmlLang" dir="@htmlDir">
@@ -49,6 +50,19 @@
             --primary-color: #6c5ce7;
             --border-radius-lg: 28px;
             --shadow-lg: 0 8px 36px rgba(108,92,231,0.18);
+         /* /*   
+            --body-color: @(ViewBag.RootBodyColor ?? "#fff"); 
+            --button-color: @(ViewBag.RootButtonColor ?? "blue"); 
+            --body-font-color: @(ViewBag.RootBodyFont ?? "black"); 
+            --button-font-color: @(ViewBag.RootButtonFontColor ?? "black"); 
+            --button-font-color2: @(ViewBag.RootButtonFontColor2 ?? "#fff"); 
+            --background-color: @(ViewBag.RootBackgroundColor ?? "gray"); */ */
+
+        }
+
+        .modal-body {
+            background-color: var(--body-color);
+            color: var(--body-font-color);
         }
 
         html[dir="rtl"] body,
@@ -147,8 +161,7 @@
         }
 
         .add-center-btn-top {
-            background: linear-gradient(90deg,#6c5ce7,#a29bfe);
-            color: #fff;
+            /* background: linear-gradient(90deg,#6c5ce7,#a29bfe); */
             border: none;
             border-radius: 22px;
             padding: 0.5rem 1.3rem;
@@ -168,7 +181,7 @@
     <script>
         window.userId = @userCode;
     </script>
-
+    
     <div id="js-localization"
          data-title-manage-branches="@Localizer["Title_ManageBranches"]"
          data-label-select-root="@Localizer["Label_SelectRoot"]"
@@ -248,7 +261,7 @@
     }
 
     <div id="centerBranchSection" style="display:none;">
-        <button id="add-center-btn" class="add-center-btn-top"><i class="fas fa-plus"></i> @Localizer["Button_AddCenter"]</button>
+        <button id="add-center-btn" class="add-center-btn-top btn1"><i class="fas fa-plus"></i> @Localizer["Button_AddCenter"]</button>
         <div style="clear:both"></div>
         <div id="limit-alert" class="alert alert-warning" style="display:none;"></div>
         <ul class="list-group mb-4" id="centerList"></ul>

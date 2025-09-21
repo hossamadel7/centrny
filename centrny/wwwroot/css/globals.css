@@ -1,0 +1,17 @@
+﻿:root {
+    --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    --primary-gradient-horizontal: linear-gradient(90deg, #012852 0%, #5982ff 100%);
+    --primary-gradient-light: linear-gradient(135deg, #a29bfe33 0%, #6c5ce722 100%);
+    --primary-color: #6c5ce7;
+    --border-radius-lg: 28px;
+    --shadow-lg: 0 8px 36px rgba(108,92,231,0.18);
+
+
+
+    --body-color: @(ViewBag.RootBodyColor ?? "#fff");
+    --button-color: @(ViewBag.RootButtonColor ?? "blue");
+    --body-font-color: @(ViewBag.RootBodyFont ?? "black");
+    --button-font-color: @(ViewBag.RootButtonFontColor ?? "black");
+    --button-font-color2: @(ViewBag.RootButtonFontColor2 ?? "#fff");
+    --background-color: @(ViewBag.RootBackgroundColor ?? "gray");
+}

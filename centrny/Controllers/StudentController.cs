@@ -2037,6 +2037,69 @@ namespace centrny.Controllers
 
             return Json(attendedExams);
         }
+        [HttpGet]
+        [Route("Student/GetExamAnswers/{studentCode}/{examCode}")]
+        public async Task<IActionResult> GetExamAnswers(int studentCode, int examCode)
+        {
+            // Get all questions for this exam
+            var examQuestions = await _context.ExamQuestions
+                .Where(eq => eq.ExamCode == examCode)
+                .ToListAsync();
+
+            var questionCodes = examQuestions.Select(eq => eq.QuestionCode).ToList();
+
+            // Get all possible answers for these questions
+            var allAnswers = await _context.Answers
+                .Where(a => questionCodes.Contains(a.QuestionCode))
+                .ToListAsync();
+
+            // Get the actual question text/content
+            var allQuestions = await _context.Questions
+                .Where(q => questionCodes.Contains(q.QuestionCode))
+                .ToListAsync();
+
+            // Get student answers for these questions
+            var studentAnswers = await _context.StudentAnswers
+                .Where(sa => sa.StudentCode == studentCode && sa.ExamCode == examCode)
+                .ToListAsync();
+
+            var result = examQuestions.Select(q =>
+            {
+                var answersForQuestion = allAnswers
+                    .Where(a => a.QuestionCode == q.QuestionCode)
+                    .Select(a => new {
+                        AnswerCode = a.AnswerCode,
+                        AnswerText = a.AnswerContent, // or whatever field holds the choice text
+                        IsCorrect = a.IsTrue // or whatever field is the correct flag
+                    }).ToList();
+
+                var studentAnswer = studentAnswers.FirstOrDefault(sa => sa.QuestionCode == q.QuestionCode);
+
+                int? studentAnswerCode = studentAnswer?.StudentAnswerCode;
+                int? rightAnswerCode = studentAnswer?.RightAnswerCode;
+                double? questionDegree = studentAnswer?.QuestionDegree ?? q.QuestionDegree;
+                double? studentDegree = studentAnswer?.StudentDegree;
+
+                // Fetch question text/content from Questions table
+                var questionEntity = allQuestions.FirstOrDefault(qq => qq.QuestionCode == q.QuestionCode);
+                string questionText = questionEntity?.QuestionContent ?? $"Question {q.QuestionCode}";
+
+                return new
+                {
+                    QuestionCode = q.QuestionCode,
+                    QuestionText = questionText,
+                    QuestionDegree = questionDegree,
+                    StudentDegree = studentDegree,
+                    Answers = answersForQuestion,
+                    StudentAnswerCode = studentAnswerCode,
+                    RightAnswerCode = rightAnswerCode,
+                    IsStudentCorrect = (studentAnswerCode.HasValue && rightAnswerCode.HasValue && studentAnswerCode.Value == rightAnswerCode.Value)
+                };
+            });
+
+            return Json(result);
+        }
+
 
         [HttpGet]
         [Route("Student/GetAssignments/{item_key}")]

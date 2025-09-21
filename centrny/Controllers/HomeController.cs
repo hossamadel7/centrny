@@ -216,6 +216,54 @@ namespace centrny.Controllers
 
             return View();
         }
+        public IActionResult Students()
+        {
+            var culture = Request.Cookies["SelectedCulture"];
+
+            // Get domain information
+            var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
+            var domainNoPort = HttpContext.Request.Host.Host;
+            var fullHost = HttpContext.Request.Host.ToString();
+
+            var Ruselt = (from c in DB.Contents
+                          join r in DB.Roots on c.RootCode equals r.RootCode
+                          where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
+                          select new
+                          {
+                              root_code = c.RootCode,
+                              title = c.Title,
+                              title_ar = c.TitleAr,
+                              web_header = c.WebLayoutH,
+                              web_header_ar = c.WebLayoutHAr,
+                              web_footer = c.WebLayoutF,
+                              web_footer_ar = c.WebLayoutFAr,
+                              outstanding_students = c.OutstandingStudents,
+                              outstanding_students_ar = c.OutstandingStudentsAr // Make sure this exists
+                          }).ToList();
+
+            // Set ViewBag values
+            if (Ruselt.Count == 0)
+            {
+                ViewBag.title = "Outstanding Students";
+                ViewBag.web_header = "";
+                ViewBag.web_footer = "";
+                ViewBag.outstanding_students = "<h1>No Outstanding Students found.</h1>";
+            }
+            else
+            {
+                var studentsContent = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].outstanding_students_ar)) ? Ruselt[0].outstanding_students_ar : Ruselt[0].outstanding_students;
+
+                ViewBag.title = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title;
+                ViewBag.web_header = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header;
+                ViewBag.web_footer = ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString());
+                ViewBag.outstanding_students = string.IsNullOrWhiteSpace(studentsContent) ? "<h1>No Outstanding Students found.</h1>" : studentsContent;
+            }
+
+            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
+            ViewBag.Culture = culture ?? "en";
+
+            return View();
+        }
 
         public IActionResult Gallery()
         {

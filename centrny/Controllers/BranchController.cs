@@ -33,7 +33,7 @@ namespace centrny.Controllers
             );
         }
         // Helper to get session values
-     
+
 
         public async Task<IActionResult> Index()
         {
@@ -44,8 +44,28 @@ namespace centrny.Controllers
             var isCenterStr = GetSessionString("RootIsCenter");
             var centerName = GetSessionString("CenterName");
 
-
             bool isCenter = isCenterStr == "True";
+
+            // Get root colors
+            var rootColors = await _context.Roots
+                .Where(r => r.RootCode == rootCode)
+                .Select(r => new {
+                    r.RootBodyColor,
+                    r.RootButtonColor,
+                    r.RootBodyFont,
+                    r.RootButtonFontColor,
+                    r.RootButtonFontColor2,
+                    r.RootBackgroundColor
+                })
+                .FirstOrDefaultAsync();
+
+            // Assign to ViewBag (null-safe)
+            ViewBag.RootBodyColor = rootColors?.RootBodyColor;
+            ViewBag.RootButtonColor = rootColors?.RootButtonColor;
+            ViewBag.RootBodyFont = rootColors?.RootBodyFont;
+            ViewBag.RootButtonFontColor = rootColors?.RootButtonFontColor;
+            ViewBag.RootButtonFontColor2 = rootColors?.RootButtonFontColor2;
+            ViewBag.RootBackgroundColor = rootColors?.RootBackgroundColor;
 
             ViewBag.UserRootCode = rootCode;
             ViewBag.UserGroupCode = groupCode;
@@ -352,7 +372,34 @@ namespace centrny.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+        // Add this inside BranchController
+
+        [HttpGet]
+        public async Task<IActionResult> GetRootColors()
+        {
+            // Get root code from session
+            var rootCode = GetSessionInt("RootCode");
+
+            // Query for the root
+            var root = await _context.Roots
+                .Where(r => r.RootCode == rootCode)
+                .Select(r => new {
+                    bodyColor = r.RootBodyColor,
+                    buttonColor = r.RootButtonColor,
+                    bodyFont = r.RootBodyFont,
+                    buttonFontColor = r.RootButtonFontColor,
+                    buttonFontColor2 = r.RootButtonFontColor2,
+                    backgroundColor = r.RootBackgroundColor
+                })
+                .FirstOrDefaultAsync();
+         
+            if (root == null)
+                return NotFound();
+
+            return Json(root);
+        }
     }
+
 
     // DTOs remain unchanged
     public class HallCreateDto
