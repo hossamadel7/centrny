@@ -942,3 +942,97 @@ body {
         padding: 1rem;
     }
 }
+.access-container-modern {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    padding: 2rem 0;
+}
+
+.access-card-modern {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 36px rgba(79,70,229,0.10);
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.access-header-modern {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+    .access-header-modern i {
+        font-size: 2.2rem;
+        color: #4f46e5;
+        margin-bottom: 0.5rem;
+    }
+
+.pin-input-modern {
+    font-size: 1.3rem;
+    height: 56px;
+    text-align: center;
+    border-radius: 14px;
+    border: 1.5px solid #e5e7eb;
+    background: #f3f4f6;
+    transition: border-color 0.2s;
+    letter-spacing: 4px;
+    font-family: 'Inter', monospace;
+}
+
+    .pin-input-modern:focus {
+        outline: none;
+        border-color: #4f46e5;
+        background: #fff;
+        box-shadow: 0 0 0 0.12rem #a29bfe33;
+    }
+
+    .pin-input-modern.is-invalid {
+        border-color: #ef4444;
+        background: #f8d7da;
+    }
+
+.access-btn-modern {
+    font-weight: 600;
+    font-size: 1.08rem;
+    border-radius: 14px;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 2px 8px #4f46e522;
+    padding: 0.9rem;
+}
+
+    .access-btn-modern:hover, .access-btn-modern:focus {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        transform: translateY(-2px);
+    }
+
+.alert.error-message {
+    font-size: 0.97rem;
+    border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+    .access-card-modern {
+        padding: 1.2rem 0.7rem;
+        max-width: 95vw;
+    }
+
+    .access-header-modern h2 {
+        font-size: 1.4rem;
+    }
+
+    .access-btn-modern {
+        font-size: 1rem;
+        padding: 0.8rem;
+    }
+}

@@ -1,225 +1,93 @@
 ﻿@{
     Layout = null;
+    var lessonCode = ViewBag.PreFilledLessonCode as int?;
+    var hasLesson = lessonCode.HasValue && lessonCode.Value > 0;
+    string errorMessage = TempData["ErrorMessage"] as string;
 }
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <title>Lesson Access</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-            --primary-color: #6c5ce7;
-            --border-radius-lg: 16px;
-            --shadow-lg: 0 8px 36px rgba(108,92,231,0.18);
+            --primary-blue: #6366f1;
+            --primary-purple: #8b5cf6;
+            --primary-teal: #14b8a6;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: #f8f9fa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        .access-container {
-            max-width: 500px;
-            width: 100%;
-            padding: 2rem;
-        }
-
-        .access-card {
-            background: white;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-lg);
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .access-header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 2rem;
-            border-radius: var(--border-radius-lg);
-            margin-bottom: 2rem;
-        }
-
-        .pin-input {
-            font-family: 'Courier New', monospace;
-            font-size: 1.3rem;
-            text-align: center;
-            letter-spacing: 3px;
-            height: 60px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-            .pin-input:focus {
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+            /* Animated background elements */
+            body::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+                background-size: 50px 50px;
+                animation: float 20s linear infinite;
+                pointer-events: none;
             }
 
-        .lesson-input {
-            font-size: 1.2rem;
-            text-align: center;
-            height: 60px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-            .lesson-input:focus {
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+            body::after {
+                content: '';
+                position: absolute;
+                top: 20%;
+                right: 10%;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
+                border-radius: 50%;
+                filter: blur(60px);
+                animation: pulse 4s ease-in-out infinite alternate;
+                pointer-events: none;
             }
 
-            .lesson-input:read-only {
-                background-color: #f8f9fa;
-                border-color: #28a745;
-                color: #28a745;
-                font-weight: 600;
-            }
-
-        .access-btn {
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            padding: 1rem 3rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-            height: 60px;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-
-            .access-btn:hover {
-                color: white;
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
-            }
-
-            .access-btn:disabled {
-                opacity: 0.6;
-                transform: none;
-            }
-
-        .info-section {
-            background: #e8f2ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-            text-align: left;
-        }
-
-        .lesson-info-section {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            text-align: left;
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .loading-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .error-message {
-            animation: slideIn 0.3s ease-out;
-        }
-
-        .back-to-learning {
-            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-            border: none;
-            border-radius: 10px;
-            color: white;
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-            margin-bottom: 1rem;
-        }
-
-            .back-to-learning:hover {
-                color: white;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
-            }
-
-        /* Enhanced alert styles for access checking */
-        .access-check-message {
-            animation: slideIn 0.3s ease-out;
-            margin-bottom: 1.5rem !important;
-        }
-
-        .alert-success {
-            background: #d1e7dd;
-            border-color: #badbcc;
-            color: #0f5132;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            border-color: #bee5eb;
-            color: #0c5460;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            border-color: #ffecb5;
-            color: #664d03;
-        }
-
-        .alert-danger {
-            background: #f8d7da;
-            border-color: #f5c2c7;
-            color: #842029;
-        }
-
-        /* Pulse animation for access checking */
-        .checking-access {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @@keyframes slideIn {
-            from
+        @@keyframes float {
+            0%
 
         {
-            opacity: 0;
-            transform: translateY(-10px);
+            transform: translate(-50%, -50%) rotate(0deg);
         }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
         }
 
         }
@@ -228,339 +96,788 @@
             0%
 
         {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.7;
+            opacity: 0.4;
+            transform: scale(1);
         }
 
         100% {
+            opacity: 0.8;
+            transform: scale(1.2);
+        }
+
+        }
+
+        @@keyframes slideUp {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+
+        to {
             opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        }
+
+        @@keyframes shimmer {
+            0%
+
+        {
+            background-position: -200% center;
+        }
+
+        100% {
+            background-position: 200% center;
+        }
+
+        }
+
+        @@keyframes iconBounce {
+            0%, 100%
+
+        {
+            transform: translateY(0) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-8px) rotate(5deg);
+        }
+
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 2.5rem 2rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+            .card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            }
+
+            .card::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+                animation: shimmer 3s infinite;
+                pointer-events: none;
+            }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            background: var(--gray-100);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 2rem;
+            border: 1px solid var(--gray-200);
+        }
+
+            .back-link:hover {
+                background: var(--gray-200);
+                color: var(--gray-700);
+                transform: translateX(-4px);
+            }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+            animation: iconBounce 3s ease-in-out infinite;
+            position: relative;
+        }
+
+            .icon::before {
+                content: '';
+                position: absolute;
+                inset: -2px;
+                background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+                border-radius: 22px;
+                z-index: -1;
+                filter: blur(8px);
+                opacity: 0.6;
+            }
+
+            .icon i {
+                font-size: 2rem;
+                color: white;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-600) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
+            margin: 2rem 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+            .label i {
+                color: var(--primary-blue);
+            }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .pin-input {
+            width: 100%;
+            height: 64px;
+            border: 2px solid var(--gray-200);
+            border-radius: 16px;
+            background: var(--gray-50);
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 8px;
+            color: var(--gray-800);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            font-family: 'Inter', monospace;
+        }
+
+            .pin-input::placeholder {
+                color: var(--gray-400);
+                letter-spacing: 4px;
+            }
+
+            .pin-input:hover {
+                border-color: var(--gray-300);
+                background: white;
+            }
+
+            .pin-input:focus {
+                border-color: var(--primary-blue);
+                background: white;
+                box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 10px 25px -5px rgba(99, 102, 241, 0.1);
+                transform: translateY(-2px);
+            }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-align: center;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .message {
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            animation: slideUp 0.3s ease;
+        }
+
+            .message.show {
+                display: flex;
+            }
+
+            .message.success {
+                background: rgba(16, 185, 129, 0.1);
+                color: #065f46;
+                border: 1px solid rgba(16, 185, 129, 0.2);
+            }
+
+            .message.warning {
+                background: rgba(245, 158, 11, 0.1);
+                color: #92400e;
+                border: 1px solid rgba(245, 158, 11, 0.2);
+            }
+
+            .message.danger {
+                background: rgba(239, 68, 68, 0.1);
+                color: #991b1b;
+                border: 1px solid rgba(239, 68, 68, 0.2);
+            }
+
+        .error-alert {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .no-lesson-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            padding: 1.25rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        }
+
+            .submit-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s;
+            }
+
+            .submit-btn:hover:not(:disabled)::before {
+                left: 100%;
+            }
+
+            .submit-btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+            }
+
+            .submit-btn:active {
+                transform: translateY(-1px);
+            }
+
+            .submit-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+                .submit-btn:disabled::before {
+                    display: none;
+                }
+
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-top: 1.5rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .form-disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Loading overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+            .overlay.active {
+                display: flex;
+            }
+
+        .overlay-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 320px;
+            width: 90%;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @@keyframes spin {
+            to
+
+        {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        .overlay-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-text {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        /* Mobile responsive */
+        @@media (max-width: 640px) {
+            body
+
+        {
+            padding: 1rem 0.5rem;
+        }
+
+        .card {
+            padding: 2rem 1.5rem;
+            border-radius: 20px;
+        }
+
+        .title {
+            font-size: 1.75rem;
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+        }
+
+        .pin-input {
+            height: 58px;
+            font-size: 1.25rem;
+            letter-spacing: 6px;
+        }
+
+        }
+
+        /* Accessibility */
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after
+
+        {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+
+        }
+
+        /* Dark mode support */
+        @@media (prefers-color-scheme: dark) {
+            .card
+
+        {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .title {
+            background: linear-gradient(135deg, white 0%, var(--gray-300) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--gray-400);
+        }
+
+        .label {
+            color: var(--gray-300);
+        }
+
+        .pin-input {
+            background: var(--gray-800);
+            border-color: var(--gray-700);
+            color: white;
+        }
+
+            .pin-input:hover {
+                border-color: var(--gray-600);
+                background: var(--gray-700);
+            }
+
+            .pin-input:focus {
+                background: var(--gray-700);
+            }
+
+        .hint {
+            color: var(--gray-400);
+        }
+
+        .footer {
+            color: var(--gray-400);
+        }
+
+        .overlay-content {
+            background: var(--gray-800);
+        }
+
+        .overlay-title {
+            color: white;
+        }
+
+        .overlay-text {
+            color: var(--gray-300);
         }
 
         }
     </style>
 </head>
 <body>
-    <div class="access-container">
-        <div class="access-header">
-            <h1><i class="fas fa-graduation-cap me-2"></i>Lesson Access</h1>
-            <p class="mb-0">
-                @if (ViewBag.PreFilledLessonCode != null)
+    <div class="container">
+        <div class="card">
+            <a class="back-link" href="/OnlineStudent/Learning">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Learning</span>
+            </a>
+
+            <div class="header">
+                <div class="icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h1 class="title">Lesson Access</h1>
+                @if (hasLesson)
                 {
-                    <span>Enter your PIN code to access the selected lesson</span>
+                    <p class="subtitle">Enter your secure PIN code to unlock and access this lesson.</p>
                 }
                 else
                 {
-                    <span>Enter your PIN code and lesson number</span>
+                    <p class="subtitle">Please select a lesson from the Learning Center first.</p>
                 }
-            </p>
-        </div>
+            </div>
 
-        <div class="access-card">
-            @if (ViewBag.PreFilledLessonCode != null)
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                <a href="/OnlineStudent/Learning" class="back-to-learning">
-                    <i class="fas fa-arrow-left"></i>
-                    Back to Learning
-                </a>
-            }
-
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger error-message mb-4">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    @TempData["ErrorMessage"]
+                <div class="error-alert" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    @errorMessage
                 </div>
             }
 
-            <form method="post" action="/LessonContent/AccessLesson" id="accessForm">
-                <div class="mb-4">
-                    <label for="pinCode" class="form-label fs-5 fw-bold text-start w-100">
-                        <i class="fas fa-key me-2"></i>PIN Code
+            @if (!hasLesson)
+            {
+                <div class="no-lesson-warning" role="alert">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>No lesson selected.</strong><br />
+                        Return to the Learning Center and choose a lesson to unlock with your PIN code.
+                    </div>
+                </div>
+            }
+
+            <div class="divider"></div>
+
+            <form method="post"
+                  action="/LessonContent/AccessLesson"
+                  id="accessForm"
+                  class="@(hasLesson ? "" : "form-disabled")"
+                  autocomplete="off"
+                  novalidate>
+
+                <input type="hidden" name="lessonCode" id="lessonCodeHidden" value="@(hasLesson ? lessonCode.Value : 0)" />
+
+                <div class="form-group">
+                    <label class="label" for="pinCode">
+                        <i class="fas fa-shield-alt"></i>
+                        PIN Code
                     </label>
-                    <input type="text"
-                           class="form-control pin-input"
-                           id="pinCode"
-                           name="pinCode"
-                           placeholder="Enter PIN code"
-                           maxlength="20"
-                           required
-                           autocomplete="off">
-                    <small class="form-text text-muted">Enter the access code provided by your teacher</small>
+                    <div class="input-wrapper">
+                        <input type="text"
+                               id="pinCode"
+                               name="pinCode"
+                               class="pin-input"
+                               maxlength="20"
+                               inputmode="text"
+                               autocapitalize="off"
+                               autocomplete="off"
+                               spellcheck="false"
+                               placeholder="••••••••"
+                               required />
+                    </div>
+                    <div class="hint">SECURE ACCESS CODE PROVIDED BY YOUR TEACHER</div>
                 </div>
 
-                <div class="mb-4">
-                    <label for="lessonCode" class="form-label fs-5 fw-bold text-start w-100">
-                        <i class="fas fa-book me-2"></i>Lesson Code
-                    </label>
-                    <input type="number"
-                           class="form-control lesson-input"
-                           id="lessonCode"
-                           name="lessonCode"
-                           placeholder="Enter lesson number"
-                           min="1"
-                           value="@(ViewBag.PreFilledLessonCode ?? "")"
-                           @(ViewBag.PreFilledLessonCode != null ? "readonly" : "")
-                           required>
-                    <small class="form-text text-muted">
-                        @if (ViewBag.PreFilledLessonCode != null)
-                        {
-                            <span class="text-success">
-                                <i class="fas fa-check me-1"></i>Lesson selected from learning page
-                            </span>
-                        }
-                        else
-                        {
-                            <span>Enter the lesson number you want to access</span>
-                        }
-                    </small>
+                <div class="message" id="statusMessage">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="statusText"></span>
                 </div>
 
-                <button type="submit" class="btn access-btn" id="accessBtn">
-                    <i class="fas fa-unlock me-2"></i>
-                    <span id="btnText">Access Lesson</span>
+                <button type="submit"
+                        id="submitBtn"
+                        class="submit-btn"
+                        disabled
+                        aria-disabled="true">
+                    <i class="fas fa-unlock"></i>
+                    <span id="submitBtnText">Unlock Lesson</span>
                 </button>
+
+                <div class="footer">
+                    🔒 Access times and validity are monitored for security
+                </div>
             </form>
-
-
-            
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
-            <h5>Validating Access...</h5>
-            <p class="mb-0">Please wait while we verify your credentials and PIN validity</p>
+    <div class="overlay" id="loadingOverlay" aria-hidden="true">
+        <div class="overlay-content" role="alert" aria-live="polite">
+            <div class="spinner"></div>
+            <h3 class="overlay-title">Validating PIN...</h3>
+            <p class="overlay-text">Please wait while we verify your access credentials</p>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        console.log('🎓 Enhanced StudentViewer PIN Entry loaded at @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC');
-
-        document.addEventListener('DOMContentLoaded', function() {
+        (function () {
+            const hasLesson = @(hasLesson.ToString().ToLower());
             const form = document.getElementById('accessForm');
-            const accessBtn = document.getElementById('accessBtn');
-            const btnText = document.getElementById('btnText');
-            const loadingOverlay = document.getElementById('loadingOverlay');
             const pinInput = document.getElementById('pinCode');
-            const lessonInput = document.getElementById('lessonCode');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const lessonCodeHidden = document.getElementById('lessonCodeHidden');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const statusMessage = document.getElementById('statusMessage');
+            const statusText = document.getElementById('statusText');
 
-            const isPreFilled = @(ViewBag.PreFilledLessonCode != null ? "true" : "false");
+            function showMessage(message, type = 'info', autoHide = 4000) {
+                statusMessage.className = 'message show ' + type;
+                statusText.textContent = message;
 
-            // Auto-focus PIN input
-            pinInput.focus();
+                if (autoHide > 0) {
+                    setTimeout(() => {
+                        statusMessage.classList.remove('show');
+                    }, autoHide);
+                }
+            }
 
-            // Handle Enter key navigation
+            function isValidPin(value) {
+                return value && value.trim().length >= 4;
+            }
+
+            function setLoadingState(loading) {
+                if (loading) {
+                    loadingOverlay.classList.add('active');
+                    loadingOverlay.setAttribute('aria-hidden', 'false');
+                    submitBtn.disabled = true;
+                    submitBtn.setAttribute('aria-disabled', 'true');
+                    submitBtnText.textContent = 'Validating...';
+                } else {
+                    loadingOverlay.classList.remove('active');
+                    loadingOverlay.setAttribute('aria-hidden', 'true');
+                    submitBtnText.textContent = 'Unlock Lesson';
+                }
+            }
+
+            // Initialize
+            if (!hasLesson) {
+                showMessage('No lesson selected. Please return to the Learning Center.', 'warning', 0);
+                return;
+            } else {
+                showMessage('✨ Lesson ready! Enter your PIN code to continue.', 'success', 3000);
+                pinInput.focus({ preventScroll: true });
+            }
+
+            // Real-time validation
+            pinInput.addEventListener('input', function() {
+                const isValid = isValidPin(pinInput.value);
+                submitBtn.disabled = !isValid;
+                submitBtn.setAttribute('aria-disabled', String(!isValid));
+
+                // Visual feedback
+                if (pinInput.value.length > 0) {
+                    if (isValid) {
+                        pinInput.style.borderColor = 'var(--success-green)';
+                        pinInput.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.1)';
+                    } else {
+                        pinInput.style.borderColor = 'var(--warning-orange)';
+                        pinInput.style.boxShadow = '0 0 0 4px rgba(245, 158, 11, 0.1)';
+                    }
+                } else {
+                    pinInput.style.borderColor = 'var(--gray-200)';
+                    pinInput.style.boxShadow = 'none';
+                }
+            });
+
+            // Enter key support
             pinInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    if (!isPreFilled) {
-                        lessonInput.focus();
+                    if (isValidPin(pinInput.value)) {
+                        form.dispatchEvent(new Event('submit'));
                     } else {
-                        form.submit();
+                        showMessage('❌ PIN must be at least 4 characters long', 'danger', 3000);
+                        pinInput.focus();
                     }
                 }
             });
 
-            if (!isPreFilled) {
-                lessonInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        form.submit();
-                    }
-                });
-            }
-
-            // Handle form submission
+            // Form submission
             form.addEventListener('submit', function(e) {
-                const pinCode = pinInput.value.trim();
-                const lessonCode = lessonInput.value.trim();
-
-                if (!pinCode || !lessonCode) {
+                if (!hasLesson) {
                     e.preventDefault();
-                    alert('Please enter both PIN code and lesson code');
                     return;
                 }
 
-                // Show loading overlay
-                loadingOverlay.style.display = 'flex';
-                accessBtn.disabled = true;
-                btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validating PIN...';
+                const pinValue = pinInput.value.trim();
 
-                console.log('🔐 Enhanced access attempt:', {
-                    pin: pinCode,
-                    lesson: lessonCode,
-                    preFilled: isPreFilled,
-                    timestamp: new Date().toISOString()
-                });
+                if (!isValidPin(pinValue)) {
+                    e.preventDefault();
+                    showMessage('❌ PIN must be at least 4 characters long', 'danger', 3000);
+                    pinInput.focus();
+                    return;
+                }
+
+                if (lessonCodeHidden.value === "0") {
+                    e.preventDefault();
+                    showMessage('❌ Lesson code missing. Please reselect from Learning Center.', 'danger', 5000);
+                    return;
+                }
+
+                setLoadingState(true);
+                console.log('[StudentViewer] Submitting PIN for lesson:', lessonCodeHidden.value);
             });
 
-            // Real-time input validation
-            function validateInputs() {
-                const pinCode = pinInput.value.trim();
-                const lessonCode = lessonInput.value.trim();
+            // Paste handling
+            pinInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedText = (e.clipboardData.getData('text') || '')
+                    .replace(/\s+/g, '')
+                    .slice(0, 20);
 
-                accessBtn.disabled = !pinCode || !lessonCode;
+                pinInput.value = pastedText;
+                pinInput.dispatchEvent(new Event('input'));
 
-                if (pinCode && lessonCode) {
-                    btnText.textContent = 'Access Lesson';
-                } else if (isPreFilled && pinCode) {
-                    btnText.textContent = 'Access Lesson';
-                } else {
-                    btnText.textContent = isPreFilled ? 'Enter PIN Code' : 'Enter PIN and Lesson Code';
-                }
-            }
-
-            pinInput.addEventListener('input', validateInputs);
-            if (!isPreFilled) {
-                lessonInput.addEventListener('input', validateInputs);
-            }
-
-            // Initial validation
-            validateInputs();
-
-            // Handle page visibility change (if user comes back from another tab)
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden && loadingOverlay.style.display === 'flex') {
-                    // Reset loading state if page becomes visible again
-                    setTimeout(() => {
-                        loadingOverlay.style.display = 'none';
-                        accessBtn.disabled = false;
-                        btnText.innerHTML = '<i class="fas fa-unlock me-2"></i>Access Lesson';
-                    }, 1000);
+                if (pastedText) {
+                    showMessage('📋 PIN pasted successfully', 'success', 2000);
                 }
             });
 
-            // Show pre-filled lesson info
-            if (isPreFilled) {
-                console.log('📚 Lesson pre-filled from learning page:', @(ViewBag.PreFilledLessonCode ?? 0));
-            }
-
-            // ============ AUTOMATIC ACCESS CHECK FUNCTIONALITY ============
-
-            // Function to check lesson access automatically
-            function checkLessonAccess(lessonCode) {
-                console.log('🔍 Checking automatic access for lesson:', lessonCode);
-
-                fetch(`/LessonContent/CheckLessonAccess?lessonCode=${lessonCode}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('✅ Access check response:', data);
-
-                        if (data.result === 'DirectAccess') {
-                            console.log('🎯 Direct access granted - redirecting to lesson');
-
-                            // Show success message
-                            showAccessMessage('🎉 You already have access to this lesson! Redirecting...', 'success');
-
-                            // Hide the PIN form with fade effect
-                            form.style.opacity = '0.5';
-                            form.style.pointerEvents = 'none';
-                            accessBtn.disabled = true;
-                            btnText.innerHTML = '<i class="fas fa-check-circle me-2"></i>Access Granted';
-
-                            // Redirect after delay
-                            setTimeout(() => {
-                                console.log('🚀 Redirecting to:', data.redirectUrl);
-                                window.location.href = data.redirectUrl;
-                            }, 2500);
-
-                        } else if (data.result === 'RequirePIN') {
-                            console.log('🔐 PIN required - showing PIN form');
-                            showAccessMessage(data.message || 'Please enter your PIN to access this lesson.', 'info');
-
-                            // Ensure form is visible and enabled
-                            form.style.opacity = '1';
-                            form.style.pointerEvents = 'auto';
-
-                        } else if (data.result === 'AccessDenied') {
-                            console.log('❌ Access denied');
-                            showAccessMessage(data.message || 'Access denied for this lesson.', 'danger');
-
-                            // Disable the form
-                            form.style.opacity = '0.5';
-                            form.style.pointerEvents = 'none';
-                            accessBtn.disabled = true;
-                            btnText.innerHTML = '<i class="fas fa-times-circle me-2"></i>Access Denied';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('❌ Error checking lesson access:', error);
-                        showAccessMessage('Unable to check access status. Please try entering your PIN manually.', 'warning');
-
-                        // Ensure form remains accessible
-                        form.style.opacity = '1';
-                        form.style.pointerEvents = 'auto';
-                    });
-            }
-
-            function showAccessMessage(message, type) {
-                // Remove any existing access messages
-                const existingMessages = document.querySelectorAll('.access-check-message');
-                existingMessages.forEach(msg => msg.remove());
-
-                // Create new message
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `alert alert-${type} access-check-message mb-4`;
-
-                const iconMap = {
-                    'success': 'fa-check-circle',
-                    'info': 'fa-info-circle',
-                    'warning': 'fa-exclamation-triangle',
-                    'danger': 'fa-times-circle'
-                };
-
-                const icon = iconMap[type] || 'fa-info-circle';
-                messageDiv.innerHTML = `<i class="fas ${icon} me-2"></i>${message}`;
-
-                // Insert before the form
-                form.parentNode.insertBefore(messageDiv, form);
-
-                // Auto-remove info/warning messages after delay
-                if (type === 'info' || type === 'warning') {
-                    setTimeout(() => {
-                        if (messageDiv.parentNode) {
-                            messageDiv.style.opacity = '0';
-                            setTimeout(() => messageDiv.remove(), 300);
-                        }
-                    }, 4000);
+            // Failsafe timeout
+            setTimeout(() => {
+                if (loadingOverlay.classList.contains('active')) {
+                    setLoadingState(false);
+                    showMessage('⏰ Taking longer than expected. Please try again.', 'warning', 6000);
                 }
-            }
+            }, 15000);
 
-            // Automatic access check for pre-filled lessons
-            if (isPreFilled) {
-                const preFilledLessonCode = @(ViewBag.PreFilledLessonCode ?? 0);
-                if (preFilledLessonCode > 0) {
-                    console.log('📚 Pre-filled lesson detected, checking access automatically');
-
-                    // Show initial checking message
-                    showAccessMessage('🔍 Checking your access status...', 'info');
-
-                    // Add checking animation to the access card
-                    document.querySelector('.access-card').classList.add('checking-access');
-
-                    // Delay to let page finish loading
-                    setTimeout(() => {
-                        checkLessonAccess(preFilledLessonCode);
-
-                        // Remove checking animation after check completes
-                        setTimeout(() => {
-                            document.querySelector('.access-card')?.classList.remove('checking-access');
-                        }, 1500);
-                    }, 1200);
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // ESC to cancel loading
+                if (e.key === 'Escape' && loadingOverlay.classList.contains('active')) {
+                    setLoadingState(false);
                 }
-            }
-        });
+
+                // Focus input with any alphanumeric key
+                if (e.key.match(/^[a-z0-9]$/i) && document.activeElement !== pinInput) {
+                    pinInput.focus();
+                }
+            });
+
+        })();
     </script>
 </body>
 </html>

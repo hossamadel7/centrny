@@ -162,7 +162,53 @@ namespace centrny.Controllers
                    "Please enter PIN to access this lesson.",
                    $"/LessonContent/StudentViewer?lessonCode={lessonCode}");
         }
+        private async Task<bool> CanStudentAttendLesson(int studentCode, int lessonCode, int rootCode)
+        {
+            // Query OnlineAttend for the student's attendance record for this lesson
+            var attend = await _context.OnlineAttends
+                .FirstOrDefaultAsync(oa => oa.StudentCode == studentCode
+                                        && oa.LessonCode == lessonCode
+                                        && oa.RootCode == rootCode
+                                        && oa.Status == true);
 
+            if (attend == null)
+            {
+                // No attendance record found (student has not attended before)
+                return false;
+            }
+
+            // If expiry date is not set, treat as unlimited access (can attend)
+            if (!attend.ExpiryDate.HasValue)
+                return true;
+
+            // If expiry date is today or in the future, access is allowed
+            if (attend.ExpiryDate.Value >= DateOnly.FromDateTime(DateTime.Today))
+                return true;
+
+            // Expiry date has passed, cannot attend
+            return false;
+        }
+        [HttpGet]
+        public async Task<IActionResult> CanAccessLesson(int lessonCode)
+        {
+            var studentCode = GetSessionInt("StudentCode");
+            var rootCode = GetSessionInt("RootCode");
+
+            if (!studentCode.HasValue || !rootCode.HasValue)
+                return Json(new { canAttend = false, message = "Not logged in." });
+
+            bool canAttend = await CanStudentAttendLesson(studentCode.Value, lessonCode, rootCode.Value);
+
+            string message = canAttend
+      ? "Access allowed."
+      : "Your access to this lesson has expired. Please enter a PIN to buy or renew access.";
+
+            return Json(new
+            {
+                canAttend,
+                message
+            });
+        }
         // <summary>
         /// Enhanced AccessLesson method with proper PIN validation
         /// </summary>
@@ -1003,36 +1049,63 @@ namespace centrny.Controllers
         [HttpGet]
         public async Task<IActionResult> StudentViewer(int? lessonCode = null)
         {
-            Console.WriteLine($"🔐 StudentViewer access attempt by {GetCurrentUser()} at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            Console.WriteLine($"📍 IP Address: {HttpContext.Connection.RemoteIpAddress}");
-
             var rootCode = GetSessionInt("RootCode");
+            var studentCode = GetSessionInt("StudentCode");
 
-            // Pre-fill lesson code if provided from learning page
             ViewBag.PreFilledLessonCode = lessonCode;
 
+            // Only attempt auto-redirect if all context values and lessonCode exist
+            if (lessonCode.HasValue && rootCode.HasValue && studentCode.HasValue)
+            {
+                var today = DateOnly.FromDateTime(DateTime.Today);
+
+                var attend = await _context.OnlineAttends
+                    .Include(a => a.PinCodeNavigation)
+                    .FirstOrDefaultAsync(a =>
+                        a.StudentCode == studentCode.Value &&
+                        a.LessonCode == lessonCode.Value &&
+                        a.RootCode == rootCode.Value);
+
+                if (attend != null && attend.PinCodeNavigation != null)
+                {
+                    bool stillValid = !attend.ExpiryDate.HasValue || attend.ExpiryDate.Value >= today;
+
+                    if (stillValid)
+                    {
+                        var pinCode = attend.PinCodeNavigation.Watermark;
+                        if (!string.IsNullOrEmpty(pinCode))
+                        {
+                            // Set session (same shape as AccessLesson)
+                            HttpContext.Session.SetString("ValidatedPin", pinCode);
+                            HttpContext.Session.SetInt32("AccessibleLesson", lessonCode.Value);
+                            HttpContext.Session.SetString("AccessGrantedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                            HttpContext.Session.SetString("AccessGrantedToUser", GetCurrentUser());
+
+                            return RedirectToAction("ViewLesson", new { lessonCode = lessonCode.Value, pinCode });
+                        }
+                    }
+                    // If expired → fall through to show PIN form (renew required)
+                }
+                // If no attendance → fall through (needs to enter PIN first)
+            }
+
+            // Only build lesson dropdown (or list) when no specific lesson requested
             if (rootCode.HasValue && !lessonCode.HasValue)
             {
-                var lessons = await _context.Lessons
+                ViewBag.AvailableLessons = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .Include(l => l.EduYearCodeNavigation)
                     .Where(l => l.RootCode == rootCode.Value && l.IsActive)
                     .OrderBy(l => l.LessonName)
                     .ToListAsync();
-
-                ViewBag.AvailableLessons = lessons;
-                Console.WriteLine($"📚 Loaded {lessons.Count} available lessons for selection");
             }
             else
             {
                 ViewBag.AvailableLessons = new List<Lesson>();
-                Console.WriteLine("⚠️ Lesson pre-filled or no rootCode - showing minimal lesson list");
             }
 
-            return View();
+            return View(); // Renders PIN entry
         }
-
-
         private async Task CreateOrUpdateAttendanceRecord(int studentCode, int lessonCode, int pinCode, int rootCode)
         {
             try
@@ -1078,7 +1151,30 @@ namespace centrny.Controllers
             }
         }
 
-       
+        [HttpGet]
+        public async Task<IActionResult> LessonAccessState(int lessonCode)
+        {
+            var rootCode = GetSessionInt("RootCode");
+            var studentCode = GetSessionInt("StudentCode");
+
+            if (!rootCode.HasValue || !studentCode.HasValue)
+                return Json(new { state = "NotLoggedIn" });
+
+            var attend = await _context.OnlineAttends
+                .Include(a => a.PinCodeNavigation)
+                .FirstOrDefaultAsync(a => a.StudentCode == studentCode.Value &&
+                                          a.LessonCode == lessonCode &&
+                                          a.RootCode == rootCode.Value);
+
+            if (attend == null)
+                return Json(new { state = "NeedPIN", reason = "NoAttendance" });
+
+            bool valid = !attend.ExpiryDate.HasValue || attend.ExpiryDate.Value >= DateOnly.FromDateTime(DateTime.Today);
+            if (valid)
+                return Json(new { state = "DirectAccess", pin = attend.PinCodeNavigation?.Watermark });
+
+            return Json(new { state = "NeedPIN", reason = "Expired" });
+        }
 
         [HttpGet]
         public IActionResult GetSessionStudentCode()

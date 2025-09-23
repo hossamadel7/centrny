@@ -1,6 +1,4 @@
-﻿// OnlineStudent.js - Localization-aware version (fixed key resolution + missing key logging)
-
-console.log('OnlineStudent.js loading...');
+﻿console.log('OnlineStudent.js loading...');
 
 class OnlineStudentDashboard {
     constructor() {
@@ -36,38 +34,33 @@ class OnlineStudentDashboard {
         const ds = this.locNode.dataset;
 
         const toSnakeFromCamel = (k) =>
-            k.replace(/([A-Z])/g, '_$1').toLowerCase(); // labelSubject -> label_subject
+            k.replace(/([A-Z])/g, '_$1').toLowerCase();
         const snakeToDash = (s) => s.replace(/_/g, '-');
         const snakeToCamel = (s) =>
             s.split('_').map((p, i) => i === 0 ? p : (p.charAt(0).toUpperCase() + p.slice(1))).join('');
 
         for (const camelKey of Object.keys(ds)) {
             const value = ds[camelKey];
-            const snake = toSnakeFromCamel(camelKey);           // label_subject
-            const dash = snakeToDash(snake);                    // label-subject
-            const upperSnake = snake.toUpperCase();             // LABEL_SUBJECT
+            const snake = toSnakeFromCamel(camelKey);
+            const dash = snakeToDash(snake);
+            const upperSnake = snake.toUpperCase();
 
-            // Store many aliases pointing to value
             this._locMap[camelKey] = value;
             this._locMap[snake] = value;
             this._locMap[dash] = value;
             this._locMap[upperSnake] = value;
-            this._locMap[snake.replace(/_/g, '')] = value;      // labelsubject
-            this._locMap[dash.replace(/-/g, '')] = value;       // labelsubject again
+            this._locMap[snake.replace(/_/g, '')] = value;
+            this._locMap[dash.replace(/-/g, '')] = value;
         }
     }
 
     _normalizeKeyVariants(key) {
-        // Original key might be like Label_Subject
         const base = key.trim();
         const lower = base.toLowerCase();
         const snake = lower.replace(/-/g, '_').replace(/ /g, '_');
         const dash = snake.replace(/_/g, '-');
-
-        // Convert snake/dash to camel
         const toCamel = (s) =>
             s.split(/[_-]/).map((p, i) => i === 0 ? p : (p.charAt(0).toUpperCase() + p.slice(1))).join('');
-
         const camelFromSnake = toCamel(snake);
         const camelFromDash = toCamel(dash);
 
@@ -78,8 +71,8 @@ class OnlineStudentDashboard {
             dash,
             camelFromSnake,
             camelFromDash,
-            snake.replace(/_/g, ''),   // collapsed
-            dash.replace(/-/g, '')     // collapsed
+            snake.replace(/_/g, ''),
+            dash.replace(/-/g, '')
         ];
     }
 
@@ -104,6 +97,7 @@ class OnlineStudentDashboard {
         } else if (currentPath.includes('onlinestudent') || currentPath === '/' || currentPath.includes('index')) {
             this.loadAll();
         } else {
+            // Fallback: try to initialize whichever section is present
             if (document.getElementById('subjectSelect')) this.initLearningSystem();
             else if (document.getElementById('subjectsGrid')) this.loadAll();
         }
@@ -120,10 +114,10 @@ class OnlineStudentDashboard {
                 this.loadExams()
             ]);
             this.hideLoading();
-            this.showAlert(this.loc('Alert_DashboardLoaded'));
+            this.showAlert(this.loc('Alert_DashboardLoaded', 'Dashboard loaded'));
         } catch (e) {
             console.error(e);
-            this.showAlert(this.loc('Alert_DashboardFailed'), 'error');
+            this.showAlert(this.loc('Alert_DashboardFailed', 'Failed to load dashboard'), 'error');
             this.hideLoading();
         }
     }
@@ -144,9 +138,11 @@ class OnlineStudentDashboard {
         this.setCounter('examsCount', this.stats.examsCount);
         this.setCounter('attendanceCount', this.stats.totalAttendance);
         const avg = document.getElementById('averageGrade');
-        if (avg) avg.textContent = (this.stats.averageGrade && this.stats.averageGrade > 0)
-            ? `${this.stats.averageGrade}%`
-            : '--';
+        if (avg) {
+            avg.textContent = (this.stats.averageGrade && this.stats.averageGrade > 0)
+                ? `${this.stats.averageGrade}%`
+                : '--';
+        }
     }
 
     setCounter(id, value) {
@@ -176,8 +172,8 @@ class OnlineStudentDashboard {
             const badge = document.getElementById('subscription-status');
             if (badge) {
                 badge.textContent = this.subscription.isSubscribed
-                    ? this.loc('Badge_Subscribed')
-                    : this.loc('Badge_Regular');
+                    ? this.loc('Badge_Subscribed', 'Subscribed')
+                    : this.loc('Badge_Regular', 'Regular');
                 badge.className = `badge ${this.subscription.isSubscribed ? 'bg-success' : 'bg-secondary'}`;
             }
         } catch { /* ignore */ }
@@ -195,7 +191,7 @@ class OnlineStudentDashboard {
             }
             this.renderSubjects();
         } catch {
-            this.renderError(grid, this.loc('Alert_LoadSubjectsFailed'));
+            this.renderError(grid, this.loc('Alert_LoadSubjectsFailed', 'Failed to load subjects'));
         }
     }
 
@@ -203,9 +199,11 @@ class OnlineStudentDashboard {
         const grid = document.getElementById('subjectsGrid');
         if (!grid) return;
         if (!this.subjects || this.subjects.length === 0) {
-            grid.innerHTML = this.emptyState('fa-book',
-                this.loc('Empty_NoSubjectsTitle'),
-                this.loc('Empty_NoSubjectsMessage'));
+            grid.innerHTML = this.emptyState(
+                'fa-book',
+                this.loc('Empty_NoSubjectsTitle', 'No Subjects'),
+                this.loc('Empty_NoSubjectsMessage', 'You are not enrolled in any subjects yet.')
+            );
             return;
         }
         grid.innerHTML = this.subjects.map(s => `
@@ -222,8 +220,8 @@ class OnlineStudentDashboard {
                     <div class="detail-item"><i class="fas fa-map-marker-alt"></i><span>${s.hallName || '--'}</span></div>
                     <div class="detail-item"><i class="fas fa-building"></i><span>${this.escape(s.branchName)}</span></div>
                     <div class="detail-item"><i class="fas fa-phone"></i><span>${s.teacherPhone || 'N/A'}</span></div>
-                    ${s.isOnline ? `<div class="online-badge"><i class="fas fa-wifi"></i> ${this.loc('Online_Badge')}</div>` : ''}
-                    ${(s.studentFee ? `<div class="detail-item"><i class="fas fa-money-bill"></i><span>${this.loc('Fee_Label')}: ${s.studentFee}</span></div>` : '')}
+                    ${s.isOnline ? `<div class="online-badge"><i class="fas fa-wifi"></i> ${this.loc('Online_Badge', 'Online')}</div>` : ''}
+                    ${(s.studentFee ? `<div class="detail-item"><i class="fas fa-money-bill"></i><span>${this.loc('Fee_Label', 'Fee')}: ${s.studentFee}</span></div>` : '')}
                 </div>
             </div>
         `).join('');
@@ -241,7 +239,7 @@ class OnlineStudentDashboard {
             }
             this.renderExams();
         } catch {
-            this.renderError(grid, this.loc('Alert_LoadExamsFailed'));
+            this.renderError(grid, this.loc('Alert_LoadExamsFailed', 'Failed to load exams'));
         }
     }
 
@@ -249,9 +247,11 @@ class OnlineStudentDashboard {
         const grid = document.getElementById('examsGrid');
         if (!grid) return;
         if (!this.exams || this.exams.length === 0) {
-            grid.innerHTML = this.emptyState('fa-clipboard-list',
-                this.loc('Empty_NoExamsTitle'),
-                this.loc('Empty_NoExamsMessage'));
+            grid.innerHTML = this.emptyState(
+                'fa-clipboard-list',
+                this.loc('Empty_NoExamsTitle', 'No Exams'),
+                this.loc('Empty_NoExamsMessage', 'You have not taken any exams yet.')
+            );
             return;
         }
         grid.innerHTML = this.exams.map(e => {
@@ -268,12 +268,12 @@ class OnlineStudentDashboard {
                         </div>
                     </div>
                     <div class="exam-details">
-                        <div class="detail-row"><span class="label">${this.loc('Label_Subject')}</span><span class="value">${this.escape(e.subjectName)}</span></div>
-                        <div class="detail-row"><span class="label">${this.loc('Label_Teacher')}</span><span class="value">${this.escape(e.teacherName)}</span></div>
-                        <div class="detail-row"><span class="label">${this.loc('Label_Date')}</span><span class="value">${this.formatDate(e.examDate)}</span></div>
-                        <div class="detail-row"><span class="label">${this.loc('Label_Type')}</span><span class="value">${e.isExam ? this.loc('Type_Exam') : this.loc('Type_Quiz')}</span></div>
-                        <div class="detail-row"><span class="label">${this.loc('Label_Status')}</span>
-                            <span class="value ${pass ? 'text-success' : 'text-danger'}">${pass ? this.loc('Status_Passed') : this.loc('Status_Failed')}</span>
+                        <div class="detail-row"><span class="label">${this.loc('Label_Subject', 'Subject')}</span><span class="value">${this.escape(e.subjectName)}</span></div>
+                        <div class="detail-row"><span class="label">${this.loc('Label_Teacher', 'Teacher')}</span><span class="value">${this.escape(e.teacherName)}</span></div>
+                        <div class="detail-row"><span class="label">${this.loc('Label_Date', 'Date')}</span><span class="value">${this.formatDate(e.examDate)}</span></div>
+                        <div class="detail-row"><span class="label">${this.loc('Label_Type', 'Type')}</span><span class="value">${e.isExam ? this.loc('Type_Exam', 'Exam') : this.loc('Type_Quiz', 'Quiz')}</span></div>
+                        <div class="detail-row"><span class="label">${this.loc('Label_Status', 'Status')}</span>
+                            <span class="value ${pass ? 'text-success' : 'text-danger'}">${pass ? this.loc('Status_Passed', 'Passed') : this.loc('Status_Failed', 'Failed')}</span>
                         </div>
                     </div>
                 </div>
@@ -292,7 +292,7 @@ class OnlineStudentDashboard {
         const loadChaptersBtn = document.getElementById('loadChaptersBtn');
         if (subjectSelect) {
             subjectSelect.addEventListener('change', () => {
-                loadChaptersBtn.disabled = !subjectSelect.value;
+                if (loadChaptersBtn) loadChaptersBtn.disabled = !subjectSelect.value;
             });
         }
         if (loadChaptersBtn) {
@@ -310,7 +310,7 @@ class OnlineStudentDashboard {
         try {
             const subjectSelect = document.getElementById('subjectSelect');
             if (!subjectSelect) return;
-            subjectSelect.innerHTML = `<option value="">${this.loc('Loading_Subjects')}</option>`;
+            subjectSelect.innerHTML = `<option value="">${this.loc('Loading_Subjects', 'Loading subjects...')}</option>`;
             const response = await fetch('/OnlineStudent/GetLearningSubjects');
             if (!response.ok) throw new Error();
             this.learningSubjects = await response.json();
@@ -322,8 +322,8 @@ class OnlineStudentDashboard {
             this.renderLearningSubjects();
         } catch {
             const subjectSelect = document.getElementById('subjectSelect');
-            if (subjectSelect) subjectSelect.innerHTML = `<option value="">${this.loc('Alert_LoadSubjectsFailed')}</option>`;
-            this.showAlert(this.loc('Alert_LoadSubjectsFailed'), 'error');
+            if (subjectSelect) subjectSelect.innerHTML = `<option value="">${this.loc('Alert_LoadSubjectsFailed', 'Failed to load')}</option>`;
+            this.showAlert(this.loc('Alert_LoadSubjectsFailed', 'Failed to load subjects'), 'error');
         }
     }
 
@@ -331,10 +331,10 @@ class OnlineStudentDashboard {
         const subjectSelect = document.getElementById('subjectSelect');
         if (!subjectSelect) return;
         if (!this.learningSubjects || this.learningSubjects.length === 0) {
-            subjectSelect.innerHTML = `<option value="">${this.loc('Select_SubjectPlaceholder')}</option>`;
+            subjectSelect.innerHTML = `<option value="">${this.loc('Select_SubjectPlaceholder', 'Select a subject')}</option>`;
             return;
         }
-        const options = [`<option value="">${this.loc('Select_SubjectPlaceholder')}</option>`];
+        const options = [`<option value="">${this.loc('Select_SubjectPlaceholder', 'Select a subject')}</option>`];
         this.learningSubjects.forEach(subject => {
             options.push(`<option value="${subject.subjectCode}">${this.escape(subject.subjectName)} - ${this.escape(subject.eduYearName)}</option>`);
         });
@@ -356,7 +356,7 @@ class OnlineStudentDashboard {
             this.renderChapters();
             this.updateBreadcrumb(['Title_LearningCenter', this.currentSubject?.subjectName || '...']);
         } catch {
-            this.showAlert(this.loc('Alert_LoadChaptersFailed'), 'error');
+            this.showAlert(this.loc('Alert_LoadChaptersFailed', 'Failed to load chapters'), 'error');
         } finally {
             this.hideLearningLoading('chaptersSection');
         }
@@ -366,9 +366,11 @@ class OnlineStudentDashboard {
         const chaptersGrid = document.getElementById('chaptersGrid');
         if (!chaptersGrid) return;
         if (!this.chapters || this.chapters.length === 0) {
-            chaptersGrid.innerHTML = this.emptyState('fa-layer-group',
-                this.loc('Empty_NoChaptersTitle'),
-                this.loc('Empty_NoChaptersMessage'));
+            chaptersGrid.innerHTML = this.emptyState(
+                'fa-layer-group',
+                this.loc('Empty_NoChaptersTitle', 'No Chapters'),
+                this.loc('Empty_NoChaptersMessage', 'No chapters available for this subject.')
+            );
             return;
         }
         chaptersGrid.innerHTML = this.chapters.map(chapter => `
@@ -379,7 +381,7 @@ class OnlineStudentDashboard {
                             <h5 class="chapter-title">${this.escape(chapter.chapterName)}</h5>
                             <span class="lessons-count-badge">${chapter.lessonsCount}</span>
                         </div>
-                        <p class="chapter-description">${this.loc('Label_Subject')}: ${this.escape(chapter.subjectName)}</p>
+                        <p class="chapter-description">${this.loc('Label_Subject', 'Subject')}: ${this.escape(chapter.subjectName)}</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted"><i class="fas fa-clock me-1"></i>${this.formatDate(chapter.insertTime)}</small>
                             <i class="fas fa-arrow-right text-primary"></i>
@@ -416,7 +418,7 @@ class OnlineStudentDashboard {
                 data.chapter?.chapterName || '...'
             ]);
         } catch {
-            this.showAlert(this.loc('Alert_LoadLessonsFailed'), 'error');
+            this.showAlert(this.loc('Alert_LoadLessonsFailed', 'Failed to load lessons'), 'error');
         } finally {
             this.hideLearningLoading('lessonsSection');
         }
@@ -426,15 +428,17 @@ class OnlineStudentDashboard {
         const lessonsContainer = document.getElementById('lessonsContainer');
         if (!lessonsContainer) return;
         if (!this.lessons || this.lessons.length === 0) {
-            lessonsContainer.innerHTML = this.emptyState('fa-play-circle',
-                this.loc('Empty_NoLessonsTitle'),
-                this.loc('Empty_NoLessonsMessage'));
+            lessonsContainer.innerHTML = this.emptyState(
+                'fa-play-circle',
+                this.loc('Empty_NoLessonsTitle', 'No Lessons'),
+                this.loc('Empty_NoLessonsMessage', 'No lessons available in this chapter.')
+            );
             return;
         }
         const chapterInfo = `
             <div class="mb-4 p-3 bg-light rounded">
                 <h4>${this.escape(chapter.chapterName)}</h4>
-                <p class="text-muted mb-0">${this.loc('Label_Subject')}: ${this.escape(chapter.subjectName)}</p>
+                <p class="text-muted mb-0">${this.loc('Label_Subject', 'Subject')}: ${this.escape(chapter.subjectName)}</p>
                 <small class="text-muted">${this.lessons.length}</small>
             </div>
         `;
@@ -446,27 +450,46 @@ class OnlineStudentDashboard {
                         ${this.escape(lesson.lessonName)}
                     </h6>
                     <div class="lesson-actions">
-                        <button class="btn btn-primary btn-sm" onclick="window.onlineStudentDashboard.accessLesson(${lesson.lessonCode}, '${this.escape(lesson.lessonName)}')">
+                        <button class="btn btn-primary btn-sm"
+                            onclick="window.onlineStudentDashboard.accessLesson(${lesson.lessonCode}, '${this.escape(lesson.lessonName)}')">
                             <i class="fas fa-key me-1"></i>${this.loc('Button_AccessLesson', 'Access')}
                         </button>
                     </div>
                 </div>
                 <p class="lesson-description">
-                    <small class="text-muted"><i class="fas fa-calendar me-1"></i>${this.loc('Added_Label')}: ${this.formatDate(lesson.insertTime)}</small>
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>${this.loc('Added_Label', 'Added')}: ${this.formatDate(lesson.insertTime)}
+                    </small>
                 </p>
             </div>
         `).join('');
         lessonsContainer.innerHTML = chapterInfo + lessonsList;
     }
 
+    // Access logic: if canAttend -> direct open; else -> go to StudentViewer to enter PIN (purchase/renew)
     accessLesson(lessonCode, lessonName) {
-        const msg = `${this.loc('Confirm_AccessLesson')}\n${lessonName}`;
-        if (confirm(msg)) {
-            this.showAlert(this.loc('Redirecting', 'Redirecting...'), 'info');
-            setTimeout(() => {
-                window.location.href = `/LessonContent/StudentViewer?lessonCode=${lessonCode}`;
-            }, 400);
-        }
+        const msg = `${this.loc('Confirm_AccessLesson', 'Access this lesson?')}\n${lessonName}`;
+        if (!confirm(msg)) return;
+
+        fetch(`/LessonContent/CanAccessLesson?lessonCode=${lessonCode}`)
+            .then(r => r.json())
+            .then(res => {
+                if (res.canAttend) {
+                    this.showAlert(this.loc('Redirecting', 'Redirecting...'), 'info');
+                    setTimeout(() => {
+                        window.location.href = `/LessonContent/StudentViewer?lessonCode=${lessonCode}`;
+                    }, 300);
+                } else {
+                    // Show reason then send to StudentViewer (PIN entry / renew)
+                    this.showAlert(res.message || this.loc('Access_Expired', 'Access expired. Enter PIN.'), 'error');
+                    setTimeout(() => {
+                        window.location.href = `/LessonContent/StudentViewer?lessonCode=${lessonCode}`;
+                    }, 1200);
+                }
+            })
+            .catch(() => {
+                this.showAlert(this.loc('Error_CheckingAccess', 'Error checking lesson access'), 'error');
+            });
     }
 
     // Navigation / breadcrumb
@@ -520,28 +543,38 @@ class OnlineStudentDashboard {
         if (!start || !end) return '--';
         return `${start} - ${end}`;
     }
+
     formatDate(d) {
         if (!d || d === 'N/A') return 'N/A';
         try {
             const dt = new Date(d);
-            return dt.toLocaleDateString(this.locale || 'en', { year: 'numeric', month: 'short', day: 'numeric' });
+            return dt.toLocaleDateString(this.locale || 'en', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
         } catch {
             return d;
         }
     }
+
     showLoading() {
         document.querySelectorAll('.loading-spinner').forEach(el => el.style.display = 'flex');
     }
+
     hideLoading() {
         document.querySelectorAll('.loading-spinner').forEach(el => el.style.display = 'none');
     }
+
     showAlert(msg, type = 'info') {
         const container = document.getElementById('alertContainer');
         if (!container) return;
-        const alertClass = type === 'success' ? 'alert-success' :
-            type === 'error' ? 'alert-danger' : 'alert-info';
-        const icon = type === 'success' ? 'fa-check-circle' :
-            type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        const alertClass = type === 'success' ? 'alert-success'
+            : type === 'error' ? 'alert-danger'
+                : 'alert-info';
+        const icon = type === 'success' ? 'fa-check-circle'
+            : type === 'error' ? 'fa-exclamation-triangle'
+                : 'fa-info-circle';
         container.innerHTML = `
             <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
                 <i class="fas ${icon} me-2"></i>${this.escape(msg)}
@@ -552,6 +585,7 @@ class OnlineStudentDashboard {
             if (alert) alert.remove();
         }, 5000);
     }
+
     renderError(container, message) {
         if (!container) return;
         container.innerHTML = `
@@ -561,6 +595,7 @@ class OnlineStudentDashboard {
                 <p>${this.escape(message)}</p>
             </div>`;
     }
+
     emptyState(icon, title, message) {
         return `
             <div class="empty-state">
@@ -569,10 +604,15 @@ class OnlineStudentDashboard {
                 <p>${this.escape(message)}</p>
             </div>`;
     }
+
     escape(text) {
         if (text === null || text === undefined) return '';
         return String(text).replace(/[&<>"']/g, c => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
         }[c]));
     }
 }
@@ -580,7 +620,6 @@ class OnlineStudentDashboard {
 // Initialize
 window.onlineStudentDashboard = new OnlineStudentDashboard();
 
-// Language switch logic (cookie approach)
 function switchLanguage(lang) {
     document.cookie = `.AspNetCore.Culture=c=${lang}|uic=${lang}; path=/; max-age=31536000`;
     location.reload();
