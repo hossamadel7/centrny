@@ -70,7 +70,7 @@ namespace centrny.Controllers
                 HttpContext.Session.SetString("Username", dbUser.Username);
                 HttpContext.Session.SetString("Password", dbUser.Password);
                 HttpContext.Session.SetInt32("GroupCode", dbUser.GroupCode);
-
+             
                 if (dbUser.GroupCodeNavigation != null)
                 {
                     HttpContext.Session.SetString("GroupName", dbUser.GroupCodeNavigation.GroupName ?? "");
@@ -81,6 +81,13 @@ namespace centrny.Controllers
                         HttpContext.Session.SetString("RootName", root.RootName ?? "");
                         HttpContext.Session.SetString("RootDomain", root.RootDomain ?? "");
                         HttpContext.Session.SetString("RootIsCenter", root.IsCenter.ToString());
+                        // Store root colors in session
+                        HttpContext.Session.SetString("RootBodyColor", root.RootBodyColor ?? "#fff");
+                        HttpContext.Session.SetString("RootButtonColor", root.RootButtonColor ?? "#007bff");
+                        HttpContext.Session.SetString("RootBodyFont", root.RootBodyFont ?? "#000");
+                        HttpContext.Session.SetString("RootButtonFontColor", root.RootButtonFontColor ?? "#000");
+                        HttpContext.Session.SetString("RootButtonFontColor2", root.RootButtonFontColor2 ?? "#fff");
+                        HttpContext.Session.SetString("RootBackgroundColor", root.RootBackgroundColor ?? "#eee");
 
                         if (!root.IsCenter)
                         {

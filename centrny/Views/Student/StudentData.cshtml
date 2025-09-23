@@ -26,6 +26,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link href="~/css/student-profile.css" rel="stylesheet" />
     <link href="~/css/studentData.css" rel="stylesheet" />
+    <link href="~/css/exam_cards_styles.css" rel="stylesheet" />
 </head>
 <body>
     <div id="js-localization"
@@ -62,6 +63,7 @@
          data-no-downloads="No Files"
          data-no-downloads-msg="There are no downloadable files available."
          data-failed-to-load-downloads="Failed to load downloadable files." />
+
     <div class="container-fluid student-profile-page">
         <div class="profile-container">
             <div class="profile-header">
@@ -210,367 +212,490 @@
 
     <div id="alertContainer"></div>
 
+    <!-- Answers Modal -->
+    <div id="answersModal" class="modal" tabindex="-1" style="display:none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Exam Answers Review
+                    </h5>
+                    <button type="button" class="btn-close" onclick="closeAnswersModal()" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="answersModalBody">
+                    <!-- Questions and answers will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-   <script>
-    console.log('Student profile script loaded');
+    <script>
+        console.log('Student profile script loaded');
 
-    let videosData = [];
-    let downloadsData = [];
+        let videosData = [];
+        let downloadsData = [];
 
-    // -- Videos: Only show videos for the lesson of the last attended class --
-    async function loadLatestVideos() {
-        if (!ITEM_KEY) {
-            showError('videosGrid', 'failed-to-load-videos');
-            return;
-        }
-        try {
-            // Use the new backend endpoint you created for last attended class videos
-            const data = await safeFetchJson(`/Student/GetLatestStudentVideos/${ITEM_KEY}`);
-            if (!data || !Array.isArray(data)) {
+        // -- Videos: Only show videos for the lesson of the last attended class --
+        async function loadLatestVideos() {
+            if (!ITEM_KEY) {
                 showError('videosGrid', 'failed-to-load-videos');
                 return;
             }
-            videosData = data;
-            renderVideos(videosData);
-        } catch {
-            showError('videosGrid', 'failed-to-load-videos');
+            try {
+                const data = await safeFetchJson(`/Student/GetLatestStudentVideos/${ITEM_KEY}`);
+                if (!data || !Array.isArray(data)) {
+                    showError('videosGrid', 'failed-to-load-videos');
+                    return;
+                }
+                videosData = data;
+                renderVideos(videosData);
+            } catch {
+                showError('videosGrid', 'failed-to-load-videos');
+            }
         }
-    }
 
-    function renderVideos(videos) {
-        const container = document.getElementById('videosGrid');
-        if (!videos.length) {
-            container.innerHTML = renderEmptyState('fa-video', 'no-videos', 'no-videos-msg');
-            return;
+        function renderVideos(videos) {
+            const container = document.getElementById('videosGrid');
+            if (!videos.length) {
+                container.innerHTML = renderEmptyState('fa-video', 'no-videos', 'no-videos-msg');
+                return;
+            }
+            container.innerHTML = videos.map(v => {
+                const fixedPath = v.fileLocation.replace(/\\/g, '/');
+                const url = fixedPath.startsWith('/') ? fixedPath : '/' + fixedPath;
+                return `
+                    <div class="exam-card video-card" onclick="watchVideo(${v.fileCode})">
+                        <div class="exam-header">
+                            <div class="exam-icon"><i class="fas fa-video"></i></div>
+                            <h3 class="exam-name">${v.displayName}</h3>
+                        </div>
+                        <div class="exam-details">
+                            <div class="exam-detail"><i class="fas fa-book"></i> <span>${v.subjectName}</span></div>
+                            <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${v.teacherName}</span></div>
+                            <div class="exam-detail"><i class="fas fa-bookmark"></i> <span>${v.lessonName}</span></div>
+                            ${v.duration ? `<div class="exam-detail"><i class="fas fa-clock"></i> <span>${v.duration}</span></div>` : ''}
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <a class="attend-exam-btn" href="${url}" target="_blank">
+                                <i class="fas fa-play"></i> Watch Video
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
-        container.innerHTML = videos.map(v => {
-            const fixedPath = v.fileLocation.replace(/\\/g, '/');
-            const url = fixedPath.startsWith('/') ? fixedPath : '/' + fixedPath;
-            return `
-                <div class="exam-card video-card" onclick="watchVideo(${v.fileCode})">
-                    <div class="exam-header">
-                        <div class="exam-icon"><i class="fas fa-video"></i></div>
-                        <h3 class="exam-name">${v.displayName}</h3>
-                    </div>
-                    <div class="exam-details">
-                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${v.subjectName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${v.teacherName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-bookmark"></i> <span>${v.lessonName}</span></div>
-                        ${v.duration ? `<div class="exam-detail"><i class="fas fa-clock"></i> <span>${v.duration}</span></div>` : ''}
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <a class="attend-exam-btn" href="${url}" target="_blank">
-                            <i class="fas fa-play"></i> Watch Video
-                        </a>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
 
-    function watchVideo(fileCode) {
-        if (!fileCode) {
-            console.warn('Missing fileCode, navigation blocked');
-            return;
+        function watchVideo(fileCode) {
+            if (!fileCode) {
+                console.warn('Missing fileCode, navigation blocked');
+                return;
+            }
+            window.location.href = `/Student/WatchVideo/${ITEM_KEY}/${fileCode}`;
         }
-        window.location.href = `/Student/WatchVideo/${ITEM_KEY}/${fileCode}`;
-    }
 
-    // -- Downloads: Only show PDFs for the lesson of the last attended class --
-    async function loadLatestDownloads() {
-        if (!ITEM_KEY) {
-            showError('downloadsGrid', 'failed-to-load-downloads');
-            return;
-        }
-        try {
-            // Use the new backend endpoint you created for last attended class PDFs
-            const data = await safeFetchJson(`/Student/GetLatestStudentDownloads/${ITEM_KEY}`);
-            if (!data || !Array.isArray(data)) {
+        // -- Downloads: Only show PDFs for the lesson of the last attended class --
+        async function loadLatestDownloads() {
+            if (!ITEM_KEY) {
                 showError('downloadsGrid', 'failed-to-load-downloads');
                 return;
             }
-            downloadsData = data;
-            renderDownloads(downloadsData);
-        } catch {
-            showError('downloadsGrid', 'failed-to-load-downloads');
+            try {
+                const data = await safeFetchJson(`/Student/GetLatestStudentDownloads/${ITEM_KEY}`);
+                if (!data || !Array.isArray(data)) {
+                    showError('downloadsGrid', 'failed-to-load-downloads');
+                    return;
+                }
+                downloadsData = data;
+                renderDownloads(downloadsData);
+            } catch {
+                showError('downloadsGrid', 'failed-to-load-downloads');
+            }
         }
-    }
 
-    function renderDownloads(files) {
-        const container = document.getElementById('downloadsGrid');
-        if (!files.length) {
-            container.innerHTML = renderEmptyState('fa-download', 'no-downloads', 'no-downloads-msg');
-            return;
-        }
-        container.innerHTML = files.map(f => {
-            const fixedPath = f.fileLocation.replace(/\\/g, '/');
-            const url = fixedPath.startsWith('/') ? fixedPath : '/' + fixedPath;
-            return `
-                <div class="exam-card download-card">
-                    <div class="exam-header">
-                        <div class="exam-icon"><i class="fas fa-download"></i></div>
-                        <h3 class="exam-name">${f.displayName}</h3>
-                    </div>
-                    <div class="exam-details">
-                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${f.subjectName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${f.teacherName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-bookmark"></i> <span>${f.lessonName}</span></div>
-                        <div class="exam-detail"><i class="fas fa-calendar"></i> <span>${f.insertTime ? f.insertTime : ''}</span></div>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <a class="attend-exam-btn" href="${url}" download target="_blank">
-                            <i class="fas fa-download"></i> Download
-                        </a>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function getJsString(key) { return $('#js-localization').data(key); }
-
-    function setStudentLabels() {
-        $('#academic-year-label').text(getJsString('academic-year'));
-        $('#branch-label').text(getJsString('branch'));
-        $('#student-label').text(getJsString('student'));
-        $('#parent-phone-label').text(getJsString('parent-phone'));
-        $('#student-phone-label').text(getJsString('student-phone'));
-        $('#upcoming-exams-title').text(getJsString('upcoming-exams'));
-        $('#loading-upcoming-exams-label').text(getJsString('loading-upcoming-exams'));
-        $('#attended-exams-title').text(getJsString('attended-exams'));
-        $('#loading-attended-exams-label').text(getJsString('loading-attended-exams'));
-        $('#assignments-title').text(getJsString('assignments'));
-        $('#loading-assignments-label').text(getJsString('loading-assignments'));
-        $('#downloads-title').text(getJsString('downloads-title'));
-        $('#loading-downloads-label').text(getJsString('loading-downloads-label'));
-        $('#status-label').text(getJsString('@(Model.IsActive ? "active-student" : "inactive-student")'));
-    }
-
-    const ITEM_KEY = '@Model.ItemKey';
-    console.log('ITEM_KEY raw value:', ITEM_KEY);
-    document.getElementById('debugItemKey').textContent = 'ItemKey: ' + (ITEM_KEY || '(empty)');
-
-    let upcomingExamsData = [];
-    let attendedExamsData = [];
-    let assignmentsData = [];
-
-    function showError(containerId, key) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h4>${getJsString('error')}</h4>
-                <p>${getJsString(key)}</p>
-            </div>
-        `;
-    }
-
-    function renderEmptyState(icon, titleKey, msgKey) {
-        return `<div class="empty-state">
-            <i class="fas ${icon}"></i>
-            <h4>${getJsString(titleKey)}</h4>
-            <p>${getJsString(msgKey)}</p>
-        </div>`;
-    }
-
-    function normalizeArray(arr) {
-        if (!Array.isArray(arr)) return [];
-        return arr.map(o => ({
-            examCode: o.examCode ?? o.ExamCode ?? o.fileCode ?? o.FileCode ?? o.lessonCode ?? o.LessonCode ?? 0,
-            examName: o.examName ?? o.ExamName ?? o.displayName ?? o.DisplayName ?? o.lessonName ?? o.LessonName ?? '(Unnamed)',
-            subjectName: o.subjectName ?? o.SubjectName ?? '',
-            teacherName: o.teacherName ?? o.TeacherName ?? '',
-            attended: o.attended ?? o.Attended ?? false,
-            isDone: o.isDone ?? o.IsDone ?? false,
-            degree: o.degree ?? o.Degree ?? null,
-            examDegree: o.examDegree ?? o.ExamDegree ?? null,
-            examDate: o.examDate ?? o.ExamDate ?? o.insertTime ?? o.InsertTime ?? null,
-            raw: o
-        }));
-    }
-
-    async function safeFetchJson(url) {
-        console.log('Fetching:', url);
-        const resp = await fetch(url);
-        if (!resp.ok) {
-            console.warn('Fetch failed', url, resp.status);
-            return null;
-        }
-        const data = await resp.json();
-        console.log('Data received from', url, data);
-        return data;
-    }
-
-    async function loadUpcomingExams() {
-        if (!ITEM_KEY) {
-            showError('upcomingExamsGrid', 'failed-to-load-exams');
-            console.error('Missing ITEM_KEY; cannot load upcoming exams');
-            return;
-        }
-        try {
-            const data = await safeFetchJson(`/Student/GetUpcomingExams/${ITEM_KEY}`);
-            if (data == null) {
-                showError('upcomingExamsGrid', 'failed-to-load-exams');
+        function renderDownloads(files) {
+            const container = document.getElementById('downloadsGrid');
+            if (!files.length) {
+                container.innerHTML = renderEmptyState('fa-download', 'no-downloads', 'no-downloads-msg');
                 return;
             }
-            upcomingExamsData = normalizeArray(data);
-            renderUpcomingExams(upcomingExamsData);
-        } catch (e) {
-            console.error('loadUpcomingExams error', e);
-            showError('upcomingExamsGrid', 'failed-to-load-exams');
+            container.innerHTML = files.map(f => {
+                const fixedPath = f.fileLocation.replace(/\\/g, '/');
+                const url = fixedPath.startsWith('/') ? fixedPath : '/' + fixedPath;
+                return `
+                    <div class="exam-card download-card">
+                        <div class="exam-header">
+                            <div class="exam-icon"><i class="fas fa-download"></i></div>
+                            <h3 class="exam-name">${f.displayName}</h3>
+                        </div>
+                        <div class="exam-details">
+                            <div class="exam-detail"><i class="fas fa-book"></i> <span>${f.subjectName}</span></div>
+                            <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${f.teacherName}</span></div>
+                            <div class="exam-detail"><i class="fas fa-bookmark"></i> <span>${f.lessonName}</span></div>
+                            <div class="exam-detail"><i class="fas fa-calendar"></i> <span>${f.insertTime ? f.insertTime : ''}</span></div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <a class="attend-exam-btn" href="${url}" download target="_blank">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
-    }
 
-    function renderUpcomingExams(exams) {
-        const container = document.getElementById('upcomingExamsGrid');
-        if (!exams.length) {
-            container.innerHTML = renderEmptyState('fa-file-alt', 'no-upcoming-exams', 'no-upcoming-exams-msg');
-            return;
+        function getJsString(key) { return $('#js-localization').data(key); }
+
+        function setStudentLabels() {
+            $('#academic-year-label').text(getJsString('academic-year'));
+            $('#branch-label').text(getJsString('branch'));
+            $('#student-label').text(getJsString('student'));
+            $('#parent-phone-label').text(getJsString('parent-phone'));
+            $('#student-phone-label').text(getJsString('student-phone'));
+            $('#upcoming-exams-title').text(getJsString('upcoming-exams'));
+            $('#loading-upcoming-exams-label').text(getJsString('loading-upcoming-exams'));
+            $('#attended-exams-title').text(getJsString('attended-exams'));
+            $('#loading-attended-exams-label').text(getJsString('loading-attended-exams'));
+            $('#assignments-title').text(getJsString('assignments'));
+            $('#loading-assignments-label').text(getJsString('loading-assignments'));
+            $('#downloads-title').text(getJsString('downloads-title'));
+            $('#loading-downloads-label').text(getJsString('loading-downloads-label'));
+            $('#status-label').text(getJsString('@(Model.IsActive ? "active-student" : "inactive-student")'));
         }
-        container.innerHTML = exams.map(exam => {
-            const hideAttendBtn = exam.isDone && !exam.attended;
-            return `
-            <div class="exam-card">
-                <div class="exam-header">
-                    <div class="exam-icon"><i class="fas fa-file-alt"></i></div>
-                    <h3 class="exam-name">${exam.examName}</h3>
+
+        const ITEM_KEY = '@Model.ItemKey';
+        console.log('ITEM_KEY raw value:', ITEM_KEY);
+        document.getElementById('debugItemKey').textContent = 'ItemKey: ' + (ITEM_KEY || '(empty)');
+
+        let upcomingExamsData = [];
+        let attendedExamsData = [];
+        let assignmentsData = [];
+
+        function showError(containerId, key) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>${getJsString('error')}</h4>
+                    <p>${getJsString(key)}</p>
                 </div>
-                <div class="exam-details">
-                    <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
-                    <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
-                </div>
-                <div style="margin-top: 1rem;">
-                    ${
-                        hideAttendBtn
-                        ? `<div class="alert-error" style="margin-top:10px;">Closed.</div>`
-                        : `<button class="attend-exam-btn" onclick="attendExam(${exam.examCode})">
-                             <i class="fas fa-play"></i> ${getJsString('attend-exam')}
-                           </button>`
-                    }
-                </div>
+            `;
+        }
+
+        function renderEmptyState(icon, titleKey, msgKey) {
+            return `<div class="empty-state">
+                <i class="fas ${icon}"></i>
+                <h4>${getJsString(titleKey)}</h4>
+                <p>${getJsString(msgKey)}</p>
             </div>`;
-        }).join('');
-    }
-
-    async function loadAttendedExams() {
-        if (!ITEM_KEY) {
-            showError('attendedExamsGrid', 'failed-to-load-exams');
-            return;
         }
-        try {
-            const data = await safeFetchJson(`/Student/GetAttendedExams/${ITEM_KEY}`);
-            if (data == null) {
+
+        function normalizeArray(arr) {
+            if (!Array.isArray(arr)) return [];
+            return arr.map(o => ({
+                examCode: o.examCode ?? o.ExamCode ?? o.fileCode ?? o.FileCode ?? o.lessonCode ?? o.LessonCode ?? 0,
+                examName: o.examName ?? o.ExamName ?? o.displayName ?? o.DisplayName ?? o.lessonName ?? o.LessonName ?? '(Unnamed)',
+                subjectName: o.subjectName ?? o.SubjectName ?? '',
+                teacherName: o.teacherName ?? o.TeacherName ?? '',
+                attended: o.attended ?? o.Attended ?? false,
+                isDone: o.isDone ?? o.IsDone ?? false,
+                degree: o.degree ?? o.Degree ?? null,
+                examDegree: o.examDegree ?? o.ExamDegree ?? null,
+                examDate: o.examDate ?? o.ExamDate ?? o.insertTime ?? o.InsertTime ?? null,
+                raw: o
+            }));
+        }
+
+        async function safeFetchJson(url) {
+            console.log('Fetching:', url);
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                console.warn('Fetch failed', url, resp.status);
+                return null;
+            }
+            const data = await resp.json();
+            console.log('Data received from', url, data);
+            return data;
+        }
+
+        async function loadUpcomingExams() {
+            if (!ITEM_KEY) {
+                showError('upcomingExamsGrid', 'failed-to-load-exams');
+                console.error('Missing ITEM_KEY; cannot load upcoming exams');
+                return;
+            }
+            try {
+                const data = await safeFetchJson(`/Student/GetUpcomingExams/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('upcomingExamsGrid', 'failed-to-load-exams');
+                    return;
+                }
+                upcomingExamsData = normalizeArray(data);
+                renderUpcomingExams(upcomingExamsData);
+            } catch (e) {
+                console.error('loadUpcomingExams error', e);
+                showError('upcomingExamsGrid', 'failed-to-load-exams');
+            }
+        }
+
+        function renderUpcomingExams(exams) {
+            const container = document.getElementById('upcomingExamsGrid');
+            if (!exams.length) {
+                container.innerHTML = renderEmptyState('fa-file-alt', 'no-upcoming-exams', 'no-upcoming-exams-msg');
+                return;
+            }
+            container.innerHTML = exams.map(exam => {
+                const hideAttendBtn = exam.isDone && !exam.attended;
+                return `
+                <div class="exam-card">
+                    <div class="exam-header">
+                        <div class="exam-icon"><i class="fas fa-file-alt"></i></div>
+                        <h3 class="exam-name">${exam.examName}</h3>
+                    </div>
+                    <div class="exam-details">
+                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        ${
+                            hideAttendBtn
+                            ? `<div class="alert-error" style="margin-top:10px;">Closed.</div>`
+                            : `<button class="attend-exam-btn" onclick="attendExam(${exam.examCode})">
+                                 <i class="fas fa-play"></i> ${getJsString('attend-exam')}
+                               </button>`
+                        }
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function loadAttendedExams() {
+            if (!ITEM_KEY) {
                 showError('attendedExamsGrid', 'failed-to-load-exams');
                 return;
             }
-            attendedExamsData = normalizeArray(data);
-            renderAttendedExams(attendedExamsData);
-        } catch {
-            showError('attendedExamsGrid', 'failed-to-load-exams');
+            try {
+                const data = await safeFetchJson(`/Student/GetAttendedExams/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('attendedExamsGrid', 'failed-to-load-exams');
+                    return;
+                }
+                attendedExamsData = normalizeArray(data);
+                renderAttendedExams(attendedExamsData);
+            } catch {
+                showError('attendedExamsGrid', 'failed-to-load-exams');
+            }
         }
-    }
 
-    function renderAttendedExams(exams) {
-        const container = document.getElementById('attendedExamsGrid');
-        if (!exams.length) {
-            container.innerHTML = renderEmptyState('fa-check-double', 'no-attended-exams', 'no-attended-exams-msg');
-            return;
-        }
-        container.innerHTML = exams.map(exam => `
-            <div class="exam-card attended">
-                <div class="exam-header">
-                    <div class="exam-icon"><i class="fas fa-check-double"></i></div>
-                    <h3 class="exam-name">${exam.examName}</h3>
-                </div>
-                <div class="exam-details">
-                    <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
-                    <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
-                    <div class="exam-detail"><i class="fas fa-star"></i>
-                        <span>${getJsString('degree')}: ${(exam.degree ?? getJsString('na'))} / ${(exam.examDegree ?? getJsString('na'))}</span>
+        function renderAttendedExams(exams) {
+            const container = document.getElementById('attendedExamsGrid');
+            if (!exams.length) {
+                container.innerHTML = renderEmptyState('fa-check-double', 'no-attended-exams', 'no-attended-exams-msg');
+                return;
+            }
+            container.innerHTML = exams.map(exam => `
+                <div class="exam-card attended">
+                    <div class="exam-header">
+                        <div class="exam-icon"><i class="fas fa-check-double"></i></div>
+                        <h3 class="exam-name">${exam.examName}</h3>
                     </div>
-                    ${exam.examDate ? `<div class="exam-detail"><i class="fas fa-calendar"></i> <span>${exam.examDate}</span></div>` : ''}
+                    <div class="exam-details">
+                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${exam.subjectName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${exam.teacherName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-star"></i>
+                            <span>${getJsString('degree')}: ${(exam.degree ?? getJsString('na'))} / ${(exam.examDegree ?? getJsString('na'))}</span>
+                        </div>
+                        ${exam.examDate ? `<div class="exam-detail"><i class="fas fa-calendar"></i> <span>${exam.examDate}</span></div>` : ''}
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="view-answers-btn" onclick="openViewAnswers(${exam.examCode})">
+                            <i class="fas fa-eye"></i> View Answers
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
-    }
-
-    async function loadAssignments() {
-        if (!ITEM_KEY) {
-            showError('assignmentsGrid', 'failed-to-load-assignments');
-            return;
+            `).join('');
         }
-        try {
-            const data = await safeFetchJson(`/Student/GetAssignments/${ITEM_KEY}`);
-            if (data == null) {
+
+        async function loadAssignments() {
+            if (!ITEM_KEY) {
                 showError('assignmentsGrid', 'failed-to-load-assignments');
                 return;
             }
-            assignmentsData = normalizeArray(data);
-            renderAssignments(assignmentsData);
-        } catch {
-            showError('assignmentsGrid', 'failed-to-load-assignments');
+            try {
+                const data = await safeFetchJson(`/Student/GetAssignments/${ITEM_KEY}`);
+                if (data == null) {
+                    showError('assignmentsGrid', 'failed-to-load-assignments');
+                    return;
+                }
+                assignmentsData = normalizeArray(data);
+                renderAssignments(assignmentsData);
+            } catch {
+                showError('assignmentsGrid', 'failed-to-load-assignments');
+            }
         }
-    }
 
-    function renderAssignments(items) {
-        const container = document.getElementById('assignmentsGrid');
-        if (!items.length) {
-            container.innerHTML = renderEmptyState('fa-tasks', 'no-assignments', 'no-assignments-msg');
-            return;
+        function renderAssignments(items) {
+            const container = document.getElementById('assignmentsGrid');
+            if (!items.length) {
+                container.innerHTML = renderEmptyState('fa-tasks', 'no-assignments', 'no-assignments-msg');
+                return;
+            }
+            container.innerHTML = items.map(a => {
+                const hideAttendBtn = a.isDone && !a.attended;
+                return `
+                <div class="exam-card ${a.attended ? 'attended' : ''}">
+                    <div class="exam-header">
+                        <div class="exam-icon"><i class="fas fa-tasks"></i></div>
+                        <h3 class="exam-name">${a.examName}</h3>
+                    </div>
+                    <div class="exam-details">
+                        <div class="exam-detail"><i class="fas fa-book"></i> <span>${a.subjectName}</span></div>
+                        <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${a.teacherName}</span></div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        ${
+                            a.attended
+                            ? `<button class="attend-exam-btn" disabled><i class="fas fa-check"></i> ${getJsString('attended')}</button>`
+                            : hideAttendBtn
+                                ? `<div class="alert-error" style="margin-top:10px;">Closed.</div>`
+                                : `<button class="attend-exam-btn" onclick="attendExam(${a.examCode})">
+                                     <i class="fas fa-play"></i> ${getJsString('attend-assignment')}
+                                   </button>`
+                        }
+                    </div>
+                </div>`;
+            }).join('');
         }
-        container.innerHTML = items.map(a => {
-            const hideAttendBtn = a.isDone && !a.attended;
-            return `
-            <div class="exam-card ${a.attended ? 'attended' : ''}">
-                <div class="exam-header">
-                    <div class="exam-icon"><i class="fas fa-tasks"></i></div>
-                    <h3 class="exam-name">${a.examName}</h3>
-                </div>
-                <div class="exam-details">
-                    <div class="exam-detail"><i class="fas fa-book"></i> <span>${a.subjectName}</span></div>
-                    <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${a.teacherName}</span></div>
-                </div>
-                <div style="margin-top: 1rem;">
-                    ${
-                        a.attended
-                        ? `<button class="attend-exam-btn" disabled><i class="fas fa-check"></i> ${getJsString('attended')}</button>`
-                        : hideAttendBtn
-                            ? `<div class="alert-error" style="margin-top:10px;">Closed.</div>`
-                            : `<button class="attend-exam-btn" onclick="attendExam(${a.examCode})">
-                                 <i class="fas fa-play"></i> ${getJsString('attend-assignment')}
-                               </button>`
-                    }
-                </div>
-            </div>`;
-        }).join('');
-    }
 
-    function attendExam(examCode) {
-        const studentCode = '@Model.StudentCode';
-        if (!examCode || examCode === 0) {
-            console.warn('Missing examCode, navigation blocked');
-            return;
+        function attendExam(examCode) {
+            const studentCode = '@Model.StudentCode';
+            if (!examCode || examCode === 0) {
+                console.warn('Missing examCode, navigation blocked');
+                return;
+            }
+            window.location.href = `/StudentExam?studentCode=${studentCode}&examCode=${examCode}&itemKey=${ITEM_KEY}`;
         }
-        window.location.href = `/StudentExam?studentCode=${studentCode}&examCode=${examCode}&itemKey=${ITEM_KEY}`;
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOMContentLoaded fired');
-        if (typeof $ === 'undefined') {
-            console.error('jQuery not loaded. Aborting.');
-            return;
+        // --- Answers Modal Logic ---
+        function openViewAnswers(examCode) {
+            const studentCode = '@Model.StudentCode';
+            $('#answersModal').show();
+            $('#answersModalBody').html(`
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <div style="margin-top: 1rem;">Loading exam answers...</div>
+                </div>
+            `);
+
+            fetch(`/Student/GetExamAnswers/${studentCode}/${examCode}`)
+                .then(resp => resp.json())
+                .then(renderExamAnswers)
+                .catch(() => $('#answersModalBody').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h4>Error</h4>
+                        <p>Failed to load exam answers. Please try again.</p>
+                    </div>
+                `));
         }
-        setStudentLabels();
-        if (!ITEM_KEY) {
-            console.error('ITEM_KEY is empty. No fetch calls will be made.');
-            return;
+
+        function closeAnswersModal() {
+            $('#answersModal').hide();
         }
-        loadUpcomingExams();
-        loadAttendedExams();
-        loadAssignments();
-        loadLatestVideos();      // <-- changed to show only last attended class's videos
-        loadLatestDownloads();   // <-- changed to show only last attended class's PDFs
-    });
-</script>
+
+        function renderExamAnswers(data) {
+            console.log('Exam answers data:', data);
+
+            if (!Array.isArray(data) || !data.length) {
+                $('#answersModalBody').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-question"></i>
+                        <h4>No Answers Found</h4>
+                        <p>No exam answers were found for this exam.</p>
+                    </div>
+                `);
+                return;
+            }
+
+            $('#answersModalBody').html(data.map((q, index) => `
+                <div class="question-block">
+                    <div class="question-header">
+                        <div>
+                            <span class="question-number">Q${index + 1}</span>
+                            <span style="margin-left: 0.75rem;">${q.questionText || 'Question text not available'}</span>
+                        </div>
+                        <div class="question-degree">
+                            Score: <span class="student-score">${q.studentDegree ?? 0}</span> / ${q.questionDegree ?? 0}
+                        </div>
+                    </div>
+
+                    <ul class="answer-list">
+                        ${(q.answers ?? []).map(ans => {
+                            const isStudent = (ans.answerCode == q.studentAnswerCode);
+                            const isCorrect = ans.isCorrect;
+                            const isRight = (ans.answerCode == q.rightAnswerCode);
+
+                            let classList = '';
+                            if (isRight && isStudent) classList = 'answer-right-student';
+                            else if (isStudent && !isRight) classList = 'answer-wrong-student';
+                            else if (isRight) classList = 'answer-right';
+                            else if (isStudent) classList = 'answer-student';
+
+                            return `
+                                <li class="${classList}">
+                                    <span>${ans.answerText || 'Answer text not available'}</span>
+                                    <div>
+                                        ${isRight ? '<i class="fas fa-check" title="Correct answer"></i>' : ''}
+                                        ${isStudent ? '<i class="fas fa-user" title="Your answer"></i>' : ''}
+                                    </div>
+                                </li>
+                            `;
+                        }).join('')}
+                    </ul>
+
+                    <div class="question-result ${q.isStudentCorrect ? 'result-correct' : 'result-incorrect'}">
+                        <i class="fas ${q.isStudentCorrect ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                        <span>${q.isStudentCorrect ? 'Correct Answer!' : 'Incorrect Answer'}</span>
+                    </div>
+                </div>
+            `).join(''));
+        }
+
+        // Simple modal close on outside click
+        $(document).mouseup(function(e){
+            var modal = $("#answersModal");
+            if (modal.is(":visible") && !$(e.target).closest('.modal-content').length) {
+                closeAnswersModal();
+            }
+        });
+
+        // Close modal on Escape key
+        $(document).keydown(function(e) {
+            if (e.keyCode === 27 && $("#answersModal").is(":visible")) {
+                closeAnswersModal();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired');
+            if (typeof $ === 'undefined') {
+                console.error('jQuery not loaded. Aborting.');
+                return;
+            }
+            setStudentLabels();
+            if (!ITEM_KEY) {
+                console.error('ITEM_KEY is empty. No fetch calls will be made.');
+                return;
+            }
+            loadUpcomingExams();
+            loadAttendedExams();
+            loadAssignments();
+            loadLatestVideos();
+            loadLatestDownloads();
+        });
+    </script>
 </body>
 </html>

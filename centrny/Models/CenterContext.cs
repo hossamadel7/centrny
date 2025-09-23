@@ -160,17 +160,7 @@ public partial class CenterContext : DbContext
         {
             entity.HasKey(e => new { e.TeacherCode, e.ClassId, e.StudentId }).HasName("PK_Attend_1");
 
-            entity.ToTable("Attend", tb =>
-                {
-                    tb.HasTrigger("AttendTrigger");
-                    tb.HasTrigger("TRG_Attend_AfterInsert_SubribedSTd");
-                    tb.HasTrigger("Trigger_After_Insert_Update_Total_Amount");
-                    tb.HasTrigger("Trigger_UpdateTotalAmount");
-                    tb.HasTrigger("UpdateAttendDetails");
-                    tb.HasTrigger("trg_Set_SessionPrice_Zero_On_Type2");
-                    tb.HasTrigger("trg_UpdateClassFinancials");
-                    tb.HasTrigger("trg_Update_Attend_SessionPrice");
-                });
+            entity.ToTable("Attend");
 
             entity.Property(e => e.TeacherCode).HasColumnName("Teacher_Code");
             entity.Property(e => e.ClassId).HasColumnName("Class_Id");
@@ -180,7 +170,6 @@ public partial class CenterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Attend_Date");
             entity.Property(e => e.HallId).HasColumnName("Hall_Id");
-            entity.Property(e => e.IsHisSchedule).HasColumnName("IsHisSChedule");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.ScheduleCode).HasColumnName("Schedule_Code");
             entity.Property(e => e.SessionPrice)
@@ -446,6 +435,8 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.GallerAr).HasColumnName("Galler_Ar");
             entity.Property(e => e.HomaAr).HasColumnName("Homa_Ar");
             entity.Property(e => e.LoginAr).HasColumnName("Login_Ar");
+            entity.Property(e => e.OutstandingStudents).HasColumnName("Outstanding_Students");
+            entity.Property(e => e.OutstandingStudentsAr).HasColumnName("Outstanding_Students-AR");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
             entity.Property(e => e.SignUpAr).HasColumnName("SignUp_Ar");
             entity.Property(e => e.TeacherAr).HasColumnName("Teacher_Ar");

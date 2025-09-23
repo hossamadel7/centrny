@@ -11,8 +11,6 @@ public partial class Attend
 
     public int StudentId { get; set; }
 
-    public bool? IsHisSchedule { get; set; }
-
     public int? HallId { get; set; }
 
     public int? ScheduleCode { get; set; }
@@ -24,6 +22,8 @@ public partial class Attend
     public int RootCode { get; set; }
 
     public int Type { get; set; }
+
+    public bool? IsHisSchedule { get; set; }
 
     public virtual Class Class { get; set; } = null!;
 

@@ -69,5 +69,9 @@ public partial class Content
 
     public string? CenterAr { get; set; }
 
+    public string? OutstandingStudents { get; set; }
+
+    public string? OutstandingStudentsAr { get; set; }
+
     public virtual Root RootCodeNavigation { get; set; } = null!;
 }
