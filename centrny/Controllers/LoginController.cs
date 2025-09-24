@@ -70,7 +70,7 @@ namespace centrny.Controllers
                 HttpContext.Session.SetString("Username", dbUser.Username);
                 HttpContext.Session.SetString("Password", dbUser.Password);
                 HttpContext.Session.SetInt32("GroupCode", dbUser.GroupCode);
-             
+
                 if (dbUser.GroupCodeNavigation != null)
                 {
                     HttpContext.Session.SetString("GroupName", dbUser.GroupCodeNavigation.GroupName ?? "");
@@ -173,7 +173,7 @@ namespace centrny.Controllers
                 if (IsDefaultPassword(User))
                     return RedirectToAction("ForceChangePassword");
 
-                return RedirectToAction("Index", "Reports");
+                return RedirectToAction("Index", "DailyClass"); // <--- CHANGED HERE
             }
 
             return View();
@@ -344,7 +344,7 @@ namespace centrny.Controllers
                     return Redirect(returnUrl);
                 }
 
-                return RedirectToAction("Index", "Reports");
+                return RedirectToAction("Index", "DailyClass"); // <--- CHANGED HERE
             }
             catch (Exception ex)
             {
@@ -402,7 +402,7 @@ namespace centrny.Controllers
         public IActionResult ForceChangePassword()
         {
             if (!IsDefaultPassword(User))
-                return RedirectToAction("Index", "Reports");
+                return RedirectToAction("Index", "DailyClass"); // <--- Change here if you want, otherwise leave as Reports
             return View("ChangePassword");
         }
 
@@ -412,7 +412,7 @@ namespace centrny.Controllers
         public async Task<IActionResult> ForceChangePassword(string newPassword, string confirmPassword)
         {
             if (!IsDefaultPassword(User))
-                return RedirectToAction("Index", "Reports");
+                return RedirectToAction("Index", "DailyClass"); // <--- Change here if you want, otherwise leave as Reports
 
             if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
             {
@@ -432,7 +432,7 @@ namespace centrny.Controllers
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userId, out int id))
-                return RedirectToAction("Index", "Reports");
+                return RedirectToAction("Index", "DailyClass"); // <--- Change here if you want, otherwise leave as Reports
 
             var dbUser = await _context.Users.FindAsync(id);
             if (dbUser != null)
