@@ -98,8 +98,8 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Website}/{action=Home}/{id?}");
 
+ pattern: "{controller=Home}/{action=Index}/{id?}");
 Console.WriteLine($"?? Application started at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
 Console.WriteLine($"?? System configured for user: hossamadel7");
 
