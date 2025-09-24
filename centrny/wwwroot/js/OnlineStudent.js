@@ -12,6 +12,9 @@ class OnlineStudentDashboard {
         this.currentSubject = null;
         this.currentChapter = null;
 
+        // Auto-load chapters immediately if there is only one subject
+        this.autoLoadSingleSubject = true;
+
         this.locNode = document.getElementById('js-online-localization');
         this.locale = this.locNode?.dataset.locale || 'en';
         this.dir = this.locNode?.dataset.dir || 'ltr';
@@ -25,26 +28,17 @@ class OnlineStudentDashboard {
         }
     }
 
-    // Build a flexible lookup map so any of these forms will resolve:
-    // Label_Subject, label_subject, label-subject, labelSubject
     _buildLocalizationIndex() {
         this._locMap = {};
         if (!this.locNode) return;
-
         const ds = this.locNode.dataset;
-
-        const toSnakeFromCamel = (k) =>
-            k.replace(/([A-Z])/g, '_$1').toLowerCase();
+        const toSnakeFromCamel = (k) => k.replace(/([A-Z])/g, '_$1').toLowerCase();
         const snakeToDash = (s) => s.replace(/_/g, '-');
-        const snakeToCamel = (s) =>
-            s.split('_').map((p, i) => i === 0 ? p : (p.charAt(0).toUpperCase() + p.slice(1))).join('');
-
         for (const camelKey of Object.keys(ds)) {
             const value = ds[camelKey];
             const snake = toSnakeFromCamel(camelKey);
             const dash = snakeToDash(snake);
             const upperSnake = snake.toUpperCase();
-
             this._locMap[camelKey] = value;
             this._locMap[snake] = value;
             this._locMap[dash] = value;
@@ -59,29 +53,16 @@ class OnlineStudentDashboard {
         const lower = base.toLowerCase();
         const snake = lower.replace(/-/g, '_').replace(/ /g, '_');
         const dash = snake.replace(/_/g, '-');
-        const toCamel = (s) =>
-            s.split(/[_-]/).map((p, i) => i === 0 ? p : (p.charAt(0).toUpperCase() + p.slice(1))).join('');
+        const toCamel = (s) => s.split(/[_-]/).map((p, i) => i === 0 ? p : (p.charAt(0).toUpperCase() + p.slice(1))).join('');
         const camelFromSnake = toCamel(snake);
         const camelFromDash = toCamel(dash);
-
-        return [
-            base,
-            lower,
-            snake,
-            dash,
-            camelFromSnake,
-            camelFromDash,
-            snake.replace(/_/g, ''),
-            dash.replace(/-/g, '')
-        ];
+        return [base, lower, snake, dash, camelFromSnake, camelFromDash, snake.replace(/_/g, ''), dash.replace(/-/g, '')];
     }
 
     loc(key, fallback = '') {
         if (!key) return fallback;
         const variants = this._normalizeKeyVariants(key);
-        for (const v of variants) {
-            if (v in this._locMap) return this._locMap[v];
-        }
+        for (const v of variants) if (v in this._locMap) return this._locMap[v];
         if (!this._locMissingWarned) this._locMissingWarned = new Set();
         if (!this._locMissingWarned.has(key)) {
             console.warn(`[Localization] Missing key: "${key}" (tried: ${variants.join(', ')})`);
@@ -97,7 +78,6 @@ class OnlineStudentDashboard {
         } else if (currentPath.includes('onlinestudent') || currentPath === '/' || currentPath.includes('index')) {
             this.loadAll();
         } else {
-            // Fallback: try to initialize whichever section is present
             if (document.getElementById('subjectSelect')) this.initLearningSystem();
             else if (document.getElementById('subjectsGrid')) this.loadAll();
         }
@@ -129,7 +109,7 @@ class OnlineStudentDashboard {
             this.stats = await res.json();
             if (this.stats.error) return;
             this.updateStats();
-        } catch { /* ignore */ }
+        } catch { }
     }
 
     updateStats() {
@@ -138,11 +118,7 @@ class OnlineStudentDashboard {
         this.setCounter('examsCount', this.stats.examsCount);
         this.setCounter('attendanceCount', this.stats.totalAttendance);
         const avg = document.getElementById('averageGrade');
-        if (avg) {
-            avg.textContent = (this.stats.averageGrade && this.stats.averageGrade > 0)
-                ? `${this.stats.averageGrade}%`
-                : '--';
-        }
+        if (avg) avg.textContent = (this.stats.averageGrade && this.stats.averageGrade > 0) ? `${this.stats.averageGrade}%` : '--';
     }
 
     setCounter(id, value) {
@@ -176,7 +152,7 @@ class OnlineStudentDashboard {
                     : this.loc('Badge_Regular', 'Regular');
                 badge.className = `badge ${this.subscription.isSubscribed ? 'bg-success' : 'bg-secondary'}`;
             }
-        } catch { /* ignore */ }
+        } catch { }
     }
 
     async loadSubjects() {
@@ -330,15 +306,32 @@ class OnlineStudentDashboard {
     renderLearningSubjects() {
         const subjectSelect = document.getElementById('subjectSelect');
         if (!subjectSelect) return;
+
         if (!this.learningSubjects || this.learningSubjects.length === 0) {
             subjectSelect.innerHTML = `<option value="">${this.loc('Select_SubjectPlaceholder', 'Select a subject')}</option>`;
             return;
         }
-        const options = [`<option value="">${this.loc('Select_SubjectPlaceholder', 'Select a subject')}</option>`];
-        this.learningSubjects.forEach(subject => {
-            options.push(`<option value="${subject.subjectCode}">${this.escape(subject.subjectName)} - ${this.escape(subject.eduYearName)}</option>`);
-        });
-        subjectSelect.innerHTML = options.join('');
+
+        const single = this.learningSubjects.length === 1;
+        if (single) {
+            const s = this.learningSubjects[0];
+            // Only one subject: select it
+            subjectSelect.innerHTML = `<option value="${s.subjectCode}" selected>${this.escape(s.subjectName)} - ${this.escape(s.eduYearName)}</option>`;
+            subjectSelect.value = s.subjectCode;
+            const loadBtn = document.getElementById('loadChaptersBtn');
+            if (loadBtn) loadBtn.disabled = false;
+
+            // Auto-load chapters immediately if configured
+            if (this.autoLoadSingleSubject) {
+                setTimeout(() => this.loadChapters(s.subjectCode), 80);
+            }
+        } else {
+            const options = [`<option value="">${this.loc('Select_SubjectPlaceholder', 'Select a subject')}</option>`];
+            this.learningSubjects.forEach(subject => {
+                options.push(`<option value="${subject.subjectCode}">${this.escape(subject.subjectName)} - ${this.escape(subject.eduYearName)}</option>`);
+            });
+            subjectSelect.innerHTML = options.join('');
+        }
     }
 
     async loadChapters(subjectCode) {
@@ -466,7 +459,6 @@ class OnlineStudentDashboard {
         lessonsContainer.innerHTML = chapterInfo + lessonsList;
     }
 
-    // Access logic: if canAttend -> direct open; else -> go to StudentViewer to enter PIN (purchase/renew)
     accessLesson(lessonCode, lessonName) {
         const msg = `${this.loc('Confirm_AccessLesson', 'Access this lesson?')}\n${lessonName}`;
         if (!confirm(msg)) return;
@@ -480,7 +472,6 @@ class OnlineStudentDashboard {
                         window.location.href = `/LessonContent/StudentViewer?lessonCode=${lessonCode}`;
                     }, 300);
                 } else {
-                    // Show reason then send to StudentViewer (PIN entry / renew)
                     this.showAlert(res.message || this.loc('Access_Expired', 'Access expired. Enter PIN.'), 'error');
                     setTimeout(() => {
                         window.location.href = `/LessonContent/StudentViewer?lessonCode=${lessonCode}`;
@@ -492,7 +483,6 @@ class OnlineStudentDashboard {
             });
     }
 
-    // Navigation / breadcrumb
     showSubjectSelection() {
         this.toggleDisplay('subjectSelection', true);
         this.toggleDisplay('chaptersSection', false);
@@ -538,7 +528,6 @@ class OnlineStudentDashboard {
         if (sp) sp.classList.add('d-none');
     }
 
-    // Utilities
     formatTimeRange(start, end) {
         if (!start || !end) return '--';
         return `${start} - ${end}`;
@@ -548,11 +537,7 @@ class OnlineStudentDashboard {
         if (!d || d === 'N/A') return 'N/A';
         try {
             const dt = new Date(d);
-            return dt.toLocaleDateString(this.locale || 'en', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
+            return dt.toLocaleDateString(this.locale || 'en', { year: 'numeric', month: 'short', day: 'numeric' });
         } catch {
             return d;
         }
@@ -617,7 +602,6 @@ class OnlineStudentDashboard {
     }
 }
 
-// Initialize
 window.onlineStudentDashboard = new OnlineStudentDashboard();
 
 function switchLanguage(lang) {
@@ -640,4 +624,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-console.log('OnlineStudent.js loaded with improved localization support.');
+console.log('OnlineStudent.js loaded with single-subject auto-select + auto chapter loading.');

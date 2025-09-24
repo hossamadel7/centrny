@@ -3,84 +3,90 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System;
-using System.Collections.Generic;
-using System.Data;
 using Microsoft.AspNetCore.Authorization;
 
 namespace centrny.Controllers
 {
-    [Authorize]
+
     public class HomeController : Controller
     {
-        CenterContext DB = new CenterContext();
+        private readonly CenterContext DB = new CenterContext();
+
+        
+        private static string ApplyTokens(string s, string rootCode, string currentYear)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return s;
+            var registerUrl = string.IsNullOrWhiteSpace(rootCode) ? "/Register" : $"/Register/{rootCode}";
+            return s
+                .Replace("{{register_url}}", registerUrl)
+                .Replace("{{root_code}}", rootCode ?? "")
+                .Replace("{{date}}", currentYear);
+        }
 
         public IActionResult Index()
         {
-            // Get the domain with port (e.g., "localhost:7187")
+            // Host and culture
             var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
-            // Get the domain without port (e.g., "localhost")
             var domainNoPort = HttpContext.Request.Host.Host;
+            var culture = Request.Cookies["SelectedCulture"]; // "ar" or "en" (null => en)
+            var currentYear = DateTime.Now.Year.ToString();
 
-            // Query for either match (with or without port), include both columns
-            var Ruselt = (from c in DB.Contents
-                          join r in DB.Roots on c.RootCode equals r.RootCode
-                          where r.RootDomain == domain || r.RootDomain == domainNoPort
-                          select new
-                          {
-                              root_code = c.RootCode,
-                              title = c.Title,
-                              title_ar = c.TitleAr, // Add Arabic title if exists
-                              web_header = c.WebLayoutH,
-                              web_header_ar = c.WebLayoutHAr, // Add Arabic header if exists
-                              web_footer = c.WebLayoutF,
-                              web_footer_ar = c.WebLayoutFAr, // Add Arabic footer if exists
-                              home = c.Home,
-                              home_ar = c.HomaAr // This property must exist in your Content model and DB
-                          }).ToList();
+            // Load content for this root/domain
+            var row = (
+                from c in DB.Contents
+                join r in DB.Roots on c.RootCode equals r.RootCode
+                where r.RootDomain == domain || r.RootDomain == domainNoPort
+                select new
+                {
+                    root_code = c.RootCode,
+                    title = c.Title,
+                    title_ar = c.TitleAr,
+                    web_header = c.WebLayoutH,
+                    web_header_ar = c.WebLayoutHAr,
+                    web_footer = c.WebLayoutF,
+                    web_footer_ar = c.WebLayoutFAr,
+                    home = c.Home,
+                    home_ar = c.HomaAr
+                }
+            ).FirstOrDefault();
 
-            var culture = Request.Cookies["SelectedCulture"];
-            ViewBag.domain = domain;
-            ViewBag.domain_no_port = domainNoPort;
-            ViewBag.root_code = Ruselt.Count > 0 ? Ruselt[0].root_code.ToString() : "NOT FOUND";
+            // Defaults
+            string title = "Home";
+            string web_header = "";
+            string web_footer = "";
+            string home = "";
+            string rootCodeStr = "";
 
-            // Set title based on culture
-            ViewBag.title = Ruselt.Count > 0
-                ? ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title)
-                : "";
-
-            // Set header based on culture
-            ViewBag.web_header = Ruselt.Count > 0
-                ? ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header)
-                : "";
-
-            // Set footer based on culture
-            ViewBag.web_footer = Ruselt.Count > 0
-                ? ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString())
-                : "";
-
-            // Show Arabic if cookie is "ar", otherwise show English
-            ViewBag.home = Ruselt.Count > 0
-                ? ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].home_ar)) ? Ruselt[0].home_ar : Ruselt[0].home)?.Replace("{{date}}", DateTime.Now.Year.ToString())
-                : "";
-
-            // Set current language for language switcher button
-            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
-            ViewBag.Culture = culture ?? "en";
-
-            // Debug output for diagnostics
-            System.Diagnostics.Debug.WriteLine($"Domain with port: {domain}");
-            System.Diagnostics.Debug.WriteLine($"Domain without port: {domainNoPort}");
-            if (Ruselt.Count > 0)
+            if (row == null)
             {
-                System.Diagnostics.Debug.WriteLine("RootCode: " + Ruselt[0].root_code);
-                System.Diagnostics.Debug.WriteLine("Home value: " + Ruselt[0].home);
-                System.Diagnostics.Debug.WriteLine("Home-ar value: " + Ruselt[0].home_ar);
-                System.Diagnostics.Debug.WriteLine("Culture: " + culture);
+                ViewBag.root_code = "NOT_FOUND";
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Ruselt.Count == 0");
+                var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+
+                rootCodeStr = row.root_code.ToString() ;
+                ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
+
+                title = useArabic && !string.IsNullOrWhiteSpace(row.title_ar) ? row.title_ar : row.title;
+
+                var headerRaw = useArabic && !string.IsNullOrWhiteSpace(row.web_header_ar) ? row.web_header_ar : row.web_header;
+                var footerRaw = useArabic && !string.IsNullOrWhiteSpace(row.web_footer_ar) ? row.web_footer_ar : row.web_footer;
+                var chosenHome = useArabic && !string.IsNullOrWhiteSpace(row.home_ar) ? row.home_ar : row.home;
+
+                // Inject tokens
+                web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+                web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+                home = ApplyTokens(chosenHome, rootCodeStr, currentYear);
             }
+
+            ViewBag.title = title;
+            ViewBag.web_header = web_header;
+            ViewBag.web_footer = web_footer;
+            ViewBag.home = home;
+
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
 
             return View();
         }
@@ -89,42 +95,36 @@ namespace centrny.Controllers
         [AllowAnonymous]
         public IActionResult SetCulture(string culture)
         {
-            Response.Cookies.Append("SelectedCulture", culture, new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7) });
-            return RedirectToAction("Index");
-        }
-
-        public IActionResult Test()
-        {
-            return View();
+            if (string.IsNullOrWhiteSpace(culture)) culture = "en";
+            Response.Cookies.Append("SelectedCulture", culture, new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" });
+            return RedirectToAction(nameof(Index));
         }
 
         public IActionResult About()
         {
             var culture = Request.Cookies["SelectedCulture"];
-
-            // Get domain information
             var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
             var domainNoPort = HttpContext.Request.Host.Host;
             var fullHost = HttpContext.Request.Host.ToString();
+            var currentYear = DateTime.Now.Year.ToString();
 
-            var Ruselt = (from c in DB.Contents
-                          join r in DB.Roots on c.RootCode equals r.RootCode
-                          where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
-                          select new
-                          {
-                              root_code = c.RootCode,
-                              title = c.Title,
-                              title_ar = c.TitleAr,
-                              web_header = c.WebLayoutH,
-                              web_header_ar = c.WebLayoutHAr,
-                              web_footer = c.WebLayoutF,
-                              web_footer_ar = c.WebLayoutFAr,
-                              about = c.About,
-                              about_ar = c.AboutAr
-                          }).ToList();
+            var res = (from c in DB.Contents
+                       join r in DB.Roots on c.RootCode equals r.RootCode
+                       where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
+                       select new
+                       {
+                           root_code = c.RootCode,
+                           title = c.Title,
+                           title_ar = c.TitleAr,
+                           web_header = c.WebLayoutH,
+                           web_header_ar = c.WebLayoutHAr,
+                           web_footer = c.WebLayoutF,
+                           web_footer_ar = c.WebLayoutFAr,
+                           about = c.About,
+                           about_ar = c.AboutAr
+                       }).FirstOrDefault();
 
-            // Set ViewBag values
-            if (Ruselt.Count == 0)
+            if (res == null)
             {
                 ViewBag.title = "About";
                 ViewBag.web_header = "";
@@ -133,116 +133,157 @@ namespace centrny.Controllers
             }
             else
             {
-                var aboutContent = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].about_ar)) ? Ruselt[0].about_ar : Ruselt[0].about;
+                var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+                var rootCodeStr = res.root_code.ToString();
+                ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
 
-                ViewBag.title = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title;
-                ViewBag.web_header = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header;
-                ViewBag.web_footer = ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString());
-                ViewBag.about = string.IsNullOrWhiteSpace(aboutContent) ? "<h1>About Page - Content Empty</h1>" : aboutContent;
+                ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
+
+                var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
+                var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
+                var content = useArabic && !string.IsNullOrWhiteSpace(res.about_ar) ? res.about_ar : res.about;
+
+                ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+                ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+                ViewBag.about = string.IsNullOrWhiteSpace(content) ? "<h1>About Page - Content Empty</h1>" : ApplyTokens(content, rootCodeStr, currentYear);
             }
 
-            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
-            ViewBag.Culture = culture ?? "en";
-
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
             return View();
         }
 
-        public IActionResult Coaches()
+        public IActionResult Courses()
         {
             var culture = Request.Cookies["SelectedCulture"];
-
-            var Ruselt = (from c in DB.Contents
-                          join r in DB.Roots on c.RootCode equals r.RootCode
-                          where (r.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "") || r.RootName + ".gymsofto.com" == HttpContext.Request.Host.ToString())
-                          select new
-                          {
-                              title = c.Title,
-                              title_ar = c.TitleAr,
-                              web_header = c.WebLayoutH,
-                              web_header_ar = c.WebLayoutHAr,
-                              web_footer = c.WebLayoutF,
-                              web_footer_ar = c.WebLayoutFAr,
-                              coaches = c.Teacher,
-                              coaches_ar = c.TeacherAr // Add Arabic teacher if exists
-                          }).ToList();
-
-            if (Ruselt.Count == 0) return RedirectToAction("Index", "Home");
-
-            // Check if we have content for the selected culture
-            var coachesContent = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].coaches_ar)) ? Ruselt[0].coaches_ar : Ruselt[0].coaches;
-            if (string.IsNullOrWhiteSpace(coachesContent)) return RedirectToAction("Index", "Home");
-
-            ViewBag.title = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title;
-            ViewBag.web_header = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header;
-            ViewBag.web_footer = ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString());
-            ViewBag.coaches = coachesContent;
-            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
-            ViewBag.Culture = culture ?? "en";
-
-            return View();
-        }
-
-        public IActionResult Contact()
-        {
-            var culture = Request.Cookies["SelectedCulture"];
-
-            var Ruselt = (from c in DB.Contents
-                          join r in DB.Roots on c.RootCode equals r.RootCode
-                          where (r.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "") || r.RootName + ".gymsofto.com" == HttpContext.Request.Host.ToString())
-                          select new
-                          {
-                              title = c.Title,
-                              title_ar = c.TitleAr,
-                              web_header = c.WebLayoutH,
-                              web_header_ar = c.WebLayoutHAr,
-                              web_footer = c.WebLayoutF,
-                              web_footer_ar = c.WebLayoutFAr,
-                              contact = c.Contact,
-                              contact_ar = c.ContactAr // Add Arabic contact if exists
-                          }).ToList();
-
-            if (Ruselt.Count == 0) return RedirectToAction("Index", "Home");
-
-            // Check if we have content for the selected culture
-            var contactContent = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].contact_ar)) ? Ruselt[0].contact_ar : Ruselt[0].contact;
-            if (string.IsNullOrWhiteSpace(contactContent)) return RedirectToAction("Index", "Home");
-
-            ViewBag.title = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title;
-            ViewBag.web_header = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header;
-            ViewBag.web_footer = ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString());
-            ViewBag.contact = contactContent;
-            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
-            ViewBag.Culture = culture ?? "en";
-
-            return View();
-        }
-        public IActionResult Students()
-        {
-            var culture = Request.Cookies["SelectedCulture"];
-
-            // Get domain information
             var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
             var domainNoPort = HttpContext.Request.Host.Host;
             var fullHost = HttpContext.Request.Host.ToString();
+            var currentYear = DateTime.Now.Year.ToString();
 
-            var Ruselt = (from c in DB.Contents
-                          join r in DB.Roots on c.RootCode equals r.RootCode
-                          where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
-                          select new
-                          {
-                              root_code = c.RootCode,
-                              title = c.Title,
-                              title_ar = c.TitleAr,
-                              web_header = c.WebLayoutH,
-                              web_header_ar = c.WebLayoutHAr,
-                              web_footer = c.WebLayoutF,
-                              web_footer_ar = c.WebLayoutFAr,
-                              outstanding_students = c.OutstandingStudents,
-                              outstanding_students_ar = c.OutstandingStudentsAr // Make sure this exists
-                          }).ToList();
+            var res = (from c in DB.Contents
+                       join r in DB.Roots on c.RootCode equals r.RootCode
+                       where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".Clasrio.com" == fullHost)
+                       select new
+                       {
+                           root_code = c.RootCode,
+                           title = c.Title,
+                           title_ar = c.TitleAr,
+                           web_header = c.WebLayoutH,
+                           web_header_ar = c.WebLayoutHAr,
+                           web_footer = c.WebLayoutF,
+                           web_footer_ar = c.WebLayoutFAr,
+                           courses = c.Courses,
+                           courses_ar = c.CoursesAr
+                       }).FirstOrDefault();
 
-            // Set ViewBag values
-            if (Ruselt.Count == 0)
+            if (res == null)
+            {
+                ViewBag.title = "Courses";
+                ViewBag.web_header = "";
+                ViewBag.web_footer = "";
+                ViewBag.courses = "<h1>No Courses found.</h1>";
+            }
+            else
+            {
+                var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+                var rootCodeStr = res.root_code.ToString();
+                ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
+
+                ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
+
+                var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
+                var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
+                var content = useArabic && !string.IsNullOrWhiteSpace(res.courses_ar) ? res.courses_ar : res.courses;
+
+                ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+                ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+                ViewBag.courses = string.IsNullOrWhiteSpace(content) ? "<h1>No Courses found.</h1>" : ApplyTokens(content, rootCodeStr, currentYear);
+            }
+
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
+            return View();
+        }
+
+        public IActionResult Center()
+        {
+            var culture = Request.Cookies["SelectedCulture"];
+            var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
+            var domainNoPort = HttpContext.Request.Host.Host;
+            var fullHost = HttpContext.Request.Host.ToString();
+            var currentYear = DateTime.Now.Year.ToString();
+
+            var res = (from c in DB.Contents
+                       join r in DB.Roots on c.RootCode equals r.RootCode
+                       where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
+                       select new
+                       {
+                           root_code = c.RootCode,
+                           title = c.Title,
+                           title_ar = c.TitleAr,
+                           web_header = c.WebLayoutH,
+                           web_header_ar = c.WebLayoutHAr,
+                           web_footer = c.WebLayoutF,
+                           web_footer_ar = c.WebLayoutFAr,
+                           center = c.Center,
+                           center_ar = c.CenterAr
+                       }).FirstOrDefault();
+
+            if (res == null)
+            {
+                ViewBag.title = "Center";
+                ViewBag.web_header = "";
+                ViewBag.web_footer = "";
+                ViewBag.center = "<h1>No Center info found.</h1>";
+            }
+            else
+            {
+                var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+                var rootCodeStr = res.root_code.ToString();
+                ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
+
+                ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
+
+                var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
+                var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
+                var content = useArabic && !string.IsNullOrWhiteSpace(res.center_ar) ? res.center_ar : res.center;
+
+                ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+                ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+                ViewBag.center = string.IsNullOrWhiteSpace(content) ? "<h1>No Center info found.</h1>" : ApplyTokens(content, rootCodeStr, currentYear);
+            }
+
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
+            return View();
+        }
+
+        public IActionResult Students()
+        {
+            var culture = Request.Cookies["SelectedCulture"];
+            var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
+            var domainNoPort = HttpContext.Request.Host.Host;
+            var fullHost = HttpContext.Request.Host.ToString();
+            var currentYear = DateTime.Now.Year.ToString();
+
+            var res = (from c in DB.Contents
+                       join r in DB.Roots on c.RootCode equals r.RootCode
+                       where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
+                       select new
+                       {
+                           root_code = c.RootCode,
+                           title = c.Title,
+                           title_ar = c.TitleAr,
+                           web_header = c.WebLayoutH,
+                           web_header_ar = c.WebLayoutHAr,
+                           web_footer = c.WebLayoutF,
+                           web_footer_ar = c.WebLayoutFAr,
+                           outstanding_students = c.OutstandingStudents,
+                           outstanding_students_ar = c.OutstandingStudentsAr
+                       }).FirstOrDefault();
+
+            if (res == null)
             {
                 ViewBag.title = "Outstanding Students";
                 ViewBag.web_header = "";
@@ -251,82 +292,97 @@ namespace centrny.Controllers
             }
             else
             {
-                var studentsContent = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].outstanding_students_ar)) ? Ruselt[0].outstanding_students_ar : Ruselt[0].outstanding_students;
+                var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+                var rootCodeStr = res.root_code.ToString();
+                ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
 
-                ViewBag.title = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title;
-                ViewBag.web_header = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header;
-                ViewBag.web_footer = ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString());
-                ViewBag.outstanding_students = string.IsNullOrWhiteSpace(studentsContent) ? "<h1>No Outstanding Students found.</h1>" : studentsContent;
+                ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
+
+                var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
+                var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
+                var content = useArabic && !string.IsNullOrWhiteSpace(res.outstanding_students_ar) ? res.outstanding_students_ar : res.outstanding_students;
+
+                ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+                ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+                ViewBag.outstanding_students = string.IsNullOrWhiteSpace(content) ? "<h1>No Outstanding Students found.</h1>" : ApplyTokens(content, rootCodeStr, currentYear);
             }
 
-            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
-            ViewBag.Culture = culture ?? "en";
-
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
             return View();
         }
 
         public IActionResult Gallery()
         {
             var culture = Request.Cookies["SelectedCulture"];
+            var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
+            var fullHost = HttpContext.Request.Host.ToString();
+            var currentYear = DateTime.Now.Year.ToString();
 
-            var Ruselt = (from c in DB.Contents
-                          join r in DB.Roots on c.RootCode equals r.RootCode
-                          where (r.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "") || r.RootName + ".gymsofto.com" == HttpContext.Request.Host.ToString())
-                          select new
-                          {
-                              title = c.Title,
-                              title_ar = c.TitleAr,
-                              web_header = c.WebLayoutH,
-                              web_header_ar = c.WebLayoutHAr,
-                              web_footer = c.WebLayoutF,
-                              web_footer_ar = c.WebLayoutFAr,
-                              gallery = c.Gallery,
-                              gallery_ar = c.GallerAr // Add Arabic gallery if exists
-                          }).ToList();
+            var res = (from c in DB.Contents
+                       join r in DB.Roots on c.RootCode equals r.RootCode
+                       where (r.RootDomain == domain || r.RootName + ".gymsofto.com" == fullHost)
+                       select new
+                       {
+                           root_code = c.RootCode,
+                           title = c.Title,
+                           title_ar = c.TitleAr,
+                           web_header = c.WebLayoutH,
+                           web_header_ar = c.WebLayoutHAr,
+                           web_footer = c.WebLayoutF,
+                           web_footer_ar = c.WebLayoutFAr,
+                           gallery = c.Gallery,
+                           gallery_ar = c.GallerAr
+                       }).FirstOrDefault();
 
-            if (Ruselt.Count == 0) return RedirectToAction("Index", "Home");
+            if (res == null) return RedirectToAction(nameof(Index));
 
-            // Check if we have content for the selected culture
-            var galleryContent = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].gallery_ar)) ? Ruselt[0].gallery_ar : Ruselt[0].gallery;
-            if (string.IsNullOrWhiteSpace(galleryContent)) return RedirectToAction("Index", "Home");
+            var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+            var content = useArabic && !string.IsNullOrWhiteSpace(res.gallery_ar) ? res.gallery_ar : res.gallery;
+            if (string.IsNullOrWhiteSpace(content)) return RedirectToAction(nameof(Index));
 
-            ViewBag.title = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].title_ar)) ? Ruselt[0].title_ar : Ruselt[0].title;
-            ViewBag.web_header = (culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_header_ar)) ? Ruselt[0].web_header_ar : Ruselt[0].web_header;
-            ViewBag.web_footer = ((culture == "ar" && !string.IsNullOrWhiteSpace(Ruselt[0].web_footer_ar)) ? Ruselt[0].web_footer_ar : Ruselt[0].web_footer)?.Replace("{{date}}", DateTime.Now.Year.ToString());
-            ViewBag.gallery = galleryContent;
-            ViewBag.CurrentLanguage = culture == "ar" ? "العربية" : "English";
-            ViewBag.Culture = culture ?? "en";
+            var rootCodeStr = res.root_code.ToString();
+            ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
 
+            ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
+
+            var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
+            var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
+
+            ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+            ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+            ViewBag.gallery = ApplyTokens(content, rootCodeStr, currentYear);
+
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
             return View();
         }
 
+        // API helpers
         public string get_branches()
         {
-            var Ruselt = DB.Branches
+            var data = DB.Branches
                 .Where(x => x.IsActive == true &&
                     (x.RootCodeNavigation.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "") ||
                      x.RootCodeNavigation.RootName + ".gymsofto.com" == HttpContext.Request.Host.ToString()))
                 .Select(x => new { branch_code = x.BranchCode, branch_name = x.BranchName })
                 .ToList();
 
-            return Newtonsoft.Json.JsonConvert.SerializeObject(Ruselt);
+            return Newtonsoft.Json.JsonConvert.SerializeObject(data);
         }
 
-        public class table_data
-        {
-            public string branch_code { get; set; }
-        }
+        public class table_data { public string branch_code { get; set; } }
 
-        public string get_table([FromBody] table_data table_data)
+        public string get_table([FromBody] table_data tableData)
         {
-            var Ruselt = DB.Schedules
-                .Where(x => x.BranchCode == Convert.ToInt32(table_data.branch_code)
+            var data = DB.Schedules
+                .Where(x => x.BranchCode == Convert.ToInt32(tableData.branch_code)
                     && (x.BranchCodeNavigation.RootCodeNavigation.RootDomain == HttpContext.Request.Host.ToString().Replace("www.", "") ||
                         x.BranchCodeNavigation.RootCodeNavigation.RootName + ".clasrio.com" == HttpContext.Request.Host.ToString()))
                 .OrderBy(x => x.BranchCode)
                 .ToList();
 
-            return Newtonsoft.Json.JsonConvert.SerializeObject(Ruselt);
+            return Newtonsoft.Json.JsonConvert.SerializeObject(data);
         }
     }
 }

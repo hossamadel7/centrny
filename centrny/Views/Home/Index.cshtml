@@ -1,4 +1,16 @@
 ﻿@{
     Layout = null;
+    // Converted from home.html to Razor (.cshtml). Paths made root-relative. Internal page links updated to .cshtml
+
+    // Build Register URL with correct root code
+    var rootCode = ViewBag.root_code?.ToString();
+    var generatedRegisterUrl = Url.Action("Register", "Student", new { root_code = rootCode });
+    if (string.IsNullOrWhiteSpace(generatedRegisterUrl))
+    {
+        generatedRegisterUrl = !string.IsNullOrEmpty(rootCode) ? $"/studentregister?root_code={rootCode}" : "/studentregister";
+    }
+    var registerUrl = generatedRegisterUrl;
 }
+@Html.Raw(ViewBag.web_header)
 @Html.Raw(ViewBag.home)
+@Html.Raw(ViewBag.web_footer)
