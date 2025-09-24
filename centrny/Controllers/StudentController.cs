@@ -794,6 +794,7 @@ namespace centrny.Controllers
         }
         // ==================== EXISTING PROFILE METHODS ====================
 
+        // Update your Profile method in StudentController to include StudentUsername
         [HttpGet]
         [Route("Student/{item_key}")]
         public async Task<IActionResult> Profile(string item_key)
@@ -839,7 +840,8 @@ namespace centrny.Controllers
                 RootCode = student.RootCode,
                 YearCode = student.YearCode,
                 Age = CalculateAge(student.StudentBirthdate),
-                CanMarkAttendance = canMarkAttendance
+                CanMarkAttendance = canMarkAttendance,
+                StudentUsername = student.StudentUsername // ADD THIS LINE
             };
 
             return View(viewModel);
@@ -883,7 +885,7 @@ namespace centrny.Controllers
                 RootCode = student.RootCode,
                 YearCode = student.YearCode,
                 Age = CalculateAge(student.StudentBirthdate),
-                CanMarkAttendance = await IsCurrentUserAdmin(student.RootCode,(int) student.BranchCode)
+                CanMarkAttendance = await IsCurrentUserAdmin(student.RootCode, (int)student.BranchCode)
             };
 
             return View("StudentData", viewModel);
@@ -980,7 +982,8 @@ namespace centrny.Controllers
                 .ToListAsync();
 
             // Format the data after retrieving from database
-            var formattedSchedules = schedules.Select(s => new {
+            var formattedSchedules = schedules.Select(s => new
+            {
                 ScheduleCode = s.ScheduleCode,
                 ScheduleName = s.ScheduleName,
                 DayOfWeek = s.DayOfWeek ?? "N/A",
@@ -1528,7 +1531,8 @@ namespace centrny.Controllers
             var pdfFiles = await _context.Files
                 .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 2)
                 .OrderByDescending(f => f.InsertTime)
-                .Select(f => new {
+                .Select(f => new
+                {
                     fileCode = f.FileCode,
                     displayName = f.DisplayName ?? "Downloadable File",
                     fileLocation = f.FileLocation,
@@ -1568,7 +1572,8 @@ namespace centrny.Controllers
             var videoFiles = await _context.Files
                 .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 1)
                 .OrderByDescending(f => f.InsertTime)
-                .Select(f => new {
+                .Select(f => new
+                {
                     fileCode = f.FileCode,
                     displayName = f.DisplayName ?? "Video",
                     fileLocation = f.FileLocation,
@@ -1740,6 +1745,8 @@ namespace centrny.Controllers
         }
 
 
+
+
         [HttpGet]
         [Route("Student/GetStudentVideos/{item_key}")]
         public async Task<IActionResult> GetStudentVideos(string item_key)
@@ -1772,7 +1779,7 @@ namespace centrny.Controllers
             var videoFiles = await _context.Files
                 .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
                            f.IsActive &&
-                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) && 
+                           (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
                            f.FileType == 1) // Videos only
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.SubjectCodeNavigation)
@@ -1890,6 +1897,8 @@ namespace centrny.Controllers
                 expiryTime = DateTime.Now.AddHours(expiryHours)
             });
         }
+
+
 
         // Add the decrypt method to StudentController
         private string DecryptString(string encryptedText)
@@ -2067,7 +2076,8 @@ namespace centrny.Controllers
             {
                 var answersForQuestion = allAnswers
                     .Where(a => a.QuestionCode == q.QuestionCode)
-                    .Select(a => new {
+                    .Select(a => new
+                    {
                         AnswerCode = a.AnswerCode,
                         AnswerText = a.AnswerContent, // or whatever field holds the choice text
                         IsCorrect = a.IsTrue // or whatever field is the correct flag
@@ -2263,7 +2273,7 @@ namespace centrny.Controllers
                         TeacherCode = teacherCode,
                         YearCode = request.YearCode,
                         EduYearCode = request.EduYearCode ?? currentEduYear.EduCode,
-                        ScheduleCode = request.Mode == "Online" ? null :scheduleCodeToUse ,
+                        ScheduleCode = request.Mode == "Online" ? null : scheduleCodeToUse,
                         BranchCode = request.Mode == "Online" ? null : request.BranchCode,
                         RootCode = student.RootCode,
                         IsOnline = request.Mode == "Online",
@@ -2306,8 +2316,187 @@ namespace centrny.Controllers
                 return dbEx.InnerException.Message;
             return ex.Message;
         }
+
+
+        [HttpPost]
+        [Route("Student/ValidateSignupPin")]
+        public async Task<IActionResult> ValidateSignupPin([FromBody] SignupPinValidationRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.PinCode))
+                    return Json(new { success = false, error = "PIN code is required." });
+
+                if (string.IsNullOrWhiteSpace(request.ItemKey))
+                    return Json(new { success = false, error = "Invalid session." });
+
+                // Get student from item key
+                var student = await GetStudentByItemKey(request.ItemKey);
+                if (student == null)
+                    return Json(new { success = false, error = "Student not found." });
+
+                // Check if student already has credentials
+                if (!string.IsNullOrEmpty(student.StudentUsername))
+                    return Json(new { success = false, error = "Student already has online access." });
+
+                // Validate PIN - must be from same root, active, and not linked to any student
+                var pinEntity = await _context.Pins
+                    .FirstOrDefaultAsync(p =>
+                        p.Watermark == request.PinCode &&
+                        p.RootCode == student.RootCode &&
+                        p.IsActive == 1 &&
+                        p.StudentCode == null);
+
+                if (pinEntity == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        error = "Invalid PIN code or PIN already used."
+                    });
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    message = "PIN code validated successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating signup PIN");
+                return Json(new
+                {
+                    success = false,
+                    error = "An error occurred while validating PIN."
+                });
+            }
+        }
+
+        [HttpPost]
+        [Route("Student/CompleteOnlineSignup")]
+        public async Task<IActionResult> CompleteOnlineSignup([FromBody] CompleteSignupRequest request)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Validate input
+                if (string.IsNullOrWhiteSpace(request.ItemKey) ||
+                    string.IsNullOrWhiteSpace(request.Username) ||
+                    string.IsNullOrWhiteSpace(request.Password) ||
+                    string.IsNullOrWhiteSpace(request.PinCode))
+                {
+                    return Json(new { success = false, error = "All fields are required." });
+                }
+
+                // Get student
+                var student = await GetStudentByItemKey(request.ItemKey);
+                if (student == null)
+                    return Json(new { success = false, error = "Student not found." });
+
+                // Check if student already has credentials
+                if (!string.IsNullOrEmpty(student.StudentUsername))
+                    return Json(new { success = false, error = "Student already has online access." });
+
+                // Validate PIN again
+                var pinEntity = await _context.Pins
+                    .FirstOrDefaultAsync(p =>
+                        p.Watermark == request.PinCode &&
+                        p.RootCode == student.RootCode &&
+                        p.IsActive == 1 &&
+                        p.StudentCode == null);
+
+                if (pinEntity == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        error = "Invalid PIN code or PIN already used."
+                    });
+                }
+
+                // Check username uniqueness (within same root)
+                var existingStudent = await _context.Students
+                    .FirstOrDefaultAsync(s =>
+                        s.StudentUsername.ToLower() == request.Username.ToLower() &&
+                        s.RootCode == student.RootCode);
+
+                if (existingStudent != null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        error = "Username is already taken."
+                    });
+                }
+
+                // Update student with credentials
+                student.StudentUsername = request.Username.Trim();
+                student.StudentPassword = request.Password; // Consider hashing this
+                student.IsConfirmed = false; // Set to false initially
+                student.LastInsertUser = 1;
+                student.LastInsertTime = DateTime.Now;
+
+                // Link PIN to student
+                pinEntity.StudentCode = student.StudentCode;
+                pinEntity.LastUpdateUser = 1;
+                pinEntity.LastUpdateTime = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Online access has been successfully set up!"
+                });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error completing online signup");
+                return Json(new
+                {
+                    success = false,
+                    error = "An error occurred while setting up online access."
+                });
+            }
+        }
+
+        [HttpGet]
+        [Route("Student/CheckUsernameAvailability")]
+        public async Task<IActionResult> CheckUsernameAvailability(string username, string itemKey)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(itemKey))
+                    return Json(new { available = false, error = "Invalid parameters." });
+
+                var student = await GetStudentByItemKey(itemKey);
+                if (student == null)
+                    return Json(new { available = false, error = "Student not found." });
+
+                var exists = await _context.Students
+                    .AnyAsync(s =>
+                        s.StudentUsername.ToLower() == username.ToLower() &&
+                        s.RootCode == student.RootCode);
+
+                return Json(new { available = !exists });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking username availability");
+                return Json(new { available = false, error = "Error checking username." });
+            }
+        }
+
+       
     }
 }
+
+
+
+
 // ==================== VIEWMODELS & REQUEST MODELS ====================
 public class PinValidationRequest
 {
@@ -2440,7 +2629,7 @@ public class MarkAttendanceRequest
     public int? AttendanceType { get; set; }
     public decimal? SessionPrice { get; set; }
 }
-
+// Add this property to your StudentProfileViewModel class
 public class StudentProfileViewModel
 {
     public string? ItemKey { get; set; }
@@ -2460,4 +2649,22 @@ public class StudentProfileViewModel
     public int? YearCode { get; set; }
     public int Age { get; set; }
     public bool CanMarkAttendance { get; set; }
+
+    // ADD THIS NEW PROPERTY
+    public string? StudentUsername { get; set; }
+}
+
+// Request models - add these at the bottom of the file
+public class SignupPinValidationRequest
+{
+    public string ItemKey { get; set; }
+    public string PinCode { get; set; }
+}
+
+public class CompleteSignupRequest
+{
+    public string ItemKey { get; set; }
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string PinCode { get; set; }
 }

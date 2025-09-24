@@ -54,6 +54,8 @@
     </style>
 </head>
 <body>
+
+
     <!-- JS Localization keys -->
     <div id="js-localization"
          data-student-profile="@Localizer["StudentProfile"]"
@@ -100,6 +102,8 @@
     <div class="container-fluid student-profile-page">
         <div class="profile-container">
             <!-- Profile Header -->
+            <!-- Replace the profile header section in your Profile.cshtml with this updated version -->
+            <!-- Profile Header -->
             <div class="profile-header">
                 <div class="container">
                     <div class="row align-items-center justify-content-center g-4">
@@ -111,6 +115,18 @@
                                 <i class="fas @(Model.IsActive ? "fa-check-circle" : "fa-times-circle")"></i>
                                 <span id="status-label"></span>
                             </div>
+
+                            <!-- Online Signup Button (only shows if student has no username/password) -->
+                            @if (string.IsNullOrEmpty(Model.StudentUsername))
+                            {
+                                <div class="online-signup-button-container">
+                                    <button id="setupOnlineAccessBtn" class="setup-online-btn">
+                                        <i class="fas fa-user-plus"></i>
+                                        Sign Up for Online Access
+                                    </button>
+                                </div>
+                            }
+
                             <div class="row justify-content-center mt-4">
                                 <div class="col-12 col-md-3 mb-3">
                                     <div class="header-info-card">
@@ -156,7 +172,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="profile-content">
                 <!-- Upcoming Classes -->
                 <div class="section-card">
@@ -625,8 +640,19 @@
         window.closeWeeklyModal = closeWeeklyModal;
 
         // ========== Event Delegation ==========
-        function setupDelegatedEvents() {
+                function setupDelegatedEvents() {
             document.addEventListener('click', e => {
+                // Handle signup modal clicks FIRST - before all other handlers
+                if (e.target.closest('#onlineSignupModal .signup-modal')) {
+                    return; // Let the modal handle its own clicks
+                }
+
+                // Close signup modal only if clicking the backdrop
+                if (e.target.id === 'onlineSignupModal') {
+                    closeSignupModal();
+                    return;
+                }
+
                 // 1. Weekly classes button
                 const weeklyBtn = e.target.closest('.view-weekly-btn');
                 if (weeklyBtn) {
@@ -675,7 +701,7 @@
                     return;
                 }
 
-                // 5. Overlays
+                // 5. Other modal overlays
                 if (e.target.id === 'attendancePasswordModal') {
                     closeAttendancePasswordModal();
                     return;
@@ -707,6 +733,7 @@
                 if (e.key === 'Escape') {
                     closeAttendancePasswordModal();
                     closeWeeklyModal();
+                    closeSignupModal();
                 }
             });
         }
@@ -798,16 +825,405 @@
             });
         }
 
-        // ========== Init ==========
+    
+
+                // ========== Online Signup Feature ==========
+        // Add this to your existing JavaScript in Profile.cshtml
+
+        // Online Signup Variables
+        let validatedPinCode = null;
+        let usernameCheckTimeout = null;
+
+        // Initialize signup functionality (add this to your existing DOMContentLoaded event)
+        function initializeSignupFeature() {
+            const setupBtn = document.getElementById('setupOnlineAccessBtn');
+            if (setupBtn) {
+                setupBtn.addEventListener('click', openSignupModal);
+            }
+
+            setupSignupEventListeners();
+        }
+
+        function setupSignupEventListeners() {
+            // PIN validation form
+            const pinForm = document.getElementById('pinValidationForm');
+        if (pinForm) {
+            pinForm.removeEventListener('submit', handlePinValidation);
+            pinForm.addEventListener('submit', handlePinValidation);
+        }
+            // Account setup form
+            const accountForm = document.getElementById('accountSetupForm');
+            if (accountForm) {
+                accountForm.addEventListener('submit', handleAccountSetup);
+            }
+
+            // Username availability check
+            const usernameInput = document.getElementById('signupUsername');
+            if (usernameInput) {
+                usernameInput.addEventListener('input', debounceUsernameCheck);
+            }
+
+            // Password confirmation
+            const passwordInput = document.getElementById('signupPassword');
+            const confirmInput = document.getElementById('confirmPassword');
+            if (passwordInput && confirmInput) {
+                confirmInput.addEventListener('input', checkPasswordMatch);
+                passwordInput.addEventListener('input', checkPasswordMatch);
+            }
+        }
+
+        function debounceUsernameCheck(e) {
+            clearTimeout(usernameCheckTimeout);
+            usernameCheckTimeout = setTimeout(() => {
+                checkUsernameAvailability();
+            }, 500);
+        }
+
+        function openSignupModal() {
+            const modal = document.getElementById('onlineSignupModal');
+            if (modal) {
+                modal.classList.add('show');
+                modal.setAttribute('aria-hidden', 'false');
+
+                // Reset to first step
+                showSignupStep('pinStep');
+                clearSignupForm();
+
+                // Focus on PIN input
+                setTimeout(() => {
+                    const pinInput = document.getElementById('signupPinInput');
+                    if (pinInput) pinInput.focus();
+                }, 100);
+            }
+        }
+
+        function closeSignupModal() {
+            const modal = document.getElementById('onlineSignupModal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.setAttribute('aria-hidden', 'true');
+                clearSignupForm();
+                validatedPinCode = null;
+            }
+        }
+        window.closeSignupModal = closeSignupModal;
+
+        function showSignupStep(stepId) {
+            // Hide all steps
+            document.querySelectorAll('.signup-step').forEach(step => {
+                step.classList.remove('active');
+            });
+
+            // Show target step
+            const targetStep = document.getElementById(stepId);
+            if (targetStep) {
+                targetStep.classList.add('active');
+            }
+        }
+
+        function clearSignupForm() {
+            // Clear all inputs
+            const inputs = document.querySelectorAll('#onlineSignupModal input');
+            inputs.forEach(input => input.value = '');
+
+            // Clear error messages
+            document.querySelectorAll('.error-msg').forEach(error => {
+                error.style.display = 'none';
+                error.textContent = '';
+            });
+
+            // Clear feedback messages
+            document.querySelectorAll('.input-feedback').forEach(feedback => {
+                feedback.textContent = '';
+                feedback.className = 'input-feedback';
+            });
+        }
+
+        async function handlePinValidation(e) {
+            e.preventDefault();
+
+            const pinInput = document.getElementById('signupPinInput');
+            const errorDiv = document.getElementById('pinError');
+            const submitBtn = document.getElementById('validatePinBtn');
+
+            const pinCode = pinInput.value.trim();
+
+            if (!pinCode) {
+                showSignupError(errorDiv, 'Please enter your PIN code.');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/Student/ValidateSignupPin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ItemKey: ITEM_KEY,
+                        PinCode: pinCode
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    validatedPinCode = pinCode;
+                    showSignupStep('accountStep');
+
+                    // Focus on username input
+                    setTimeout(() => {
+                        const usernameInput = document.getElementById('signupUsername');
+                        if (usernameInput) usernameInput.focus();
+                    }, 100);
+                } else {
+                    showSignupError(errorDiv, result.error || 'Invalid PIN code.');
+                }
+            } catch (error) {
+                showSignupError(errorDiv, 'An error occurred while validating the PIN code.');
+                console.error('PIN validation error:', error);
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Validate PIN';
+            }
+        }
+
+        async function handleAccountSetup(e) {
+            e.preventDefault();
+
+            const usernameInput = document.getElementById('signupUsername');
+            const passwordInput = document.getElementById('signupPassword');
+            const confirmInput = document.getElementById('confirmPassword');
+            const errorDiv = document.getElementById('accountError');
+            const submitBtn = document.getElementById('completeSignupBtn');
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmInput.value;
+
+            // Validate inputs
+            if (!username) {
+                showSignupError(errorDiv, 'Please enter a username.');
+                return;
+            }
+
+            if (!password || password.length < 6) {
+                showSignupError(errorDiv, 'Password must be at least 6 characters long.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showSignupError(errorDiv, 'Passwords do not match.');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/Student/CompleteOnlineSignup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ItemKey: ITEM_KEY,
+                        Username: username,
+                        Password: password,
+                        PinCode: validatedPinCode
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSignupStep('successStep');
+                } else {
+                    showSignupError(errorDiv, result.error || 'Failed to create account.');
+                }
+            } catch (error) {
+                showSignupError(errorDiv, 'An error occurred while creating your account.');
+                console.error('Account setup error:', error);
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+            }
+        }
+
+        async function checkUsernameAvailability() {
+            const usernameInput = document.getElementById('signupUsername');
+            const feedback = document.getElementById('usernameCheck');
+
+            const username = usernameInput.value.trim();
+
+            if (!username || username.length < 3) {
+                feedback.textContent = '';
+                feedback.className = 'input-feedback';
+                return;
+            }
+
+            feedback.textContent = 'Checking availability...';
+            feedback.className = 'input-feedback';
+
+            try {
+                const response = await fetch(`/Student/CheckUsernameAvailability?username=${encodeURIComponent(username)}&itemKey=${ITEM_KEY}`);
+                const result = await response.json();
+
+                if (result.available) {
+                    feedback.textContent = 'Username is available';
+                    feedback.className = 'input-feedback success';
+                } else {
+                    feedback.textContent = 'Username is already taken';
+                    feedback.className = 'input-feedback error';
+                }
+            } catch (error) {
+                feedback.textContent = 'Error checking username';
+                feedback.className = 'input-feedback error';
+                console.error('Username check error:', error);
+            }
+        }
+
+        function checkPasswordMatch() {
+            const passwordInput = document.getElementById('signupPassword');
+            const confirmInput = document.getElementById('confirmPassword');
+            const feedback = document.getElementById('passwordMatch');
+
+            const password = passwordInput.value;
+            const confirmPassword = confirmInput.value;
+
+            if (!confirmPassword) {
+                feedback.textContent = '';
+                feedback.className = 'input-feedback';
+                return;
+            }
+
+            if (password === confirmPassword) {
+                feedback.textContent = 'Passwords match';
+                feedback.className = 'input-feedback success';
+            } else {
+                feedback.textContent = 'Passwords do not match';
+                feedback.className = 'input-feedback error';
+            }
+        }
+
+        function goBackToPinStep() {
+            showSignupStep('pinStep');
+        }
+        window.goBackToPinStep = goBackToPinStep;
+
+        function completeSignupProcess() {
+            closeSignupModal();
+            // Refresh the page to show the updated profile without the signup button
+            window.location.reload();
+        }
+        window.completeSignupProcess = completeSignupProcess;
+
+        function showSignupError(errorDiv, message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+
         document.addEventListener('DOMContentLoaded', async function () {
             setStudentLabels();
             setupDelegatedEvents();
             setupAttendancePasswordForm();
             setupSearch();
+            initializeSignupFeature(); // <- This was missing
             await loadAttendanceTypes();
             await Promise.all([loadUpcomingClasses(), loadStudentSubjects()]);
             console.log('[StudentProfile] Initialized');
         });
     </script>
+
+    <div id="onlineSignupModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog signup-modal" role="document">
+            <div class="modal-header">
+                <h3 class="modal-title">Set Up Online Access</h3>
+                <button class="close-btn" onclick="closeSignupModal()" aria-label="Close signup modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: PIN Validation -->
+                <div id="pinStep" class="signup-step active">
+                    <div class="step-header">
+                        <i class="fas fa-key"></i>
+                        <h4>Enter Your PIN Code</h4>
+                        <p>Please enter the PIN code provided by your institution to verify your eligibility for online access.</p>
+                    </div>
+                    <div id="pinError" class="error-msg" style="display:none;"></div>
+                    <form id="pinValidationForm">
+                        <div class="form-group">
+                            <label for="signupPinInput">PIN Code:</label>
+                            <input type="text" class="form-control" id="signupPinInput" placeholder="Enter your PIN code" maxlength="20" required />
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeSignupModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="validatePinBtn">
+                                <i class="fas fa-check"></i> Validate PIN
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 2: Account Setup -->
+                <div id="accountStep" class="signup-step">
+                    <div class="step-header">
+                        <i class="fas fa-user-cog"></i>
+                        <h4>Create Your Account</h4>
+                        <p>Choose your username and password for online access.</p>
+                    </div>
+                    <div id="accountError" class="error-msg" style="display:none;"></div>
+                    <form id="accountSetupForm">
+                        <div class="form-group">
+                            <label for="signupUsername">Username:</label>
+                            <input type="text" class="form-control" id="signupUsername" placeholder="Choose a username" maxlength="50" required />
+                            <div class="input-feedback" id="usernameCheck"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password:</label>
+                            <input type="password" class="form-control" id="signupPassword" placeholder="Choose a strong password" minlength="6" required />
+                            <div class="password-requirements">
+                                <small>Password must be at least 6 characters long</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password:</label>
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" required />
+                            <div class="input-feedback" id="passwordMatch"></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="goBackToPinStep()">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="completeSignupBtn">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 3: Success -->
+                <div id="successStep" class="signup-step">
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>Account Created Successfully!</h4>
+                        <p>Your online access has been set up. You can now access digital content and participate in online classes.</p>
+                        <button class="btn btn-primary" onclick="completeSignupProcess()">
+                            <i class="fas fa-home"></i> Continue to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
+
 </html>
