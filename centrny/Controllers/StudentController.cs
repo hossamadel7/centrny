@@ -1570,7 +1570,7 @@ namespace centrny.Controllers
 
             // Get all FileType=1 files for this lesson (Videos)
             var videoFiles = await _context.Files
-                .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 1)
+                .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 1 && f.IsOnlineLesson==false)
                 .OrderByDescending(f => f.InsertTime)
                 .Select(f => new
                 {
