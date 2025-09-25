@@ -845,6 +845,19 @@ namespace centrny.Controllers
                 if (exam == null)
                     return NotFound("Exam not found or access denied");
 
+                // ✅ NEW: Find and remove the corresponding File record
+                var examFile = await _context.Files
+                    .FirstOrDefaultAsync(f => f.ExamCode == examCode &&
+                                              f.RootCode == rootCode.Value &&
+                                              f.IsActive);
+
+                if (examFile != null)
+                {
+                    _context.Files.Remove(examFile);
+                    Console.WriteLine($"🗑️ Removed File record {examFile.FileCode} for exam {examCode}");
+                }
+
+                // ✅ Update the exam record
                 exam.LessonCode = null;
                 exam.SortOrder = null;
                 exam.LastUpdateUser = GetSessionInt("UserCode") ?? 1;
@@ -853,8 +866,9 @@ namespace centrny.Controllers
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true });
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error unlinking exam: {ex.Message}");
                 return StatusCode(500, "Error unlinking exam from lesson");
             }
         }

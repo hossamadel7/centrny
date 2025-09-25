@@ -861,7 +861,7 @@
                                     </button>`;
                 } else if (isExam) {
                     metaInfo = `${item.examTimer ? 'Duration: ' + item.examTimer : ''}${item.examDegree ? ' • Total: ' + item.examDegree + ' marks' : ''}`;
-                    actionButton = `<button class="btn btn-sm btn-outline-warning" onclick="unlinkExam(${item.itemCode})" title="Unlink Exam">
+                    actionButton = `<button class="btn btn-sm btn-outline-warning" onclick="unlinkExam(${item.examCode})" title="Unlink Exam">
                                         <i class="fas fa-unlink"></i> Unlink
                                     </button>`;
                 } else {

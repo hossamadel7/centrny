@@ -1619,7 +1619,8 @@ namespace centrny.Controllers
             // Get downloadable files (FileType == 2)
             var downloadableFiles = await _context.Files
                 .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
-                            f.IsActive &&
+                            f.IsActive &&  
+               (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
                             f.FileType == 2)
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.SubjectCodeNavigation)
