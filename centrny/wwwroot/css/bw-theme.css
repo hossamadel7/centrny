@@ -3096,3 +3096,26 @@ html[dir="ltr"] .form-page__content form input::placeholder {
 		text-align: center !important;
 	}
 }
+/* === EXCLUDE SCHEDULE CARDS FROM B&W GLOBAL OVERRIDES === */
+.schedule-card,
+.schedule-card *,
+.schedule-list,
+.schedule-list * {
+	background: #23202c !important;
+	color: #fff !important;
+	border-radius: 18px !important;
+	box-shadow: 0 8px 24px rgba(110,89,164,0.13) !important;
+	border: 2px solid #6e59a4 !important;
+	margin-bottom: 28px !important;
+	padding: 26px 22px 14px !important;
+	/* Restore any other styles you want for the schedule cards */
+}
+
+	/* Prevent transparency and forced text color on schedule cards */
+	.schedule-card *,
+	.schedule-list * {
+		background-color: #23202c !important;
+		color: #fff !important;
+		border-color: #6e59a4 !important;
+	}
+

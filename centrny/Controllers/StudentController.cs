@@ -276,6 +276,18 @@ namespace centrny.Controllers
             }
         }
         [HttpGet]
+        [Route("Student/CheckPhone")]
+        public async Task<IActionResult> CheckPhone(string phone, int rootCode)
+        {
+            if (string.IsNullOrWhiteSpace(phone) || rootCode <= 0)
+                return Json(new { exists = false });
+
+            var exists = await _context.Students
+                .AnyAsync(s => s.StudentPhone == phone.Trim() && s.RootCode == rootCode && s.IsActive);
+
+            return Json(new { exists });
+        }
+        [HttpGet]
         [Route("Register/{root_code:int}/Success")]
         public IActionResult PublicRegisterSuccess(int root_code)
         {

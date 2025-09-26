@@ -325,27 +325,6 @@ label.form-label {
     }
 
 /* ---------- Schedule Options ---------- */
-#scheduleSelection > .schedule-item,
-.schedule-options .form-check {
-    border: 1px solid #e3e6ee;
-    border-radius: 10px;
-    padding: 10px 14px;
-    background: #fff;
-    transition: .2s;
-}
-
-    .schedule-options .form-check:not(:last-child) {
-        margin-bottom: 10px;
-    }
-
-    .schedule-options .form-check:hover {
-        border-color: var(--color-primary);
-        background: #f7f4ff;
-    }
-
-.schedule-options .form-check-input:checked ~ label strong {
-    color: var(--color-primary);
-}
 
 /* ---------- Alerts ---------- */
 .alert {
@@ -581,8 +560,4 @@ label.form-label {
 .form-page__content,
 .registration-card {
     background: #1c1c1c !important ;
-}
-.content-wrapper > section * {
-    color: #ffffff !important;
-    border-color: rgb(207 207 207 / 51%) !important;
 }

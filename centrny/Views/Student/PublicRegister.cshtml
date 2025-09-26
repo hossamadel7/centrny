@@ -545,7 +545,9 @@
                                                         <i class="fas fa-info-circle me-2"></i>
                                                         <span data-localize="step4_info">اختر الجدول المناسب لكل مادة.</span>
                                                     </div>
-                                                    <div id="scheduleSelection"></div>
+                                                    <div id="scheduleSelection" class="schedule-list">
+                                                       
+                                                    </div>
                                                 </div>
 
                                                 <div id="onlineUserSection" style="display:none;">
@@ -661,269 +663,252 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Localization System
-        let currentLanguage = 'ar'; // Default to Arabic
+        let studentPhoneExists = false;
+        let currentLanguage = 'ar';
 
         const translations = {
-            ar: {
-                // Navigation
-                nav_home: 'الرئيسية',
-                nav_about: 'حول الأستاذ',
-                nav_courses: 'الدروس',
-                nav_centres: 'المراكز',
-                nav_outstanding: 'الطلاب المتميزون',
-                contact_us: 'اتصل بنا',
-                login_btn: 'تسجيل الدخول',
-                signup_btn: 'إنشاء حساب',
+             ar: {
+                 // Navigation
+                 nav_home: 'الرئيسية',
+                 nav_about: 'حول الأستاذ',
+                 nav_courses: 'الدروس',
+                 nav_centres: 'المراكز',
+                 nav_outstanding: 'الطلاب المتميزون',
+                 contact_us: 'اتصل بنا',
+                 login_btn: 'تسجيل الدخول',
+                 signup_btn: 'إنشاء حساب',
+                 registration_failed: 'فشل في التسجيل.',
+                 student_already_registered: 'هذا الطالب مسجل بالفعل.',
 
-                // Main content
-                main_title: 'التسجيل كطالب جديد',
-                main_subtitle: 'انضم إلى {name} وابدأ رحلتك التعليمية.',
+                 // Main content
+                 main_title: 'التسجيل كطالب جديد',
+                 main_subtitle: 'انضم إلى {name} وابدأ رحلتك التعليمية.',
 
-                // Instructions
-                instructions_title: 'خطوات التسجيل',
-                instruction_1: 'أدخل بياناتك الشخصية',
-                instruction_2: 'اختر طريقة الدراسة والفرع أو رمز الأونلاين',
-                instruction_3: 'حدد المواد واختر المعلم لكل مادة',
-                instruction_4: 'اختر الجداول وبيانات الحساب الأونلاين',
-                instruction_5: 'راجع و أكمل التسجيل',
+                 // Instructions
+                 instructions_title: 'خطوات التسجيل',
+                 instruction_1: 'أدخل بياناتك الشخصية',
+                 instruction_2: 'اختر طريقة الدراسة والفرع أو رمز الأونلاين',
+                 instruction_3: 'حدد المواد واختر المعلم لكل مادة',
+                 instruction_4: 'اختر الجداول وبيانات الحساب الأونلاين',
+                 instruction_5: 'راجع و أكمل التسجيل',
 
-                // Validation
-                validation_error: 'يرجى تصحيح الأخطاء التالية:',
+                 // Validation
+                 validation_error: 'يرجى تصحيح الأخطاء التالية:',
 
-                // Step 1 - Personal Information
-                step1_title: 'البيانات الشخصية',
-                full_name: 'الاسم الكامل',
-                birth_date: 'تاريخ الميلاد',
-                student_phone: 'هاتف الطالب',
-                father_phone: 'هاتف الأب',
-                mother_phone: 'هاتف الأم',
-                father_job: 'مهنة الأب',
-                mother_job: 'مهنة الأم',
-                gender: 'النوع',
-                male: 'ذكر',
-                female: 'أنثى',
+                 // Step 1 - Personal Information
+                 step1_title: 'البيانات الشخصية',
+                 full_name: 'الاسم الكامل',
+                 birth_date: 'تاريخ الميلاد',
+                 student_phone: 'هاتف الطالب',
+                 father_phone: 'هاتف الأب',
+                 mother_phone: 'هاتف الأم',
+                 father_job: 'مهنة الأب',
+                 mother_job: 'مهنة الأم',
+                 gender: 'النوع',
+                 male: 'ذكر',
+                 female: 'أنثى',
 
-                // Step 2 - Study Mode
-                step2_title: 'وضع الدراسة و الموقع',
-                study_mode: 'طريقة الدراسة',
-                offline_mode: 'مركز (أوفلاين)',
-                online_mode: 'أونلاين',
-                branch: 'الفرع',
-                academic_year: 'السنة الدراسية',
-                education_year: 'المرحلة التعليمية',
-                select_branch: 'اختر الفرع',
-                select_year: 'اختر السنة',
-                online_pin: 'رمز التسجيل أونلاين',
-                enter_pin: 'أدخل الرمز',
-                validate_pin: 'تحقق من الرمز',
-                select_academic_year: 'اختر السنة الدراسية',
-                year: 'السنة',
+                 // Step 2 - Study Mode
+                 step2_title: 'وضع الدراسة و الموقع',
+                 study_mode: 'طريقة الدراسة',
+                 offline_mode: 'مركز (أوفلاين)',
+                 online_mode: 'أونلاين',
+                 branch: 'الفرع',
+                 academic_year: 'السنة الدراسية',
+                 education_year: 'المرحلة التعليمية',
+                 select_branch: 'اختر الفرع',
+                 select_year: 'اختر السنة',
+                 online_pin: 'رمز التسجيل أونلاين',
+                 enter_pin: 'أدخل الرمز',
+                 validate_pin: 'تحقق من الرمز',
+                 select_academic_year: 'اختر السنة الدراسية',
+                 year: 'السنة',
 
-                // Step 3 - Subjects
-                step3_title: 'اختيار المواد و المعلمين',
-                step3_info: 'اختر المواد ثم اختر معلم لكل مادة.',
-                selected_subjects: 'المواد المختارة',
+                 // Step 3 - Subjects
+                 step3_title: 'اختيار المواد و المعلمين',
+                 step3_info: 'اختر المواد ثم اختر معلم لكل مادة.',
+                 selected_subjects: 'المواد المختارة',
 
-                // Step 4 - Schedules
-                step4_title: 'اختيار الجداول',
-                step4_info: 'اختر الجدول المناسب لكل مادة.',
-                create_account: 'إنشاء حساب أونلاين',
-                username: 'اسم المستخدم',
-                password: 'كلمة المرور',
+                 // Step 4 - Schedules
+                 step4_title: 'اختيار الجداول',
+                 step4_info: 'اختر الجدول المناسب لكل مادة.',
+                 create_account: 'إنشاء حساب أونلاين',
+                 username: 'اسم المستخدم',
+                 password: 'كلمة المرور',
 
-                // Step 5 - Confirmation
-                step5_title: 'تأكيد البيانات',
-                step5_info: 'راجع بياناتك قبل الإرسال.',
-                terms_accept: 'أوافق على الشروط و الأحكام',
-                complete_online_reg: 'إكمال التسجيل الأونلاين',
-                ready_complete: 'جاهز لإكمال التسجيل.',
-                finish_online_reg: 'إكمال التسجيل الأونلاين',
+                 // Step 5 - Confirmation
+                 step5_title: 'تأكيد البيانات',
+                 step5_info: 'راجع بياناتك قبل الإرسال.',
+                 terms_accept: 'أوافق على الشروط و الأحكام',
+                 complete_online_reg: 'إكمال التسجيل الأونلاين',
+                 ready_complete: 'جاهز لإكمال التسجيل.',
+                 finish_online_reg: 'إكمال التسجيل الأونلاين',
 
-                // Navigation Buttons
-                previous: 'السابق',
-                next: 'التالي',
-                complete_registration: 'تأكيد التسجيل',
+                 // Navigation Buttons
+                 previous: 'السابق',
+                 next: 'التالي',
+                 complete_registration: 'تأكيد التسجيل',
 
-                // Other
-                security_note: 'بياناتك آمنة و مشفرة.',
-                processing: 'جارٍ معالجة التسجيل...',
-                current_lang: 'العربية',
+                 // Other
+                 security_note: 'بياناتك آمنة و مشفرة.',
+                 processing: 'جارٍ معالجة التسجيل...',
+                 current_lang: 'العربية',
 
-                // Error Messages
-                pin_validation_required: 'يرجى التحقق من رمز التسجيل أولاً.',
-                select_branch_year: 'يرجى اختيار الفرع والسنة الدراسية.',
-                select_subjects_teacher: 'يرجى اختيار مادة واحدة على الأقل ومعلم.',
-                select_schedules: 'يرجى اختيار جداول لجميع المواد المختارة.',
-                username_password_required: 'اسم المستخدم وكلمة المرور مطلوبان.',
-                terms_required: 'يجب الموافقة على الشروط والأحكام.',
-                pin_required: 'رمز التسجيل مطلوب.',
-                invalid_pin: 'رمز التسجيل غير صحيح.',
-                pin_validated_success: 'تم التحقق من الرمز بنجاح. اختر السنة الدراسية.',
-                username_taken: 'اسم المستخدم مستخدم بالفعل.',
-                network_error: 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
-                registration_successful: 'تم التسجيل بنجاح!',
-                welcome_message: 'مرحباً بك!',
-                registration_failed: 'فشل في التسجيل.'
-            },
-            en: {
-                // Navigation
-                nav_home: 'Home',
-                nav_about: 'About',
-                nav_courses: 'Courses',
-                nav_centres: 'Centres',
-                nav_outstanding: 'Outstanding Students',
-                contact_us: 'Call us',
-                login_btn: 'Log in',
-                signup_btn: 'Sign up',
+                 // Error Messages
+                 pin_validation_required: 'يرجى التحقق من رمز التسجيل أولاً.',
+                 select_branch_year: 'يرجى اختيار الفرع والسنة الدراسية.',
+                 select_subjects_teacher: 'يرجى اختيار مادة واحدة على الأقل ومعلم.',
+                 select_schedules: 'يرجى اختيار جداول لجميع المواد المختارة.',
+                 username_password_required: 'اسم المستخدم وكلمة المرور مطلوبان.',
+                 terms_required: 'يجب الموافقة على الشروط والأحكام.',
+                 pin_required: 'رمز التسجيل مطلوب.',
+                 invalid_pin: 'رمز التسجيل غير صحيح.',
+                 pin_validated_success: 'تم التحقق من الرمز بنجاح. اختر السنة الدراسية.',
+                 username_taken: 'اسم المستخدم مستخدم بالفعل.',
+                 network_error: 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
+                 registration_successful: 'تم التسجيل بنجاح!',
+                 welcome_message: 'مرحباً بك!',
+             },
+             en: {
+                 // Navigation
+                 nav_home: 'Home',
+                 nav_about: 'About',
+                 nav_courses: 'Courses',
+                 nav_centres: 'Centres',
+                 nav_outstanding: 'Outstanding Students',
+                 contact_us: 'Call us',
+                 login_btn: 'Log in',
+                 signup_btn: 'Sign up',
+                 registration_failed: 'Registration failed.',
+                 student_already_registered: 'This student is already registered.',
 
-                // Main content
-                main_title: 'New Student Registration',
-                main_subtitle: 'Join {name} and start your learning journey.',
+                 // Main content
+                 main_title: 'New Student Registration',
+                 main_subtitle: 'Join {name} and start your learning journey.',
 
-                // Instructions
-                instructions_title: 'Registration Steps',
-                instruction_1: 'Enter your personal information',
-                instruction_2: 'Choose study mode, branch or online PIN',
-                instruction_3: 'Select subjects & teacher for each',
-                instruction_4: 'Pick schedules & online account (if online)',
-                instruction_5: 'Review & finish registration',
+                 // Instructions
+                 instructions_title: 'Registration Steps',
+                 instruction_1: 'Enter your personal information',
+                 instruction_2: 'Choose study mode, branch or online PIN',
+                 instruction_3: 'Select subjects & teacher for each',
+                 instruction_4: 'Pick schedules & online account (if online)',
+                 instruction_5: 'Review & finish registration',
 
-                // Validation
-                validation_error: 'Please correct the following errors:',
+                 // Validation
+                 validation_error: 'Please correct the following errors:',
 
-                // Step 1 - Personal Information
-                step1_title: 'Personal Information',
-                full_name: 'Full Name',
-                birth_date: 'Birthdate',
-                student_phone: 'Student Phone',
-                father_phone: 'Father Phone',
-                mother_phone: 'Mother Phone',
-                father_job: 'Father Job',
-                mother_job: 'Mother Job',
-                gender: 'Gender',
-                male: 'Male',
-                female: 'Female',
+                 // Step 1 - Personal Information
+                 step1_title: 'Personal Information',
+                 full_name: 'Full Name',
+                 birth_date: 'Birthdate',
+                 student_phone: 'Student Phone',
+                 father_phone: 'Father Phone',
+                 mother_phone: 'Mother Phone',
+                 father_job: 'Father Job',
+                 mother_job: 'Mother Job',
+                 gender: 'Gender',
+                 male: 'Male',
+                 female: 'Female',
 
-                // Step 2 - Study Mode
-                step2_title: 'Learning Mode & Location',
-                study_mode: 'Study Mode',
-                offline_mode: 'Offline (Center)',
-                online_mode: 'Online',
-                branch: 'Branch',
-                academic_year: 'Academic Year',
-                education_year: 'Education Year',
-                select_branch: 'Select Branch',
-                select_year: 'Select Year',
-                online_pin: 'Online Registration PIN',
-                enter_pin: 'Enter PIN',
-                validate_pin: 'Validate PIN',
-                select_academic_year: 'Select Academic Year',
-                year: 'Academic Year',
+                 // Step 2 - Study Mode
+                 step2_title: 'Learning Mode & Location',
+                 study_mode: 'Study Mode',
+                 offline_mode: 'Offline (Center)',
+                 online_mode: 'Online',
+                 branch: 'Branch',
+                 academic_year: 'Academic Year',
+                 education_year: 'Education Year',
+                 select_branch: 'Select Branch',
+                 select_year: 'Select Year',
+                 online_pin: 'Online Registration PIN',
+                 enter_pin: 'Enter PIN',
+                 validate_pin: 'Validate PIN',
+                 select_academic_year: 'Select Academic Year',
+                 year: 'Academic Year',
 
-                // Step 3 - Subjects
-                step3_title: 'Subject & Teacher Selection',
-                step3_info: 'Select your subjects then pick a teacher for each.',
-                selected_subjects: 'Selected Subjects',
+                 // Step 3 - Subjects
+                 step3_title: 'Subject & Teacher Selection',
+                 step3_info: 'Select your subjects then pick a teacher for each.',
+                 selected_subjects: 'Selected Subjects',
 
-                // Step 4 - Schedules
-                step4_title: 'Schedule Selection',
-                step4_info: 'Choose a schedule for each subject.',
-                create_account: 'Create Online Account',
-                username: 'Username',
-                password: 'Password',
+                 // Step 4 - Schedules
+                 step4_title: 'Schedule Selection',
+                 step4_info: 'Choose a schedule for each subject.',
+                 create_account: 'Create Online Account',
+                 username: 'Username',
+                 password: 'Password',
 
-                // Step 5 - Confirmation
-                step5_title: 'Confirmation',
-                step5_info: 'Review your information before submitting.',
-                terms_accept: 'I accept the terms and conditions',
-                complete_online_reg: 'Complete Online Registration',
-                ready_complete: 'Ready to complete your online registration.',
-                finish_online_reg: 'Finish Online Registration',
+                 // Step 5 - Confirmation
+                 step5_title: 'Confirmation',
+                 step5_info: 'Review your information before submitting.',
+                 terms_accept: 'I accept the terms and conditions',
+                 complete_online_reg: 'Complete Online Registration',
+                 ready_complete: 'Ready to complete your online registration.',
+                 finish_online_reg: 'Finish Online Registration',
 
-                // Navigation Buttons
-                previous: 'Previous',
-                next: 'Next',
-                complete_registration: 'Complete Registration',
+                 // Navigation Buttons
+                 previous: 'Previous',
+                 next: 'Next',
+                 complete_registration: 'Complete Registration',
 
-                // Other
-                security_note: 'Your data is secure and protected.',
-                processing: 'Processing your registration...',
-                current_lang: 'English',
+                 // Other
+                 security_note: 'Your data is secure and protected.',
+                 processing: 'Processing your registration...',
+                 current_lang: 'English',
 
-                // Error Messages
-                pin_validation_required: 'Please validate your PIN code first.',
-                select_branch_year: 'Please select both branch and academic year.',
-                select_subjects_teacher: 'Please select at least one subject and a teacher.',
-                select_schedules: 'Please select schedules for all chosen subjects.',
-                username_password_required: 'Username and password are required.',
-                terms_required: 'You must accept the terms and conditions.',
-                pin_required: 'PIN code is required.',
-                invalid_pin: 'Invalid PIN code.',
-                pin_validated_success: 'PIN validated successfully. Select academic year.',
-                username_taken: 'Username is already taken.',
-                network_error: 'Network error. Please try again.',
-                registration_successful: 'Registration Successful!',
-                welcome_message: 'Welcome!',
-                registration_failed: 'Registration failed.'
-            }
-        };
+                 // Error Messages
+                 pin_validation_required: 'Please validate your PIN code first.',
+                 select_branch_year: 'Please select both branch and academic year.',
+                 select_subjects_teacher: 'Please select at least one subject and a teacher.',
+                 select_schedules: 'Please select schedules for all chosen subjects.',
+                 username_password_required: 'Username and password are required.',
+                 terms_required: 'You must accept the terms and conditions.',
+                 pin_required: 'PIN code is required.',
+                 invalid_pin: 'Invalid PIN code.',
+                 pin_validated_success: 'PIN validated successfully. Select academic year.',
+                 username_taken: 'Username is already taken.',
+                 network_error: 'Network error. Please try again.',
+                 registration_successful: 'Registration Successful!',
+                 welcome_message: 'Welcome!',
+             }
+         };
 
-        // Enhanced showAlert function that uses localized messages
+                  // ======================== LOCALIZATION & LANGUAGE ========================
         function showLocalizedAlert(messageKey, type = 'info') {
             const message = translations[currentLanguage][messageKey] || messageKey;
-
-            // Use your existing showAlert function but with localized message
             if (typeof showAlert === 'function') {
                 showAlert(message, type);
             } else {
-                // Fallback if showAlert doesn't exist
                 alert(message);
             }
         }
 
-        // Language Toggle Function
         function toggleLanguage() {
             currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
             applyLanguage(currentLanguage);
         }
 
-        // Apply Language Function
         function applyLanguage(lang) {
             const htmlRoot = document.getElementById('htmlRoot');
             const isArabic = lang === 'ar';
-
-            // Update HTML attributes
             htmlRoot.setAttribute('lang', lang);
             htmlRoot.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
-
-            // Update page title
             const rootName = '@Model.RootName';
             document.getElementById('pageTitle').textContent =
                 isArabic ? `تسجيل الطلاب - ${rootName}` : `Student Registration - ${rootName}`;
-
-            // Update current language button
             document.getElementById('currentLanguage').textContent = translations[lang].current_lang;
-
-            // Update all localized elements
             const elements = document.querySelectorAll('[data-localize]');
             elements.forEach(element => {
                 const key = element.getAttribute('data-localize');
                 let text = translations[lang][key] || key;
-
-                // Handle parameterized text
                 const paramName = element.getAttribute('data-param-name');
                 if (paramName) {
                     text = text.replace('{name}', paramName);
                 }
-
                 element.textContent = text;
             });
-
-            // Update arrow directions for navigation buttons
             const prevArrow = document.getElementById('prevArrow');
             const nextArrow = document.getElementById('nextArrow');
-
             if (prevArrow && nextArrow) {
                 if (isArabic) {
                     prevArrow.className = 'fas fa-arrow-right';
@@ -933,126 +918,248 @@
                     nextArrow.className = 'fas fa-arrow-right';
                 }
             }
-
-            // Update select option placeholders
             updateSelectOptions(lang);
-
-            // Store language preference
             localStorage.setItem('preferredLanguage', lang);
         }
 
-        // Update Select Options
         function updateSelectOptions(lang) {
             const selectBranch = document.querySelector('#branchCode option[value=""]');
             const selectYear = document.querySelectorAll('option[value=""][data-localize="select_year"]');
-
             if (selectBranch) {
                 selectBranch.textContent = translations[lang].select_branch;
             }
-
             selectYear.forEach(option => {
                 option.textContent = translations[lang].select_year;
             });
         }
 
-        // Initialize Language on Page Load
         function initializeLanguage() {
-            // Check for saved language preference or default to Arabic
             const savedLang = localStorage.getItem('preferredLanguage') || 'ar';
             currentLanguage = savedLang;
             applyLanguage(currentLanguage);
         }
 
-        // Override StudentRegistration.js functions to use localized messages
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize language system first
+        // ======================== PHONE VALIDATION ========================
+        document.addEventListener('DOMContentLoaded', function () {
             initializeLanguage();
 
-            // Override the original showAlert function to use localized messages
-            if (typeof window.showAlert === 'function') {
-                const originalShowAlert = window.showAlert;
-                window.showAlert = function(message, type) {
-                    // Check if message is a translation key
-                    const translatedMessage = translations[currentLanguage][message] || message;
-                    originalShowAlert(translatedMessage, type);
-                };
-            }
+            const studentPhoneInput = document.getElementById('studentPhone');
+            const phoneErrorDiv = studentPhoneInput.nextElementSibling;
 
-            // Override validateCurrentStep function to use localized alerts
-            if (typeof window.validateCurrentStep === 'function') {
-                const originalValidateCurrentStep = window.validateCurrentStep;
-                window.validateCurrentStep = function() {
-                    // Get current step content
-                    const currentStepContent = document.getElementById(`step${currentStep}Content`);
-                    if (!currentStepContent) return false;
+            // FIXED: Phone validation with proper button disabling
+            studentPhoneInput.addEventListener('blur', function () {
+                const phone = studentPhoneInput.value.trim();
+                const rootCode = '@Model.RootCode';
 
-                    const requiredFields = currentStepContent.querySelectorAll('input[required], select[required]');
-                    let isValid = true;
+                if (!phone) {
+                    phoneErrorDiv.textContent = '';
+                    studentPhoneInput.classList.remove('is-invalid');
+                    studentPhoneExists = false;
+                    document.getElementById('nextBtn').disabled = false;
+                    return;
+                }
 
-                    requiredFields.forEach(field => {
-                        if (!validateField({ target: field })) isValid = false;
+                fetch(`/Student/CheckPhone?phone=${encodeURIComponent(phone)}&rootCode=${rootCode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            studentPhoneExists = true;
+                            studentPhoneInput.classList.add('is-invalid');
+                            phoneErrorDiv.textContent = '';
+                            document.getElementById('nextBtn').disabled = true;
+                            Swal.fire({
+                                icon: 'error',
+                                title: translations[currentLanguage]['student_already_registered'],
+                                text: translations[currentLanguage]['student_already_registered'],
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            studentPhoneExists = false;
+                            studentPhoneInput.classList.remove('is-invalid');
+                            phoneErrorDiv.textContent = '';
+                            document.getElementById('nextBtn').disabled = false;
+                        }
+                    })
+                    .catch(() => {
+                        studentPhoneExists = false;
+                        phoneErrorDiv.textContent = translations[currentLanguage]['network_error'];
+                        studentPhoneInput.classList.add('is-invalid');
+                        document.getElementById('nextBtn').disabled = true;
                     });
+            });
 
-                    if (currentStep === 2) {
-                        if (registrationMode === "Offline") {
-                            const branchCode = document.getElementById('branchCode').value;
-                            const yearCode = document.getElementById('yearCode').value;
-                            if (!branchCode || !yearCode) {
-                                showLocalizedAlert('select_branch_year', 'danger');
-                                isValid = false;
-                            }
-                        } else if (registrationMode === "Online" && !pinValidated) {
-                            showLocalizedAlert('pin_validation_required', 'danger');
-                            isValid = false;
-                        }
-                    }
+            // Block Enter/Tab in phone field if phone exists
+            studentPhoneInput.addEventListener('keydown', function (e) {
+                if (studentPhoneExists && (e.key === 'Enter' || e.key === 'Tab')) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: translations[currentLanguage]['student_already_registered'],
+                        text: translations[currentLanguage]['student_already_registered'],
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
 
-                    if (currentStep === 3) {
-                        const completeSelections = selectedSubjects.filter(s => s.teacherCode);
-                        if (completeSelections.length === 0) {
-                            showLocalizedAlert('select_subjects_teacher', 'danger');
-                            isValid = false;
-                        }
-                    }
+            // Block submit button
+            document.getElementById('submitBtn')?.addEventListener('click', function (e) {
+                if (studentPhoneExists) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: translations[currentLanguage]['student_already_registered'],
+                        text: translations[currentLanguage]['student_already_registered'],
+                        confirmButtonText: 'OK'
+                    });
+                    e.preventDefault();
+                    return false;
+                }
+            });
 
-                    if (currentStep === 4 && registrationMode === "Offline") {
-                        const missingSchedules = selectedSubjects.filter(s => s.teacherCode && !s.scheduleCode);
-                        if (missingSchedules.length > 0) {
-                            showLocalizedAlert('select_schedules', 'danger');
-                            isValid = false;
-                        }
-                    }
+            // Block form submission
+            document.getElementById('registrationForm').addEventListener('submit', function (e) {
+                if (studentPhoneExists) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: translations[currentLanguage]['student_already_registered'],
+                        text: translations[currentLanguage]['student_already_registered'],
+                        confirmButtonText: 'OK'
+                    });
+                    e.preventDefault();
+                    return false;
+                }
+            });
 
-                    if (currentStep === 4 && registrationMode === "Online") {
-                        const username = document.getElementById('username')?.value?.trim();
-                        const password = document.getElementById('password')?.value;
-                        if (!username || !password) {
-                            showLocalizedAlert('username_password_required', 'danger');
-                            isValid = false;
-                        }
-                    }
+            // ======================== SCHEDULES RENDERING ========================
+            function renderSchedules(schedules) {
+                const container = document.getElementById('scheduleSelection');
+                container.innerHTML = ''; // Clear previous
 
-                    return isValid;
-                };
+                if (!schedules || schedules.length === 0) {
+                    container.innerHTML = `<div class="alert alert-danger">${translations[currentLanguage]['select_schedules']}</div>`;
+                    return;
+                }
+
+                schedules.forEach(schedule => {
+                    container.innerHTML += `
+                        <div class="schedule-card">
+                            <div class="schedule-item">
+                                <div class="schedule-title">
+                                    ${schedule.SubjectName || ''} - ${schedule.TeacherName || ''}
+                                </div>
+                                <div class="schedule-details">
+                                    ${schedule.DayName || schedule.DayTime || ''}
+                                    ${schedule.StartTime ? " " + schedule.StartTime : ""}
+                                    ${schedule.EndTime ? " - " + schedule.EndTime : ""}
+                                    ${schedule.HallName ? " | " + schedule.HallName : (schedule.Location ? " | " + schedule.Location : "")}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
             }
+
+            function fetchAndRenderSchedules(subjectCode, teacherCode, branchCode, yearCode) {
+                fetch(`/Student/GetSchedulesForSubjectTeacher?subjectCode=${subjectCode}&teacherCode=${teacherCode}&branchCode=${branchCode}${yearCode ? `&yearCode=${yearCode}` : ''}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderSchedules(data);
+                    })
+                    .catch(() => {
+                        document.getElementById('scheduleSelection').innerHTML =
+                            `<div class="alert alert-danger">${translations[currentLanguage]['network_error']}</div>`;
+                    });
+            }
+
+            // ======================== REGISTRATION SUMMARY RENDERING ========================
+            function formatLabel(label) {
+                // Converts camelCase or snake_case to readable
+                return label
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/_/g, ' ')
+                    .replace(/^./, function(str){ return str.toUpperCase(); });
+            }
+
+          function renderRegistrationSummary(data) {
+    let html = '';
+
+    // Personal Information
+    html += `<h5 class="summary-section">${translations[currentLanguage]['step1_title']} <i class="fa fa-user"></i></h5>`;
+    Object.entries(data.personal).forEach(([key, value]) => {
+        html += `<div class="summary-row">
+            <div class="summary-label">${translations[currentLanguage][key] || key}:</div>
+            <div class="summary-value">${value}</div>
+        </div>`;
+    });
+
+    // Academic Information
+    html += `<h5 class="summary-section">${translations[currentLanguage]['step2_title']} <i class="fa fa-graduation-cap"></i></h5>`;
+    Object.entries(data.academic).forEach(([key, value]) => {
+        html += `<div class="summary-row">
+            <div class="summary-label">${translations[currentLanguage][key] || key}:</div>
+            <div class="summary-value">${value}</div>
+        </div>`;
+    });
+
+    // Subjects
+    if (Array.isArray(data.subjects) && data.subjects.length) {
+        html += `<h5 class="summary-section">${translations[currentLanguage]['selected_subjects']} (${data.subjects.length})</h5>`;
+        data.subjects.forEach(subject => {
+            html += `<div class="summary-row">
+                <div class="summary-label">${translations[currentLanguage]['step3_title']}:</div>
+                <div class="summary-value">${subject}</div>
+            </div>`;
+        });
+    }
+
+    document.getElementById('registrationSummary').innerHTML = html;
+}
+
+            window.renderRegistrationSummaryFromForm = function() {
+    const personal = {
+        name: document.getElementById('studentName')?.value || "",
+        birthdate: document.getElementById('birthDate')?.value || "",
+        studentPhone: document.getElementById('studentPhone')?.value || "",
+        fatherPhone: document.getElementById('parentPhone')?.value || "",
+        motherPhone: document.getElementById('motherPhone')?.value || "",
+        fatherJob: document.getElementById('fatherJob')?.value || "",
+        motherJob: document.getElementById('motherJob')?.value || "",
+        gender: document.querySelector('input[name="Gender"]:checked')?.value === "true"
+            ? translations[currentLanguage]['male']
+            : translations[currentLanguage]['female']
+    };
+
+    const academic = {
+        branch: document.getElementById('branchCode')?.selectedOptions[0]?.text || "",
+        academicYear: document.getElementById('yearCode')?.selectedOptions[0]?.text || "",
+        educationYear: document.getElementById('eduYearCodeDisplay')?.value || ""
+    };
+
+    const subjects = Array.from(document.querySelectorAll('.selected-subject-item')).map(el => el.textContent.trim());
+
+    renderRegistrationSummary({
+        personal,
+        academic,
+        subjects
+    });
+};
+
+            // Make functions globally available
+            window.toggleLanguage = toggleLanguage;
+            window.showLocalizedAlert = showLocalizedAlert;
+            window.getCurrentLanguage = () => currentLanguage;
+            window.getTranslation = (key) => translations[currentLanguage][key] || key;
+            window.renderSchedules = renderSchedules;
+            window.fetchAndRenderSchedules = fetchAndRenderSchedules;
+            window.renderRegistrationSummary = renderRegistrationSummary;
         });
 
-        // Ensure preloader hides and initialize language
         window.addEventListener('load', function () {
             const pre = document.querySelector('.preloader');
             pre?.classList.add('is-hidden');
             document.body.classList.remove('preloader-visible');
             setTimeout(() => pre?.remove(), 800);
-
-            // Initialize language system
             initializeLanguage();
         });
-
-        // Make functions globally available
-        window.toggleLanguage = toggleLanguage;
-        window.showLocalizedAlert = showLocalizedAlert;
-        window.getCurrentLanguage = () => currentLanguage;
-        window.getTranslation = (key) => translations[currentLanguage][key] || key;
-    </script>
+        </Script>
 </body>
 </html>

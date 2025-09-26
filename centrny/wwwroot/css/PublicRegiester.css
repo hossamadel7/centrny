@@ -1,13 +1,12 @@
 ﻿/* Card container mimicking signup.html panel */
 .registration-card {
-    background: #ffffff;
+    background: #fff;
     border-radius: 16px;
     box-shadow: 0 8px 28px rgba(0,0,0,0.08);
     padding: 50px;
     position: relative;
 }
 
-/* Mobile responsive adjustments */
 @media (max-width: 992px) {
     .registration-card {
         padding: 28px 24px;
@@ -56,11 +55,13 @@
     }
 }
 
-
-/* Form layout */
 .form-step {
     display: none;
     animation: fadeStep .35s ease;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
 }
 
     .form-step.active {
@@ -79,15 +80,22 @@
     }
 }
 
-label.form-label {
+label.form-label,
+.form-label {
     font-weight: 600;
     margin-bottom: 6px;
     color: #2d2d2d;
     font-size: 14px;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+    display: block !important;
 }
 
 @media (max-width: 576px) {
-    label .form-label {
+    label.form-label, .form-label {
         font-size: 13px;
     }
 }
@@ -99,13 +107,13 @@ label.form-label {
     padding: 12px 14px;
     transition: .25s;
     font-size: 14px;
-    min-height: 48px; /* Better touch targets */
+    min-height: 48px;
 }
 
 @media (max-width: 576px) {
     .form-control, .form-select {
         padding: 14px 12px;
-        font-size: 16px; /* Prevent zoom on iOS */
+        font-size: 16px;
         min-height: 52px;
     }
 }
@@ -121,14 +129,12 @@ label.form-label {
     border-color: #6e59a4;
 }
 
-/* Mobile: Stack form columns */
 @media (max-width: 768px) {
     .row .col-md-6 {
         margin-bottom: 1rem;
     }
 }
 
-/* Instruction box */
 .instructions {
     background: #f6f7fb;
     border: 1px solid #e4e6ef;
@@ -179,7 +185,6 @@ label.form-label {
     color: #555;
 }
 
-/* Subject selections */
 .subject-selection {
     border: 2px solid #e1e5e9;
     border-radius: 12px;
@@ -188,6 +193,11 @@ label.form-label {
     cursor: pointer;
     background: #fff;
     transition: .25s;
+    overflow: hidden !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
 }
 
 @media (max-width: 576px) {
@@ -208,6 +218,30 @@ label.form-label {
     border-color: #6e59a4;
 }
 
+.subject-selection h6,
+.subject-selection .subject-title {
+    margin: 0 0 8px 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+.subject-selection p,
+.subject-selection .subject-description {
+    margin: 0 !important;
+    font-size: 12px !important;
+    color: #666 !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
 .teacher-option {
     border: 1px solid #dcdce3;
     border-radius: 8px;
@@ -216,6 +250,12 @@ label.form-label {
     transition: .18s;
     cursor: pointer;
     background: #fff;
+    overflow: hidden !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 @media (max-width: 576px) {
@@ -236,35 +276,96 @@ label.form-label {
     box-shadow: inset 0 0 0 2px #6e59a4;
 }
 
-/* Schedule placeholder styling if needed */
-#scheduleSelection > .schedule-item {
-    border: 1px solid #e3e6ee;
-    border-radius: 10px;
+.teacher-option .teacher-name,
+.teacher-option strong {
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+.teacher-option .teacher-details,
+.teacher-option small {
+    font-size: 11px !important;
+    color: #777 !important;
+    line-height: 1.2 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+/* Schedule styling and overflow fix (step 4) */
+#scheduleSelection,
+.schedule-item,
+#scheduleSelection .schedule-item {
+    border: 1px solid #3f3f40 !important;
+        border-radius: 10px;
     padding: 12px 14px;
     margin-bottom: 10px;
     background: #fff;
     transition: .25s;
     cursor: pointer;
+    overflow: hidden !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 @media (max-width: 576px) {
-    #scheduleSelection > .schedule-item {
+    #scheduleSelection > .schedule-item,
+    .schedule-item,
+    #scheduleSelection .schedule-item {
         padding: 12px 10px;
         border-radius: 8px;
     }
 }
 
-#scheduleSelection > .schedule-item:hover {
+#scheduleSelection > .schedule-item:hover,
+.schedule-item:hover,
+#scheduleSelection .schedule-item:hover {
     border-color: #6e59a4;
     background: #f7f4ff;
 }
 
-#scheduleSelection > .schedule-item.selected {
+#scheduleSelection > .schedule-item.selected,
+.schedule-item.selected,
+#scheduleSelection .schedule-item.selected {
     border-color: #6e59a4;
     background: #efe9ff;
     box-shadow: inset 0 0 0 2px #6e59a4;
 }
 
+.schedule-item h6,
+.schedule-item .schedule-title {
+    margin: 0 0 6px 0 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+.schedule-item p,
+.schedule-item .schedule-details {
+    margin: 0 !important;
+    font-size: 11px !important;
+    color: #666 !important;
+    line-height: 1.2 !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
 /* Alerts (unify with theme) */
 .alert {
     border-radius: 12px;
@@ -272,6 +373,13 @@ label.form-label {
     padding: 14px 16px;
     font-size: 13px;
     line-height: 1.4;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 @media (max-width: 576px) {
@@ -300,12 +408,116 @@ label.form-label {
     color: #892029;
 }
 
+.alert h6, .alert p, .alert span {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+/* Selected subjects summary - prevent overflow */
+#selectedSubjectsSummary,
+#selectedSubjectsList {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+    #selectedSubjectsList .selected-subject-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+/* Registration summary - prevent overflow (Step 5 fix) */
+#registrationSummary {
+    background: #191624;
+    border: 2px solid #6e59a4;
+    border-radius: 18px;
+    padding: 32px 34px;
+    font-size: 17px;
+    color: #d1c8f6;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    width: 95% !important;
+    max-width: 760px !important;
+    margin: 0 auto 20px auto;
+    line-height: 1.6;
+}
+
+    #registrationSummary h6,
+    #registrationSummary p,
+    #registrationSummary div,
+    #registrationSummary .summary-label,
+    #registrationSummary .summary-value {
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+    }
+
+    #registrationSummary .summary-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+        word-break: break-word;
+    }
+
+    #registrationSummary .summary-label {
+        font-weight: 600;
+        color: #6e59a4;
+        margin-left: 8px;
+    }
+
+    #registrationSummary .summary-value {
+        color: #333;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        max-width: 100% !important;
+    }
+
+@media (max-width: 576px) {
+    #registrationSummary {
+        padding: 15px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+        #registrationSummary .summary-row {
+            flex-direction: column;
+        }
+
+        #registrationSummary .summary-label,
+        #registrationSummary .summary-value {
+            flex: none;
+            width: 100%;
+        }
+}
+
+/* Navigation buttons */
 .navigation-buttons {
     display: flex;
     align-items: center;
     gap: 18px;
     margin-top: 40px;
     flex-wrap: wrap;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }
 
 @media (max-width: 768px) {
@@ -342,6 +554,10 @@ label.form-label {
     position: relative;
     overflow: hidden;
     min-height: 48px;
+    word-wrap: break-word !important;
+    word-break: keep-all !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 @media (max-width: 768px) {
@@ -385,22 +601,38 @@ label.form-label {
         transform: translateY(-2px);
     }
 
-#registrationSummary {
-    background: #faf9fd;
-    border: 1px solid #e2deee;
-    border-radius: 12px;
-    padding: 18px 20px;
-    font-size: 14px;
+#nextBtn {
+    background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
 }
 
-@media (max-width: 576px) {
-    #registrationSummary {
-        padding: 15px 16px;
-        font-size: 13px;
-        border-radius: 8px;
+    #nextBtn:hover {
+        background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+        color: #fff !important;
+        box-shadow: 0 6px 18px rgba(110,89,164,.4) !important;
+        transform: translateY(-2px) !important;
     }
-}
 
+    #nextBtn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
+    }
+
+    #nextBtn:disabled {
+        background: #ccc !important;
+        color: #666 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+    }
+
+        #nextBtn:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+/* Misc utility and layout fixes */
 .security-note {
     margin-top: 25px;
     font-size: 12px;
@@ -457,14 +689,12 @@ label.form-label {
     }
 }
 
-/* Hide spinner container (Bootstrap compatibility fallback) */
 .spinner-border {
     width: 3rem;
     height: 3rem;
     border-width: .35em;
 }
 
-/* Minor utility overrides */
 .flex-grow-1 {
     flex-grow: 1;
 }
@@ -473,7 +703,6 @@ label.form-label {
     color: #6e59a4;
 }
 
-/* Form box wrapper */
 .form-box-wrapper {
     background: #ffffff;
     border: 1px solid #e4e6ef;
@@ -482,6 +711,9 @@ label.form-label {
     max-width: 860px;
     margin: 0 auto 10px;
     box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+    box-sizing: border-box !important;
+    width: 100% !important;
+    overflow: hidden !important;
 }
 
 @media (max-width: 768px) {
@@ -500,27 +732,6 @@ label.form-label {
     }
 }
 
-/* Purple NEXT button - FIXED */
-#nextBtn {
-    background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
-    color: #fff !important;
-    border: none !important;
-    box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
-}
-
-    #nextBtn:hover {
-        background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
-        color: #fff !important;
-        box-shadow: 0 6px 18px rgba(110,89,164,.4) !important;
-        transform: translateY(-2px) !important;
-    }
-
-    #nextBtn:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
-    }
-
-/* Fix form step headings */
 .form-box-wrapper .form-step h4 {
     margin-top: 0;
 }
@@ -530,7 +741,6 @@ label.form-label {
         font-size: 16px;
     }
 }
-
 /* Header mobile responsiveness */
 .header__container {
     padding: 15px 20px;
@@ -665,8 +875,6 @@ label.form-label {
     }
 }
 
-
-
 .row {
     display: flex !important;
     flex-wrap: wrap !important;
@@ -685,7 +893,7 @@ label.form-label {
     }
 }
 
-/* Horizontal wizard steps with strong overrides */
+/* Wizard steps styling */
 .registration-card .wizard-steps {
     display: flex !important;
     flex-direction: row !important;
@@ -693,11 +901,10 @@ label.form-label {
     justify-content: center !important;
     gap: 12px;
     margin: 16px 0 24px;
-    flex-wrap: wrap; /* wrap on tablets/medium */
+    flex-wrap: wrap;
     width: 100%;
 }
 
-    /* Step circles */
     .registration-card .wizard-steps .step {
         width: 44px !important;
         height: 44px !important;
@@ -723,7 +930,6 @@ label.form-label {
             box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
         }
 
-        /* Optional: show localized digits from data attributes (no JS needed) */
         .registration-card .wizard-steps .step::before {
             content: attr(data-en);
         }
@@ -742,20 +948,19 @@ label.form-label {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        inset-inline-start: -10px; /* works in LTR/RTL */
+        inset-inline-start: -10px;
         width: 12px;
         height: 2px;
         background: #d5cdec;
         border-radius: 2px;
     }
 
-/* Mobile: keep in a single horizontal row with touch scroll */
 @media (max-width: 576px) {
     .registration-card .wizard-steps {
         justify-content: flex-start !important;
-        flex-wrap: nowrap !important; /* prevent wrapping */
+        flex-wrap: nowrap !important;
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
+        -webkit-overflow-scrolling: touch;
         padding: 8px 4px;
         gap: 10px;
     }
@@ -763,14 +968,14 @@ label.form-label {
         .registration-card .wizard-steps .step {
             width: 40px !important;
             height: 40px !important;
-            flex: 0 0 40px; /* fixed size in scroll row */
+            flex: 0 0 40px;
         }
 
             .registration-card .wizard-steps .step + .step::before {
                 width: 8px;
                 inset-inline-start: -6px;
             }
-        /* Nice thin scrollbar (optional) */
+
         .registration-card .wizard-steps::-webkit-scrollbar {
             height: 6px;
         }
@@ -778,5 +983,407 @@ label.form-label {
         .registration-card .wizard-steps::-webkit-scrollbar-thumb {
             background: rgba(110,89,164,.35);
             border-radius: 3px;
+        }
+}
+
+/* SweetAlert2 Fixes */
+.swal2-popup {
+    background: #fff !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+    opacity: 1 !important;
+}
+
+.swal2-title, .swal2-html-container, .swal2-content {
+    color: #222 !important;
+    opacity: 1 !important;
+}
+
+.swal2-confirm, .swal2-styled.swal2-confirm {
+    background: #e53e3e !important;
+    color: #fff !important;
+    opacity: 1 !important;
+    border-radius: 12px !important;
+    font-weight: bold !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(229,62,62,0.15) !important;
+    min-width: 85px;
+}
+
+.swal2-container {
+    z-index: 99999 !important;
+    background: rgba(30,30,30,0.4) !important;
+}
+
+.swal2-icon.swal2-error {
+    font-size: 3.5em !important;
+    margin: 0.5em auto 0.75em auto !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(229,62,62,0.08) !important;
+}
+/* RTL Layout Fixes */
+[dir="rtl"] .registration-card {
+    text-align: right;
+}
+
+[dir="rtl"] .registration-title {
+    text-align: right;
+}
+
+[dir="rtl"] .muted-intro {
+    text-align: right;
+}
+
+[dir="rtl"] .instructions {
+    text-align: right;
+}
+
+    [dir="rtl"] .instructions ul {
+        padding-inline-start: 0;
+        padding-inline-end: 20px;
+    }
+
+[dir="rtl"] .wizard-steps {
+    direction: ltr;
+}
+
+[dir="rtl"] .navigation-buttons {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .form-check-label {
+    margin-right: 0;
+    margin-left: 1.5em;
+    text-align: right;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: calc(100% - 2em) !important;
+}
+
+[dir="rtl"] .d-flex.gap-4 {
+    justify-content: flex-end;
+}
+
+[dir="rtl"] .form-step-header h4 {
+    text-align: right;
+}
+
+[dir="rtl"] .form-label {
+    text-align: right;
+}
+
+[dir="rtl"] .form-box-wrapper {
+    padding: 30px;
+}
+
+[dir="rtl"] .col-md-6 {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    [dir="rtl"] .registration-title {
+        text-align: center;
+    }
+
+    [dir="rtl"] .muted-intro {
+        text-align: center;
+    }
+}
+
+/* Page 4/5 schedule and summary overflow fix */
+[dir="rtl"] #scheduleSelection,
+[dir="rtl"] #registrationSummary,
+[dir="rtl"] .form-step,
+[dir="rtl"] .subject-selection,
+[dir="rtl"] .teacher-option,
+[dir="rtl"] .schedule-item {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+    [dir="rtl"] .form-step .row,
+    [dir="rtl"] .form-step .col-md-6,
+    [dir="rtl"] .form-box-wrapper,
+    [dir="rtl"] #selectedSubjectsSummary,
+    [dir="rtl"] #selectedSubjectsList {
+        max-width: 100% !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+/* Prevent horizontal scrolling */
+body, html {
+    overflow-x: hidden !important;
+}
+
+.main-content,
+.content-wrapper,
+.form-page__content,
+.container {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Final fallback for any stubborn overflow */
+.registration-card * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    box-sizing: border-box !important;
+}
+
+* {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Specific fix for the visible teacher selection in the image */
+.teacher-selection-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+    .teacher-selection-container .teacher-option {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+/* Override for Arabic text that needs to wrap */
+[dir="rtl"] .teacher-option {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+}
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 28px; /* More space between cards */
+}
+
+.schedule-card {
+    background: #191624;
+    border-radius: 16px;
+    border: 2px solid #6e59a4;
+    box-shadow: 0 4px 18px rgba(110,89,164,0.14);
+    padding: 18px 20px;
+    margin: 0 auto;
+    width: 97%;
+    max-width: 510px;
+    color: #d1c8f6;
+    position: relative;
+    display: block;
+    text-align: left;
+    transition: box-shadow 0.21s, border-color 0.21s, background 0.21s;
+}
+
+
+.schedule-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important; /* more space between cards */
+    margin-top: 10px !important;
+}
+    .schedule-list,
+    .schedule-list * {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0px !important; /* space between cards */
+        margin-top: 6px !important;
+        background: none !important;
+        border:none !important;
+        box-shadow: none !important;
+        color: inherit !important;
+        padding: 0 !important;
+    }
+
+.schedule-card,
+.schedule-card ,
+.schedule-option * {
+    background: #191624;
+    border-radius: 16px;
+    border: 2px solid #6e59a4;
+    box-shadow: 0 4px 18px rgba(110,89,164,0.14);
+    padding: 18px 20px;
+    margin: 0 auto;
+    width: 97%;
+    max-width: 510px;
+    color: #d1c8f6;
+    position: relative;
+    display: block;
+    text-align: left;
+    transition: box-shadow 0.21s, border-color 0.21s, background 0.21s;
+}
+
+
+    .schedule-card:hover,
+    .schedule-card:hover * {
+        box-shadow: 0 12px 40px rgba(110,89,164,0.28) !important;
+        border-color: #8e76d9 !important;
+        background: #241a34 !important;
+        background-color: #241a34 !important;
+    }
+
+    .schedule-title,
+    .schedule-card .schedule-title,
+    .schedule-title * {
+        font-size: 17px !important;
+        font-weight: 700 !important;
+        color: #d1c8f6 !important;
+        margin-bottom: 2px !important;
+        letter-spacing: 0.03em !important;
+        background: none !important;
+        border: 1px solid #2c2542 !important;
+            box-shadow: none !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    .schedule-details,
+    .schedule-card .schedule-details,
+    .schedule-details * {
+        font-size: 15px !important;
+        color: #b6b2c3 !important;
+        margin-top: 3px !important;
+        font-weight: 400 !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+        .schedule-title i,
+        .schedule-details i {
+            margin-right: 7px !important;
+            color: #8e76d9 !important;
+            font-size: 16px !important;
+            vertical-align: middle !important;
+            background: none !important;
+            border: black !important;
+            border-color: grey !important;
+            box-shadow: none !important;
+        }
+
+@media (max-width: 600px) {
+    .schedule-card,
+    .schedule-card * {
+        padding: 13px 7px 10px !important;
+        font-size: 14px !important;
+    }
+
+    .schedule-title,
+    .schedule-title * {
+        font-size: 15px !important;
+    }
+
+    .schedule-details,
+    .schedule-details * {
+        font-size: 13px !important;
+    }
+
+}
+/* 100% isolation for registration summary from bw-theme.css */
+#registrationSummary {
+    isolation: isolate !important;
+    position: relative !important;
+    background: #fff !important;
+    color: #222 !important;
+    border: 2px solid #2a2a2a !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 28px rgba(110, 89, 164, 0.10) !important;
+    padding: 32px 34px !important;
+    font-size: 17px !important;
+    max-width: 760px !important;
+    margin: 0 auto 20px auto !important;
+    line-height: 1.6 !important;
+    all: unset !important;
+    display: block !important;
+    isolation: isolate !important;
+    position: relative !important;
+    background: #1e1d1d !important;
+    color: #222 !important;
+    border: 2px solid #6e59a4 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 28px rgba(110, 89, 164, 0.10) !important;
+    padding: 28px 34px !important;
+    font-size: 19px !important;
+    max-width: 760px !important;
+    margin: 0 auto 20px auto !important;
+    line-height: 2.6 !important;
+    height: 420px !important; /* Set your desired height */
+    max-height: 80vh !important; /* Responsive max-height if you want */
+    overflow-y: auto !important;
+}
+
+    #registrationSummary * {
+        all: unset !important;
+        /* Now restore your intended styles to the children */
+        color: #dfdddd !important;
+        background: #1c1b1b !important;
+        font-size: 16px !important;
+        border-radius: 8px !important;
+        font-family: "Cairo", Arial, sans-serif !important;
+        box-sizing: border-box !important;
+        /* If you want more specific styles, add them below */
+    }
+
+    #registrationSummary .summary-label {
+        color: #6e59a4 !important;
+        font-weight: 700 !important;
+        margin-left: 8px !important;
+    }
+
+    #registrationSummary .summary-value {
+        color: #333 !important;
+        font-weight: 500 !important;
+    }
+
+    #registrationSummary h5,
+    #registrationSummary h6,
+    #registrationSummary p {
+        color: #6e59a4 !important;
+        background: transparent !important;
+        font-weight: 700 !important;
+    }
+
+    #registrationSummary .summary-row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 10px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+@media (max-width: 576px) {
+    #registrationSummary {
+        padding: 15px 12px !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+    }
+
+        #registrationSummary .summary-row {
+            flex-direction: column !important;
+            margin-bottom: 8px !important;
+        }
+
+        #registrationSummary .summary-label,
+        #registrationSummary .summary-value {
+            flex: none !important;
+            width: 100% !important;
+            font-size: 14px !important;
         }
 }
