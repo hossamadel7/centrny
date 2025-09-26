@@ -42,16 +42,19 @@
 	App.html = document.querySelector("html");
 	App.body = document.querySelector("body");
 	App.SMcontroller = new ScrollMagic.Controller();
+	// Replace your Preloader IIFE with this null-safe version
 	const Preloader = (function () {
 		const preloader = document.querySelector(".js-preloader");
-		const bg = preloader.querySelector(".preloader__bg");
+		const bg = preloader ? preloader.querySelector(".preloader__bg") : null;
 
 		function initial() {
 			gsap.registerEffect({
 				name: "preloaderInitial",
-				effect: (target, config) => {
-					document.documentElement.classList.add("html-overflow-hidden");
+				effect: () => {
 					const tl = gsap.timeline();
+					if (!preloader || !bg) return tl;
+
+					document.documentElement.classList.add("html-overflow-hidden");
 
 					if (!document.body.classList.contains("preloader-visible")) {
 						document.documentElement.classList.remove("html-overflow-hidden");
@@ -74,9 +77,9 @@
 		function show() {
 			gsap.registerEffect({
 				name: "preloaderShow",
-				effect: (target, config) => {
+				effect: () => {
 					const tl = gsap.timeline();
-					if (!preloader) return tl;
+					if (!preloader || !bg) return tl;
 
 					return tl.to(bg, {
 						ease: "quart.inOut",
@@ -95,8 +98,9 @@
 		function hide() {
 			gsap.registerEffect({
 				name: "preloaderHide",
-				effect: (target, config) => {
+				effect: () => {
 					const tl = gsap.timeline();
+					if (!preloader || !bg) return tl;
 
 					return tl.to(bg, {
 						ease: "quart.inOut",
@@ -118,73 +122,69 @@
 		}
 
 		function init() {
-			if (!preloader) return;
-
+			if (!preloader || !bg) return;
 			initial();
 			show();
 			hide();
 		}
 
-		return {
-			init: init,
-		};
+		return { init };
 	})();
-	window.onload = function () {
+	// REPLACE the window.onload block with this DOMContentLoaded version:
+	document.addEventListener('DOMContentLoaded', function () {
 		customEasingsInit();
-		Preloader.init();
-
-		document.fonts.ready.then(function () {
-			initComponents();
-			initialReveal();
-		});
-	};
+		Preloader.init();             // keep if you want the effect
+		initComponents();             // do not wait for document.fonts.ready
+		if (typeof initialReveal === 'function') initialReveal();
+	});
 
 	// Reloads all scripts when navigating through pages
+	// REPLACE the whole initComponents() with this guarded version:
 	function initComponents() {
+		// Light, safe to always run
 		lazyLoading();
 		Header.init();
 		Accordion.init();
 		ShowMore.init();
 		Tabs.init();
-
-		SectionSlider();
 		feather.replace();
-
 		countDown();
 		headerSticky();
 		dropDown();
-		shopSlider();
 		inputCounter();
-		mapInit();
-		lineChart();
-		pieChart();
 		clickElToggle();
 		fullScreenModeToggle();
-		parallaxIt();
-		mainSlider1();
-		parallaxInit();
-		testimonialsSlider();
-		testimonialsSlider2();
-		home1MastheadParticles();
-		pinOnScroll();
-		scrollToIdInit();
 		customSelect();
 		hideSidebar();
 		darkModeSwitch();
 		calendarDate();
 		dashboardSidebarSwitch();
 		detectWidthForSidebar();
-		galleryInit();
-
-		Select.init(".js-select");
-		priceRangeSliderInit();
-
-		//
-		// your custom plugins init here
-		//
-
-		// Highlight active nav link across pages
 		markActiveNavLink();
+
+		// Heavy features: only if present on the page
+		if (document.querySelector('.js-section-slider')) SectionSlider();
+		if (document.querySelector('.js-mouse-move-container')) parallaxIt();
+		if (document.querySelector('[data-parallax]')) parallaxInit();
+		if (document.querySelector('.js-mainSlider')) mainSlider1();
+		if (document.querySelector('.js-testimonials-slider')) testimonialsSlider();
+		if (document.querySelector('.js-testimonials-slider-2')) testimonialsSlider2();
+		if (document.getElementById('js-masthead-1-particles')) home1MastheadParticles();
+		if (document.querySelector('.js-pin-container')) pinOnScroll();
+		if (document.getElementById('lineChart')) lineChart();
+		if (document.getElementById('pieChart')) pieChart();
+		if (document.querySelector('#map')) mapInit();
+		if (document.querySelector('.js-gallery')) galleryInit();
+
+		// Only if selects exist
+		if (document.querySelector('.js-select') || document.querySelector('.js-multiple-select')) {
+			Select.init(".js-select");
+		}
+
+		// Only if range sliders exist
+		if (document.querySelector('.js-price-rangeSlider')) {
+			priceRangeSliderInit();
+		}
 	}
 
 	function priceRangeSliderInit() {

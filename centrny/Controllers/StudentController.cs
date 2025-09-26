@@ -1582,7 +1582,7 @@ namespace centrny.Controllers
 
             // Get all FileType=1 files for this lesson (Videos)
             var videoFiles = await _context.Files
-                .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 1)
+                .Where(f => f.LessonCode == lessonCode && f.IsActive && f.FileType == 1 && f.IsOnlineLesson==false)
                 .OrderByDescending(f => f.InsertTime)
                 .Select(f => new
                 {
@@ -1631,7 +1631,8 @@ namespace centrny.Controllers
             // Get downloadable files (FileType == 2)
             var downloadableFiles = await _context.Files
                 .Where(f => attendedLessonCodes.Contains(f.LessonCode) &&
-                            f.IsActive &&
+                            f.IsActive &&  
+               (f.IsOnlineLesson == false || f.IsOnlineLesson == null) &&
                             f.FileType == 2)
                 .Include(f => f.LessonCodeNavigation)
                     .ThenInclude(l => l.SubjectCodeNavigation)
