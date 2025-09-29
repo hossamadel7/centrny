@@ -25,6 +25,12 @@ public partial class Item
 
     public DateTime? LastUpdateTime { get; set; }
 
+    public int? EduYear { get; set; }
+
+    public int? SerialNumber { get; set; }
+
+    public virtual EduYear? EduYearNavigation { get; set; }
+
     public virtual User InsertUserNavigation { get; set; } = null!;
 
     public virtual ItemType ItemTypeKeyNavigation { get; set; } = null!;

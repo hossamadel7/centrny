@@ -439,7 +439,7 @@ $(document).ready(function () {
                         }
                     }
                     if (imgData) {
-                        zip.file(item.itemKey + '.png', imgData, { base64: true });
+                        zip.file(item.serialNumber + '.png', imgData, { base64: true });
                     }
                 } catch (e) { }
                 count++;

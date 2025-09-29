@@ -55,6 +55,14 @@ public partial class Root
 
     public string? RootBackgroundColor { get; set; }
 
+    public bool? IsOnline { get; set; }
+
+    public bool? IsOffline { get; set; }
+
+    public bool? HasAccount { get; set; }
+
+    public bool? HasProfile { get; set; }
+
     public virtual ICollection<Attend> Attends { get; set; } = new List<Attend>();
 
     public virtual ICollection<Branch> Branches { get; set; } = new List<Branch>();
