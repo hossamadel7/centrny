@@ -1,5 +1,13 @@
-﻿// student-registration2.js (updated)
-// Multi-step form logic with scrolling & minor UX improvements
+﻿// Student Registration Form - Online username check & normalization fixes
+// Preserves Offline flow exactly. Adds:
+// - normalized username checks (trim + lowercase) everywhere
+// - final availability re-check before submit to avoid "username already taken" surprises
+// - when a root has account enabled, Offline mode will also show PIN + username/password creation
+// Toggle debug: window.__regDebug = true/false
+
+window.__regDebug = true;
+function dlog(...args) { if (window.__regDebug) console.debug('[Reg]', ...args); }
+function derror(...args) { if (window.__regDebug) console.error('[Reg]', ...args); }
 
 let currentStep = 1;
 let selectedSubjects = [];
@@ -7,514 +15,682 @@ let availableSubjects = [];
 let availableTeachers = [];
 let registrationMode = "Offline";
 let pinValidated = false;
+let rootFlags = window.rootFlags || null;
+
+let scheduleLoadTimer = null;
+const SCHEDULE_LOAD_DEBOUNCE_MS = 150;
+
+function getMaxStep() {
+    const steps = document.querySelectorAll('.form-step');
+    return steps ? steps.length : 2;
+}
 
 document.addEventListener('DOMContentLoaded', function () {
+    dlog('DOMContentLoaded - init');
+    rootFlags = window.rootFlags || rootFlags || null;
+
     updateStepButtons();
     setupEventListeners();
+    initModeToggle();
+    applyRootFlags();
     modeChangeHandler();
     ensureScrollEnabled();
+
+    window.addEventListener('error', function (evt) {
+        derror('Uncaught error:', evt.message, 'at', evt.filename + ':' + evt.lineno + ':' + evt.colno);
+    });
+    window.addEventListener('unhandledrejection', function (evt) {
+        derror('Unhandled rejection:', evt.reason);
+    });
+
+    loadInitialLookups().then(() => {
+        dlog('Initial lookups done');
+        updateScheduleVisibility();
+    });
 });
 
-function ensureScrollEnabled() {
-    document.documentElement.style.overflowY = 'auto';
-    document.body.style.overflowY = 'auto';
-}
-function getSingleTeacher(teachers) {
-    if (!teachers.length) return null;
-    const code = teachers[0].teacherCode;
-    return teachers.every(t => t.teacherCode === code) ? teachers[0] : null;
-}
+// ------------------ Helpers & Lookups ------------------
+async function loadInitialLookups() {
+    try {
+        dlog('loadInitialLookups start, rootCode=', window.registrationRootCode);
 
-function setupEventListeners() {
-    document.querySelectorAll('input[name="Mode"]').forEach(radio => {
-        radio.addEventListener('change', modeChangeHandler);
-    });
-
-    const branchSelect = document.getElementById('branchCode');
-    if (branchSelect) {
-        branchSelect.addEventListener('change', function () {
-            resetSubjectsAndTeachers();
-            if (this.value && document.getElementById('yearCode').value) {
-                loadAvailableSubjects();
+        // Branches
+        try {
+            const res = await fetch('/Student/GetAvailableBranches?rootCode=' + (window.registrationRootCode || '0'));
+            const branches = await res.json();
+            dlog('GetAvailableBranches returned', branches);
+            const select = document.getElementById('branchCode');
+            if (select && Array.isArray(branches)) {
+                select.innerHTML = `<option value="">اختر الفرع</option>`;
+                branches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch.Value ?? branch.value;
+                    option.textContent = branch.Text ?? branch.text;
+                    select.appendChild(option);
+                });
             }
-        });
+        } catch (ex) {
+            console.warn('Failed to load branches', ex);
+        }
+
+        // Years (offline + online)
+        try {
+            const res2 = await fetch('/Student/GetYearsForEduYear');
+            const years = await res2.json();
+            dlog('GetYearsForEduYear returned', years);
+            const selectY = document.getElementById('yearCode');
+            const selectOnlineY = document.getElementById('onlineYearCode');
+            if (selectY && Array.isArray(years)) {
+                selectY.innerHTML = `<option value="">اختر السنة</option>`;
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year.Value ?? year.value;
+                    option.textContent = year.Text ?? year.text;
+                    selectY.appendChild(option);
+                });
+            }
+            if (selectOnlineY && Array.isArray(years)) {
+                selectOnlineY.innerHTML = `<option value="">اختر السنة</option>`;
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year.Value ?? year.value;
+                    option.textContent = year.Text ?? year.text;
+                    selectOnlineY.appendChild(option);
+                });
+            }
+        } catch (ex) {
+            console.warn('Failed to load years', ex);
+        }
+
+        // Edu Years
+        try {
+            const res3 = await fetch('/Student/GetAvailableEduYears?rootCode=' + (window.registrationRootCode || '0'));
+            const eduyears = await res3.json();
+            dlog('GetAvailableEduYears returned', eduyears);
+            if (Array.isArray(eduyears) && eduyears.length > 0) {
+                const display = document.getElementById('eduYearCodeDisplay');
+                const hidden = document.getElementById('eduYearCode');
+                if (display) display.value = eduyears[0].Text ?? eduyears[0].text ?? '';
+                if (hidden) hidden.value = eduyears[0].Value ?? eduyears[0].value ?? '';
+                const onlineDisplay = document.getElementById('onlineEduYearCodeDisplay');
+                const onlineHidden = document.getElementById('onlineEduYearCode');
+                if (onlineDisplay) onlineDisplay.value = eduyears[0].Text ?? eduyears[0].text ?? '';
+                if (onlineHidden) onlineHidden.value = eduyears[0].Value ?? eduyears[0].value ?? '';
+            }
+        } catch (ex) {
+            console.warn('Failed to load edu years', ex);
+        }
+    } catch (err) {
+        console.error('Initial lookups failed', err);
     }
+}
+
+function showLoading() { const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.style.display = 'flex'; }
+function hideLoading() { const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.style.display = 'none'; }
+
+function showAlert(message, type = 'info') {
+    try {
+        const stepContent = document.getElementById(`step${currentStep}Content`) || document.querySelector('.form-box-wrapper') || document.body;
+        (stepContent).querySelectorAll && stepContent.querySelectorAll('.alert.temp').forEach(a => a.remove());
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} temp`;
+        alertDiv.style.marginBottom = '12px';
+        alertDiv.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>${message}`;
+        if (stepContent && stepContent.prepend) {
+            stepContent.prepend(alertDiv);
+            if (type !== 'danger') setTimeout(() => alertDiv.remove(), 5000);
+        } else { alert(message); }
+    } catch (ex) { console.warn('showAlert failed', ex); try { alert(message); } catch { } }
+}
+
+function ensureScrollEnabled() { document.documentElement.style.overflowY = 'auto'; document.body.style.overflowY = 'auto'; }
+
+function escapeHtml(s) { if (s == null) return ''; return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", "&#39;"); }
+function escapeHtmlAttr(s) { return escapeHtml(String(s ?? '')).replaceAll(' ', '&#32;'); }
+function escapeJs(s) { if (s == null) return ''; return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+
+function normalizeUsername(u) {
+    // Trim and lowercase to avoid invisible whitespace / casing mismatches.
+    // We do NOT remove internal spaces here; we trim only.
+    if (!u) return '';
+    return String(u).trim().toLowerCase();
+}
+
+// Helper to check availability and update UI; returns { available: bool, error?: string }
+async function isUsernameAvailable(usernameRaw) {
+    const username = normalizeUsername(usernameRaw);
+    if (!username) return { available: false, error: 'Username is required.' };
+    try {
+        dlog('Checking username availability for:', username);
+        const res = await fetch(`/Student/CheckUsername?username=${encodeURIComponent(username)}`);
+        const data = await res.json();
+        dlog('CheckUsername response', data);
+        if (!data || typeof data.available === 'undefined') {
+            return { available: false, error: 'Unable to validate username availability.' };
+        }
+        return { available: !!data.available, error: data.error || null };
+    } catch (ex) {
+        derror('isUsernameAvailable error', ex);
+        return { available: false, error: 'Network error checking username.' };
+    }
+}
+
+// ---------------- Root flags & mode ----------------
+function getSingleTeacher(teachers) {
+    if (!Array.isArray(teachers) || teachers.length === 0) return null;
+    const code = teachers[0].teacherCode ?? teachers[0].TeacherCode;
+    return teachers.every(t => (t.teacherCode ?? t.TeacherCode) === code) ? (teachers[0].teacherCode ? teachers[0] : { teacherCode: teachers[0].TeacherCode, teacherName: teachers[0].TeacherName }) : null;
+}
+
+function applyRootFlags() {
+    try {
+        rootFlags = window.rootFlags || rootFlags || null;
+        const group = document.getElementById('modeToggleGroup');
+        const modeInput = document.getElementById('modeInput');
+        if (!rootFlags) {
+            if (group) group.classList.remove('mode-hidden');
+            registrationMode = modeInput?.value || registrationMode;
+            return;
+        }
+        const isOffline = !!rootFlags.isOffline;
+        const isOnline = !!rootFlags.isOnline;
+        if (isOffline && !isOnline) { if (group) group.classList.add('mode-hidden'); registrationMode = 'Offline'; if (modeInput) modeInput.value = 'Offline'; }
+        else if (isOnline && !isOffline) { if (group) group.classList.add('mode-hidden'); registrationMode = 'Online'; if (modeInput) modeInput.value = 'Online'; }
+        else { if (group) group.classList.remove('mode-hidden'); registrationMode = modeInput?.value || 'Offline'; if (modeInput) modeInput.value = registrationMode; }
+        toggleAccountCreationSectionIfNeeded();
+        dlog('applyRootFlags ->', registrationMode, rootFlags);
+    } catch (ex) { console.warn('applyRootFlags error', ex); }
+}
+
+// When Online: hide the duplicate account PIN input wrapper so the user only sees the online PIN (pinCode).
+// When Offline and the root requires account (rootFlags.hasAccount), show accountCreationSection and make sure the account PIN wrapper is visible.
+function toggleAccountCreationSectionIfNeeded() {
+    const accountSection = document.getElementById('accountCreationSection');
+    if (!accountSection) return;
+    const hasAccount = !!(rootFlags && rootFlags.hasAccount);
+
+    if (registrationMode === 'Online') {
+        accountSection.style.display = '';
+        const pinAccountInput = document.getElementById('pinCodeAccount');
+        if (pinAccountInput) {
+            const wrapper = pinAccountInput.closest('.mb-3') || pinAccountInput.parentNode;
+            if (wrapper) wrapper.style.display = 'none';
+            pinAccountInput.value = '';
+            const pinErrAcc = document.getElementById('pinErrorAccount');
+            if (pinErrAcc) pinErrAcc.textContent = '';
+            const pinOkAcc = document.getElementById('pinOkAccount');
+            if (pinOkAcc) pinOkAcc.style.display = 'none';
+        }
+    } else {
+        // Offline mode: show account section only if center requires account
+        accountSection.style.display = hasAccount ? '' : 'none';
+        const pinAccountInput = document.getElementById('pinCodeAccount');
+        if (pinAccountInput) {
+            const wrapper = pinAccountInput.closest('.mb-3') || pinAccountInput.parentNode;
+            if (wrapper) wrapper.style.display = '';
+        }
+    }
+}
+
+// ---------------- Event wiring ----------------
+function setupEventListeners() {
+    dlog('setupEventListeners');
+    const branchSelect = document.getElementById('branchCode');
+    if (branchSelect) branchSelect.addEventListener('change', function () { resetSubjectsAndTeachers(); if (this.value && document.getElementById('yearCode')?.value) loadAvailableSubjects(); });
 
     const yearSelect = document.getElementById('yearCode');
-    if (yearSelect) {
-        yearSelect.addEventListener('change', function () {
-            resetSubjectsAndTeachers();
-            if (this.value && document.getElementById('branchCode').value) {
-                loadAvailableSubjects();
-            }
-        });
-    }
+    if (yearSelect) yearSelect.addEventListener('change', function () { resetSubjectsAndTeachers(); if (this.value && document.getElementById('branchCode')?.value) loadAvailableSubjects(); });
 
-    document.querySelectorAll('input[required], select[required]').forEach(input => {
-        input.addEventListener('blur', validateField);
-        input.addEventListener('input', clearValidation);
+    const onlineYearSelect = document.getElementById('onlineYearCode');
+    if (onlineYearSelect) onlineYearSelect.addEventListener('change', function () {
+        resetSubjectsAndTeachers();
+        if (registrationMode === 'Online' && this.value && pinValidated) loadAvailableSubjects();
     });
 
-    document.getElementById('prevBtn').addEventListener('click', function () {
-        changeStep(-1);
-    });
-    document.getElementById('nextBtn').addEventListener('click', function () {
-        changeStep(1);
-    });
-    document.getElementById('submitBtn').addEventListener('click', function () {
-        submitRegistration();
-    });
+    document.querySelectorAll('input[required], select[required]').forEach(input => { input.addEventListener('blur', validateField); input.addEventListener('input', clearValidation); });
 
-    const validatePinBtn = document.getElementById('validatePinBtn');
-    if (validatePinBtn) validatePinBtn.addEventListener('click', validatePin);
+    const prevBtn = document.getElementById('prevBtn'); if (prevBtn) prevBtn.addEventListener('click', () => changeStep(-1));
+    const nextBtn = document.getElementById('nextBtn'); if (nextBtn) nextBtn.addEventListener('click', () => changeStep(1));
+    const submitBtn = document.getElementById('submitBtn'); if (submitBtn) submitBtn.addEventListener('click', () => submitRegistration());
 
-    const usernameInput = document.getElementById('username');
-    if (usernameInput) usernameInput.addEventListener('blur', checkUsername);
-
-    const completeOnlineBtn = document.getElementById('completeOnlineBtn');
-    if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
+    const validatePinBtn = document.getElementById('validatePinBtn'); if (validatePinBtn) validatePinBtn.addEventListener('click', validatePin);
+    const validatePinAndUsernameBtn = document.getElementById('validatePinAndUsernameBtn'); if (validatePinAndUsernameBtn) validatePinAndUsernameBtn.addEventListener('click', validatePinAndUsername);
+    const usernameInput = document.getElementById('username'); if (usernameInput) usernameInput.addEventListener('blur', async () => {
+        // On blur, normalize and check availability and update UI
+        const raw = usernameInput.value || '';
+        const normalized = normalizeUsername(raw);
+        if (normalized !== raw) {
+            // show trimmed/normalized username in the input so what user sees is what will be submitted
+            usernameInput.value = normalized;
+        }
+        const check = await isUsernameAvailable(normalized);
+        const ue = document.getElementById('userError');
+        if (!check.available) {
+            if (ue) ue.textContent = check.error || 'Username is not available.';
+        } else {
+            if (ue) ue.textContent = '';
+        }
+    });
+    const completeOnlineBtn = document.getElementById('completeOnlineBtn'); if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
 }
 
-// MODE HANDLING
+function initModeToggle() {
+    const group = document.getElementById('modeToggleGroup');
+    const modeInput = document.getElementById('modeInput');
+    if (!group || !modeInput) {
+        document.querySelectorAll('input[name="Mode"]').forEach(r => { r.removeEventListener('change', modeChangeHandler); r.addEventListener('change', modeChangeHandler); });
+        return;
+    }
+    const btns = group.querySelectorAll('.mode-toggle-btn');
+    btns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const mode = btn.getAttribute('data-mode') || 'Offline';
+            modeInput.value = mode;
+            registrationMode = mode;
+            toggleAccountCreationSectionIfNeeded();
+            modeChangeHandler();
+        });
+        btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); } });
+    });
+    const active = group.querySelector('.mode-toggle-btn.active');
+    if (active) { const initial = active.getAttribute('data-mode') || 'Offline'; modeInput.value = initial; registrationMode = initial; }
+}
+
 function modeChangeHandler() {
-    const mode = document.querySelector('input[name="Mode"]:checked').value;
-    registrationMode = mode;
+    const modeInput = document.getElementById('modeInput');
+    const checkedRadio = document.querySelector('input[name="Mode"]:checked');
+    registrationMode = modeInput ? (modeInput.value || registrationMode) : (checkedRadio ? checkedRadio.value : registrationMode);
 
     const branchSection = document.getElementById('branchSection');
     const onlinePinSection = document.getElementById('onlinePinSection');
+    const onlineYearSection = document.getElementById('onlineYearSection');
+    const onlineUserSection = document.getElementById('onlineUserSection');
+    const branchInput = document.getElementById('branchCode');
+    const yearInput = document.getElementById('yearCode');
 
-    if (mode === "Online") {
-        if (branchSection) branchSection.style.display = "none";
-        if (onlinePinSection) onlinePinSection.style.display = "";
-        const onlineYearSection = document.getElementById('onlineYearSection');
-        if (onlineYearSection) onlineYearSection.style.display = "none";
-        document.getElementById('branchCode').required = false;
-        document.getElementById('yearCode').required = false;
+    function show(el) { if (!el) return; el.classList.remove('hidden-by-js'); el.classList.add('visible-by-js'); el.setAttribute('aria-hidden', 'false'); el.style.display = ''; }
+    function hide(el) { if (!el) return; el.classList.add('hidden-by-js'); el.classList.remove('visible-by-js'); el.setAttribute('aria-hidden', 'true'); el.style.display = 'none'; }
+
+    if (registrationMode === "Online") {
+        hide(branchSection);
+        show(onlinePinSection);
+        if (pinValidated) show(onlineYearSection); else hide(onlineYearSection);
+        hide(onlineUserSection);
+        if (branchInput) branchInput.required = false; if (yearInput) yearInput.required = false;
     } else {
-        if (branchSection) branchSection.style.display = "";
-        if (onlinePinSection) onlinePinSection.style.display = "none";
-        document.getElementById('branchCode').required = true;
-        document.getElementById('yearCode').required = true;
+        show(branchSection);
+        hide(onlinePinSection);
+        hide(onlineYearSection);
+        hide(onlineUserSection);
+        if (branchInput) branchInput.required = true; if (yearInput) yearInput.required = true;
     }
+
     resetSubjectsAndTeachers();
+    updateStepButtons();
+    toggleAccountCreationSectionIfNeeded();
+
+    dlog('modeChangeHandler ->', registrationMode);
+    updateScheduleVisibility();
 }
 
-function resetSubjectsAndTeachers() {
-    selectedSubjects = [];
-    availableSubjects = [];
-    availableTeachers = [];
-    const subjectsDiv = document.getElementById('availableSubjects');
-    if (subjectsDiv) subjectsDiv.innerHTML = '';
-    const schedulesDiv = document.getElementById('scheduleSelection');
-    if (schedulesDiv) schedulesDiv.innerHTML = '';
-    const summaryDiv = document.getElementById('selectedSubjectsSummary');
-    if (summaryDiv) summaryDiv.style.display = 'none';
-}
-
-// STEP NAVIGATION
+// ---------------- Steps & Validation ----------------
 function changeStep(direction) {
+    const maxStep = getMaxStep();
     if (direction === 1 && !validateCurrentStep()) return;
 
-    const currentStepContent = document.getElementById(`step${currentStep}Content`);
-    if (currentStepContent) currentStepContent.classList.remove('active');
-    const currentStepIndicator = document.getElementById(`step${currentStep}`);
-    if (currentStepIndicator) currentStepIndicator.classList.remove('active');
+    const currentStepContent = document.getElementById(`step${currentStep}Content`); if (currentStepContent) currentStepContent.classList.remove('active');
+    const currentStepIndicator = document.getElementById(`step${currentStep}`); if (currentStepIndicator) currentStepIndicator.classList.remove('active');
 
     currentStep += direction;
     if (currentStep < 1) currentStep = 1;
-    if (currentStep > 5) currentStep = 5;
+    if (currentStep > maxStep) currentStep = maxStep;
 
-    const newStepContent = document.getElementById(`step${currentStep}Content`);
-    if (newStepContent) newStepContent.classList.add('active');
-    const newStepIndicator = document.getElementById(`step${currentStep}`);
-    if (newStepIndicator) newStepIndicator.classList.add('active');
+    const newStepContent = document.getElementById(`step${currentStep}Content`); if (newStepContent) newStepContent.classList.add('active');
+    const newStepIndicator = document.getElementById(`step${currentStep}`); if (newStepIndicator) newStepIndicator.classList.add('active');
 
-    if (currentStep === 3) {
-        const branchCode = document.getElementById('branchCode')?.value;
-        const yearCode = document.getElementById('yearCode')?.value;
-        if ((branchCode && yearCode && registrationMode === "Offline") || registrationMode === "Online") {
+    if (currentStep === 2) {
+        const branchVal = document.getElementById('branchCode')?.value;
+        const yearVal = document.getElementById('yearCode')?.value || document.getElementById('onlineYearCode')?.value;
+        if ((registrationMode === 'Offline' && branchVal && yearVal) || (registrationMode === 'Online' && pinValidated && document.getElementById('onlineYearCode')?.value)) {
             loadAvailableSubjects();
+        } else if (registrationMode === 'Online') {
+            dlog('Online mode step2: waiting for PIN validation and year selection before loading subjects');
         }
-    } else if (currentStep === 4) {
-        if (registrationMode === "Offline") {
-            document.getElementById('scheduleSection').style.display = "";
-            document.getElementById('onlineUserSection').style.display = "none";
-            loadAvailableSchedules();
-        } else {
-            document.getElementById('scheduleSection').style.display = "none";
-            if (pinValidated) {
-                document.getElementById('onlineUserSection').style.display = "";
-            }
-        }
-    } else if (currentStep === 5) {
-        if (registrationMode === "Offline") {
-            document.getElementById('offlineSummarySection').style.display = "";
-            document.getElementById('onlineRegistrationSection').style.display = "none";
-            showRegistrationSummary();
-        } else {
-            document.getElementById('offlineSummarySection').style.display = "none";
-            document.getElementById('onlineRegistrationSection').style.display = "";
-        }
+        updateScheduleVisibility();
     }
 
     updateStepButtons();
     scrollToFormTop();
+    dlog('changeStep ->', currentStep);
 }
 
-function scrollToFormTop() {
-    const box = document.getElementById('registrationRootBox');
-    if (box) {
-        const top = box.getBoundingClientRect().top + window.scrollY - 20;
-        window.scrollTo({ top, behavior: 'smooth' });
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}
+function scrollToFormTop() { const box = document.getElementById('registrationRootBox'); if (box) { const top = box.getBoundingClientRect().top + window.scrollY - 20; window.scrollTo({ top, behavior: 'smooth' }); } else window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function updateStepButtons() { const maxStep = getMaxStep(); const prevBtn = document.getElementById('prevBtn'); const nextBtn = document.getElementById('nextBtn'); const submitBtn = document.getElementById('submitBtn'); if (prevBtn) prevBtn.style.display = currentStep > 1 ? 'inline-flex' : 'none'; if (nextBtn) nextBtn.style.display = currentStep < maxStep ? 'inline-flex' : 'none'; if (submitBtn) submitBtn.style.display = (currentStep === maxStep) ? 'inline-flex' : 'none'; }
 
-function updateStepButtons() {
-    document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-flex' : 'none';
-    document.getElementById('nextBtn').style.display = currentStep < 5 ? 'inline-flex' : 'none';
-    document.getElementById('submitBtn').style.display = (currentStep === 5 && registrationMode === "Offline") ? 'inline-flex' : 'none';
-}
-
-// VALIDATION
 function validateCurrentStep() {
     const currentStepContent = document.getElementById(`step${currentStep}Content`);
     if (!currentStepContent) return false;
-
     const requiredFields = currentStepContent.querySelectorAll('input[required], select[required]');
     let isValid = true;
+    requiredFields.forEach(field => { if (!validateField({ target: field })) isValid = false; });
 
-    requiredFields.forEach(field => {
-        if (!validateField({ target: field })) isValid = false;
-    });
+    if (currentStep === 1) return isValid;
 
     if (currentStep === 2) {
         if (registrationMode === "Offline") {
-            const branchCode = document.getElementById('branchCode').value;
-            const yearCode = document.getElementById('yearCode').value;
-            if (!branchCode || !yearCode) {
-                showAlert('Please select both branch and academic year.', 'danger');
-                isValid = false;
-            }
-        } else if (registrationMode === "Online" && !pinValidated) {
-            showAlert('Please validate your PIN code first.', 'danger');
-            isValid = false;
+            const branchCode = document.getElementById('branchCode')?.value;
+            const yearCode = document.getElementById('yearCode')?.value;
+            if (!branchCode || !yearCode) { showAlert('Please select both branch and academic year.', 'danger'); isValid = false; }
+        } else {
+            if (!pinValidated) { showAlert('Please validate your PIN code first.', 'danger'); isValid = false; }
+            const onlineYearVal = document.getElementById('onlineYearCode')?.value;
+            if (!onlineYearVal) { showAlert('Please select academic year for Online registration.', 'danger'); isValid = false; }
         }
-    }
 
-    if (currentStep === 3) {
         const completeSelections = selectedSubjects.filter(s => s.teacherCode);
-        if (completeSelections.length === 0) {
-            showAlert('Please select at least one subject and a teacher.', 'danger');
-            isValid = false;
+        if (completeSelections.length === 0) { showAlert('Please select at least one subject and a teacher.', 'danger'); isValid = false; }
+
+        if (registrationMode === "Offline") {
+            const missingSchedules = selectedSubjects.filter(s => s.teacherCode && !s.scheduleCode);
+            if (missingSchedules.length > 0) { showAlert('Please select schedules for all chosen subjects.', 'danger'); updateScheduleVisibility(); isValid = false; }
+        }
+
+        const accountVisible = document.getElementById('accountCreationSection') && document.getElementById('accountCreationSection').style.display !== 'none';
+        if (registrationMode === "Online" || (rootFlags && rootFlags.hasAccount && accountVisible)) {
+            const usernameVal = normalizeUsername(document.getElementById('username')?.value || '');
+            const password = document.getElementById('password')?.value;
+            const confirm = document.getElementById('passwordConfirm')?.value;
+            if (!usernameVal || !password) { showAlert('Username and password are required.', 'danger'); isValid = false; }
+            else if (password !== confirm) { showAlert('Passwords do not match.', 'danger'); isValid = false; }
+            else if (rootFlags && rootFlags.hasAccount && registrationMode === "Offline" && !pinValidated) { showAlert('Please validate the PIN and username using the provided button.', 'danger'); isValid = false; }
         }
     }
-
-    if (currentStep === 4 && registrationMode === "Offline") {
-        const missingSchedules = selectedSubjects.filter(s => s.teacherCode && !s.scheduleCode);
-        if (missingSchedules.length > 0) {
-            showAlert('Please select schedules for all chosen subjects.', 'danger');
-            isValid = false;
-        }
-    }
-
-    if (currentStep === 4 && registrationMode === "Online") {
-        const username = document.getElementById('username')?.value?.trim();
-        const password = document.getElementById('password')?.value;
-        if (!username || !password) {
-            showAlert('Username and password are required.', 'danger');
-            isValid = false;
-        }
-    }
-
     return isValid;
 }
 
 function validateField(event) {
     const field = event.target;
-    const value = field.value.trim();
+    const value = (field.value || '').toString().trim();
     let isValid = true;
     let message = '';
-
     field.classList.remove('is-invalid');
-    const feedback = field.parentNode.querySelector('.invalid-feedback');
-    if (feedback) feedback.textContent = '';
-
-    if (field.hasAttribute('required') && !value) {
-        isValid = false;
-        message = 'This field is required.';
-    }
-
-    if (value && field.type === 'tel') {
-        if (!/^[\+]?[0-9\s\-\(\)]{8,}$/.test(value)) {
-            isValid = false;
-            message = 'Enter a valid phone number.';
-        }
-    }
-
-    if (value && field.type === 'email') {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            isValid = false;
-            message = 'Enter a valid email address.';
-        }
-    }
-
-    if (!isValid) {
-        field.classList.add('is-invalid');
-        if (feedback) feedback.textContent = message;
-    }
-
+    const feedback = field.parentNode ? field.parentNode.querySelector('.invalid-feedback') : null;
+    if (field.hasAttribute('required') && !value) { isValid = false; message = 'This field is required.'; }
+    if (value && field.type === 'tel' && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(value)) { isValid = false; message = 'Enter a valid phone number.'; }
+    if (value && field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { isValid = false; message = 'Enter a valid email address.'; }
+    if (!isValid) { field.classList.add('is-invalid'); if (feedback) feedback.textContent = message; }
     return isValid;
 }
+function clearValidation(event) { const field = event.target; field.classList.remove('is-invalid'); const feedback = field.parentNode ? field.parentNode.querySelector('.invalid-feedback') : null; if (feedback) feedback.textContent = ''; }
 
-function clearValidation(event) {
-    const field = event.target;
-    field.classList.remove('is-invalid');
-    const feedback = field.parentNode.querySelector('.invalid-feedback');
-    if (feedback) feedback.textContent = '';
+// ---------------- Subjects / Teachers / Schedules ----------------
+function resetSubjectsAndTeachers() {
+    selectedSubjects = []; availableSubjects = []; availableTeachers = [];
+    const subjectsDiv = document.getElementById('availableSubjects'); if (subjectsDiv) subjectsDiv.innerHTML = '';
+    const schedulesDiv = document.getElementById('scheduleSelection'); if (schedulesDiv) schedulesDiv.innerHTML = '';
+    const summaryDiv = document.getElementById('selectedSubjectsSummary'); if (summaryDiv) summaryDiv.style.display = 'none';
 }
 
-// SUBJECT / TEACHER / SCHEDULE LOADING
 async function loadAvailableSubjects() {
-    let branchCode = '';
-    let yearCode = '';
-
-    if (registrationMode === "Offline") {
-        branchCode = document.getElementById('branchCode')?.value || '';
-        yearCode = document.getElementById('yearCode')?.value || '';
-        if (!branchCode || !yearCode) {
-            resetSubjectsAndTeachers();
-            return;
-        }
-    } else if (registrationMode === "Online") {
-        yearCode = document.getElementById('onlineYearCode')?.value || '';
-        branchCode = '0';
-        if (!yearCode) {
-            resetSubjectsAndTeachers();
-            return;
-        }
-    }
-
-    showLoading();
-    try {
-        const url = `/Student/GetAvailableSubjects?branchCode=${branchCode}&yearCode=${yearCode}`;
-        const response = await fetch(url);
-        const result = await response.json();
-
-        if (result.error) {
-            showAlert(result.error, 'danger');
-            availableSubjects = [];
-        } else {
-            availableSubjects = result;
-        }
-
-        renderSubjects();
-    } catch (error) {
-        showAlert('Failed to load subjects.', 'danger');
-        availableSubjects = [];
-    } finally {
-        hideLoading();
-    }
-}
-
-async function loadTeachersForSubjects() {
-    let branchCode = '';
-    let yearCode = '';
-
-    if (registrationMode === "Offline") {
-        branchCode = document.getElementById('branchCode')?.value || '';
-        yearCode = document.getElementById('yearCode')?.value || '';
-    } else if (registrationMode === "Online") {
-        yearCode = document.getElementById('onlineYearCode')?.value || '';
-        branchCode = '0';
-    }
-
-    const subjectCodes = availableSubjects.map(s => s.subjectCode).join(',');
-    if (!subjectCodes) {
-        availableTeachers = [];
+    if (registrationMode === "Online" && !pinValidated) {
+        dlog('loadAvailableSubjects aborted - Online PIN not validated');
         return;
     }
 
-    try {
-        const url = `/Student/GetTeachersForSubjects?subjectCodes=${subjectCodes}&branchCode=${branchCode}&yearCode=${yearCode}`;
-        const response = await fetch(url);
-        const result = await response.json();
-
-        if (result.error) {
-            console.warn(result.error);
-            availableTeachers = [];
-        } else {
-            availableTeachers = result;
-        }
-    } catch (error) {
-        console.error('Failed to load teachers:', error);
-        availableTeachers = [];
-    }
-    if (availableTeachers.length === 1) {
-        window.rootSingleTeacher = availableTeachers[0];
-    } else {
-        window.rootSingleTeacher = null;
-    }
-}
-
-async function loadScheduleForSubjectTeacher(subjectCode, teacherCode) {
-    let branchCode = '';
-    let yearCode = '';
-
+    let branchCode = '', yearCode = '';
     if (registrationMode === "Offline") {
         branchCode = document.getElementById('branchCode')?.value || '';
         yearCode = document.getElementById('yearCode')?.value || '';
+        if (!branchCode || !yearCode) { resetSubjectsAndTeachers(); updateScheduleVisibility(); dlog('loadAvailableSubjects aborted - branch/year missing', branchCode, yearCode); return; }
+    } else if (registrationMode === "Online") {
+        yearCode = document.getElementById('onlineYearCode')?.value || '';
+        branchCode = '0';
+        if (!yearCode) { resetSubjectsAndTeachers(); updateScheduleVisibility(); dlog('loadAvailableSubjects aborted - onlineYear missing'); return; }
     }
 
+    dlog('loadAvailableSubjects -> branchCode, yearCode =', branchCode, yearCode);
+    showLoading();
     try {
-        const url = `/Student/GetSchedulesForSubjectTeacher?subjectCode=${subjectCode}&teacherCode=${teacherCode}&branchCode=${branchCode}&yearCode=${yearCode}`;
+        const url = `/Student/GetAvailableSubjects?branchCode=${encodeURIComponent(branchCode)}&yearCode=${encodeURIComponent(yearCode)}`;
+        dlog('fetch', url);
         const response = await fetch(url);
         const result = await response.json();
-        if (result.error) {
-            console.error(result.error);
-            return [];
-        }
-        return result;
-    } catch (error) {
-        console.error('Failed to load schedules:', error);
-        return [];
-    }
+        dlog('GetAvailableSubjects response', result);
+        if (result && result.error) { showAlert(result.error, 'danger'); availableSubjects = []; }
+        else availableSubjects = Array.isArray(result) ? result.map(s => ({ subjectCode: s.SubjectCode ?? s.subjectCode, subjectName: s.SubjectName ?? s.subjectName })) : [];
+        renderSubjects();
+    } catch (err) {
+        showAlert('Failed to load subjects.', 'danger'); console.error('loadAvailableSubjects error', err); availableSubjects = [];
+    } finally { hideLoading(); updateScheduleVisibility(); }
+}
+
+async function loadTeachersForSubjects() {
+    let branchCode = '', yearCode = '';
+    if (registrationMode === "Offline") { branchCode = document.getElementById('branchCode')?.value || ''; yearCode = document.getElementById('yearCode')?.value || ''; }
+    else { yearCode = document.getElementById('onlineYearCode')?.value || ''; branchCode = '0'; }
+
+    const subjectCodes = availableSubjects.map(s => s.subjectCode).join(',');
+    dlog('loadTeachersForSubjects -> subjectCodes, branchCode, yearCode =', subjectCodes, branchCode, yearCode);
+    if (!subjectCodes) { availableTeachers = []; return; }
+
+    try {
+        const url = `/Student/GetTeachersForSubjects?subjectCodes=${encodeURIComponent(subjectCodes)}&branchCode=${encodeURIComponent(branchCode)}&yearCode=${encodeURIComponent(yearCode)}`;
+        dlog('fetch', url);
+        const response = await fetch(url);
+        const result = await response.json();
+        dlog('GetTeachersForSubjects response', result);
+        if (result && result.error) { console.warn(result.error); availableTeachers = []; }
+        else availableTeachers = Array.isArray(result) ? result.map(t => ({
+            teacherCode: t.TeacherCode ?? t.teacherCode,
+            teacherName: t.TeacherName ?? t.teacherName,
+            teacherPhone: t.TeacherPhone ?? t.teacherPhone,
+            subjectCode: t.SubjectCode ?? t.subjectCode,
+            yearCode: t.YearCode ?? t.yearCode,
+            eduYearCode: t.EduYearCode ?? t.eduYearCode
+        })) : [];
+    } catch (err) { console.error('loadTeachersForSubjects error', err); availableTeachers = []; }
+    window.rootSingleTeacher = availableTeachers.length === 1 ? availableTeachers[0] : null;
+}
+
+async function loadScheduleForSubjectTeacher(subjectCode, teacherCode) {
+    let branchCode = '', yearCode = '';
+    if (registrationMode === "Offline") { branchCode = document.getElementById('branchCode')?.value || ''; yearCode = document.getElementById('yearCode')?.value || ''; }
+    const url = `/Student/GetSchedulesForSubjectTeacher?subjectCode=${encodeURIComponent(subjectCode)}&teacherCode=${encodeURIComponent(teacherCode)}&branchCode=${encodeURIComponent(branchCode)}&yearCode=${encodeURIComponent(yearCode)}`;
+    dlog('loadScheduleForSubjectTeacher fetch', url);
+    try {
+        const res = await fetch(url);
+        if (!res.ok) { derror('schedules fetch http error', res.status, await res.text()); return []; }
+        const result = await res.json();
+        dlog('GetSchedulesForSubjectTeacher response', { subjectCode, teacherCode, result });
+        if (result && result.error) { derror(result.error); return []; }
+        return Array.isArray(result) ? result.map(sch => ({
+            scheduleCode: sch.ScheduleCode ?? sch.scheduleCode,
+            scheduleName: sch.ScheduleName ?? sch.scheduleName,
+            dayOfWeek: sch.DayOfWeek ?? sch.dayOfWeek,
+            startTime: sch.StartTime ?? sch.startTime,
+            endTime: sch.EndTime ?? sch.endTime,
+            hallName: sch.HallName ?? sch.hallName
+        })) : [];
+    } catch (err) { derror('Failed to load schedules:', err); return []; }
 }
 
 async function loadAvailableSchedules() {
+    dlog('loadAvailableSchedules start');
     const container = document.getElementById('scheduleSelection');
-    if (!container) return;
+    if (!container) { dlog('loadAvailableSchedules: no container found'); return; }
+
+    const scheduleSection = document.getElementById('scheduleSection');
+    if (scheduleSection && registrationMode === "Offline") scheduleSection.style.display = "";
 
     const subjectsWithTeachers = selectedSubjects.filter(s => s.teacherCode);
 
     if (subjectsWithTeachers.length === 0) {
-        container.innerHTML = `
-            <div class="empty-block">
-                <i class="fas fa-calendar-times"></i>
-                <p>No subjects with teachers selected.</p>
-            </div>`;
+        container.innerHTML = `<div class="empty-block"><i class="fas fa-calendar-times"></i><p>No subjects with teachers selected.</p></div>`;
+        dlog('loadAvailableSchedules: no selected subjects with teachers');
         return;
     }
 
     container.innerHTML = '<div class="loading-inline"><i class="fas fa-spinner fa-spin"></i> Loading schedules...</div>';
-
     let scheduleHtml = '';
+
     for (const subject of subjectsWithTeachers) {
         const schedules = await loadScheduleForSubjectTeacher(subject.subjectCode, subject.teacherCode);
-        scheduleHtml += `
-        <div class="schedule-subject-block">
-            <h5><i class="fas fa-book me-2"></i>${subject.subjectName} - ${subject.teacherName}</h5>
-            <div class="schedule-options">`;
-
-        if (schedules.length > 0) {
+        scheduleHtml += `<div class="schedule-subject-block"><h5><i class="fas fa-book me-2"></i>${escapeHtml(subject.subjectName)} - ${escapeHtml(subject.teacherName)}</h5><div class="schedule-options">`;
+        if (Array.isArray(schedules) && schedules.length > 0) {
             schedules.forEach(sch => {
-                const isSelected = subject.scheduleCode === sch.scheduleCode;
+                const isSelected = subject.scheduleCode == sch.scheduleCode;
                 scheduleHtml += `
                 <label class="schedule-option ${isSelected ? 'selected' : ''}">
                     <input type="radio"
-                           name="schedule_${subject.subjectCode}_${subject.teacherCode}"
-                           value="${sch.ScheduleCode}"
+                           name="schedule_${escapeHtmlAttr(subject.subjectCode)}_${escapeHtmlAttr(subject.teacherCode)}"
+                           value="${escapeHtmlAttr(sch.scheduleCode)}"
                            ${isSelected ? 'checked' : ''}
-                           onchange="selectSchedule(${subject.subjectCode}, ${subject.teacherCode}, ${sch.scheduleCode}, '${sch.scheduleName}', '${sch.dayOfWeek}', '${sch.startTime}', '${sch.endTime}')">
-                    <div class="so-meta">
-                        <strong>${sch.scheduleName}</strong>
-                        <small>${sch.dayOfWeek} ${sch.startTime}-${sch.endTime} | ${sch.hallName}</small>
+                           data-subject="${escapeHtmlAttr(subject.subjectCode)}"
+                           data-teacher="${escapeHtmlAttr(subject.teacherCode)}"
+                           data-schedule="${escapeHtmlAttr(sch.scheduleCode)}"
+                           data-scheduletitle="${escapeHtmlAttr(sch.scheduleName)}">
+                    <div class="so-meta"><strong>${escapeHtml(sch.scheduleName)}</strong>
+                        <small>${escapeHtml(`${sch.dayOfWeek} ${sch.startTime}-${sch.endTime} | ${sch.hallName}`)}</small>
                     </div>
                 </label>`;
             });
         } else {
             scheduleHtml += '<p class="text-muted small mb-0">No schedules available.</p>';
         }
-
         scheduleHtml += `</div></div>`;
     }
 
     container.innerHTML = scheduleHtml;
+
+    container.querySelectorAll('.schedule-option input[type="radio"]').forEach(inp => {
+        inp.addEventListener('change', function () {
+            const subj = this.getAttribute('data-subject');
+            const teach = this.getAttribute('data-teacher');
+            const sched = this.getAttribute('data-schedule');
+            const title = this.getAttribute('data-scheduletitle');
+            selectSchedule(subj, teach, sched, title, '', '', '');
+            const parent = this.closest('.schedule-option'); parent && parent.classList.add('selected');
+            parent && parent.parentNode && Array.from(parent.parentNode.querySelectorAll('.schedule-option')).forEach(sib => { if (sib !== parent) sib.classList.remove('selected'); });
+        });
+    });
+
+    dlog('loadAvailableSchedules finished, rendered schedules for', subjectsWithTeachers.length, 'subjects');
 }
 
-// RENDER SUBJECTS
+// ---------------- Render Subjects ----------------
 function renderSubjects() {
     const container = document.getElementById('availableSubjects');
-    if (!container) return;
+    if (!container) { dlog('renderSubjects: no container'); return; }
 
-    if (availableSubjects.length === 0) {
-        container.innerHTML = `
-            <div class="empty-block">
-                <i class="fas fa-book"></i>
-                <p>No subjects available for the selected criteria.</p>
-            </div>`;
+    if (!availableSubjects || availableSubjects.length === 0) {
+        container.innerHTML = `<div class="empty-block"><i class="fas fa-book"></i><p>No subjects available for the selected criteria.</p></div>`;
+        updateScheduleVisibility();
         return;
     }
 
     loadTeachersForSubjects().then(() => {
+        dlog('renderSubjects -> availableSubjects:', availableSubjects.length, 'availableTeachers:', availableTeachers.length);
         let html = '';
+
         availableSubjects.forEach(subject => {
-            const isSelected = selectedSubjects.some(s => s.subjectCode === subject.subjectCode);
-            const subjectTeachers = availableTeachers.filter(t => t.subjectCode === subject.subjectCode);
+            const isSelected = selectedSubjects.some(s => String(s.subjectCode) === String(subject.subjectCode));
+            const subjectTeachers = availableTeachers.filter(t => String(t.subjectCode) === String(subject.subjectCode));
             const singleTeacher = getSingleTeacher(subjectTeachers);
 
-            html += `
-    <div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${subject.subjectCode}">
-        <div class="subject-header">
-            <h5 class="subject-title"><i class="fas fa-book me-2"></i>${subject.subjectName}</h5>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox"
-                       id="subject_${subject.subjectCode}"
-                       ${isSelected ? 'checked' : ''}
-                       onchange="toggleSubject(${subject.subjectCode}, '${subject.subjectName}')">
-            </div>
-        </div>
-        <div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${subject.subjectCode}">
-    `;
+            html += `<div class="subject-selection ${isSelected ? 'selected' : ''}" data-subject-code="${escapeHtmlAttr(subject.subjectCode)}">`;
+            html += `<div class="subject-header"><h5 class="subject-title"><i class="fas fa-book me-2"></i>${escapeHtml(subject.subjectName)}</h5>`;
+            html += `<div class="form-check"><input class="form-check-input subject-checkbox" type="checkbox" data-subject="${escapeHtmlAttr(subject.subjectCode)}" id="subject_${escapeHtmlAttr(subject.subjectCode)}" ${isSelected ? 'checked' : ''}></div></div>`;
+            html += `<div class="teachers-list ${isSelected ? '' : 'd-none'}" id="teachers_${escapeHtmlAttr(subject.subjectCode)}">`;
 
-            // Hide teacher selection if all teach records are for the same teacher
             if (singleTeacher) {
-                html += `<span class="text-muted small">Assigned teacher: <strong>${singleTeacher.teacherName}</strong></span>`;
+                html += `<span class="text-muted small">Assigned teacher: <strong>${escapeHtml(singleTeacher.teacherName)}</strong></span>`;
             } else {
                 html += `<label class="form-label small mb-2">Select Teacher</label>`;
                 if (subjectTeachers.length > 0) {
                     subjectTeachers.forEach(teacher => {
-                        const selectedSubject = selectedSubjects.find(s => s.subjectCode === subject.subjectCode);
-                        const isTeacherSelected = selectedSubject && selectedSubject.teacherCode === teacher.teacherCode;
-
-                        html += `
-                <div class="teacher-option ${isTeacherSelected ? 'selected' : ''}"
-                     onclick="selectTeacher(${subject.subjectCode}, '${subject.subjectName}', ${teacher.teacherCode}, '${teacher.teacherName}', ${teacher.yearCode}, ${teacher.eduYearCode})">
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio"
-                               name="teacher_${subject.subjectCode}"
-                               value="${teacher.teacherCode}"
-                               id="teacher_${subject.subjectCode}_${teacher.teacherCode}"
-                               ${isTeacherSelected ? 'checked' : ''}>
-                        <label class="form-check-label">
-                            <strong>${teacher.teacherName}</strong><br>
-                            <small class="text-muted">${teacher.teacherPhone || 'N/A'}</small>
-                        </label>
-                    </div>
-                </div>`;
+                        const selectedSubject = selectedSubjects.find(s => String(s.subjectCode) === String(subject.subjectCode));
+                        const isTeacherSelected = selectedSubject && String(selectedSubject.teacherCode) === String(teacher.teacherCode);
+                        html += `<div class="teacher-option ${isTeacherSelected ? 'selected' : ''}" data-subject="${escapeHtmlAttr(subject.subjectCode)}" data-subjectname="${escapeHtmlAttr(subject.subjectName)}" data-teacher="${escapeHtmlAttr(teacher.teacherCode)}" data-teachername="${escapeHtmlAttr(teacher.teacherName)}" data-year="${escapeHtmlAttr(teacher.yearCode)}" data-eduyear="${escapeHtmlAttr(teacher.eduYearCode)}">`;
+                        html += `<div class="form-check"><input class="form-check-input teacher-radio" type="radio" name="teacher_${escapeHtmlAttr(subject.subjectCode)}" value="${escapeHtmlAttr(teacher.teacherCode)}" id="teacher_${escapeHtmlAttr(subject.subjectCode)}_${escapeHtmlAttr(teacher.teacherCode)}" ${isTeacherSelected ? 'checked' : ''}>`;
+                        html += `<label class="form-check-label"><strong>${escapeHtml(teacher.teacherName)}</strong><br><small class="text-muted">${escapeHtml(teacher.teacherPhone || 'N/A')}</small></label></div></div>`;
                     });
                 } else {
                     html += '<p class="text-muted small mb-0">No teachers available.</p>';
                 }
             }
+
             html += `</div></div>`;
         });
 
         container.innerHTML = html;
-    });
+
+        container.querySelectorAll('.subject-checkbox').forEach(cb => {
+            cb.removeEventListener('change', _subjectCheckboxHandler);
+            cb.addEventListener('change', _subjectCheckboxHandler);
+        });
+
+        container.querySelectorAll('.teacher-option').forEach(el => {
+            el.removeEventListener('click', _teacherClickHandler);
+            el.addEventListener('click', _teacherClickHandler);
+        });
+
+        container.querySelectorAll('.teacher-radio').forEach(r => {
+            r.removeEventListener('change', _radioChangeHandler);
+            r.addEventListener('change', _radioChangeHandler);
+        });
+
+        updateScheduleVisibility();
+    }).catch(err => { console.error('renderSubjects error', err); updateScheduleVisibility(); });
+
+    function _subjectCheckboxHandler(evt) {
+        const subj = evt.currentTarget.getAttribute('data-subject');
+        const subjName = availableSubjects.find(s => String(s.subjectCode) === String(subj))?.subjectName || '';
+        toggleSubject(subj, subjName);
+    }
+    function _teacherClickHandler(evt) {
+        try {
+            const el = evt.currentTarget;
+            const subj = el.getAttribute('data-subject');
+            const subjName = el.getAttribute('data-subjectname');
+            const teacher = el.getAttribute('data-teacher');
+            const teacherName = el.getAttribute('data-teachername');
+            const year = el.getAttribute('data-year');
+            const eduYear = el.getAttribute('data-eduyear');
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+            selectTeacher(subj, subjName, teacher, teacherName, year, eduYear);
+        } catch (e) { console.error('teacher click handler error', e); }
+    }
+    function _radioChangeHandler(evt) {
+        try {
+            const r = evt.currentTarget;
+            const parent = r.closest('.teacher-option');
+            if (!parent) return;
+            const subj = parent.getAttribute('data-subject');
+            const subjName = parent.getAttribute('data-subjectname');
+            const teacher = parent.getAttribute('data-teacher');
+            const teacherName = parent.getAttribute('data-teachername');
+            const year = parent.getAttribute('data-year');
+            const eduYear = parent.getAttribute('data-eduyear');
+            selectTeacher(subj, subjName, teacher, teacherName, year, eduYear);
+        } catch (e) { console.error('radio change handler error', e); }
+    }
 }
-// SUBJECT / TEACHER / SCHEDULE SELECTION HANDLERS
+
+// ---------------- Selection Handlers ----------------
 window.toggleSubject = function (subjectCode, subjectName) {
     const checkbox = document.getElementById(`subject_${subjectCode}`);
     const subjectCard = document.querySelector(`[data-subject-code="${subjectCode}"]`);
     const teachersDiv = document.getElementById(`teachers_${subjectCode}`);
 
-    if (checkbox.checked) {
-        if (!selectedSubjects.some(s => s.subjectCode === subjectCode)) {
+    const subjKey = String(subjectCode);
+    if (checkbox && checkbox.checked) {
+        if (!selectedSubjects.some(s => String(s.subjectCode) === subjKey)) {
             selectedSubjects.push({
-                subjectCode,
-                subjectName,
+                subjectCode: subjectCode,
+                subjectName: subjectName || '',
                 teacherCode: null,
                 teacherName: null,
                 yearCode: null,
@@ -523,310 +699,369 @@ window.toggleSubject = function (subjectCode, subjectName) {
                 scheduleName: null
             });
         }
-        subjectCard.classList.add('selected');
-        if (teachersDiv) teachersDiv.classList.remove('d-none');
+        subjectCard && subjectCard.classList.add('selected');
+        teachersDiv && teachersDiv.classList.remove('d-none');
 
-        // Auto-select if all teach records for subject map to one teacher
-        const subjectTeachers = availableTeachers.filter(t => t.subjectCode === subjectCode);
+        const subjectTeachers = availableTeachers.filter(t => String(t.subjectCode) === subjKey);
         const singleTeacher = getSingleTeacher(subjectTeachers);
         if (singleTeacher) {
-            window.selectTeacher(
-                subjectCode,
-                subjectName,
-                singleTeacher.teacherCode,
-                singleTeacher.teacherName,
-                singleTeacher.yearCode,
-                singleTeacher.eduYearCode
-            );
-            // Automatically move to next step
-            setTimeout(() => {
-                changeStep(1);
-            }, 300);
+            selectTeacher(subjectCode, subjectName, singleTeacher.teacherCode, singleTeacher.teacherName, singleTeacher.yearCode, singleTeacher.eduYearCode);
+            return;
         }
     } else {
-        selectedSubjects = selectedSubjects.filter(s => s.subjectCode !== subjectCode);
-        subjectCard.classList.remove('selected');
-        if (teachersDiv) teachersDiv.classList.add('d-none');
-        document.querySelectorAll(`input[name="teacher_${subjectCode}"]`).forEach(r => r.checked = false);
+        selectedSubjects = selectedSubjects.filter(s => String(s.subjectCode) !== subjKey);
+        subjectCard && subjectCard.classList.remove('selected');
+        teachersDiv && teachersDiv.classList.add('d-none');
+        document.querySelectorAll(`input[name="teacher_${escapeHtmlAttr(subjectCode)}"]`).forEach(r => r.checked = false);
     }
 
     updateSelectedSubjectsSummary();
+    updateScheduleVisibility();
 };
-window.selectTeacher = function (subjectCode, subjectName, teacherCode, teacherName, yearCode, eduYearCode) {
-    const radio = document.getElementById(`teacher_${subjectCode}_${teacherCode}`);
-    if (radio) radio.checked = true;
 
-    const idx = selectedSubjects.findIndex(s => s.subjectCode === subjectCode);
-    if (idx !== -1) {
-        selectedSubjects[idx] = {
-            ...selectedSubjects[idx],
-            teacherCode,
-            teacherName,
-            yearCode,
-            eduYearCode,
+window.selectTeacher = function (subjectCode, subjectName, teacherCode, teacherName, yearCode, eduYearCode) {
+    try {
+        dlog('selectTeacher called', { subjectCode, teacherCode, teacherName, yearCode, eduYearCode });
+
+        const subj = (subjectCode !== null && subjectCode !== undefined && String(subjectCode).trim() !== '') ? (isFinite(subjectCode) ? Number(subjectCode) : String(subjectCode)) : subjectCode;
+        const teach = (teacherCode !== null && teacherCode !== undefined && String(teacherCode).trim() !== '') ? (isFinite(teacherCode) ? Number(teacherCode) : String(teacherCode)) : teacherCode;
+
+        let finalYear = yearCode ?? (registrationMode === 'Online' ? (document.getElementById('onlineYearCode')?.value || null) : (document.getElementById('yearCode')?.value || null));
+        let finalEduYear = eduYearCode ?? (registrationMode === 'Online' ? (document.getElementById('onlineEduYearCode')?.value || null) : (document.getElementById('eduYearCode')?.value || null));
+
+        const idx = selectedSubjects.findIndex(s => String(s.subjectCode) === String(subj));
+        const newEntry = {
+            subjectCode: subj,
+            subjectName: subjectName || '',
+            teacherCode: teach,
+            teacherName: teacherName || '',
+            yearCode: finalYear,
+            eduYearCode: finalEduYear,
             scheduleCode: null,
             scheduleName: null
         };
+        if (idx !== -1) selectedSubjects[idx] = { ...selectedSubjects[idx], ...newEntry };
+        else selectedSubjects.push(newEntry);
+
+        try {
+            const radioId = `teacher_${subj}_${teach}`;
+            const radio = document.getElementById(radioId);
+            if (radio) radio.checked = true;
+            else dlog('selectTeacher: radio element not found for id=', radioId);
+
+            document.querySelectorAll(`#teachers_${escapeHtmlAttr(String(subj))} .teacher-option`).forEach(o => o.classList.remove('selected'));
+            const clicked = document.getElementById(`teacher_${escapeHtmlAttr(String(subj))}_${escapeHtmlAttr(String(teach))}`)?.closest('.teacher-option');
+            if (clicked) clicked.classList.add('selected');
+        } catch (e) { }
+
+        updateSelectedSubjectsSummary();
+
+        if (scheduleLoadTimer) clearTimeout(scheduleLoadTimer);
+        scheduleLoadTimer = setTimeout(() => {
+            try {
+                updateScheduleVisibility();
+            } catch (e) {
+                derror('updateScheduleVisibility failed inside selectTeacher', e);
+                if (typeof loadAvailableSchedules === 'function') loadAvailableSchedules();
+            }
+        }, SCHEDULE_LOAD_DEBOUNCE_MS);
+    } catch (ex) {
+        derror('selectTeacher exception', ex);
     }
-
-    document.querySelectorAll(`#teachers_${subjectCode} .teacher-option`).forEach(o => o.classList.remove('selected'));
-    const clicked = document.querySelector(`#teacher_${subjectCode}_${teacherCode}`)?.closest('.teacher-option');
-    if (clicked) clicked.classList.add('selected');
-
-    updateSelectedSubjectsSummary();
 };
 
 window.selectSchedule = function (subjectCode, teacherCode, scheduleCode, scheduleName, dayOfWeek, startTime, endTime) {
-    const idx = selectedSubjects.findIndex(s => s.subjectCode === subjectCode && s.teacherCode === teacherCode);
+    const idx = selectedSubjects.findIndex(s => String(s.subjectCode) === String(subjectCode) && String(s.teacherCode) === String(teacherCode));
     if (idx !== -1) {
         selectedSubjects[idx].scheduleCode = scheduleCode;
-        selectedSubjects[idx].scheduleName = `${dayOfWeek} ${startTime}-${endTime}`;
+        selectedSubjects[idx].scheduleName = scheduleName || `${dayOfWeek} ${startTime}-${endTime}`;
     }
     updateSelectedSubjectsSummary();
 };
 
 window.removeSubject = function (subjectCode) {
     const checkbox = document.getElementById(`subject_${subjectCode}`);
-    if (checkbox) {
-        checkbox.checked = false;
-        window.toggleSubject(subjectCode, '');
-    }
+    if (checkbox) { checkbox.checked = false; toggleSubject(subjectCode, ''); }
 };
 
+// ---------------- Summary UI ----------------
 function updateSelectedSubjectsSummary() {
     const container = document.getElementById('selectedSubjectsSummary');
     const list = document.getElementById('selectedSubjectsList');
-
-    if (selectedSubjects.length === 0) {
-        container.style.display = 'none';
-        return;
-    }
+    if (!container || !list) return;
+    if (selectedSubjects.length === 0) { container.style.display = 'none'; list.innerHTML = ''; return; }
 
     list.innerHTML = selectedSubjects.map(s => `
         <div class="summary-item">
             <div class="si-info">
-                <strong>${s.subjectName}</strong>
-                ${s.teacherName ? `<br><small class="text-muted">${s.teacherName}</small>` : ''}
-                ${s.scheduleName ? `<br><small class="text-info">${s.scheduleName}</small>` : ''}
+                <strong>${escapeHtml(s.subjectName)}</strong>
+                ${s.teacherName ? `<br><small class="text-muted">${escapeHtml(s.teacherName)}</small>` : ''}
+                ${s.scheduleName ? `<br><small class="text-info">${escapeHtml(s.scheduleName)}</small>` : ''}
             </div>
-            <button type="button" class="btn-remove" onclick="removeSubject(${s.subjectCode})">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `).join('');
-
+            <button type="button" class="btn-remove" onclick="removeSubject('${escapeJs(s.subjectCode)}')"><i class="fas fa-times"></i></button>
+        </div>`).join('');
     container.style.display = 'block';
 }
 
-// PIN VALIDATION
-async function validatePin() {
-    const pin = document.getElementById('pinCode').value.trim();
-    if (!pin) {
-        setPinError("PIN code is required.");
-        return;
-    }
-
-    setPinError("");
-    showLoading();
-
+// ---------------- Schedule visibility ----------------
+function updateScheduleVisibility() {
     try {
-        const res = await fetch('/Student/ValidatePin', {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin })
-        });
-        const data = await res.json();
+        const scheduleSection = document.getElementById('scheduleSection');
+        if (!scheduleSection) { dlog('updateScheduleVisibility: scheduleSection not found'); return; }
 
-        if (data.valid) {
-            document.getElementById('pinError').textContent = "";
-            pinValidated = true;
-            document.getElementById('onlineYearSection').style.display = "";
-
-            const onlineYearSelect = document.getElementById('onlineYearCode');
-            if (onlineYearSelect && !onlineYearSelect.dataset.bound) {
-                onlineYearSelect.addEventListener('change', function () {
-                    resetSubjectsAndTeachers();
-                });
-                onlineYearSelect.dataset.bound = 'true';
+        if (registrationMode === "Offline") {
+            const hasSelection = Array.isArray(selectedSubjects) && selectedSubjects.some(s => s.teacherCode);
+            if (hasSelection) {
+                scheduleSection.style.display = "";
+                if (scheduleLoadTimer) clearTimeout(scheduleLoadTimer);
+                scheduleLoadTimer = setTimeout(() => {
+                    loadAvailableSchedules();
+                }, SCHEDULE_LOAD_DEBOUNCE_MS);
+            } else {
+                scheduleSection.style.display = "none";
+                const container = document.getElementById('scheduleSelection');
+                if (container) container.innerHTML = `<div class="empty-block"><i class="fas fa-calendar-times"></i><p>No subjects with teachers selected.</p></div>`;
             }
-
-            showAlert("PIN validated successfully. Select academic year.", "success");
         } else {
-            setPinError(data.error || "Invalid PIN.");
+            scheduleSection.style.display = "none";
+        }
+    } catch (ex) {
+        console.warn('updateScheduleVisibility error', ex);
+    }
+}
+
+// ---------------- PIN / username / submission ----------------
+async function validatePin() {
+    const pin = document.getElementById('pinCode')?.value?.trim() || '';
+    if (!pin) { setPinError("PIN code is required."); return; }
+    setPinError(''); showLoading();
+    try {
+        const res = await fetch('/Student/ValidatePin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin }) });
+        const data = await res.json();
+        if (data && data.valid) {
+            document.getElementById('pinError').textContent = '';
+            pinValidated = true;
+            const onlineYearSection = document.getElementById('onlineYearSection');
+            if (onlineYearSection) onlineYearSection.style.display = '';
+            const pinOk = document.getElementById('pinOk');
+            if (pinOk) pinOk.style.display = '';
+            showAlert('PIN validated successfully. Select academic year.', 'success');
+            dlog('PIN validated, pinValidated=true');
+
+            const onlineYear = document.getElementById('onlineYearCode')?.value;
+            if (onlineYear) loadAvailableSubjects();
+
+            toggleAccountCreationSectionIfNeeded();
+        } else {
+            setPinError(data?.error || 'Invalid PIN.');
             pinValidated = false;
         }
-    } catch {
-        setPinError("Network error. Please try again.");
-        pinValidated = false;
-    }
-
-    hideLoading();
+    } catch (e) { setPinError('Network error. Please try again.'); pinValidated = false; derror('validatePin error', e); } finally { hideLoading(); }
 }
-function setPinError(msg) {
-    document.getElementById('pinError').textContent = msg;
-}
+function setPinError(msg) { const el = document.getElementById('pinError'); if (el) el.textContent = msg; }
 
-// USERNAME CHECK
-async function checkUsername() {
-    const username = document.getElementById('username').value.trim();
-    if (!username) return;
+// validatePinAndUsername used for centers' offline account creation flow.
+// It uses the online pin input if registrationMode === 'Online'
+async function validatePinAndUsername() {
+    const pinField = registrationMode === 'Online' ? document.getElementById('pinCode') : document.getElementById('pinCodeAccount');
+    const pin = pinField?.value?.trim();
+    const usernameRaw = document.getElementById('username')?.value || '';
+    const username = normalizeUsername(usernameRaw);
+    const password = document.getElementById('password')?.value;
+    const confirm = document.getElementById('passwordConfirm')?.value;
+
+    if (!pin) { const pe = document.getElementById('pinErrorAccount'); if (pe) pe.textContent = "PIN is required."; return; }
+    if (!username) { document.getElementById('userError') && (document.getElementById('userError').textContent = "Username is required."); return; }
+    if (!password || !confirm) { document.getElementById('pwMismatch') && (document.getElementById('pwMismatch').style.display = ''); return; }
+    if (password !== confirm) { document.getElementById('pwMismatch') && (document.getElementById('pwMismatch').style.display = ''); return; }
+    document.getElementById('pwMismatch') && (document.getElementById('pwMismatch').style.display = 'none');
+
+    // normalize shown username so user sees trimmed lowercase value
+    const usernameInput = document.getElementById('username');
+    if (usernameInput && usernameInput.value !== username) usernameInput.value = username;
 
     showLoading();
     try {
-        const res = await fetch(`/Student/CheckUsername?username=${encodeURIComponent(username)}`);
-        const data = await res.json();
+        const pinRes = await fetch('/Student/ValidatePin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin }) });
+        const pinData = await pinRes.json();
+        if (!(pinData && pinData.valid)) { document.getElementById('pinErrorAccount') && (document.getElementById('pinErrorAccount').textContent = pinData?.error || "Invalid PIN"); document.getElementById('pinOkAccount') && (document.getElementById('pinOkAccount').style.display = 'none'); hideLoading(); return; }
+        document.getElementById('pinErrorAccount') && (document.getElementById('pinErrorAccount').textContent = "");
+        document.getElementById('pinOkAccount') && (document.getElementById('pinOkAccount').style.display = '');
 
-        if (!data.available) {
-            document.getElementById('userError').textContent = "Username is already taken.";
-        } else {
-            document.getElementById('userError').textContent = "";
+        // Check username availability
+        const avail = await isUsernameAvailable(username);
+        if (!avail.available) {
+            document.getElementById('userError') && (document.getElementById('userError').textContent = avail.error || "Username not available.");
+            hideLoading();
+            return;
         }
-    } catch {
-        document.getElementById('userError').textContent = "Network error checking username.";
-    }
-    hideLoading();
+
+        document.getElementById('userError') && (document.getElementById('userError').textContent = "");
+        pinValidated = true;
+        showAlert('PIN and username validated. You can now submit the registration.', 'success');
+    } catch (ex) { derror('validatePinAndUsername error', ex); showAlert('Network error during validation. Please try again.', 'danger'); } finally { hideLoading(); }
 }
 
-// REGISTRATION SUBMISSION
-async function submitOnlineRegistration() {
-    const formData = getFormData();
-    formData.Mode = "Online";
-    formData.PinCode = document.getElementById('pinCode').value.trim();
-    formData.Username = document.getElementById('username').value.trim();
-    formData.Password = document.getElementById('password').value;
+async function checkUsername() {
+    const usernameRaw = document.getElementById('username')?.value || '';
+    const username = normalizeUsername(usernameRaw);
+    const ue = document.getElementById('userError');
 
-    if (!formData.Username || !formData.Password) {
-        document.getElementById('userError').textContent = "Username and password are required.";
+    // show normalized value back in input so the user sees what will be checked/sent
+    const usernameInput = document.getElementById('username');
+    if (usernameInput && usernameInput.value !== username) usernameInput.value = username;
+
+    if (!username) { if (ue) ue.textContent = ''; return; }
+    showLoading();
+    try {
+        const check = await isUsernameAvailable(username);
+        if (!check.available) {
+            if (ue) ue.textContent = check.error || 'Username is not available.';
+        } else {
+            if (ue) ue.textContent = '';
+        }
+    } catch (ex) { if (ue) ue.textContent = 'Network error checking username.'; derror('checkUsername error', ex); } finally { hideLoading(); }
+}
+
+async function submitOnlineRegistration() {
+    // Normalize username and ensure availability immediately before submit
+    const usernameInput = document.getElementById('username');
+    const usernameRaw = usernameInput?.value || '';
+    const username = normalizeUsername(usernameRaw);
+    if (usernameInput && usernameInput.value !== username) usernameInput.value = username;
+
+    if (!username) {
+        // Provide a SweetAlert error if username missing
+        await Swal.fire({ icon: 'error', title: 'Missing username', text: 'Username is required for online registration.' });
+        usernameInput && usernameInput.focus();
         return;
     }
 
+    const avail = await isUsernameAvailable(username);
+    if (!avail.available) {
+        // show SweetAlert2 error and focus username (no separate "check" click required)
+        await Swal.fire({ icon: 'error', title: 'Username not available', text: avail.error || 'This username is already taken.' });
+        usernameInput && usernameInput.focus();
+        return;
+    } else {
+        document.getElementById('userError') && (document.getElementById('userError').textContent = '');
+    }
+
+    const formData = getFormData(); formData.Mode = "Online";
+    // ensure sent username is normalized and trimmed
+    formData.Username = username;
+    formData.PinCode = document.getElementById('pinCode')?.value?.trim();
+    formData.Password = document.getElementById('password')?.value;
+
+    if (!formData.Username || !formData.Password) {
+        await Swal.fire({ icon: 'error', title: 'Missing credentials', text: 'Username and password are required.' });
+        return;
+    }
+
+    // Online does not require schedules, but must select at least one subject+teacher
+    const completeSelections = selectedSubjects.filter(s => s.teacherCode);
+    if (completeSelections.length === 0) { await Swal.fire({ icon: 'error', title: 'Selection required', text: 'Please select at least one subject and a teacher.' }); return; }
+
+    dlog('Submitting Online registration with Username:', formData.Username);
     showLoading();
     try {
         const root_code = getRootCodeFromUrl();
-        const response = await fetch(`/Register/${root_code}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
+        const response = await fetch(`/Register/${root_code}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
         const result = await response.json();
-
-        if (result.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Registration Successful!',
-                text: "Your online registration is complete."
-            }).then(() => {
-                window.location.href = '/';
-            });
+        dlog('Register response', result);
+        if (result && result.success) {
+            await Swal.fire({ icon: 'success', title: 'Registration Successful!', text: result.message || "Your online registration is complete." });
+            window.location.href = result.redirectUrl || '/';
         } else {
-            showAlert(result.error || "Registration failed.", "danger");
+            // Use SweetAlert2 for submission errors
+            const errMsg = result?.error || 'Registration failed.';
+            dlog('Server rejected registration:', result, 'usernameSent=', formData.Username);
+            await Swal.fire({ icon: 'error', title: 'Registration Failed', text: errMsg });
+            // Also show any inline userError text
+            const ue = document.getElementById('userError');
+            if (ue) ue.textContent = result?.error || '';
         }
     } catch (ex) {
-        showAlert("Network error. Please try again.", "danger");
-    }
-    hideLoading();
+        derror('submitOnlineRegistration error', ex);
+        await Swal.fire({ icon: 'error', title: 'Network Error', text: 'Network error. Please try again.' });
+    } finally { hideLoading(); }
 }
 
 async function submitRegistration() {
-    if (registrationMode === "Online") return;
+    if (registrationMode === "Online") { await submitOnlineRegistration(); return; }
+    const terms = document.getElementById('termsAccepted'); if (terms && !terms.checked) { await Swal.fire({ icon: 'error', title: 'Terms required', text: 'You must accept the terms and conditions.' }); return; }
 
-    if (!document.getElementById('termsAccepted').checked) {
-        showAlert('You must accept the terms and conditions.', 'danger');
-        return;
+    const prevStep = currentStep; currentStep = 2; if (!validateCurrentStep()) { currentStep = prevStep; return; } currentStep = prevStep;
+
+    const requiresAccount = !!(rootFlags && rootFlags.hasAccount);
+    if (requiresAccount) {
+        // For Offline when center requires account (including the "root with all flags true" scenario)
+        // ensure username is normalized and available BEFORE proceeding to PIN validation/server submit.
+        const pin = document.getElementById('pinCodeAccount')?.value?.trim();
+        const usernameInput = document.getElementById('username');
+        const usernameRaw = usernameInput?.value || '';
+        const usernameNorm = normalizeUsername(usernameRaw);
+        if (usernameInput && usernameInput.value !== usernameNorm) usernameInput.value = usernameNorm;
+
+        const password = document.getElementById('password')?.value;
+        const confirm = document.getElementById('passwordConfirm')?.value;
+
+        if (!pin || !usernameNorm || !password || !confirm) { await Swal.fire({ icon: 'error', title: 'Missing data', text: 'PIN and account credentials are required for this center.' }); return; }
+        if (password !== confirm) { await Swal.fire({ icon: 'error', title: 'Passwords mismatch', text: 'Passwords do not match.' }); return; }
+
+        // Re-check username availability right before submit (prevents race and matches Online behavior)
+        showLoading();
+        try {
+            const avail = await isUsernameAvailable(usernameNorm);
+            if (!avail.available) {
+                hideLoading();
+                await Swal.fire({ icon: 'error', title: 'Username not available', text: avail.error || 'This username is already taken.' });
+                usernameInput && usernameInput.focus();
+                return;
+            } else {
+                document.getElementById('userError') && (document.getElementById('userError').textContent = '');
+            }
+
+            if (!pinValidated) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: '',
+                    text: 'يجب ان تتحقق من اسم المستخدم و الرمز اولا'
+                });
+                return;
+            }
+                
+            
+        } catch (ex) {
+            hideLoading();
+            await Swal.fire({ icon: 'error', title: 'Network Error', text: 'Network error validating username or PIN.' });
+            return;
+        } finally {
+            hideLoading();
+        }
     }
 
-    const formData = getFormData();
-    formData.Mode = registrationMode;
-
+    const formData = getFormData(); formData.Mode = registrationMode;
     showLoading();
     try {
         const root_code = getRootCodeFromUrl();
-        const response = await fetch(`/Register/${root_code}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-
+        const response = await fetch(`/Register/${root_code}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
         const text = await response.text();
-        if (!response.ok) {
-            showAlert(`Server error: ${response.status}`, 'danger');
-            return;
-        }
-
+        if (!response.ok) { await Swal.fire({ icon: 'error', title: 'Server Error', text: `Server error: ${response.status}` }); console.error('submitRegistration http error', response.status, text); return; }
         let result;
-        try {
-            result = JSON.parse(text);
-        } catch {
-            showAlert('Invalid response from server', 'danger');
-            return;
+        try { result = JSON.parse(text); } catch (e) { await Swal.fire({ icon: 'error', title: 'Server Error', text: 'Invalid response from server' }); console.error('submitRegistration parse error', e, text); return; }
+        if (result && result.success) { await Swal.fire({ icon: 'success', title: 'Registration Successful!', text: result.message || "Welcome!" }); window.location.href = result.redirectUrl || `/Register/${root_code}/Success`; }
+        else {
+            const errMsg = result?.error || 'Registration failed.';
+            await Swal.fire({ icon: 'error', title: 'Registration Failed', text: errMsg });
         }
-
-        if (result.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Registration Successful!',
-                text: result.message || "Welcome!"
-            }).then(() => {
-                window.location.href = result.redirectUrl || `/Register/${root_code}/Success`;
-            });
-        } else {
-            showAlert(result.error || 'Registration failed.', 'danger');
-        }
-    } catch (error) {
-        showAlert(`Network error: ${error.message}`, 'danger');
-    } finally {
-        hideLoading();
-    }
+    } catch (error) { await Swal.fire({ icon: 'error', title: 'Network Error', text: `Network error: ${error.message}` }); console.error('submitRegistration error', error); } finally { hideLoading(); }
 }
 
-// SUMMARY
-function showRegistrationSummary() {
-    const summary = document.getElementById('registrationSummary');
-    const formData = getFormData();
-
-    summary.innerHTML = `
-        <div class="summary-grid">
-            <div>
-                <h5 class="summary-heading"><i class="fas fa-user me-2"></i>Personal Information</h5>
-                <ul class="summary-list">
-                    <li><strong>Name:</strong> ${formData.StudentName}</li>
-                    <li><strong>Birthdate:</strong> ${formData.BirthDate}</li>
-                    <li><strong>Student Phone:</strong> ${formData.StudentPhone}</li>
-                    <li><strong>Father Phone:</strong> ${formData.StudentFatherPhone}</li>
-                    <li><strong>Mother Phone:</strong> ${formData.StudentMotherPhone}</li>
-                    <li><strong>Father Job:</strong> ${formData.StudentFatherJob}</li>
-                    <li><strong>Mother Job:</strong> ${formData.StudentMotherJob}</li>
-                    <li><strong>Gender:</strong> ${formData.Gender === true ? 'Male' : formData.Gender === false ? 'Female' : 'Not Specified'}</li>
-                </ul>
-            </div>
-            <div>
-                <h5 class="summary-heading"><i class="fas fa-school me-2"></i>Academic Information</h5>
-                <ul class="summary-list">
-                    <li><strong>Branch:</strong> ${document.getElementById('branchCode')?.selectedOptions[0]?.text || '—'}</li>
-                    <li><strong>Academic Year:</strong> ${document.getElementById('yearCode')?.selectedOptions[0]?.text || '—'}</li>
-                    <li><strong>Education Year:</strong> ${document.getElementById('eduYearCodeDisplay')?.value || '—'}</li>
-                </ul>
-            </div>
-        </div>
-        <h5 class="summary-heading mt-3"><i class="fas fa-books me-2"></i>Selected Subjects (${selectedSubjects.filter(s => s.teacherCode).length})</h5>
-        <div class="subject-summary-list">
-            ${selectedSubjects.filter(s => s.teacherCode).map(s => `
-                <div class="subject-chip">
-                    <div>
-                        <strong>${s.subjectName}</strong><br>
-                        <small>${s.teacherName}</small>
-                        ${s.scheduleName ? `<br><small class="text-info">${s.scheduleName}</small>` : ''}
-                    </div>
-                </div>`).join('')}
-        </div>
-    `;
-}
-
-// FORM DATA
+// ---------------- Form data ----------------
 function getFormData() {
     const genderRadio = document.querySelector('input[name="Gender"]:checked');
-    let genderValue = null;
-    if (genderRadio) genderValue = genderRadio.value === 'true';
+    let genderValue = null; if (genderRadio) genderValue = genderRadio.value === 'true';
 
     let branchCodeValue, yearCodeValue, eduYearCodeValue;
     if (registrationMode === "Offline") {
@@ -839,31 +1074,30 @@ function getFormData() {
         eduYearCodeValue = document.getElementById('onlineEduYearCode')?.value;
     }
 
-    const subjectsArray = [];
-    const teachersArray = [];
-    const schedulesArray = [];
-
+    const subjectsArray = [], teachersArray = [], schedulesArray = [];
     selectedSubjects.forEach(s => {
-        if (s.teacherCode && s.yearCode && s.eduYearCode) {
+        if (s.teacherCode && (registrationMode === "Online" || (s.yearCode != null && s.eduYearCode != null))) {
             subjectsArray.push(s.subjectCode);
             teachersArray.push(s.teacherCode);
-            if (registrationMode === "Offline") {
-                schedulesArray.push(s.scheduleCode ? s.scheduleCode : 0);
-            }
+            if (registrationMode === "Offline") schedulesArray.push(s.scheduleCode ? s.scheduleCode : 0);
         }
     });
 
     const rootCode = getRootCodeFromUrl();
+    // normalize username for final payload (trim + lower)
+    const usernameInput = document.getElementById('username');
+    const usernameNorm = usernameInput ? normalizeUsername(usernameInput.value || '') : null;
+    if (usernameInput && usernameInput.value !== usernameNorm) usernameInput.value = usernameNorm;
 
     return {
         RootCode: rootCode ? parseInt(rootCode) : 0,
-        StudentName: document.getElementById('studentName').value.trim(),
-        StudentPhone: document.getElementById('studentPhone').value.trim(),
-        StudentFatherPhone: document.getElementById('parentPhone').value.trim(),
-        StudentMotherPhone: document.getElementById('motherPhone').value.trim(),
-        StudentFatherJob: document.getElementById('fatherJob').value.trim(),
-        StudentMotherJob: document.getElementById('motherJob').value.trim(),
-        BirthDate: document.getElementById('birthDate').value,
+        StudentName: (document.getElementById('studentName')?.value || '').trim(),
+        StudentPhone: (document.getElementById('studentPhone')?.value || '').trim(),
+        StudentFatherPhone: (document.getElementById('parentPhone')?.value || '').trim(),
+        StudentMotherPhone: (document.getElementById('motherPhone')?.value || '').trim(),
+        StudentFatherJob: (document.getElementById('fatherJob')?.value || '').trim(),
+        StudentMotherJob: (document.getElementById('motherJob')?.value || '').trim(),
+        BirthDate: document.getElementById('birthDate')?.value,
         Gender: genderValue,
         Mode: registrationMode,
         BranchCode: branchCodeValue ? parseInt(branchCodeValue) : null,
@@ -872,44 +1106,10 @@ function getFormData() {
         SelectedSubjects: subjectsArray,
         SelectedTeachers: teachersArray,
         SelectedSchedules: registrationMode === "Online" ? [] : schedulesArray,
-        PinCode: document.getElementById('pinCode')?.value?.trim() || null,
-        Username: document.getElementById('username')?.value?.trim() || null,
+        PinCode: (document.getElementById('pinCodeAccount')?.value || document.getElementById('pinCode')?.value || '').trim() || null,
+        Username: usernameNorm || null,
         Password: document.getElementById('password')?.value || null
     };
 }
 
-function getRootCodeFromUrl() {
-    const match = window.location.pathname.match(/\/Register\/(\d+)/i);
-    return match ? match[1] : null;
-}
-
-// UTILITIES
-function showLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.style.display = 'flex';
-}
-
-function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.style.display = 'none';
-}
-
-function showAlert(message, type = 'info') {
-    const currentStepContent = document.getElementById(`step${currentStep}Content`);
-    if (!currentStepContent) return;
-
-    currentStepContent.querySelectorAll('.alert.temp').forEach(a => a.remove());
-
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} temp`;
-    alertDiv.innerHTML = `
-        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>
-        ${message}`;
-    currentStepContent.prepend(alertDiv);
-
-    currentStepContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    if (type !== 'danger') {
-        setTimeout(() => alertDiv.remove(), 5000);
-    }
-}
+function getRootCodeFromUrl() { const match = window.location.pathname.match(/\/Register\/(\d+)/i); return match ? match[1] : null; }

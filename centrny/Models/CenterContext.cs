@@ -908,6 +908,7 @@ public partial class CenterContext : DbContext
             entity.Property(e => e.ItemCode)
                 .ValueGeneratedNever()
                 .HasColumnName("Item_Code");
+            entity.Property(e => e.EduYear).HasColumnName("Edu_Year");
             entity.Property(e => e.InsertTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -925,7 +926,12 @@ public partial class CenterContext : DbContext
                 .HasColumnName("Last_Update_Time");
             entity.Property(e => e.LastUpdateUser).HasColumnName("Last_Update_User");
             entity.Property(e => e.RootCode).HasColumnName("Root_Code");
+            entity.Property(e => e.SerialNumber).HasColumnName("Serial_Number");
             entity.Property(e => e.StudentCode).HasColumnName("Student_Code");
+
+            entity.HasOne(d => d.EduYearNavigation).WithMany(p => p.Items)
+                .HasForeignKey(d => d.EduYear)
+                .HasConstraintName("FK_Item_Edu_Year");
 
             entity.HasOne(d => d.InsertUserNavigation).WithMany(p => p.ItemInsertUserNavigations)
                 .HasForeignKey(d => d.InsertUser)

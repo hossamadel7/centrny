@@ -1,19 +1,20 @@
 ﻿@using Microsoft.Extensions.Localization
+@using System.Text.Json
 @model PublicRegistrationViewModel
 @inject IStringLocalizerFactory LocalizerFactory
 
 @{
-    // Remove server-side localization dependency
     ViewData["Title"] = "Student Registration";
     Layout = null;
     var activeEduYear = Model.AvailableEduYears.FirstOrDefault();
+    // Optional: server can set ViewBag.RootFlagsJson = JsonSerializer.Serialize(new { isOffline = true, isOnline = true, hasProfile = true, hasAccount = true });
+    // The JS will pick it up from ViewBag.RootFlagsJson if present.
 }
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="htmlRoot">
 <head>
     <meta charset="utf-8" />
-    <title id="pageTitle">تسجيل الطلاب - @Model.RootName</title>
+    <title id="pageTitle">تسجيل الطلاب - Student Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- Fonts (Cairo + Allura like signup/login pages) -->
@@ -23,16 +24,14 @@
     <!-- FontAwesome from CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
     <!-- Theme / Vendor CSS -->
-    <link rel="stylesheet" href="~/css/main.css" />
-    <link rel="stylesheet" href="~/css/vendors.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/vendors.css" />
     <link rel="stylesheet" href="/AWS/css/bw-theme.css" />
-    <link rel="stylesheet" href="~/css/StudentRegistration.css" />
-    <link rel="stylesheet" href="~/css/PublicRegiester.css" />
-    <link rel="icon" type="image/png" href="~/Image/clasrio-high-resolution-logoo.png" />
+    <link rel="stylesheet" href="/css/StudentRegistration.css" />
+    <link rel="stylesheet" href="/css/PublicRegiester.css" />
+    <link rel="icon" type="image/png" href="/Image/clasrio-high-resolution-logoo.png" />
 
     <style>
-        /* CRITICAL: Add step indicator styles */
-
         .wizard-steps .step {
             width: 44px !important;
             height: 44px !important;
@@ -50,22 +49,18 @@
             visibility: visible !important;
             opacity: 1 !important;
         }
-
-            .wizard-steps .step.active {
-                background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
-                color: #fff !important;
-                border-color: #6e59a4 !important;
-                box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
-            }
-
-        /* Fix form layout - ensure proper Bootstrap columns */
+        .wizard-steps .step.active {
+            background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+            color: #fff !important;
+            border-color: #6e59a4 !important;
+            box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
+        }
         .row {
             display: flex !important;
             flex-wrap: wrap !important;
             margin-right: -0.75rem !important;
             margin-left: -0.75rem !important;
         }
-
         .col-md-6 {
             flex: 0 0 50% !important;
             max-width: 50% !important;
@@ -73,26 +68,21 @@
             padding-left: 0.75rem !important;
             position: relative !important;
         }
-
         @@media (max-width: 767.98px) {
             .col-md-6 {
                 flex: 0 0 100% !important;
                 max-width: 100% !important;
             }
         }
-
-        /* Ensure form wrapper doesn't interfere */
         .form-box-wrapper {
             display: block !important;
         }
-
         .form-step-header {
             width: 100% !important;
             clear: both !important;
             display: block !important;
             margin-bottom: 1.5rem !important;
         }
-        /* Fix for step indicators - ensure horizontal display */
         .wizard-steps {
             display: flex !important;
             flex-direction: row !important;
@@ -102,55 +92,56 @@
             margin: 25px 0 35px !important;
             flex-wrap: wrap !important;
         }
-
-        /* Fix Next button - remove white styling */
         #nextBtn {
             background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
             color: #fff !important;
             border: none !important;
             box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
         }
-
-            #nextBtn:hover {
-                box-shadow: 0 6px 18px rgba(110,89,164,.4) !important;
-                transform: translateY(-2px) !important;
-                background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
-                color: #fff !important;
-            }
-
-            #nextBtn:focus-visible {
-                outline: none;
-                box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
-            }
-
-        /* Language Switcher Button */
+        #nextBtn:hover {
+            box-shadow: 0 6px 18px rgba(110,89,164,.4) !important;
+            transform: translateY(-2px) !important;
+            background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
+            color: #fff !important;
+        }
+        #nextBtn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
+        }
         .language-switcher {
             cursor: pointer;
             transition: color 0.25s ease;
         }
-
-            .language-switcher:hover {
-                color: #6e59a4 !important;
-            }
-
-        /* RTL/LTR specific styles */
+        .language-switcher:hover {
+            color: #6e59a4 !important;
+        }
         [dir="rtl"] .navigation-buttons {
             flex-direction: row-reverse;
         }
-
         [dir="rtl"] .form-check-label {
             margin-right: 0;
             margin-left: 1.5em;
         }
-
         [dir="ltr"] .form-check-label {
             margin-left: 0;
             margin-right: 1.5em;
         }
-
-        /* Smooth transitions for direction changes */
         * {
             transition: text-align 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+        }
+
+        /* Small helper styles for forced mode */
+        .mode-hidden {
+            display: none !important;
+        }
+        .pin-validated {
+            color: #1f7a1f;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .pw-mismatch {
+            color: #a94442;
+            margin-top: 6px;
         }
     </style>
 </head>
@@ -159,7 +150,6 @@
     <div class="preloader js-preloader">
         <div class="preloader__bg"></div>
     </div>
-
     <main class="main-content bg-beige-1">
         <!-- Header -->
         <header data-anim="fade" data-add-bg class="header -type-4 -shadow bg-white border-bottom-light js-header">
@@ -167,7 +157,7 @@
                 <div class="row justify-between items-center">
                     <div class="col-auto">
                         <div class="header-left d-flex items-center">
-                            <a href="~/" class="brand-logo" aria-label="@Model.RootName">
+                            <a href="~/" class="brand-logo" aria-label="Dynamic Root">
                                 <span class="brand-logo__letter">A</span>
                                 <span class="brand-logo__sep">|</span>
                                 <span class="brand-logo__letter">F</span>
@@ -232,7 +222,6 @@
                 </div>
             </div>
         </header>
-
         <!-- Page Content -->
         <div class="content-wrapper js-content-wrapper">
             <section class="form-page js-mouse-move-container">
@@ -256,66 +245,37 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Wizard Content -->
                 <div class="form-page__content lg:py-50">
                     <div class="container">
                         <div class="row justify-center items-center">
                             <div class="col-xl-7 col-lg-8">
                                 <div class="registration-card">
-                                    <h3 class="registration-title" data-localize="main_title">
-                                        التسجيل كطالب جديد
-                                    </h3>
-                                    <p class="muted-intro" data-localize="main_subtitle" data-param-name="@Model.RootName">
-                                        انضم إلى @Model.RootName وابدأ رحلتك التعليمية.
+                                    <h3 class="registration-title" data-localize="main_title">التسجيل كطالب جديد</h3>
+                                    <p class="muted-intro" data-localize="main_subtitle" data-param-name="Dynamic Root">
+                                        انضم إلى Dynamic Root وابدأ رحلتك التعليمية.
                                     </p>
-
                                     <!-- Instructions -->
                                     <div class="instructions">
                                         <h5><i class="fas fa-info-circle"></i> <span data-localize="instructions_title">خطوات التسجيل</span></h5>
                                         <ul>
                                             <li data-localize="instruction_1">أدخل بياناتك الشخصية</li>
                                             <li data-localize="instruction_2">اختر طريقة الدراسة والفرع أو رمز الأونلاين</li>
-                                            <li data-localize="instruction_3">حدد المواد واختر المعلم لكل مادة</li>
+                                            <li data-localize="instruction_3">حدد المواد واختر معلم لكل مادة</li>
                                             <li data-localize="instruction_4">اختر الجداول وبيانات الحساب الأونلاين</li>
-                                            <li data-localize="instruction_5">راجع و أكمل التسجيل</li>
                                         </ul>
                                     </div>
-
                                     <!-- BEGIN: Boxed Form Content -->
                                     <div class="form-box-wrapper">
-                                        <!-- Step Indicators -->
+                                        <!-- Step Indicators (now only 2 steps) -->
                                         <div class="wizard-steps" aria-label="steps">
                                             <div class="step active" id="step1">1</div>
                                             <div class="step" id="step2">2</div>
-                                            <div class="step" id="step3">3</div>
-                                            <div class="step" id="step4">4</div>
-                                            <div class="step" id="step5">5</div>
                                         </div>
-
-                                        <!-- Validation Summary -->
-                                        @if (!ViewData.ModelState.IsValid)
-                                        {
-                                            <div class="alert alert-danger" role="alert">
-                                                <h6 style="margin:0 0 6px;">
-                                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                                    <span data-localize="validation_error">يرجى تصحيح الأخطاء التالية:</span>
-                                                </h6>
-                                                <ul style="margin:0; padding-inline-start:18px;">
-                                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                                                    {
-                                                        <li>@error.ErrorMessage</li>
-                                                    }
-                                                </ul>
-                                            </div>
-                                        }
-
                                         <!-- Multi-step Registration Form -->
-                                        <form id="registrationForm"
-                                              method="post"
-                                              asp-action="PublicRegister"
-                                              asp-route-root_code="@Model.RootCode"
-                                              autocomplete="off">
+                                        <form id="registrationForm" autocomplete="off">
+                                            @* Anti-forgery token so JS can pick it up and include in POSTs *@
+                                            @Html.AntiForgeryToken()
 
                                             <!-- STEP 1: Personal Information -->
                                             <div class="form-step active" id="step1Content">
@@ -394,69 +354,53 @@
                                                                 <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
                                                                 <label class="form-check-label" for="genderFemale" data-localize="female">أنثى</label>
                                                             </div>
+
                                                         </div>
                                                         <div class="invalid-feedback"></div>
                                                     </div>
+                                                    <button type="button" class="btn-theme" id="nextBtn" style="display: inline-flex;">
+    <span data-localize="next">التالي</span>
+    <i class="fas fa-arrow-left" id="nextArrow"></i>
+</button>
                                                 </div>
                                             </div>
-
-                                            <!-- STEP 2: Mode / Branch / PIN -->
+                                            <!-- STEP 2: All Remaining Registration (Combined) -->
                                             <div class="form-step" id="step2Content">
+                                                <!-- Registration Mode / Branch / PIN -->
                                                 <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
                                                     <i class="fas fa-laptop"></i>
-                                                    <span data-localize="step2_title">وضع الدراسة و الموقع</span>
+                                                    <span data-localize="step2_title">طريقة الدراسة</span>
                                                 </h4>
                                                 <div class="mb-4">
                                                     <label class="form-label">
-                                                        <span data-localize="study_mode">طريقة الدراسة</span> <span class="text-danger">*</span>
+                                                        <span data-localize="study_mode"></span> <span class="text-danger"></span>
                                                     </label>
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="form-check">
-                                                                <input type="radio" class="form-check-input" name="Mode" value="Offline" id="modeOffline" checked required />
-                                                                <label class="form-check-label" for="modeOffline">
-                                                                    <i class="fas fa-building me-2"></i><span data-localize="offline_mode">مركز (أوفلاين)</span>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-check">
-                                                                <input type="radio" class="form-check-input" name="Mode" value="Online" id="modeOnline" required />
-                                                                <label class="form-check-label" for="modeOnline">
-                                                                    <i class="fas fa-laptop me-2"></i><span data-localize="online_mode">أونلاين</span>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                   <div class="mode-toggle-group" id="modeToggleGroup">
+    <button type="button" class="mode-toggle-btn active" data-mode="Offline" id="offlineBtn">
+        <i class="fas fa-building"></i>
+        <span>مركز (أوفلاين)</span>
+    </button>
+    <button type="button" class="mode-toggle-btn" data-mode="Online" id="onlineBtn">
+        <i class="fas fa-laptop"></i>
+        <span>أونلاين</span>
+    </button>
+    <input type="hidden" id="modeInput" name="Mode" value="Offline" />
+</div>
                                                 </div>
-
-                                                <!-- Offline branch/year -->
                                                 <div id="branchSection" class="mb-4">
                                                     <div class="row">
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label" for="branchCode">
-                                                                <span data-localize="branch">الفرع</span> <span class="text-danger">*</span>
+                                                                <span data-localize="branch">السنتر</span> <span class="text-danger">*</span>
                                                             </label>
-                                                            <select class="form-select" id="branchCode" name="BranchCode">
-                                                                <option value="" data-localize="select_branch">اختر الفرع</option>
-                                                                @foreach (var branch in Model.AvailableBranches)
-                                                                {
-                                                                    <option value="@branch.Value">@branch.Text</option>
-                                                                }
-                                                            </select>
+                                                            <select class="form-select" id="branchCode" name="BranchCode"></select>
                                                             <div class="invalid-feedback"></div>
                                                         </div>
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label" for="yearCode">
                                                                 <span data-localize="academic_year">السنة الدراسية</span> <span class="text-danger">*</span>
                                                             </label>
-                                                            <select class="form-select" id="yearCode" name="YearCode">
-                                                                <option value="" data-localize="select_year">اختر السنة</option>
-                                                                @foreach (var year in Model.AvailableYears)
-                                                                {
-                                                                    <option value="@year.Value">@year.Text</option>
-                                                                }
-                                                            </select>
+                                                            <select class="form-select" id="yearCode" name="YearCode"></select>
                                                             <div class="invalid-feedback"></div>
                                                         </div>
                                                     </div>
@@ -465,12 +409,11 @@
                                                             <label class="form-label" for="eduYearCodeDisplay">
                                                                 <span data-localize="education_year">المرحلة التعليمية</span>
                                                             </label>
-                                                            <input type="text" class="form-control" id="eduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                                                            <input type="hidden" id="eduYearCode" name="EduYearCode" value="@activeEduYear?.Value" />
+                                                            <input type="text" class="form-control" id="eduYearCodeDisplay" disabled />
+                                                            <input type="hidden" id="eduYearCode" name="EduYearCode" />
                                                         </div>
                                                     </div>
                                                 </div>
-
                                                 <!-- Online PIN Flow -->
                                                 <div id="onlinePinSection" style="display:none;">
                                                     <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
@@ -483,11 +426,11 @@
                                                         </label>
                                                         <input type="text" class="form-control" id="pinCode" maxlength="20" autocomplete="off" />
                                                         <div id="pinError" class="text-danger mt-2"></div>
+                                                        <div id="pinOk" class="pin-validated" style="display:none;">PIN صالح</div>
                                                     </div>
                                                     <button type="button" class="btn-theme" id="validatePinBtn">
                                                         <i class="fas fa-check-circle"></i> <span data-localize="validate_pin">تحقق من الرمز</span>
                                                     </button>
-
                                                     <div id="onlineYearSection" style="display:none;" class="mt-4">
                                                         <h6 class="mb-3 text-15 fw-600">
                                                             <i class="fas fa-graduation-cap text-purple-1 me-1"></i>
@@ -497,45 +440,30 @@
                                                             <label class="form-label" for="onlineYearCode">
                                                                 <span data-localize="year">السنة</span> <span class="text-danger">*</span>
                                                             </label>
-                                                            <select class="form-select" id="onlineYearCode" name="OnlineYearCode">
-                                                                <option value="" data-localize="select_year">اختر السنة</option>
-                                                                @foreach (var year in Model.AvailableYears)
-                                                                {
-                                                                    <option value="@year.Value">@year.Text</option>
-                                                                }
-                                                            </select>
+                                                            <select class="form-select" id="onlineYearCode" name="OnlineYearCode"></select>
                                                             <div class="invalid-feedback"></div>
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label" for="onlineEduYearCodeDisplay">
                                                                 <span data-localize="education_year">المرحلة التعليمية</span>
                                                             </label>
-                                                            <input type="text" class="form-control" id="onlineEduYearCodeDisplay" value="@activeEduYear?.Text" disabled />
-                                                            <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" value="@activeEduYear?.Value" />
+                                                            <input type="text" class="form-control" id="onlineEduYearCodeDisplay" disabled />
+                                                            <input type="hidden" id="onlineEduYearCode" name="OnlineEduYearCode" />
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <!-- STEP 3: Subjects & Teachers -->
-                                            <div class="form-step" id="step3Content">
+                                                <!-- Subjects & Teachers (combined) -->
                                                 <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
                                                     <i class="fas fa-school"></i>
                                                     <span data-localize="step3_title">اختيار المواد و المعلمين</span>
                                                 </h4>
-                                                <div class="alert alert-info">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    <span data-localize="step3_info">اختر المواد ثم اختر معلم لكل مادة.</span>
-                                                </div>
+
                                                 <div id="availableSubjects"></div>
                                                 <div id="selectedSubjectsSummary" class="mt-4" style="display:none;">
                                                     <h6 class="text-16 fw-600 mb-2" data-localize="selected_subjects">المواد المختارة</h6>
                                                     <div id="selectedSubjectsList"></div>
                                                 </div>
-                                            </div>
-
-                                            <!-- STEP 4: Schedules / Online Account -->
-                                            <div class="form-step" id="step4Content">
+                                                <!-- Schedules / Online Account (combined) -->
                                                 <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
                                                     <i class="fas fa-calendar"></i>
                                                     <span data-localize="step4_title">اختيار الجداول</span>
@@ -545,16 +473,23 @@
                                                         <i class="fas fa-info-circle me-2"></i>
                                                         <span data-localize="step4_info">اختر الجدول المناسب لكل مادة.</span>
                                                     </div>
-                                                    <div id="scheduleSelection" class="schedule-list">
-                                                       
-                                                    </div>
+                                                    <div id="scheduleSelection" class="schedule-list"></div>
                                                 </div>
 
-                                                <div id="onlineUserSection" style="display:none;">
+                                                <!-- Account creation area reused for both online and offline-hasAccount -->
+                                                <div id="accountCreationSection" style="display:none; margin-top:18px;">
                                                     <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
                                                         <i class="fas fa-user-lock text-purple-1"></i>
-                                                        <span data-localize="create_account">إنشاء حساب أونلاين</span>
+                                                        <span data-localize="create_account">إنشاء حساب أونلاين (مطلوب لهذه المركز)</span>
                                                     </h5>
+                                                    <div class="mb-3">
+                                                        <label for="pinCodeAccount" class="form-label">
+                                                            <span>رمز التحقق (PIN)</span> <span class="text-danger">*</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="pinCodeAccount" maxlength="20" autocomplete="off" />
+                                                        <div id="pinErrorAccount" class="text-danger mt-2"></div>
+                                                        <div id="pinOkAccount" class="pin-validated" style="display:none;">PIN صالح</div>
+                                                    </div>
                                                     <div class="mb-3">
                                                         <label for="username" class="form-label">
                                                             <span data-localize="username">اسم المستخدم</span> <span class="text-danger">*</span>
@@ -568,70 +503,41 @@
                                                         </label>
                                                         <input type="password" class="form-control" id="password" maxlength="40" />
                                                     </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- STEP 5: Confirmation -->
-                                            <div class="form-step" id="step5Content">
-                                                <div id="offlineSummarySection">
-                                                    <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                        <i class="fas fa-check-circle text-success"></i>
-                                                        <span data-localize="step5_title">تأكيد البيانات</span>
-                                                    </h4>
-                                                    <div class="alert alert-success">
-                                                        <i class="fas fa-info-circle me-2"></i>
-                                                        <span data-localize="step5_info">راجع بياناتك قبل الإرسال.</span>
-                                                    </div>
-                                                    <div id="registrationSummary"></div>
-                                                    <div class="form-check mt-4">
-                                                        <input class="form-check-input" type="checkbox" id="termsAccepted" required />
-                                                        <label class="form-check-label" for="termsAccepted" data-localize="terms_accept">
-                                                            أوافق على الشروط و الأحكام
+                                                    <div class="mb-3">
+                                                        <label for="passwordConfirm" class="form-label">
+                                                            <span>تأكيد كلمة المرور</span> <span class="text-danger">*</span>
                                                         </label>
+                                                        <input type="password" class="form-control" id="passwordConfirm" maxlength="40" />
+                                                        <div id="pwMismatch" class="pw-mismatch" style="display:none;">كلمات المرور لا تتطابق</div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn-theme" id="validatePinAndUsernameBtn">
+                                                            <i class="fas fa-user-check"></i> <span>تحقق من الرمز واسم المستخدم</span>
+                                                        </button>
                                                     </div>
                                                 </div>
 
-                                                <div id="onlineRegistrationSection" style="display:none;">
-                                                    <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
-                                                        <i class="fas fa-check-circle text-success"></i>
-                                                        <span data-localize="complete_online_reg">إكمال التسجيل الأونلاين</span>
-                                                    </h4>
-                                                    <div class="alert alert-success">
-                                                        <i class="fas fa-info-circle me-2"></i>
-                                                        <span data-localize="ready_complete">جاهز لإكمال التسجيل.</span>
-                                                    </div>
-                                                    <button type="button" class="btn-theme-success w-100" id="completeOnlineBtn">
-                                                        <i class="fas fa-cloud-download-alt"></i>
-                                                        <span data-localize="finish_online_reg">إكمال التسجيل الأونلاين</span>
+                                                <!-- Submit Button -->
+                                                <div class="navigation-buttons">
+                                                    <button type="button" class="btn-theme-secondary" id="prevBtn" style="display:none;">
+                                                        <i class="fas fa-arrow-right" id="prevArrow"></i>
+                                                        <span data-localize="previous">السابق</span>
+                                                    </button>
+
+                                                    <div class="flex-grow-1"></div>
+                                                    <button type="button" class="btn-theme-success" id="submitBtn">
+                                                        <i class="fas fa-check"></i>
+                                                        <span data-localize="complete_registration">تأكيد التسجيل</span>
                                                     </button>
                                                 </div>
-                                            </div>
-
-                                            <!-- Navigation Buttons -->
-                                            <div class="navigation-buttons">
-                                                <button type="button" class="btn-theme-secondary" id="prevBtn" style="display:none;">
-                                                    <i class="fas fa-arrow-right" id="prevArrow"></i>
-                                                    <span data-localize="previous">السابق</span>
-                                                </button>
-                                                <div class="flex-grow-1"></div>
-                                                <button type="button" class="btn-theme" id="nextBtn">
-                                                    <span data-localize="next">التالي</span>
-                                                    <i class="fas fa-arrow-left" id="nextArrow"></i>
-                                                </button>
-                                                <button type="button" class="btn-theme-success" id="submitBtn" style="display:none;">
-                                                    <i class="fas fa-check"></i>
-                                                    <span data-localize="complete_registration">تأكيد التسجيل</span>
-                                                </button>
-                                            </div>
-
-                                            <div class="security-note">
-                                                <i class="fas fa-lock me-1"></i>
-                                                <span data-localize="security_note">بياناتك آمنة و مشفرة.</span>
+                                                <div class="security-note">
+                                                    <i class="fas fa-lock me-1"></i>
+                                                    <span data-localize="security_note">بياناتك آمنة و مشفرة.</span>
+                                                </div>
                                             </div>
                                         </form>
                                     </div>
                                     <!-- END: Boxed Form Content -->
-
                                 </div>
                             </div>
                         </div>
@@ -640,7 +546,6 @@
             </section>
         </div>
     </main>
-
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay" style="display:none;">
         <div class="loading-spinner">
@@ -649,517 +554,25 @@
         </div>
     </div>
 
+    <script>
+        // render registrationRootCode safely as JSON (avoids JS errors if null or string)
+        window.registrationRootCode = @Html.Raw(JsonSerializer.Serialize(Model.RootCode));
+        // rootFlags injected by controller via ViewBag.RootFlagsJson (must be valid JSON literal)
+        window.rootFlags = @Html.Raw(ViewBag.RootFlagsJson ?? "null");
+    </script>
+
     <!-- Core JS Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"></script>
-    <!-- Vendor bundle and theme scripts -->
     <script src="/js/vendors.js"></script>
-    <script src="~/js/main.js"></script>
-    <!-- Registration Logic -->
-    <script src="~/js/StudentRegistration.js"></script>
-    <script src="/AWS/js/auth-layout-fix.js"></script>
-    <script src="~/aws/js/enhanced-hover-effects.js"></script>
+    <script src="/js/main.js"></script>
 
-    <!-- SweetAlert2 -->
+    <!-- Application registration script (ensure this is the updated script you want to run) -->
+    <!-- If you added the final merged file, point to it here (e.g. /js/student-registration14.js) -->
+    <script src="/js/StudentRegistration.js"></script>
+  
+    <script src="/AWS/js/auth-layout-fix.js"></script>
+    <script src="/aws/js/enhanced-hover-effects.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
-        let studentPhoneExists = false;
-        let currentLanguage = 'ar';
-
-        const translations = {
-             ar: {
-                 // Navigation
-                 nav_home: 'الرئيسية',
-                 nav_about: 'حول الأستاذ',
-                 nav_courses: 'الدروس',
-                 nav_centres: 'المراكز',
-                 nav_outstanding: 'الطلاب المتميزون',
-                 contact_us: 'اتصل بنا',
-                 login_btn: 'تسجيل الدخول',
-                 signup_btn: 'إنشاء حساب',
-                 registration_failed: 'فشل في التسجيل.',
-                 student_already_registered: 'هذا الطالب مسجل بالفعل.',
-
-                 // Main content
-                 main_title: 'التسجيل كطالب جديد',
-                 main_subtitle: 'انضم إلى {name} وابدأ رحلتك التعليمية.',
-
-                 // Instructions
-                 instructions_title: 'خطوات التسجيل',
-                 instruction_1: 'أدخل بياناتك الشخصية',
-                 instruction_2: 'اختر طريقة الدراسة والفرع أو رمز الأونلاين',
-                 instruction_3: 'حدد المواد واختر المعلم لكل مادة',
-                 instruction_4: 'اختر الجداول وبيانات الحساب الأونلاين',
-                 instruction_5: 'راجع و أكمل التسجيل',
-
-                 // Validation
-                 validation_error: 'يرجى تصحيح الأخطاء التالية:',
-
-                 // Step 1 - Personal Information
-                 step1_title: 'البيانات الشخصية',
-                 full_name: 'الاسم الكامل',
-                 birth_date: 'تاريخ الميلاد',
-                 student_phone: 'هاتف الطالب',
-                 father_phone: 'هاتف الأب',
-                 mother_phone: 'هاتف الأم',
-                 father_job: 'مهنة الأب',
-                 mother_job: 'مهنة الأم',
-                 gender: 'النوع',
-                 male: 'ذكر',
-                 female: 'أنثى',
-
-                 // Step 2 - Study Mode
-                 step2_title: 'وضع الدراسة و الموقع',
-                 study_mode: 'طريقة الدراسة',
-                 offline_mode: 'مركز (أوفلاين)',
-                 online_mode: 'أونلاين',
-                 branch: 'الفرع',
-                 academic_year: 'السنة الدراسية',
-                 education_year: 'المرحلة التعليمية',
-                 select_branch: 'اختر الفرع',
-                 select_year: 'اختر السنة',
-                 online_pin: 'رمز التسجيل أونلاين',
-                 enter_pin: 'أدخل الرمز',
-                 validate_pin: 'تحقق من الرمز',
-                 select_academic_year: 'اختر السنة الدراسية',
-                 year: 'السنة',
-
-                 // Step 3 - Subjects
-                 step3_title: 'اختيار المواد و المعلمين',
-                 step3_info: 'اختر المواد ثم اختر معلم لكل مادة.',
-                 selected_subjects: 'المواد المختارة',
-
-                 // Step 4 - Schedules
-                 step4_title: 'اختيار الجداول',
-                 step4_info: 'اختر الجدول المناسب لكل مادة.',
-                 create_account: 'إنشاء حساب أونلاين',
-                 username: 'اسم المستخدم',
-                 password: 'كلمة المرور',
-
-                 // Step 5 - Confirmation
-                 step5_title: 'تأكيد البيانات',
-                 step5_info: 'راجع بياناتك قبل الإرسال.',
-                 terms_accept: 'أوافق على الشروط و الأحكام',
-                 complete_online_reg: 'إكمال التسجيل الأونلاين',
-                 ready_complete: 'جاهز لإكمال التسجيل.',
-                 finish_online_reg: 'إكمال التسجيل الأونلاين',
-
-                 // Navigation Buttons
-                 previous: 'السابق',
-                 next: 'التالي',
-                 complete_registration: 'تأكيد التسجيل',
-
-                 // Other
-                 security_note: 'بياناتك آمنة و مشفرة.',
-                 processing: 'جارٍ معالجة التسجيل...',
-                 current_lang: 'العربية',
-
-                 // Error Messages
-                 pin_validation_required: 'يرجى التحقق من رمز التسجيل أولاً.',
-                 select_branch_year: 'يرجى اختيار الفرع والسنة الدراسية.',
-                 select_subjects_teacher: 'يرجى اختيار مادة واحدة على الأقل ومعلم.',
-                 select_schedules: 'يرجى اختيار جداول لجميع المواد المختارة.',
-                 username_password_required: 'اسم المستخدم وكلمة المرور مطلوبان.',
-                 terms_required: 'يجب الموافقة على الشروط والأحكام.',
-                 pin_required: 'رمز التسجيل مطلوب.',
-                 invalid_pin: 'رمز التسجيل غير صحيح.',
-                 pin_validated_success: 'تم التحقق من الرمز بنجاح. اختر السنة الدراسية.',
-                 username_taken: 'اسم المستخدم مستخدم بالفعل.',
-                 network_error: 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
-                 registration_successful: 'تم التسجيل بنجاح!',
-                 welcome_message: 'مرحباً بك!',
-             },
-             en: {
-                 // Navigation
-                 nav_home: 'Home',
-                 nav_about: 'About',
-                 nav_courses: 'Courses',
-                 nav_centres: 'Centres',
-                 nav_outstanding: 'Outstanding Students',
-                 contact_us: 'Call us',
-                 login_btn: 'Log in',
-                 signup_btn: 'Sign up',
-                 registration_failed: 'Registration failed.',
-                 student_already_registered: 'This student is already registered.',
-
-                 // Main content
-                 main_title: 'New Student Registration',
-                 main_subtitle: 'Join {name} and start your learning journey.',
-
-                 // Instructions
-                 instructions_title: 'Registration Steps',
-                 instruction_1: 'Enter your personal information',
-                 instruction_2: 'Choose study mode, branch or online PIN',
-                 instruction_3: 'Select subjects & teacher for each',
-                 instruction_4: 'Pick schedules & online account (if online)',
-                 instruction_5: 'Review & finish registration',
-
-                 // Validation
-                 validation_error: 'Please correct the following errors:',
-
-                 // Step 1 - Personal Information
-                 step1_title: 'Personal Information',
-                 full_name: 'Full Name',
-                 birth_date: 'Birthdate',
-                 student_phone: 'Student Phone',
-                 father_phone: 'Father Phone',
-                 mother_phone: 'Mother Phone',
-                 father_job: 'Father Job',
-                 mother_job: 'Mother Job',
-                 gender: 'Gender',
-                 male: 'Male',
-                 female: 'Female',
-
-                 // Step 2 - Study Mode
-                 step2_title: 'Learning Mode & Location',
-                 study_mode: 'Study Mode',
-                 offline_mode: 'Offline (Center)',
-                 online_mode: 'Online',
-                 branch: 'Branch',
-                 academic_year: 'Academic Year',
-                 education_year: 'Education Year',
-                 select_branch: 'Select Branch',
-                 select_year: 'Select Year',
-                 online_pin: 'Online Registration PIN',
-                 enter_pin: 'Enter PIN',
-                 validate_pin: 'Validate PIN',
-                 select_academic_year: 'Select Academic Year',
-                 year: 'Academic Year',
-
-                 // Step 3 - Subjects
-                 step3_title: 'Subject & Teacher Selection',
-                 step3_info: 'Select your subjects then pick a teacher for each.',
-                 selected_subjects: 'Selected Subjects',
-
-                 // Step 4 - Schedules
-                 step4_title: 'Schedule Selection',
-                 step4_info: 'Choose a schedule for each subject.',
-                 create_account: 'Create Online Account',
-                 username: 'Username',
-                 password: 'Password',
-
-                 // Step 5 - Confirmation
-                 step5_title: 'Confirmation',
-                 step5_info: 'Review your information before submitting.',
-                 terms_accept: 'I accept the terms and conditions',
-                 complete_online_reg: 'Complete Online Registration',
-                 ready_complete: 'Ready to complete your online registration.',
-                 finish_online_reg: 'Finish Online Registration',
-
-                 // Navigation Buttons
-                 previous: 'Previous',
-                 next: 'Next',
-                 complete_registration: 'Complete Registration',
-
-                 // Other
-                 security_note: 'Your data is secure and protected.',
-                 processing: 'Processing your registration...',
-                 current_lang: 'English',
-
-                 // Error Messages
-                 pin_validation_required: 'Please validate your PIN code first.',
-                 select_branch_year: 'Please select both branch and academic year.',
-                 select_subjects_teacher: 'Please select at least one subject and a teacher.',
-                 select_schedules: 'Please select schedules for all chosen subjects.',
-                 username_password_required: 'Username and password are required.',
-                 terms_required: 'You must accept the terms and conditions.',
-                 pin_required: 'PIN code is required.',
-                 invalid_pin: 'Invalid PIN code.',
-                 pin_validated_success: 'PIN validated successfully. Select academic year.',
-                 username_taken: 'Username is already taken.',
-                 network_error: 'Network error. Please try again.',
-                 registration_successful: 'Registration Successful!',
-                 welcome_message: 'Welcome!',
-             }
-         };
-
-                  // ======================== LOCALIZATION & LANGUAGE ========================
-        function showLocalizedAlert(messageKey, type = 'info') {
-            const message = translations[currentLanguage][messageKey] || messageKey;
-            if (typeof showAlert === 'function') {
-                showAlert(message, type);
-            } else {
-                alert(message);
-            }
-        }
-
-        function toggleLanguage() {
-            currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
-            applyLanguage(currentLanguage);
-        }
-
-        function applyLanguage(lang) {
-            const htmlRoot = document.getElementById('htmlRoot');
-            const isArabic = lang === 'ar';
-            htmlRoot.setAttribute('lang', lang);
-            htmlRoot.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
-            const rootName = '@Model.RootName';
-            document.getElementById('pageTitle').textContent =
-                isArabic ? `تسجيل الطلاب - ${rootName}` : `Student Registration - ${rootName}`;
-            document.getElementById('currentLanguage').textContent = translations[lang].current_lang;
-            const elements = document.querySelectorAll('[data-localize]');
-            elements.forEach(element => {
-                const key = element.getAttribute('data-localize');
-                let text = translations[lang][key] || key;
-                const paramName = element.getAttribute('data-param-name');
-                if (paramName) {
-                    text = text.replace('{name}', paramName);
-                }
-                element.textContent = text;
-            });
-            const prevArrow = document.getElementById('prevArrow');
-            const nextArrow = document.getElementById('nextArrow');
-            if (prevArrow && nextArrow) {
-                if (isArabic) {
-                    prevArrow.className = 'fas fa-arrow-right';
-                    nextArrow.className = 'fas fa-arrow-left';
-                } else {
-                    prevArrow.className = 'fas fa-arrow-left';
-                    nextArrow.className = 'fas fa-arrow-right';
-                }
-            }
-            updateSelectOptions(lang);
-            localStorage.setItem('preferredLanguage', lang);
-        }
-
-        function updateSelectOptions(lang) {
-            const selectBranch = document.querySelector('#branchCode option[value=""]');
-            const selectYear = document.querySelectorAll('option[value=""][data-localize="select_year"]');
-            if (selectBranch) {
-                selectBranch.textContent = translations[lang].select_branch;
-            }
-            selectYear.forEach(option => {
-                option.textContent = translations[lang].select_year;
-            });
-        }
-
-        function initializeLanguage() {
-            const savedLang = localStorage.getItem('preferredLanguage') || 'ar';
-            currentLanguage = savedLang;
-            applyLanguage(currentLanguage);
-        }
-
-        // ======================== PHONE VALIDATION ========================
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeLanguage();
-
-            const studentPhoneInput = document.getElementById('studentPhone');
-            const phoneErrorDiv = studentPhoneInput.nextElementSibling;
-
-            // FIXED: Phone validation with proper button disabling
-            studentPhoneInput.addEventListener('blur', function () {
-                const phone = studentPhoneInput.value.trim();
-                const rootCode = '@Model.RootCode';
-
-                if (!phone) {
-                    phoneErrorDiv.textContent = '';
-                    studentPhoneInput.classList.remove('is-invalid');
-                    studentPhoneExists = false;
-                    document.getElementById('nextBtn').disabled = false;
-                    return;
-                }
-
-                fetch(`/Student/CheckPhone?phone=${encodeURIComponent(phone)}&rootCode=${rootCode}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.exists) {
-                            studentPhoneExists = true;
-                            studentPhoneInput.classList.add('is-invalid');
-                            phoneErrorDiv.textContent = '';
-                            document.getElementById('nextBtn').disabled = true;
-                            Swal.fire({
-                                icon: 'error',
-                                title: translations[currentLanguage]['student_already_registered'],
-                                text: translations[currentLanguage]['student_already_registered'],
-                                confirmButtonText: 'OK'
-                            });
-                        } else {
-                            studentPhoneExists = false;
-                            studentPhoneInput.classList.remove('is-invalid');
-                            phoneErrorDiv.textContent = '';
-                            document.getElementById('nextBtn').disabled = false;
-                        }
-                    })
-                    .catch(() => {
-                        studentPhoneExists = false;
-                        phoneErrorDiv.textContent = translations[currentLanguage]['network_error'];
-                        studentPhoneInput.classList.add('is-invalid');
-                        document.getElementById('nextBtn').disabled = true;
-                    });
-            });
-
-            // Block Enter/Tab in phone field if phone exists
-            studentPhoneInput.addEventListener('keydown', function (e) {
-                if (studentPhoneExists && (e.key === 'Enter' || e.key === 'Tab')) {
-                    e.preventDefault();
-                    Swal.fire({
-                        icon: 'error',
-                        title: translations[currentLanguage]['student_already_registered'],
-                        text: translations[currentLanguage]['student_already_registered'],
-                        confirmButtonText: 'OK'
-                    });
-                }
-            });
-
-            // Block submit button
-            document.getElementById('submitBtn')?.addEventListener('click', function (e) {
-                if (studentPhoneExists) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: translations[currentLanguage]['student_already_registered'],
-                        text: translations[currentLanguage]['student_already_registered'],
-                        confirmButtonText: 'OK'
-                    });
-                    e.preventDefault();
-                    return false;
-                }
-            });
-
-            // Block form submission
-            document.getElementById('registrationForm').addEventListener('submit', function (e) {
-                if (studentPhoneExists) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: translations[currentLanguage]['student_already_registered'],
-                        text: translations[currentLanguage]['student_already_registered'],
-                        confirmButtonText: 'OK'
-                    });
-                    e.preventDefault();
-                    return false;
-                }
-            });
-
-            // ======================== SCHEDULES RENDERING ========================
-            function renderSchedules(schedules) {
-                const container = document.getElementById('scheduleSelection');
-                container.innerHTML = ''; // Clear previous
-
-                if (!schedules || schedules.length === 0) {
-                    container.innerHTML = `<div class="alert alert-danger">${translations[currentLanguage]['select_schedules']}</div>`;
-                    return;
-                }
-
-                schedules.forEach(schedule => {
-                    container.innerHTML += `
-                        <div class="schedule-card">
-                            <div class="schedule-item">
-                                <div class="schedule-title">
-                                    ${schedule.SubjectName || ''} - ${schedule.TeacherName || ''}
-                                </div>
-                                <div class="schedule-details">
-                                    ${schedule.DayName || schedule.DayTime || ''}
-                                    ${schedule.StartTime ? " " + schedule.StartTime : ""}
-                                    ${schedule.EndTime ? " - " + schedule.EndTime : ""}
-                                    ${schedule.HallName ? " | " + schedule.HallName : (schedule.Location ? " | " + schedule.Location : "")}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            function fetchAndRenderSchedules(subjectCode, teacherCode, branchCode, yearCode) {
-                fetch(`/Student/GetSchedulesForSubjectTeacher?subjectCode=${subjectCode}&teacherCode=${teacherCode}&branchCode=${branchCode}${yearCode ? `&yearCode=${yearCode}` : ''}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        renderSchedules(data);
-                    })
-                    .catch(() => {
-                        document.getElementById('scheduleSelection').innerHTML =
-                            `<div class="alert alert-danger">${translations[currentLanguage]['network_error']}</div>`;
-                    });
-            }
-
-            // ======================== REGISTRATION SUMMARY RENDERING ========================
-            function formatLabel(label) {
-                // Converts camelCase or snake_case to readable
-                return label
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/_/g, ' ')
-                    .replace(/^./, function(str){ return str.toUpperCase(); });
-            }
-
-          function renderRegistrationSummary(data) {
-    let html = '';
-
-    // Personal Information
-    html += `<h5 class="summary-section">${translations[currentLanguage]['step1_title']} <i class="fa fa-user"></i></h5>`;
-    Object.entries(data.personal).forEach(([key, value]) => {
-        html += `<div class="summary-row">
-            <div class="summary-label">${translations[currentLanguage][key] || key}:</div>
-            <div class="summary-value">${value}</div>
-        </div>`;
-    });
-
-    // Academic Information
-    html += `<h5 class="summary-section">${translations[currentLanguage]['step2_title']} <i class="fa fa-graduation-cap"></i></h5>`;
-    Object.entries(data.academic).forEach(([key, value]) => {
-        html += `<div class="summary-row">
-            <div class="summary-label">${translations[currentLanguage][key] || key}:</div>
-            <div class="summary-value">${value}</div>
-        </div>`;
-    });
-
-    // Subjects
-    if (Array.isArray(data.subjects) && data.subjects.length) {
-        html += `<h5 class="summary-section">${translations[currentLanguage]['selected_subjects']} (${data.subjects.length})</h5>`;
-        data.subjects.forEach(subject => {
-            html += `<div class="summary-row">
-                <div class="summary-label">${translations[currentLanguage]['step3_title']}:</div>
-                <div class="summary-value">${subject}</div>
-            </div>`;
-        });
-    }
-
-    document.getElementById('registrationSummary').innerHTML = html;
-}
-
-            window.renderRegistrationSummaryFromForm = function() {
-    const personal = {
-        name: document.getElementById('studentName')?.value || "",
-        birthdate: document.getElementById('birthDate')?.value || "",
-        studentPhone: document.getElementById('studentPhone')?.value || "",
-        fatherPhone: document.getElementById('parentPhone')?.value || "",
-        motherPhone: document.getElementById('motherPhone')?.value || "",
-        fatherJob: document.getElementById('fatherJob')?.value || "",
-        motherJob: document.getElementById('motherJob')?.value || "",
-        gender: document.querySelector('input[name="Gender"]:checked')?.value === "true"
-            ? translations[currentLanguage]['male']
-            : translations[currentLanguage]['female']
-    };
-
-    const academic = {
-        branch: document.getElementById('branchCode')?.selectedOptions[0]?.text || "",
-        academicYear: document.getElementById('yearCode')?.selectedOptions[0]?.text || "",
-        educationYear: document.getElementById('eduYearCodeDisplay')?.value || ""
-    };
-
-    const subjects = Array.from(document.querySelectorAll('.selected-subject-item')).map(el => el.textContent.trim());
-
-    renderRegistrationSummary({
-        personal,
-        academic,
-        subjects
-    });
-};
-
-            // Make functions globally available
-            window.toggleLanguage = toggleLanguage;
-            window.showLocalizedAlert = showLocalizedAlert;
-            window.getCurrentLanguage = () => currentLanguage;
-            window.getTranslation = (key) => translations[currentLanguage][key] || key;
-            window.renderSchedules = renderSchedules;
-            window.fetchAndRenderSchedules = fetchAndRenderSchedules;
-            window.renderRegistrationSummary = renderRegistrationSummary;
-        });
-
-        window.addEventListener('load', function () {
-            const pre = document.querySelector('.preloader');
-            pre?.classList.add('is-hidden');
-            document.body.classList.remove('preloader-visible');
-            setTimeout(() => pre?.remove(), 800);
-            initializeLanguage();
-        });
-        </Script>
 </body>
 </html>

@@ -11,7 +11,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace centrny.Controllers
 {
@@ -132,13 +134,44 @@ namespace centrny.Controllers
         [Route("Register/{root_code:int}")]
         public async Task<IActionResult> PublicRegister(int root_code)
         {
-            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == root_code && r.IsActive);
+            var domain = HttpContext.Request.Host.Host.ToLower().Replace("www.", "");
+            var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootDomain.ToLower() == domain && r.IsActive);
+
             if (root == null)
                 return NotFound("Registration center not found or inactive.");
 
-            var viewModel = await BuildPublicRegistrationViewModel(root_code, root.RootName);
+            // Get culture from cookie
+            var culture = Request.Cookies["SelectedCulture"];
+            var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+
+            // Query Content table for this root_code
+            var contentRow = await _context.Contents
+                .FirstOrDefaultAsync(c => c.RootCode == root.RootCode);
+
+            // Use correct property names: SignUp and SignUpAr
+            ViewBag.Signup = useArabic ? contentRow?.SignUpAr ?? contentRow?.SignUp : contentRow?.SignUp;
+
+            // Other layout pieces if needed
+            ViewBag.WebHeader = useArabic ? contentRow?.WebLayoutHAr ?? contentRow?.WebLayoutH : contentRow?.WebLayoutH;
+            ViewBag.WebFooter = useArabic ? contentRow?.WebLayoutFAr ?? contentRow?.WebLayoutF : contentRow?.WebLayoutF;
+            ViewBag.Title = useArabic ? contentRow?.TitleAr ?? contentRow?.Title : contentRow?.Title;
+
+            // --- NEW: prepare root flags for the client ---
+            // NOTE: replace property names with actual Root model properties if different
+            var flags = new
+            {
+                isOffline = (root.GetType().GetProperty("IsOffline") != null) ? (bool?)root.GetType().GetProperty("IsOffline").GetValue(root) : null,
+                isOnline = (root.GetType().GetProperty("IsOnline") != null) ? (bool?)root.GetType().GetProperty("IsOnline").GetValue(root) : null,
+                hasProfile = (root.GetType().GetProperty("HasProfile") != null) ? (bool?)root.GetType().GetProperty("HasProfile").GetValue(root) : null,
+                hasAccount = (root.GetType().GetProperty("HasAccount") != null) ? (bool?)root.GetType().GetProperty("HasAccount").GetValue(root) : null
+            };
+            // Use System.Text.Json for deterministic JSON
+            ViewBag.RootFlagsJson = JsonSerializer.Serialize(flags);
+
+            var viewModel = await BuildPublicRegistrationViewModel(root.RootCode, root.RootName);
             return View(viewModel);
         }
+
 
         [HttpPost]
         [Route("Register/{root_code:int}")]
@@ -149,9 +182,8 @@ namespace centrny.Controllers
             {
                 _logger.LogInformation($"=== STARTING REGISTRATION FOR ROOT {root_code} ===");
 
-                // Manual validation for required fields
+                // (Input validation unchanged...)
                 var validationErrors = new List<string>();
-
                 if (string.IsNullOrWhiteSpace(request.StudentName))
                     validationErrors.Add("Student name is required.");
                 if (string.IsNullOrWhiteSpace(request.StudentPhone))
@@ -167,7 +199,6 @@ namespace centrny.Controllers
                 if (string.IsNullOrWhiteSpace(request.Mode))
                     validationErrors.Add("Mode is required.");
 
-                // Custom validation based on registration mode
                 if (request.Mode == "Online")
                 {
                     if (string.IsNullOrWhiteSpace(request.PinCode))
@@ -177,16 +208,15 @@ namespace centrny.Controllers
                     if (string.IsNullOrWhiteSpace(request.Password))
                         validationErrors.Add("Password is required for online registration.");
 
-                    // Validate PIN code
                     if (!string.IsNullOrWhiteSpace(request.PinCode))
                     {
-                        var pinEntity = await _context.Pins
-                            .FirstOrDefaultAsync(p => p.Watermark == request.PinCode && p.IsActive == 1);
-                        if (pinEntity == null)
-                            validationErrors.Add("Invalid or expired PIN code.");
+                        var pinEntityCheck = await _context.Pins
+                            .FirstOrDefaultAsync(p => p.Watermark == request.PinCode && p.IsActive == 1 && p.RootCode == root_code && p.StudentCode == null);
+                        if (pinEntityCheck == null)
+                            validationErrors.Add("Invalid or expired PIN code for this center.");
                     }
                 }
-                else // Offline mode
+                else
                 {
                     if (!request.BranchCode.HasValue)
                         validationErrors.Add("Branch is required for offline registration.");
@@ -194,14 +224,12 @@ namespace centrny.Controllers
                         validationErrors.Add("Academic year is required for offline registration.");
                 }
 
-                // Return validation errors if any
                 if (validationErrors.Any())
                 {
                     _logger.LogWarning($"Validation failed: {string.Join(", ", validationErrors)}");
                     return Json(new { success = false, errors = validationErrors });
                 }
 
-                // Rest of your existing logic...
                 var rootEntity = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == root_code && r.IsActive);
                 if (rootEntity == null)
                 {
@@ -209,12 +237,11 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Registration center not found or inactive." });
                 }
 
-                // Continue with the rest of your existing code...
                 _logger.LogInformation("Creating student entity");
+                // Create student WITHOUT credentials
                 var student = CreateStudentFromRequest(request, root_code);
-                _context.Students.Add(student);
 
-                _logger.LogInformation("About to save Student entity");
+                _context.Students.Add(student);
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Student saved successfully with ID: {student.StudentCode}");
 
@@ -222,26 +249,61 @@ namespace centrny.Controllers
                 {
                     _logger.LogInformation("About to create Learn records");
                     await CreateLearnRecords(request, student);
-
-                    _logger.LogInformation("About to save Learn records");
-
-                    // Check what's in the context before saving
-                    var pendingLearns = _context.ChangeTracker.Entries<Learn>()
-                        .Where(e => e.State == Microsoft.EntityFrameworkCore.EntityState.Added)
-                        .ToList();
-
-                    _logger.LogInformation($"Number of Learn entities to save: {pendingLearns.Count}");
-
-                    foreach (var entry in pendingLearns)
-                    {
-                        var learn = entry.Entity;
-                        _logger.LogInformation($"Pending Learn: StudentCode={learn.StudentCode}, SubjectCode={learn.SubjectCode}, TeacherCode={learn.TeacherCode}, ScheduleCode={learn.ScheduleCode?.ToString() ?? "NULL"}, BranchCode={learn.BranchCode?.ToString() ?? "NULL"}");
-                    }
-
-                    _logger.LogInformation("Executing SaveChangesAsync for Learn records...");
-
                     await _context.SaveChangesAsync();
                     _logger.LogInformation("Learn records saved successfully");
+                }
+
+                // Determine whether to create online account immediately
+                bool rootRequiresAccount = (rootEntity.GetType().GetProperty("HasAccount") != null) ? (bool?)rootEntity.GetType().GetProperty("HasAccount").GetValue(rootEntity) == true : false;
+                bool accountRequestedInPayload = !string.IsNullOrWhiteSpace(request.Username) && !string.IsNullOrWhiteSpace(request.Password) && !string.IsNullOrWhiteSpace(request.PinCode);
+
+                if ((request.Mode == "Offline" && (rootRequiresAccount || accountRequestedInPayload)) || request.Mode == "Online")
+                {
+                    // Re-fetch and validate PIN against center, ensure it is not linked
+                    var pinEntity = await _context.Pins
+                        .FirstOrDefaultAsync(p => p.Watermark == (request.PinCode ?? "") && p.RootCode == root_code && p.IsActive == 1 && p.StudentCode == null);
+
+                    if (pinEntity == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return Json(new { success = false, error = "Invalid or already-used PIN for this center." });
+                    }
+
+                    // Check username uniqueness within root (if username provided)
+                    if (!string.IsNullOrWhiteSpace(request.Username))
+                    {
+                        // Normalize username for check (trim + lowercase invariant)
+                        var requestedUsername = request.Username.Trim().ToLowerInvariant();
+
+                        var exists = await _context.Students
+                            .AnyAsync(s => s.StudentUsername != null
+                                           && s.StudentUsername.ToLower() == requestedUsername
+                                           && s.RootCode == root_code);
+
+                        if (exists)
+                        {
+                            await transaction.RollbackAsync();
+                            return Json(new { success = false, error = "Username is already taken." });
+                        }
+
+                        // At this point uniqueness check passed: assign credentials and link pin
+                        student.StudentUsername = request.Username.Trim(); // keep original case as user entered, but we checked normalized
+                        student.StudentPassword = request.Password; // plaintext per current design
+                        student.IsConfirmed = false;
+                        student.LastInsertUser = 1;
+                        student.LastInsertTime = DateTime.Now;
+
+                        // Link PIN to student
+                        pinEntity.StudentCode = student.StudentCode;
+                        pinEntity.LastUpdateUser = 1;
+                        pinEntity.LastUpdateTime = DateTime.Now;
+
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // No username provided — nothing to do besides reserving PIN if required by business
+                    }
                 }
 
                 await transaction.CommitAsync();
@@ -250,8 +312,6 @@ namespace centrny.Controllers
                 string successMessage = request.Mode == "Online"
                     ? $"Online registration successful! Welcome {student.StudentName}."
                     : $"Registration successful! Welcome {student.StudentName}.";
-
-                _logger.LogInformation($"Registration completed for student ID {student.StudentCode}");
 
                 return Json(new
                 {
@@ -275,6 +335,120 @@ namespace centrny.Controllers
                 });
             }
         }
+
+        [HttpPost]
+        [Route("Student/CompleteOnlineSignup")]
+        public async Task<IActionResult> CompleteOnlineSignup([FromBody] CompleteSignupRequest request)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.ItemKey) ||
+                    string.IsNullOrWhiteSpace(request.Username) ||
+                    string.IsNullOrWhiteSpace(request.Password) ||
+                    string.IsNullOrWhiteSpace(request.PinCode))
+                {
+                    return Json(new { success = false, error = "All fields are required." });
+                }
+
+                var student = await GetStudentByItemKey(request.ItemKey);
+                if (student == null)
+                    return Json(new { success = false, error = "Student not found." });
+
+                if (!string.IsNullOrEmpty(student.StudentUsername))
+                    return Json(new { success = false, error = "Student already has online access." });
+
+                var pinEntity = await _context.Pins
+                    .FirstOrDefaultAsync(p =>
+                        p.Watermark == request.PinCode &&
+                        p.RootCode == student.RootCode &&
+                        p.IsActive == 1 &&
+                        p.StudentCode == null);
+
+                if (pinEntity == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        error = "Invalid PIN code or PIN already used."
+                    });
+                }
+
+                // Normalize username for comparison
+                var requested = request.Username.Trim();
+                var requestedLower = requested.ToLowerInvariant();
+
+                var existingStudent = await _context.Students
+                    .FirstOrDefaultAsync(s =>
+                        s.StudentUsername != null &&
+                        s.StudentUsername.ToLower() == requestedLower &&
+                        s.RootCode == student.RootCode);
+
+                if (existingStudent != null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        error = "Username is already taken."
+                    });
+                }
+
+                // Assign username/password as provided (no hashing)
+                student.StudentUsername = requested;
+                student.StudentPassword = request.Password;
+                student.IsConfirmed = false;
+                student.LastInsertUser = 1;
+                student.LastInsertTime = DateTime.Now;
+
+                // Link PIN to student
+                pinEntity.StudentCode = student.StudentCode;
+                pinEntity.LastUpdateUser = 1;
+                pinEntity.LastUpdateTime = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Online access has been successfully set up!"
+                });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error completing online signup");
+                return Json(new
+                {
+                    success = false,
+                    error = "An error occurred while setting up online access."
+                });
+            }
+        }
+
+
+        [HttpGet]
+        [Route("Student/GetAvailableBranches")]
+        public async Task<IActionResult> GetAvailableBranches(int rootCode)
+        {
+            var branches = await _context.Branches
+                .Where(b => b.RootCode == rootCode && b.IsActive)
+                .Select(b => new { Value = b.BranchCode, Text = b.BranchName })
+                .ToListAsync();
+            return Json(branches);
+        }
+
+        [HttpGet]
+        [Route("Student/GetAvailableEduYears")]
+        public async Task<IActionResult> GetAvailableEduYears(int rootCode)
+        {
+            var eduyears = await _context.EduYears
+                .Where(e => e.IsActive && e.RootCode == rootCode)
+                .Select(e => new { Value = e.EduCode, Text = e.EduName })
+                .ToListAsync();
+            return Json(eduyears);
+        }
+
         [HttpGet]
         [Route("Student/CheckPhone")]
         public async Task<IActionResult> CheckPhone(string phone, int rootCode)
@@ -403,6 +577,8 @@ namespace centrny.Controllers
 
         private Student CreateStudentFromRequest(PublicRegistrationRequest request, int rootCode)
         {
+            // NOTE: do NOT assign StudentUsername/StudentPassword here.
+            // Those should be assigned only after PIN validation and uniqueness checks.
             return new Student
             {
                 StudentName = request.StudentName?.Trim(),
@@ -424,10 +600,10 @@ namespace centrny.Controllers
                 InsertTime = DateTime.Now,
                 SubscribtionTime = DateOnly.FromDateTime(DateTime.Today),
 
-                // Add credentials for online students
-                StudentUsername = request.Mode == "Online" ? request.Username?.Trim() : null,
-                StudentPassword = request.Mode == "Online" ? request.Password : null,
-                IsConfirmed = request.Mode == "Online" ? false : (bool?)null
+                // DEFER credentials assignment until AFTER PIN + uniqueness checks
+                StudentUsername = null,
+                StudentPassword = null,
+                IsConfirmed = null
             };
         }
 
@@ -1088,25 +1264,8 @@ namespace centrny.Controllers
         }
 
 
-        [HttpGet]
-        [Route("Student/CheckUsername")]
-        public async Task<IActionResult> CheckUsername(string username)
-        {
-            if (string.IsNullOrWhiteSpace(username))
-                return Json(new { available = false, error = "Username is required." });
-
-            try
-            {
-                var existingStudent = await _context.Students
-                    .FirstOrDefaultAsync(s => s.StudentUsername.ToLower() == username.ToLower());
-
-                return Json(new { available = existingStudent == null });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { available = false, error = "Error checking username availability." });
-            }
-        }
+        
+        
         [HttpGet]
         [Route("Student/GetAvailableTeachers")]
         public async Task<IActionResult> GetAvailableTeachers(string subjectCodes, int branchCode, int? yearCode, int? eduYearCode)
@@ -2152,21 +2311,25 @@ namespace centrny.Controllers
             if (string.IsNullOrWhiteSpace(request.Pin))
                 return Json(new { valid = false, error = "PIN required" });
 
-            // Add your real table name and entity here, e.g. OnlineRegistrationPins
-            // Assume you have a DbSet<OnlineRegistrationPin> _context.OnlineRegistrationPins;
-
-            var pinEntity = await _context.Pins
-                .FirstOrDefaultAsync(p => p.Watermark == request.Pin && p.IsActive == 1); // and maybe not expired etc.
-
-            if (pinEntity != null)
+            try
             {
-                return Json(new { valid = true });
+                int rootCode = GetRootCode();
+
+                var pinEntity = await _context.Pins
+                    .FirstOrDefaultAsync(p => p.Watermark == request.Pin && p.IsActive == 1 && (p.RootCode == rootCode || rootCode == 0));
+
+                if (pinEntity != null)
+                    return Json(new { valid = true });
+                else
+                    return Json(new { valid = false, error = "Invalid or expired PIN." });
             }
-            else
+            catch (Exception ex)
             {
-                return Json(new { valid = false, error = "Invalid or expired PIN." });
+                _logger.LogError(ex, "ValidatePin error");
+                return Json(new { valid = false, error = "Error validating PIN." });
             }
         }
+
         [HttpGet]
         [Route("Student/GetStudentStats/{item_key}")]
         public async Task<IActionResult> GetStudentStats(string item_key)
@@ -2386,93 +2549,31 @@ namespace centrny.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("Student/CompleteOnlineSignup")]
-        public async Task<IActionResult> CompleteOnlineSignup([FromBody] CompleteSignupRequest request)
+
+        [HttpGet]
+        [Route("Student/CheckUsername")]
+        public async Task<IActionResult> CheckUsername(string username)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            if (string.IsNullOrWhiteSpace(username))
+                return Json(new { available = false, error = "Username is required." });
+
             try
             {
-                // Validate input
-                if (string.IsNullOrWhiteSpace(request.ItemKey) ||
-                    string.IsNullOrWhiteSpace(request.Username) ||
-                    string.IsNullOrWhiteSpace(request.Password) ||
-                    string.IsNullOrWhiteSpace(request.PinCode))
-                {
-                    return Json(new { success = false, error = "All fields are required." });
-                }
+                int rootCode = GetRootCode();
+                var requestedLower = username.Trim().ToLowerInvariant();
 
-                // Get student
-                var student = await GetStudentByItemKey(request.ItemKey);
-                if (student == null)
-                    return Json(new { success = false, error = "Student not found." });
-
-                // Check if student already has credentials
-                if (!string.IsNullOrEmpty(student.StudentUsername))
-                    return Json(new { success = false, error = "Student already has online access." });
-
-                // Validate PIN again
-                var pinEntity = await _context.Pins
-                    .FirstOrDefaultAsync(p =>
-                        p.Watermark == request.PinCode &&
-                        p.RootCode == student.RootCode &&
-                        p.IsActive == 1 &&
-                        p.StudentCode == null);
-
-                if (pinEntity == null)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        error = "Invalid PIN code or PIN already used."
-                    });
-                }
-
-                // Check username uniqueness (within same root)
                 var existingStudent = await _context.Students
                     .FirstOrDefaultAsync(s =>
-                        s.StudentUsername.ToLower() == request.Username.ToLower() &&
-                        s.RootCode == student.RootCode);
+                        s.StudentUsername != null &&
+                        s.StudentUsername.ToLower() == requestedLower &&
+                        (rootCode == 0 || s.RootCode == rootCode));
 
-                if (existingStudent != null)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        error = "Username is already taken."
-                    });
-                }
-
-                // Update student with credentials
-                student.StudentUsername = request.Username.Trim();
-                student.StudentPassword = request.Password; // Consider hashing this
-                student.IsConfirmed = false; // Set to false initially
-                student.LastInsertUser = 1;
-                student.LastInsertTime = DateTime.Now;
-
-                // Link PIN to student
-                pinEntity.StudentCode = student.StudentCode;
-                pinEntity.LastUpdateUser = 1;
-                pinEntity.LastUpdateTime = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return Json(new
-                {
-                    success = true,
-                    message = "Online access has been successfully set up!"
-                });
+                return Json(new { available = existingStudent == null });
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error completing online signup");
-                return Json(new
-                {
-                    success = false,
-                    error = "An error occurred while setting up online access."
-                });
+                _logger.LogError(ex, "CheckUsername error");
+                return Json(new { available = false, error = "Error checking username availability." });
             }
         }
 

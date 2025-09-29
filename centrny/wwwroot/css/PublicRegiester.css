@@ -1387,3 +1387,56 @@ body, html {
             font-size: 14px !important;
         }
 }
+/* Modern button toggle for registration mode (offline/online) */
+.mode-toggle-group {
+    display: flex;
+    gap: 18px;
+    margin: 18px 0 24px 0;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.mode-toggle-btn {
+    background: #ece9f6;
+    color: #6e59a4;
+    border: none;
+    border-radius: 22px;
+    padding: 12px 36px;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 4px 24px rgba(110,89,164,0.08);
+    transition: background 0.22s, color 0.22s, box-shadow 0.22s;
+    outline: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .mode-toggle-btn.active, .mode-toggle-btn:active, .mode-toggle-btn:focus {
+        background: linear-gradient(135deg,#6e59a4,#8e76d9);
+        color: #fff;
+        box-shadow: 0 8px 28px rgba(110,89,164,0.14);
+    }
+
+    .mode-toggle-btn i {
+        font-size: 20px;
+    }
+
+@media (max-width: 600px) {
+    .mode-toggle-group {
+        gap: 10px;
+        flex-direction: row;
+        justify-content: stretch;
+    }
+
+    .mode-toggle-btn {
+        flex: 1 1 0;
+        font-size: 15px;
+        padding: 10px 8px;
+        min-width: 116px;
+        justify-content: center;
+    }
+}
