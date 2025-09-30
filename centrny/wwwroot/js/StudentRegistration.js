@@ -499,18 +499,7 @@ function toggleAccountCreationSectionIfNeeded() {
         if (validateBtn) validateBtn.style.display = offlineNoPin ? 'none' : '';
     }
 
-    let note = document.getElementById('activationNote');
-    if (registrationMode === 'Offline' && isAllFourTrue() && hasAccount) {
-        if (!note) {
-            note = document.createElement('div');
-            note.id = 'activationNote';
-            note.className = 'alert alert-info mt-2';
-            note.innerHTML = '<i class="fas fa-info-circle me-1"></i> سيتم تفعيل حسابك بعد ربط الطالب بعنصر.';
-            accountSection.appendChild(note);
-        }
-    } else if (note) {
-        note.remove();
-    }
+  
 }
 
 function initModeToggle() {

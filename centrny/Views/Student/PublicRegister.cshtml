@@ -7,8 +7,6 @@
     ViewData["Title"] = "Student Registration";
     Layout = null;
     var activeEduYear = Model.AvailableEduYears.FirstOrDefault();
-    // Optional: server can set ViewBag.RootFlagsJson = JsonSerializer.Serialize(new { isOffline = true, isOnline = true, hasProfile = true, hasAccount = true });
-    // The JS will pick it up from ViewBag.RootFlagsJson if present.
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="htmlRoot">
@@ -32,6 +30,7 @@
     <link rel="icon" type="image/png" href="/Image/clasrio-high-resolution-logoo.png" />
 
     <style>
+        /* Base grid and wizard visuals */
         .wizard-steps .step {
             width: 44px !important;
             height: 44px !important;
@@ -55,6 +54,8 @@
             border-color: #6e59a4 !important;
             box-shadow: 0 4px 14px rgba(110,89,164,0.35) !important;
         }
+
+        /* Local grid (overrides vendor) */
         .row {
             display: flex !important;
             flex-wrap: wrap !important;
@@ -68,30 +69,17 @@
             padding-left: 0.75rem !important;
             position: relative !important;
         }
+        .col-12 { flex: 0 0 100% !important; max-width: 100% !important; padding-right: 0.75rem !important; padding-left: 0.75rem !important; }
+
+        /* IMPORTANT: escape CSS at-rules in Razor with double @@ */
         @@media (max-width: 767.98px) {
-            .col-md-6 {
-                flex: 0 0 100% !important;
-                max-width: 100% !important;
-            }
+            .col-md-6 { flex: 0 0 100% !important; max-width: 100% !important; }
         }
-        .form-box-wrapper {
-            display: block !important;
-        }
-        .form-step-header {
-            width: 100% !important;
-            clear: both !important;
-            display: block !important;
-            margin-bottom: 1.5rem !important;
-        }
-        .wizard-steps {
-            display: flex !important;
-            flex-direction: row !important;
-            justify-content: center !important;
-            align-items: center !important;
-            gap: 10px !important;
-            margin: 25px 0 35px !important;
-            flex-wrap: wrap !important;
-        }
+
+        .form-box-wrapper { display: block !important; }
+        .form-step-header { width: 100% !important; clear: both !important; display: block !important; margin-bottom: 1.5rem !important; }
+        .wizard-steps { display: flex !important; flex-direction: row !important; justify-content: center !important; align-items: center !important; gap: 10px !important; margin: 25px 0 35px !important; flex-wrap: wrap !important; }
+
         #nextBtn {
             background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
             color: #fff !important;
@@ -104,26 +92,134 @@
             background: linear-gradient(135deg,#6e59a4,#8e76d9) !important;
             color: #fff !important;
         }
-        #nextBtn:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 .2rem rgba(110,89,164,.35);
-        }
+        #nextBtn:focus-visible { outline: none; box-shadow: 0 0 0 .2rem rgba(110,89,164,.35); }
+
         .language-switcher { cursor: pointer; transition: color 0.25s ease; }
         .language-switcher:hover { color: #6e59a4 !important; }
-        [dir="rtl"] .navigation-buttons { flex-direction: row-reverse; }
+
+        /* Navigation buttons container */
+        .navigation-buttons {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            width: 100% !important;
+            flex-wrap: wrap !important;
+        }
+        /* RTL row order for wide screens */
+        [dir="rtl"] .navigation-buttons { flex-direction: row-reverse !important; }
+
+        /* Ensure buttons don't shrink strangely in flex rows */
+        #htmlRoot .navigation-buttons .btn-theme-secondary,
+        #htmlRoot .navigation-buttons .btn-theme-success {
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+        }
+
+        /* Generic buttons: inline-flex for centering; width auto by default */
+        #htmlRoot #nextBtn,
+        #htmlRoot #submitBtn,
+        #htmlRoot .btn-theme,
+        #htmlRoot .btn-theme-success,
+        #htmlRoot .btn-theme-secondary {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 44px !important;
+        }
+        #htmlRoot #nextBtn i, #htmlRoot #submitBtn i { margin-inline: 6px !important; }
+
+        /* Mobile stacking: full-width buttons and column layout */
+        @@media (max-width: 576px) {
+            .navigation-buttons { flex-direction: column-reverse !important; }
+            .navigation-buttons .flex-grow-1 { display: none !important; }
+            #htmlRoot #nextBtn,
+            #htmlRoot #submitBtn,
+            #htmlRoot .btn-theme,
+            #htmlRoot .btn-theme-success,
+            #htmlRoot .btn-theme-secondary { width: 100% !important; }
+        }
+
+        /* Misc form polish */
         [dir="rtl"] .form-check-label { margin-right: 0; margin-left: 1.5em; }
         [dir="ltr"] .form-check-label { margin-left: 0; margin-right: 1.5em; }
         * { transition: text-align 0.3s ease, padding 0.3s ease, margin 0.3s ease; }
 
-        /* Small helper styles for forced mode */
+        /* Helper styles for forced mode */
         .mode-hidden { display: none !important; }
         .pin-validated { color: #1f7a1f; font-weight: 700; margin-top: 6px; }
         .pw-mismatch { color: #a94442; margin-top: 6px; }
 
-        /* Bulletproof: NEVER show schedules in Online flow */
+        /* NEVER show schedules in Online flow */
         .mode-online #scheduleHeader,
-        .mode-online #scheduleSection {
-            display: none !important;
+        .mode-online #scheduleSection { display: none !important; }
+
+        /* ==========================================================
+           HARD MOBILE OVERRIDES (very small phones)
+           ========================================================== */
+        html, body { max-width: 100% !important; overflow-x: hidden !important; -webkit-text-size-adjust: 100% !important; }
+
+        #htmlRoot .registration-card,
+        #htmlRoot .registration-card * {
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
+            text-transform: none !important;
+        }
+
+        /* Inputs/selects sizing to avoid iOS zoom and keep layout clean */
+        #htmlRoot input, #htmlRoot select, #htmlRoot button { font-size: 16px !important; }
+        #htmlRoot .form-control, #htmlRoot .form-select {
+            min-height: 44px !important;
+            line-height: 1.4 !important;
+            font-size: 16px !important;
+        }
+
+        /* Radio group: keep Arabic labels horizontal */
+        #htmlRoot .form-check { display: inline-flex !important; align-items: center !important; gap: 8px !important; }
+        #htmlRoot .form-check-input[type="radio"] {
+            width: 18px !important; height: 18px !important; margin: 0 !important;
+            flex: 0 0 auto !important;
+        }
+        #htmlRoot .form-check-label {
+            display: inline-flex !important; align-items: center !important;
+            white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important;
+            writing-mode: horizontal-tb !important; direction: rtl !important;
+            font-size: 14px !important; line-height: 1.8 !important;
+            margin: 0 10px !important;
+        }
+        [dir="rtl"] #htmlRoot .form-check-label { margin-left: 10px !important; margin-right: 0 !important; }
+
+        /* Container paddings for small screens */
+        #htmlRoot .form-page__content .container { padding: 0 12px !important; }
+        #htmlRoot .registration-card { padding: 16px !important; }
+
+        /* Step headers and wizard spacing on small screens */
+        @@media (max-width: 480px) {
+            #htmlRoot .col-md-6 { flex: 0 0 100% !important; max-width: 100% !important; }
+            #htmlRoot .wizard-steps { margin: 16px 0 20px !important; }
+            #htmlRoot .form-step-header { margin-bottom: 12px !important; }
+            #htmlRoot .navigation-buttons { gap: 10px !important; }
+            #htmlRoot .registration-title { font-size: 18px !important; }
+            #htmlRoot h4, #htmlRoot h5, #htmlRoot label.form-label { font-size: 14px !important; }
+        }
+
+        /* Ultra-small devices (Galaxy Fold/older iPhones) */
+        @@media (max-width: 360px) {
+            #htmlRoot .registration-card { padding: 12px !important; }
+            #htmlRoot .form-page__content .container { padding: 0 8px !important; }
+            #htmlRoot .form-check-label { font-size: 13px !important; }
+            #htmlRoot input, #htmlRoot select, #htmlRoot button { font-size: 15px !important; }
+        }
+        @@media (max-width: 320px) {
+            #htmlRoot .registration-card { padding: 10px !important; }
+            #htmlRoot .form-check-label { font-size: 12px !important; }
+            #htmlRoot .wizard-steps .step { width: 38px !important; height: 38px !important; font-size: 14px !important; }
+        }
+
+        /* Prevent any vendor rule from forcing weird breaks in Arabic text */
+        #htmlRoot .registration-card [style*="word-break"],
+        #htmlRoot .registration-card [style*="writing-mode"] {
+            word-break: normal !important;
+            writing-mode: horizontal-tb !important;
         }
     </style>
 </head>
@@ -239,14 +335,13 @@
 
                                     <!-- BEGIN: Boxed Form Content -->
                                     <div class="form-box-wrapper">
-                                        <!-- Step Indicators (now only 2 steps) -->
+                                        <!-- Step Indicators -->
                                         <div class="wizard-steps" aria-label="steps">
                                             <div class="step active" id="step1">1</div>
                                             <div class="step" id="step2">2</div>
                                         </div>
                                         <!-- Multi-step Registration Form -->
                                         <form id="registrationForm" autocomplete="off">
-                                            @* Anti-forgery token so JS can pick it up and include in POSTs *@
                                             @Html.AntiForgeryToken()
 
                                             <!-- STEP 1: Personal Information -->
@@ -326,20 +421,23 @@
                                                                 <input class="form-check-input" type="radio" name="Gender" value="false" id="genderFemale" required />
                                                                 <label class="form-check-label" for="genderFemale" data-localize="female">أنثى</label>
                                                             </div>
-
                                                         </div>
                                                         <div class="invalid-feedback"></div>
                                                     </div>
-                                                    <button type="button" class="btn-theme" id="nextBtn" style="display: inline-flex;">
+                                                </div>
+
+                                                <!-- Step 1: Next button OUTSIDE grid rows -->
+                                                <div class="navigation-buttons mt-3">
+                                                    <button type="button" class="btn-theme" id="nextBtn">
                                                         <span data-localize="next">التالي</span>
                                                         <i class="fas fa-arrow-left" id="nextArrow"></i>
                                                     </button>
                                                 </div>
                                             </div>
+
                                             <!-- STEP 2: All Remaining Registration (Combined) -->
                                             <div class="form-step" id="step2Content">
                                                 <br><br>
-                                                <!-- Registration Mode / Branch / PIN -->
                                                 <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
                                                     <i class="fas fa-laptop"></i>
                                                     <span data-localize="step2_title">طريقة الدراسة</span>
@@ -348,7 +446,7 @@
                                                 <br>
                                                 <div class="mb-4">
                                                     <label class="form-label">
-                                                        <span data-localize="study_mode"></span> <span class="text-danger"></span>
+                                                        <span data-localize="study_mode"></span>
                                                     </label>
                                                     <div class="mode-toggle-group" id="modeToggleGroup">
                                                         <button type="button" class="mode-toggle-btn active" data-mode="Offline" id="offlineBtn">
@@ -362,6 +460,7 @@
                                                         <input type="hidden" id="modeInput" name="Mode" value="Offline" />
                                                     </div>
                                                 </div>
+
                                                 <div id="branchSection" class="mb-4">
                                                     <div class="row">
                                                         <div class="col-md-6 mb-3">
@@ -389,6 +488,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <!-- Online PIN Flow -->
                                                 <div id="onlinePinSection" style="display:none;">
                                                     <h5 class="mb-3 text-16 fw-600 d-flex align-items-center gap-2">
@@ -427,6 +527,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <!-- Subjects & Teachers (combined) -->
                                                 <h4 class="mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2" style="font-size:18px;">
                                                     <i class="fas fa-school"></i>
@@ -485,20 +586,22 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Submit Button -->
-                                                <div class="navigation-buttons">
+                                                <!-- Step 2: Navigation (Prev + Submit) -->
+                                                <div class="navigation-buttons mt-4">
                                                     <button type="button" class="btn-theme-secondary" id="prevBtn" style="display:none;">
                                                         <i class="fas fa-arrow-right" id="prevArrow"></i>
                                                         <span data-localize="previous">السابق</span>
                                                     </button>
 
                                                     <div class="flex-grow-1"></div>
+
                                                     <button type="button" class="btn-theme-success" id="submitBtn">
                                                         <i class="fas fa-check"></i>
                                                         <span data-localize="complete_registration">تأكيد التسجيل</span>
                                                     </button>
                                                 </div>
-                                                <div class="security-note">
+
+                                                <div class="security-note mt-3">
                                                     <i class="fas fa-lock me-1"></i>
                                                     <span data-localize="security_note">بياناتك آمنة و مشفرة.</span>
                                                 </div>
@@ -534,7 +637,7 @@
     <script src="/js/vendors.js"></script>
     <script src="/js/main.js"></script>
 
-    <!-- Use the updated script that enforces hiding schedules in Online flow -->
+    <!-- Registration behavior -->
     <script src="/js/StudentRegistration.js"></script>
 
     <script src="/AWS/js/auth-layout-fix.js"></script>

@@ -1440,3 +1440,14 @@ body, html {
         justify-content: center;
     }
 }
+#htmlRoot #validatePinAndUsernameBtn:not(.never-show) {
+    all: unset !important;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important; /* removes from flow */
+    width: 0 !important;
+    height: 0 !important;
+    z-index: -9999 !important;
+}
