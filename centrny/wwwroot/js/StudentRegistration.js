@@ -3,6 +3,16 @@
 // - normalized username checks (trim + lowercase) everywhere
 // - final availability re-check before submit to avoid "username already taken" surprises
 // - when a root has account enabled, Offline mode will also show PIN + username/password creation
+// NEW: If all 4 root flags are true (isOffline, isOnline, hasProfile, hasAccount) and user is in Offline flow:
+//      - Hide PIN input and PIN validation button
+//      - Require only Username/Password (no PIN), save credentials inactive
+//      - Backend should activate after Item linking
+// NEW (Online progressive flow):
+//      - Show only PIN first
+//      - After validating PIN -> show Year
+//      - After picking Year -> show Subjects & Teachers
+//      - After selecting at least one subject+teacher -> show Account Creation
+//      - Hide Schedules (header + section) entirely in Online (bulletproof - never visible)
 // Toggle debug: window.__regDebug = true/false
 
 window.__regDebug = true;
@@ -20,10 +30,82 @@ let rootFlags = window.rootFlags || null;
 let scheduleLoadTimer = null;
 const SCHEDULE_LOAD_DEBOUNCE_MS = 150;
 
+let scheduleObserver = null;
+
 function getMaxStep() {
     const steps = document.querySelectorAll('.form-step');
     return steps ? steps.length : 2;
 }
+
+/* Ensure setupEventListeners exists in the global scope before any usage */
+function setupEventListeners() {
+    dlog('setupEventListeners');
+
+    const branchSelect = document.getElementById('branchCode');
+    if (branchSelect) {
+        branchSelect.addEventListener('change', function () {
+            resetSubjectsAndTeachers();
+            if (this.value && document.getElementById('yearCode')?.value) loadAvailableSubjects();
+        });
+    }
+
+    const yearSelect = document.getElementById('yearCode');
+    if (yearSelect) {
+        yearSelect.addEventListener('change', function () {
+            resetSubjectsAndTeachers();
+            if (this.value && document.getElementById('branchCode')?.value) loadAvailableSubjects();
+        });
+    }
+
+    const onlineYearSelect = document.getElementById('onlineYearCode');
+    if (onlineYearSelect) {
+        onlineYearSelect.addEventListener('change', function () {
+            resetSubjectsAndTeachers();
+            if (registrationMode === 'Online' && this.value && pinValidated) loadAvailableSubjects();
+            updateOnlineFlowVisibility();
+        });
+    }
+
+    document.querySelectorAll('input[required], select[required]').forEach(input => {
+        input.addEventListener('blur', validateField);
+        input.addEventListener('input', clearValidation);
+    });
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) prevBtn.addEventListener('click', () => changeStep(-1));
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) nextBtn.addEventListener('click', () => changeStep(1));
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', () => submitRegistration());
+
+    const validatePinBtn = document.getElementById('validatePinBtn');
+    if (validatePinBtn) validatePinBtn.addEventListener('click', validatePin);
+
+    const validatePinAndUsernameBtn = document.getElementById('validatePinAndUsernameBtn');
+    if (validatePinAndUsernameBtn) validatePinAndUsernameBtn.addEventListener('click', validatePinAndUsername);
+
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) {
+        usernameInput.addEventListener('blur', async () => {
+            const raw = usernameInput.value || '';
+            const normalized = normalizeUsername(raw);
+            if (normalized !== raw) usernameInput.value = normalized;
+            const check = await isUsernameAvailable(normalized);
+            const ue = document.getElementById('userError');
+            if (!check.available) {
+                if (ue) ue.textContent = check.error || 'Username is not available.';
+            } else {
+                if (ue) ue.textContent = '';
+            }
+        });
+    }
+
+    const completeOnlineBtn = document.getElementById('completeOnlineBtn');
+    if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
+}
+window.setupEventListeners = setupEventListeners; // make globally accessible just in case
 
 document.addEventListener('DOMContentLoaded', function () {
     dlog('DOMContentLoaded - init');
@@ -33,9 +115,13 @@ document.addEventListener('DOMContentLoaded', function () {
     setupEventListeners();
     initModeToggle();
     applyRootFlags();
+
+    // Ensure CSS hook present ASAP
+    toggleRootModeClass();
     modeChangeHandler();
     ensureScrollEnabled();
 
+    // Global guards
     window.addEventListener('error', function (evt) {
         derror('Uncaught error:', evt.message, 'at', evt.filename + ':' + evt.lineno + ':' + evt.colno);
     });
@@ -43,10 +129,20 @@ document.addEventListener('DOMContentLoaded', function () {
         derror('Unhandled rejection:', evt.reason);
     });
 
+    // Prime lookups then enforce visibility
     loadInitialLookups().then(() => {
         dlog('Initial lookups done');
         updateScheduleVisibility();
+        updateOnlineFlowVisibility(); // ensure initial visibility is correct if Online
     });
+
+    // Final first-paint enforcement and MutationObserver
+    setTimeout(() => {
+        toggleRootModeClass();
+        if (registrationMode === 'Online') hideSchedulesHard(false); // don't destroy, just hide
+        setupScheduleMutationObserver();
+        updateOnlineFlowVisibility();
+    }, 0);
 });
 
 // ------------------ Helpers & Lookups ------------------
@@ -150,13 +246,10 @@ function escapeHtmlAttr(s) { return escapeHtml(String(s ?? '')).replaceAll(' ', 
 function escapeJs(s) { if (s == null) return ''; return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
 
 function normalizeUsername(u) {
-    // Trim and lowercase to avoid invisible whitespace / casing mismatches.
-    // We do NOT remove internal spaces here; we trim only.
     if (!u) return '';
     return String(u).trim().toLowerCase();
 }
 
-// Helper to check availability and update UI; returns { available: bool, error?: string }
 async function isUsernameAvailable(usernameRaw) {
     const username = normalizeUsername(usernameRaw);
     if (!username) return { available: false, error: 'Username is required.' };
@@ -175,11 +268,165 @@ async function isUsernameAvailable(usernameRaw) {
     }
 }
 
+function isAllFourTrue() {
+    const f = rootFlags || {};
+    return !!(f.isOffline && f.isOnline && f.hasProfile && f.hasAccount);
+}
+
+function getHeaderByLocalizeKey(key) {
+    const span = document.querySelector(`span[data-localize="${key}"]`);
+    return span ? span.closest('h4') : null;
+}
+
+function getHeaderBeforeSection(sectionEl) {
+    if (!sectionEl) return null;
+    let node = sectionEl.previousElementSibling;
+    while (node) {
+        if (node.tagName && node.tagName.toLowerCase() === 'h4') return node;
+        node = node.previousElementSibling;
+    }
+    node = sectionEl.parentElement;
+    while (node) {
+        const h4 = node.querySelector('h4');
+        if (h4) return h4;
+        node = node.parentElement;
+    }
+    return null;
+}
+
+// Bulletproof: hard-hide schedules when in Online (no destroy by default)
+function hideSchedulesHard(destroy = false) {
+    let header = document.getElementById('scheduleHeader') || document.querySelector('span[data-localize="step4_title"]')?.closest('h4');
+    let section = document.getElementById('scheduleSection');
+    const selection = document.getElementById('scheduleSelection');
+
+    if (header) {
+        header.style.display = 'none';
+        header.setAttribute('aria-hidden', 'true');
+        if (destroy && header.parentNode) header.parentNode.removeChild(header);
+    }
+    if (section) {
+        section.style.display = 'none';
+        section.setAttribute('aria-hidden', 'true');
+        if (selection) selection.innerHTML = '';
+        if (destroy && section.parentNode) section.parentNode.removeChild(section);
+    }
+}
+
+// Recreate schedule DOM if it was removed
+function ensureScheduleDom() {
+    let header = document.getElementById('scheduleHeader');
+    let section = document.getElementById('scheduleSection');
+    let selection = document.getElementById('scheduleSelection');
+    const accountSection = document.getElementById('accountCreationSection');
+    const container = accountSection ? accountSection.parentElement : document.getElementById('step2Content');
+
+    // Insert before account section if possible
+    let insertBeforeEl = accountSection || null;
+
+    if (!header) {
+        header = document.createElement('h4');
+        header.id = 'scheduleHeader';
+        header.className = 'mb-4 text-purple-1 fw-600 d-flex align-items-center gap-2';
+        header.style.fontSize = '18px';
+        header.innerHTML = '<i class="fas fa-calendar"></i> <span data-localize="step4_title">اختيار الجداول</span>';
+        if (container) {
+            if (insertBeforeEl) container.insertBefore(header, insertBeforeEl);
+            else container.appendChild(header);
+        }
+    }
+    if (!section) {
+        section = document.createElement('div');
+        section.id = 'scheduleSection';
+        if (insertBeforeEl && insertBeforeEl.parentElement === container) {
+            container.insertBefore(section, insertBeforeEl);
+        } else if (container) {
+            container.appendChild(section);
+        }
+    }
+    if (section && !selection) {
+        selection = document.createElement('div');
+        selection.id = 'scheduleSelection';
+        selection.className = 'schedule-list';
+        section.appendChild(selection);
+    }
+    return { header, section, selection };
+}
+
+// MutationObserver: re-hide if anything tries to show schedules in Online mode
+function setupScheduleMutationObserver() {
+    try {
+        if (scheduleObserver) scheduleObserver.disconnect();
+        if (registrationMode !== 'Online') return; // only observe in Online
+        scheduleObserver = new MutationObserver(() => {
+            if (registrationMode === 'Online') hideSchedulesHard(false);
+        });
+        scheduleObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+        dlog('Schedule MutationObserver attached');
+    } catch (e) {
+        console.warn('Failed to attach MutationObserver', e);
+    }
+}
+
+function updateOnlineFlowVisibility() {
+    const onlinePinSection = document.getElementById('onlinePinSection');
+    const onlineYearSection = document.getElementById('onlineYearSection');
+    const scheduleSection = document.getElementById('scheduleSection');
+    const subjectsContainer = document.getElementById('availableSubjects');
+    const subjectsSummary = document.getElementById('selectedSubjectsSummary');
+    const accountSection = document.getElementById('accountCreationSection');
+
+    const subjectsHeaderByKey = getHeaderByLocalizeKey('step3_title');
+    const scheduleHeaderByKey = getHeaderByLocalizeKey('step4_title');
+    const subjectsHeaderByPrev = getHeaderBeforeSection(subjectsContainer);
+    const scheduleHeaderByPrev = getHeaderBeforeSection(scheduleSection);
+
+    const explicitScheduleHeader = document.getElementById('scheduleHeader');
+    const subjectsHeader = subjectsHeaderByKey || subjectsHeaderByPrev;
+    const scheduleHeader = explicitScheduleHeader || scheduleHeaderByKey || scheduleHeaderByPrev;
+
+    const onlineYearSelected = (document.getElementById('onlineYearCode')?.value || '').trim() !== '';
+    const hasSubjectTeacherSelection = selectedSubjects.some(s => s.teacherCode);
+
+    if (registrationMode !== 'Online') {
+        // Ensure DOM exists (in case it was removed in a previous version)
+        const ensured = ensureScheduleDom();
+        if (subjectsHeader) subjectsHeader.style.display = '';
+        if (subjectsContainer) subjectsContainer.style.display = '';
+        if (subjectsSummary) subjectsSummary.style.display = selectedSubjects.length ? '' : 'none';
+        if (ensured.header) ensured.header.style.display = '';
+        if (ensured.section) ensured.section.style.display = '';
+        return;
+    }
+
+    if (onlinePinSection) onlinePinSection.style.display = '';
+    if (onlineYearSection) onlineYearSection.style.display = pinValidated ? '' : 'none';
+
+    const showSubjects = pinValidated && onlineYearSelected;
+    if (subjectsHeader) subjectsHeader.style.display = showSubjects ? '' : 'none';
+    if (subjectsContainer) subjectsContainer.style.display = showSubjects ? '' : 'none';
+    if (subjectsSummary) subjectsSummary.style.display = showSubjects && selectedSubjects.length ? '' : 'none';
+
+    // Force hide schedules in Online (and keep them empty)
+    hideSchedulesHard(false);
+
+    if (accountSection) {
+        accountSection.style.display = (showSubjects && hasSubjectTeacherSelection) ? '' : 'none';
+    }
+}
+
 // ---------------- Root flags & mode ----------------
 function getSingleTeacher(teachers) {
     if (!Array.isArray(teachers) || teachers.length === 0) return null;
     const code = teachers[0].teacherCode ?? teachers[0].TeacherCode;
-    return teachers.every(t => (t.teacherCode ?? t.TeacherCode) === code) ? (teachers[0].teacherCode ? teachers[0] : { teacherCode: teachers[0].TeacherCode, teacherName: teachers[0].TeacherName }) : null;
+    return teachers.every(t => (t.teacherCode ?? t.TeacherCode) === code)
+        ? (teachers[0].teacherCode ? teachers[0] : { teacherCode: teachers[0].TeacherCode, teacherName: teachers[0].TeacherName })
+        : null;
 }
 
 function applyRootFlags() {
@@ -194,23 +441,32 @@ function applyRootFlags() {
         }
         const isOffline = !!rootFlags.isOffline;
         const isOnline = !!rootFlags.isOnline;
-        if (isOffline && !isOnline) { if (group) group.classList.add('mode-hidden'); registrationMode = 'Offline'; if (modeInput) modeInput.value = 'Offline'; }
-        else if (isOnline && !isOffline) { if (group) group.classList.add('mode-hidden'); registrationMode = 'Online'; if (modeInput) modeInput.value = 'Online'; }
-        else { if (group) group.classList.remove('mode-hidden'); registrationMode = modeInput?.value || 'Offline'; if (modeInput) modeInput.value = registrationMode; }
+        if (isOffline && !isOnline) {
+            if (group) group.classList.add('mode-hidden');
+            registrationMode = 'Offline';
+            if (modeInput) modeInput.value = 'Offline';
+        } else if (isOnline && !isOffline) {
+            if (group) group.classList.add('mode-hidden');
+            registrationMode = 'Online';
+            if (modeInput) modeInput.value = 'Online';
+        } else {
+            if (group) group.classList.remove('mode-hidden');
+            registrationMode = modeInput?.value || 'Offline';
+            if (modeInput) modeInput.value = registrationMode;
+        }
         toggleAccountCreationSectionIfNeeded();
         dlog('applyRootFlags ->', registrationMode, rootFlags);
     } catch (ex) { console.warn('applyRootFlags error', ex); }
 }
 
-// When Online: hide the duplicate account PIN input wrapper so the user only sees the online PIN (pinCode).
-// When Offline and the root requires account (rootFlags.hasAccount), show accountCreationSection and make sure the account PIN wrapper is visible.
 function toggleAccountCreationSectionIfNeeded() {
     const accountSection = document.getElementById('accountCreationSection');
     if (!accountSection) return;
     const hasAccount = !!(rootFlags && rootFlags.hasAccount);
+    const offlineNoPin = registrationMode === 'Offline' && isAllFourTrue();
 
     if (registrationMode === 'Online') {
-        accountSection.style.display = '';
+        accountSection.style.display = 'none';
         const pinAccountInput = document.getElementById('pinCodeAccount');
         if (pinAccountInput) {
             const wrapper = pinAccountInput.closest('.mb-3') || pinAccountInput.parentNode;
@@ -221,64 +477,50 @@ function toggleAccountCreationSectionIfNeeded() {
             const pinOkAcc = document.getElementById('pinOkAccount');
             if (pinOkAcc) pinOkAcc.style.display = 'none';
         }
+        const validateBtn = document.getElementById('validatePinAndUsernameBtn');
+        if (validateBtn) validateBtn.style.display = '';
     } else {
-        // Offline mode: show account section only if center requires account
         accountSection.style.display = hasAccount ? '' : 'none';
+
         const pinAccountInput = document.getElementById('pinCodeAccount');
         if (pinAccountInput) {
             const wrapper = pinAccountInput.closest('.mb-3') || pinAccountInput.parentNode;
-            if (wrapper) wrapper.style.display = '';
+            if (wrapper) wrapper.style.display = offlineNoPin ? 'none' : '';
+            if (offlineNoPin) {
+                pinAccountInput.value = '';
+                const pinErrAcc = document.getElementById('pinErrorAccount');
+                if (pinErrAcc) pinErrAcc.textContent = '';
+                const pinOkAcc = document.getElementById('pinOkAccount');
+                if (pinOkAcc) pinOkAcc.style.display = 'none';
+            }
         }
+
+        const validateBtn = document.getElementById('validatePinAndUsernameBtn');
+        if (validateBtn) validateBtn.style.display = offlineNoPin ? 'none' : '';
     }
-}
 
-// ---------------- Event wiring ----------------
-function setupEventListeners() {
-    dlog('setupEventListeners');
-    const branchSelect = document.getElementById('branchCode');
-    if (branchSelect) branchSelect.addEventListener('change', function () { resetSubjectsAndTeachers(); if (this.value && document.getElementById('yearCode')?.value) loadAvailableSubjects(); });
-
-    const yearSelect = document.getElementById('yearCode');
-    if (yearSelect) yearSelect.addEventListener('change', function () { resetSubjectsAndTeachers(); if (this.value && document.getElementById('branchCode')?.value) loadAvailableSubjects(); });
-
-    const onlineYearSelect = document.getElementById('onlineYearCode');
-    if (onlineYearSelect) onlineYearSelect.addEventListener('change', function () {
-        resetSubjectsAndTeachers();
-        if (registrationMode === 'Online' && this.value && pinValidated) loadAvailableSubjects();
-    });
-
-    document.querySelectorAll('input[required], select[required]').forEach(input => { input.addEventListener('blur', validateField); input.addEventListener('input', clearValidation); });
-
-    const prevBtn = document.getElementById('prevBtn'); if (prevBtn) prevBtn.addEventListener('click', () => changeStep(-1));
-    const nextBtn = document.getElementById('nextBtn'); if (nextBtn) nextBtn.addEventListener('click', () => changeStep(1));
-    const submitBtn = document.getElementById('submitBtn'); if (submitBtn) submitBtn.addEventListener('click', () => submitRegistration());
-
-    const validatePinBtn = document.getElementById('validatePinBtn'); if (validatePinBtn) validatePinBtn.addEventListener('click', validatePin);
-    const validatePinAndUsernameBtn = document.getElementById('validatePinAndUsernameBtn'); if (validatePinAndUsernameBtn) validatePinAndUsernameBtn.addEventListener('click', validatePinAndUsername);
-    const usernameInput = document.getElementById('username'); if (usernameInput) usernameInput.addEventListener('blur', async () => {
-        // On blur, normalize and check availability and update UI
-        const raw = usernameInput.value || '';
-        const normalized = normalizeUsername(raw);
-        if (normalized !== raw) {
-            // show trimmed/normalized username in the input so what user sees is what will be submitted
-            usernameInput.value = normalized;
+    let note = document.getElementById('activationNote');
+    if (registrationMode === 'Offline' && isAllFourTrue() && hasAccount) {
+        if (!note) {
+            note = document.createElement('div');
+            note.id = 'activationNote';
+            note.className = 'alert alert-info mt-2';
+            note.innerHTML = '<i class="fas fa-info-circle me-1"></i> سيتم تفعيل حسابك بعد ربط الطالب بعنصر.';
+            accountSection.appendChild(note);
         }
-        const check = await isUsernameAvailable(normalized);
-        const ue = document.getElementById('userError');
-        if (!check.available) {
-            if (ue) ue.textContent = check.error || 'Username is not available.';
-        } else {
-            if (ue) ue.textContent = '';
-        }
-    });
-    const completeOnlineBtn = document.getElementById('completeOnlineBtn'); if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
+    } else if (note) {
+        note.remove();
+    }
 }
 
 function initModeToggle() {
     const group = document.getElementById('modeToggleGroup');
     const modeInput = document.getElementById('modeInput');
     if (!group || !modeInput) {
-        document.querySelectorAll('input[name="Mode"]').forEach(r => { r.removeEventListener('change', modeChangeHandler); r.addEventListener('change', modeChangeHandler); });
+        document.querySelectorAll('input[name="Mode"]').forEach(r => {
+            r.removeEventListener('change', modeChangeHandler);
+            r.addEventListener('change', modeChangeHandler);
+        });
         return;
     }
     const btns = group.querySelectorAll('.mode-toggle-btn');
@@ -289,13 +531,23 @@ function initModeToggle() {
             const mode = btn.getAttribute('data-mode') || 'Offline';
             modeInput.value = mode;
             registrationMode = mode;
+            toggleRootModeClass();
             toggleAccountCreationSectionIfNeeded();
             modeChangeHandler();
         });
-        btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); } });
+        btn.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+        });
     });
     const active = group.querySelector('.mode-toggle-btn.active');
     if (active) { const initial = active.getAttribute('data-mode') || 'Offline'; modeInput.value = initial; registrationMode = initial; }
+}
+
+function toggleRootModeClass() {
+    const root = document.getElementById('htmlRoot') || document.documentElement;
+    if (!root) return;
+    if (registrationMode === 'Online') root.classList.add('mode-online');
+    else root.classList.remove('mode-online');
 }
 
 function modeChangeHandler() {
@@ -327,12 +579,30 @@ function modeChangeHandler() {
         if (branchInput) branchInput.required = true; if (yearInput) yearInput.required = true;
     }
 
+    // Reset UI selections
     resetSubjectsAndTeachers();
+
+    // Toggle CSS hook and observer every time mode changes
+    toggleRootModeClass();
+    setupScheduleMutationObserver();
+
+    // If back to Offline and branch/year already chosen, reload subjects immediately
+    if (registrationMode === 'Offline') {
+        ensureScheduleDom(); // make sure the schedule DOM exists
+        const branchVal = document.getElementById('branchCode')?.value;
+        const yearVal = document.getElementById('yearCode')?.value;
+        if (branchVal && yearVal) {
+            loadAvailableSubjects();
+        }
+    }
+
     updateStepButtons();
     toggleAccountCreationSectionIfNeeded();
-
-    dlog('modeChangeHandler ->', registrationMode);
     updateScheduleVisibility();
+    updateOnlineFlowVisibility();
+
+    // Extra hard hide for Online (do not destroy to allow returning to Offline safely)
+    if (registrationMode === 'Online') hideSchedulesHard(false);
 }
 
 // ---------------- Steps & Validation ----------------
@@ -359,6 +629,10 @@ function changeStep(direction) {
             dlog('Online mode step2: waiting for PIN validation and year selection before loading subjects');
         }
         updateScheduleVisibility();
+        updateOnlineFlowVisibility();
+
+        // Ensure hide in Online without destroying DOM
+        if (registrationMode === 'Online') hideSchedulesHard(false);
     }
 
     updateStepButtons();
@@ -398,13 +672,17 @@ function validateCurrentStep() {
         }
 
         const accountVisible = document.getElementById('accountCreationSection') && document.getElementById('accountCreationSection').style.display !== 'none';
+        const allFour = isAllFourTrue();
         if (registrationMode === "Online" || (rootFlags && rootFlags.hasAccount && accountVisible)) {
             const usernameVal = normalizeUsername(document.getElementById('username')?.value || '');
             const password = document.getElementById('password')?.value;
             const confirm = document.getElementById('passwordConfirm')?.value;
             if (!usernameVal || !password) { showAlert('Username and password are required.', 'danger'); isValid = false; }
             else if (password !== confirm) { showAlert('Passwords do not match.', 'danger'); isValid = false; }
-            else if (rootFlags && rootFlags.hasAccount && registrationMode === "Offline" && !pinValidated) { showAlert('Please validate the PIN and username using the provided button.', 'danger'); isValid = false; }
+            else if (rootFlags && rootFlags.hasAccount && registrationMode === "Offline" && !allFour && !pinValidated) {
+                showAlert('Please validate the PIN and username using the provided button.', 'danger');
+                isValid = false;
+            }
         }
     }
     return isValid;
@@ -431,6 +709,7 @@ function resetSubjectsAndTeachers() {
     const subjectsDiv = document.getElementById('availableSubjects'); if (subjectsDiv) subjectsDiv.innerHTML = '';
     const schedulesDiv = document.getElementById('scheduleSelection'); if (schedulesDiv) schedulesDiv.innerHTML = '';
     const summaryDiv = document.getElementById('selectedSubjectsSummary'); if (summaryDiv) summaryDiv.style.display = 'none';
+    updateOnlineFlowVisibility();
 }
 
 async function loadAvailableSubjects() {
@@ -463,7 +742,7 @@ async function loadAvailableSubjects() {
         renderSubjects();
     } catch (err) {
         showAlert('Failed to load subjects.', 'danger'); console.error('loadAvailableSubjects error', err); availableSubjects = [];
-    } finally { hideLoading(); updateScheduleVisibility(); }
+    } finally { hideLoading(); updateScheduleVisibility(); updateOnlineFlowVisibility(); }
 }
 
 async function loadTeachersForSubjects() {
@@ -517,7 +796,17 @@ async function loadScheduleForSubjectTeacher(subjectCode, teacherCode) {
 }
 
 async function loadAvailableSchedules() {
+    // Block entirely in Online mode
+    if (registrationMode === 'Online') {
+        hideSchedulesHard(false);
+        dlog('loadAvailableSchedules skipped in Online');
+        return;
+    }
+
     dlog('loadAvailableSchedules start');
+    // Ensure DOM exists (in case it was hidden/recreated)
+    ensureScheduleDom();
+
     const container = document.getElementById('scheduleSelection');
     if (!container) { dlog('loadAvailableSchedules: no container found'); return; }
 
@@ -542,19 +831,19 @@ async function loadAvailableSchedules() {
             schedules.forEach(sch => {
                 const isSelected = subject.scheduleCode == sch.scheduleCode;
                 scheduleHtml += `
-                <label class="schedule-option ${isSelected ? 'selected' : ''}">
-                    <input type="radio"
-                           name="schedule_${escapeHtmlAttr(subject.subjectCode)}_${escapeHtmlAttr(subject.teacherCode)}"
-                           value="${escapeHtmlAttr(sch.scheduleCode)}"
-                           ${isSelected ? 'checked' : ''}
-                           data-subject="${escapeHtmlAttr(subject.subjectCode)}"
-                           data-teacher="${escapeHtmlAttr(subject.teacherCode)}"
-                           data-schedule="${escapeHtmlAttr(sch.scheduleCode)}"
-                           data-scheduletitle="${escapeHtmlAttr(sch.scheduleName)}">
-                    <div class="so-meta"><strong>${escapeHtml(sch.scheduleName)}</strong>
-                        <small>${escapeHtml(`${sch.dayOfWeek} ${sch.startTime}-${sch.endTime} | ${sch.hallName}`)}</small>
-                    </div>
-                </label>`;
+          <label class="schedule-option ${isSelected ? 'selected' : ''}">
+            <input type="radio"
+                  name="schedule_${escapeHtmlAttr(subject.subjectCode)}_${escapeHtmlAttr(subject.teacherCode)}"
+                  value="${escapeHtmlAttr(sch.scheduleCode)}"
+                  ${isSelected ? 'checked' : ''}
+                  data-subject="${escapeHtmlAttr(subject.subjectCode)}"
+                  data-teacher="${escapeHtmlAttr(subject.teacherCode)}"
+                  data-schedule="${escapeHtmlAttr(sch.scheduleCode)}"
+                  data-scheduletitle="${escapeHtmlAttr(sch.scheduleName)}">
+            <div class="so-meta"><strong>${escapeHtml(sch.scheduleName)}</strong>
+              <small>${escapeHtml(`${sch.dayOfWeek} ${sch.startTime}-${sch.endTime} | ${sch.hallName}`)}</small>
+            </div>
+          </label>`;
             });
         } else {
             scheduleHtml += '<p class="text-muted small mb-0">No schedules available.</p>';
@@ -587,6 +876,7 @@ function renderSubjects() {
     if (!availableSubjects || availableSubjects.length === 0) {
         container.innerHTML = `<div class="empty-block"><i class="fas fa-book"></i><p>No subjects available for the selected criteria.</p></div>`;
         updateScheduleVisibility();
+        updateOnlineFlowVisibility();
         return;
     }
 
@@ -642,7 +932,8 @@ function renderSubjects() {
         });
 
         updateScheduleVisibility();
-    }).catch(err => { console.error('renderSubjects error', err); updateScheduleVisibility(); });
+        updateOnlineFlowVisibility();
+    }).catch(err => { console.error('renderSubjects error', err); updateScheduleVisibility(); updateOnlineFlowVisibility(); });
 
     function _subjectCheckboxHandler(evt) {
         const subj = evt.currentTarget.getAttribute('data-subject');
@@ -717,6 +1008,7 @@ window.toggleSubject = function (subjectCode, subjectName) {
 
     updateSelectedSubjectsSummary();
     updateScheduleVisibility();
+    updateOnlineFlowVisibility();
 };
 
 window.selectTeacher = function (subjectCode, subjectName, teacherCode, teacherName, yearCode, eduYearCode) {
@@ -760,6 +1052,7 @@ window.selectTeacher = function (subjectCode, subjectName, teacherCode, teacherN
         scheduleLoadTimer = setTimeout(() => {
             try {
                 updateScheduleVisibility();
+                updateOnlineFlowVisibility();
             } catch (e) {
                 derror('updateScheduleVisibility failed inside selectTeacher', e);
                 if (typeof loadAvailableSchedules === 'function') loadAvailableSchedules();
@@ -784,6 +1077,8 @@ window.removeSubject = function (subjectCode) {
     if (checkbox) { checkbox.checked = false; toggleSubject(subjectCode, ''); }
 };
 
+
+
 // ---------------- Summary UI ----------------
 function updateSelectedSubjectsSummary() {
     const container = document.getElementById('selectedSubjectsSummary');
@@ -792,24 +1087,33 @@ function updateSelectedSubjectsSummary() {
     if (selectedSubjects.length === 0) { container.style.display = 'none'; list.innerHTML = ''; return; }
 
     list.innerHTML = selectedSubjects.map(s => `
-        <div class="summary-item">
-            <div class="si-info">
-                <strong>${escapeHtml(s.subjectName)}</strong>
-                ${s.teacherName ? `<br><small class="text-muted">${escapeHtml(s.teacherName)}</small>` : ''}
-                ${s.scheduleName ? `<br><small class="text-info">${escapeHtml(s.scheduleName)}</small>` : ''}
-            </div>
-            <button type="button" class="btn-remove" onclick="removeSubject('${escapeJs(s.subjectCode)}')"><i class="fas fa-times"></i></button>
-        </div>`).join('');
+    <div class="summary-item">
+      <div class="si-info">
+        <strong>${escapeHtml(s.subjectName)}</strong>
+        ${s.teacherName ? `<br><small class="text-muted">${escapeHtml(s.teacherName)}</small>` : ''}
+        ${s.scheduleName ? `<br><small class="text-info">${escapeHtml(s.scheduleName)}</small>` : ''}
+      </div>
+      <button type="button" class="btn-remove" onclick="removeSubject('${escapeJs(s.subjectCode)}')"><i class="fas fa-times"></i></button>
+    </div>`).join('');
     container.style.display = 'block';
 }
 
 // ---------------- Schedule visibility ----------------
 function updateScheduleVisibility() {
     try {
-        const scheduleSection = document.getElementById('scheduleSection');
+        // Ensure DOM exists (especially after switching back from Online)
+        const ensured = ensureScheduleDom();
+        const scheduleSection = ensured.section || document.getElementById('scheduleSection');
+
+        const scheduleHeaderByKey = getHeaderByLocalizeKey('step4_title');
+        const scheduleHeaderByPrev = getHeaderBeforeSection(scheduleSection);
+        const explicitScheduleHeader = document.getElementById('scheduleHeader');
+        const scheduleHeader = explicitScheduleHeader || scheduleHeaderByKey || scheduleHeaderByPrev;
+
         if (!scheduleSection) { dlog('updateScheduleVisibility: scheduleSection not found'); return; }
 
         if (registrationMode === "Offline") {
+            if (scheduleHeader) scheduleHeader.style.display = '';
             const hasSelection = Array.isArray(selectedSubjects) && selectedSubjects.some(s => s.teacherCode);
             if (hasSelection) {
                 scheduleSection.style.display = "";
@@ -823,7 +1127,8 @@ function updateScheduleVisibility() {
                 if (container) container.innerHTML = `<div class="empty-block"><i class="fas fa-calendar-times"></i><p>No subjects with teachers selected.</p></div>`;
             }
         } else {
-            scheduleSection.style.display = "none";
+            // Online: fully hide header + section and ensure they remain empty
+            hideSchedulesHard(false);
         }
     } catch (ex) {
         console.warn('updateScheduleVisibility error', ex);
@@ -852,16 +1157,18 @@ async function validatePin() {
             if (onlineYear) loadAvailableSubjects();
 
             toggleAccountCreationSectionIfNeeded();
+            updateOnlineFlowVisibility();
+            if (registrationMode === 'Online') hideSchedulesHard(false);
         } else {
             setPinError(data?.error || 'Invalid PIN.');
             pinValidated = false;
+            updateOnlineFlowVisibility();
         }
     } catch (e) { setPinError('Network error. Please try again.'); pinValidated = false; derror('validatePin error', e); } finally { hideLoading(); }
 }
 function setPinError(msg) { const el = document.getElementById('pinError'); if (el) el.textContent = msg; }
 
 // validatePinAndUsername used for centers' offline account creation flow.
-// It uses the online pin input if registrationMode === 'Online'
 async function validatePinAndUsername() {
     const pinField = registrationMode === 'Online' ? document.getElementById('pinCode') : document.getElementById('pinCodeAccount');
     const pin = pinField?.value?.trim();
@@ -876,7 +1183,6 @@ async function validatePinAndUsername() {
     if (password !== confirm) { document.getElementById('pwMismatch') && (document.getElementById('pwMismatch').style.display = ''); return; }
     document.getElementById('pwMismatch') && (document.getElementById('pwMismatch').style.display = 'none');
 
-    // normalize shown username so user sees trimmed lowercase value
     const usernameInput = document.getElementById('username');
     if (usernameInput && usernameInput.value !== username) usernameInput.value = username;
 
@@ -888,7 +1194,6 @@ async function validatePinAndUsername() {
         document.getElementById('pinErrorAccount') && (document.getElementById('pinErrorAccount').textContent = "");
         document.getElementById('pinOkAccount') && (document.getElementById('pinOkAccount').style.display = '');
 
-        // Check username availability
         const avail = await isUsernameAvailable(username);
         if (!avail.available) {
             document.getElementById('userError') && (document.getElementById('userError').textContent = avail.error || "Username not available.");
@@ -907,7 +1212,6 @@ async function checkUsername() {
     const username = normalizeUsername(usernameRaw);
     const ue = document.getElementById('userError');
 
-    // show normalized value back in input so the user sees what will be checked/sent
     const usernameInput = document.getElementById('username');
     if (usernameInput && usernameInput.value !== username) usernameInput.value = username;
 
@@ -924,14 +1228,12 @@ async function checkUsername() {
 }
 
 async function submitOnlineRegistration() {
-    // Normalize username and ensure availability immediately before submit
     const usernameInput = document.getElementById('username');
     const usernameRaw = usernameInput?.value || '';
     const username = normalizeUsername(usernameRaw);
     if (usernameInput && usernameInput.value !== username) usernameInput.value = username;
 
     if (!username) {
-        // Provide a SweetAlert error if username missing
         await Swal.fire({ icon: 'error', title: 'Missing username', text: 'Username is required for online registration.' });
         usernameInput && usernameInput.focus();
         return;
@@ -939,7 +1241,6 @@ async function submitOnlineRegistration() {
 
     const avail = await isUsernameAvailable(username);
     if (!avail.available) {
-        // show SweetAlert2 error and focus username (no separate "check" click required)
         await Swal.fire({ icon: 'error', title: 'Username not available', text: avail.error || 'This username is already taken.' });
         usernameInput && usernameInput.focus();
         return;
@@ -948,7 +1249,6 @@ async function submitOnlineRegistration() {
     }
 
     const formData = getFormData(); formData.Mode = "Online";
-    // ensure sent username is normalized and trimmed
     formData.Username = username;
     formData.PinCode = document.getElementById('pinCode')?.value?.trim();
     formData.Password = document.getElementById('password')?.value;
@@ -958,7 +1258,6 @@ async function submitOnlineRegistration() {
         return;
     }
 
-    // Online does not require schedules, but must select at least one subject+teacher
     const completeSelections = selectedSubjects.filter(s => s.teacherCode);
     if (completeSelections.length === 0) { await Swal.fire({ icon: 'error', title: 'Selection required', text: 'Please select at least one subject and a teacher.' }); return; }
 
@@ -973,11 +1272,9 @@ async function submitOnlineRegistration() {
             await Swal.fire({ icon: 'success', title: 'Registration Successful!', text: result.message || "Your online registration is complete." });
             window.location.href = result.redirectUrl || '/';
         } else {
-            // Use SweetAlert2 for submission errors
             const errMsg = result?.error || 'Registration failed.';
             dlog('Server rejected registration:', result, 'usernameSent=', formData.Username);
             await Swal.fire({ icon: 'error', title: 'Registration Failed', text: errMsg });
-            // Also show any inline userError text
             const ue = document.getElementById('userError');
             if (ue) ue.textContent = result?.error || '';
         }
@@ -994,10 +1291,9 @@ async function submitRegistration() {
     const prevStep = currentStep; currentStep = 2; if (!validateCurrentStep()) { currentStep = prevStep; return; } currentStep = prevStep;
 
     const requiresAccount = !!(rootFlags && rootFlags.hasAccount);
+    const allFour = isAllFourTrue();
+
     if (requiresAccount) {
-        // For Offline when center requires account (including the "root with all flags true" scenario)
-        // ensure username is normalized and available BEFORE proceeding to PIN validation/server submit.
-        const pin = document.getElementById('pinCodeAccount')?.value?.trim();
         const usernameInput = document.getElementById('username');
         const usernameRaw = usernameInput?.value || '';
         const usernameNorm = normalizeUsername(usernameRaw);
@@ -1006,10 +1302,15 @@ async function submitRegistration() {
         const password = document.getElementById('password')?.value;
         const confirm = document.getElementById('passwordConfirm')?.value;
 
-        if (!pin || !usernameNorm || !password || !confirm) { await Swal.fire({ icon: 'error', title: 'Missing data', text: 'PIN and account credentials are required for this center.' }); return; }
-        if (password !== confirm) { await Swal.fire({ icon: 'error', title: 'Passwords mismatch', text: 'Passwords do not match.' }); return; }
+        if (!usernameNorm || !password || !confirm) {
+            await Swal.fire({ icon: 'error', title: 'Missing data', text: 'Account credentials are required for this center.' });
+            return;
+        }
+        if (password !== confirm) {
+            await Swal.fire({ icon: 'error', title: 'Passwords mismatch', text: 'Passwords do not match.' });
+            return;
+        }
 
-        // Re-check username availability right before submit (prevents race and matches Online behavior)
         showLoading();
         try {
             const avail = await isUsernameAvailable(usernameNorm);
@@ -1022,16 +1323,17 @@ async function submitRegistration() {
                 document.getElementById('userError') && (document.getElementById('userError').textContent = '');
             }
 
-            if (!pinValidated) {
-                await Swal.fire({
-                    icon: 'warning',
-                    title: '',
-                    text: 'يجب ان تتحقق من اسم المستخدم و الرمز اولا'
-                });
-                return;
+            if (!allFour) {
+                if (!pinValidated) {
+                    hideLoading();
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: '',
+                        text: 'يجب ان تتحقق من اسم المستخدم و الرمز اولا'
+                    });
+                    return;
+                }
             }
-                
-            
         } catch (ex) {
             hideLoading();
             await Swal.fire({ icon: 'error', title: 'Network Error', text: 'Network error validating username or PIN.' });
@@ -1084,10 +1386,14 @@ function getFormData() {
     });
 
     const rootCode = getRootCodeFromUrl();
-    // normalize username for final payload (trim + lower)
     const usernameInput = document.getElementById('username');
     const usernameNorm = usernameInput ? normalizeUsername(usernameInput.value || '') : null;
     if (usernameInput && usernameInput.value !== usernameNorm) usernameInput.value = usernameNorm;
+
+    const allFour = isAllFourTrue();
+    const pinForPayload = (registrationMode === "Offline" && allFour)
+        ? null
+        : ((document.getElementById('pinCodeAccount')?.value || document.getElementById('pinCode')?.value || '').trim() || null);
 
     return {
         RootCode: rootCode ? parseInt(rootCode) : 0,
@@ -1106,7 +1412,7 @@ function getFormData() {
         SelectedSubjects: subjectsArray,
         SelectedTeachers: teachersArray,
         SelectedSchedules: registrationMode === "Online" ? [] : schedulesArray,
-        PinCode: (document.getElementById('pinCodeAccount')?.value || document.getElementById('pinCode')?.value || '').trim() || null,
+        PinCode: pinForPayload,
         Username: usernameNorm || null,
         Password: document.getElementById('password')?.value || null
     };

@@ -182,7 +182,6 @@ namespace centrny.Controllers
             {
                 _logger.LogInformation($"=== STARTING REGISTRATION FOR ROOT {root_code} ===");
 
-                // (Input validation unchanged...)
                 var validationErrors = new List<string>();
                 if (string.IsNullOrWhiteSpace(request.StudentName))
                     validationErrors.Add("Student name is required.");
@@ -199,6 +198,7 @@ namespace centrny.Controllers
                 if (string.IsNullOrWhiteSpace(request.Mode))
                     validationErrors.Add("Mode is required.");
 
+                // Online-specific validation (unchanged)
                 if (request.Mode == "Online")
                 {
                     if (string.IsNullOrWhiteSpace(request.PinCode))
@@ -237,9 +237,30 @@ namespace centrny.Controllers
                     return Json(new { success = false, error = "Registration center not found or inactive." });
                 }
 
+                // NEW: compute flags for special offline behavior
+                bool rfOffline = GetBoolProp(rootEntity, "IsOffline");
+                bool rfOnline = GetBoolProp(rootEntity, "IsOnline");
+                bool rfProfile = GetBoolProp(rootEntity, "HasProfile");
+                bool rfAccount = GetBoolProp(rootEntity, "HasAccount");
+                bool allFourFlags = rfOffline && rfOnline && rfProfile && rfAccount;
+
+                // NEW: Offline + all 4 flags => require username/password (no PIN)
+                if (request.Mode == "Offline" && allFourFlags && rfAccount)
+                {
+                    if (string.IsNullOrWhiteSpace(request.Username))
+                        return Json(new { success = false, error = "Username is required for this center." });
+                    if (string.IsNullOrWhiteSpace(request.Password))
+                        return Json(new { success = false, error = "Password is required for this center." });
+                }
+
                 _logger.LogInformation("Creating student entity");
-                // Create student WITHOUT credentials
                 var student = CreateStudentFromRequest(request, root_code);
+
+                // Set IsConfirmed based on registration flow
+                if (request.Mode == "Online")
+                    student.IsConfirmed = true;
+                else
+                    student.IsConfirmed = false;
 
                 _context.Students.Add(student);
                 await _context.SaveChangesAsync();
@@ -254,12 +275,36 @@ namespace centrny.Controllers
                 }
 
                 // Determine whether to create online account immediately
-                bool rootRequiresAccount = (rootEntity.GetType().GetProperty("HasAccount") != null) ? (bool?)rootEntity.GetType().GetProperty("HasAccount").GetValue(rootEntity) == true : false;
+                bool rootRequiresAccount = rfAccount;
                 bool accountRequestedInPayload = !string.IsNullOrWhiteSpace(request.Username) && !string.IsNullOrWhiteSpace(request.Password) && !string.IsNullOrWhiteSpace(request.PinCode);
 
-                if ((request.Mode == "Offline" && (rootRequiresAccount || accountRequestedInPayload)) || request.Mode == "Online")
+                // NEW BRANCH: Offline + all 4 flags => set username/password without PIN and keep IsConfirmed=false
+                if (request.Mode == "Offline" && allFourFlags && rfAccount)
                 {
-                    // Re-fetch and validate PIN against center, ensure it is not linked
+                    // Check username uniqueness within root
+                    var requestedUsername = request.Username.Trim().ToLowerInvariant();
+                    var exists = await _context.Students
+                        .AnyAsync(s => s.StudentUsername != null
+                                       && s.StudentUsername.ToLower() == requestedUsername
+                                       && s.RootCode == root_code);
+
+                    if (exists)
+                    {
+                        await transaction.RollbackAsync();
+                        return Json(new { success = false, error = "Username is already taken." });
+                    }
+
+                    student.StudentUsername = request.Username.Trim(); // keep user-entered case
+                    student.StudentPassword = request.Password;         // plaintext per current design
+                                                                        // IsConfirmed already set above
+                    student.LastInsertUser = 1;
+                    student.LastInsertTime = DateTime.Now;
+
+                    await _context.SaveChangesAsync();
+                }
+                // EXISTING BEHAVIOR: Offline (account + PIN) or Online (PIN)
+                else if ((request.Mode == "Offline" && (rootRequiresAccount || accountRequestedInPayload)) || request.Mode == "Online")
+                {
                     var pinEntity = await _context.Pins
                         .FirstOrDefaultAsync(p => p.Watermark == (request.PinCode ?? "") && p.RootCode == root_code && p.IsActive == 1 && p.StudentCode == null);
 
@@ -269,12 +314,9 @@ namespace centrny.Controllers
                         return Json(new { success = false, error = "Invalid or already-used PIN for this center." });
                     }
 
-                    // Check username uniqueness within root (if username provided)
                     if (!string.IsNullOrWhiteSpace(request.Username))
                     {
-                        // Normalize username for check (trim + lowercase invariant)
                         var requestedUsername = request.Username.Trim().ToLowerInvariant();
-
                         var exists = await _context.Students
                             .AnyAsync(s => s.StudentUsername != null
                                            && s.StudentUsername.ToLower() == requestedUsername
@@ -286,23 +328,17 @@ namespace centrny.Controllers
                             return Json(new { success = false, error = "Username is already taken." });
                         }
 
-                        // At this point uniqueness check passed: assign credentials and link pin
-                        student.StudentUsername = request.Username.Trim(); // keep original case as user entered, but we checked normalized
+                        student.StudentUsername = request.Username.Trim();
                         student.StudentPassword = request.Password; // plaintext per current design
-                        student.IsConfirmed = false;
+                                                                    // IsConfirmed already set above
                         student.LastInsertUser = 1;
                         student.LastInsertTime = DateTime.Now;
 
-                        // Link PIN to student
                         pinEntity.StudentCode = student.StudentCode;
                         pinEntity.LastUpdateUser = 1;
                         pinEntity.LastUpdateTime = DateTime.Now;
 
                         await _context.SaveChangesAsync();
-                    }
-                    else
-                    {
-                        // No username provided — nothing to do besides reserving PIN if required by business
                     }
                 }
 
@@ -969,6 +1005,29 @@ namespace centrny.Controllers
             item.StudentCode = student.StudentCode;
             item.LastUpdateUser = 1;
             item.LastUpdateTime = DateTime.Now;
+
+            // NEW: Activate offline account (no-PIN) after linking when all 4 flags are true
+            try
+            {
+                var root = await _context.Roots.FirstOrDefaultAsync(r => r.RootCode == student.RootCode && r.IsActive);
+                if (root != null)
+                {
+                    bool allFourFlags = GetBoolProp(root, "IsOffline")
+                                        && GetBoolProp(root, "IsOnline")
+                                        && GetBoolProp(root, "HasProfile")
+                                        && GetBoolProp(root, "HasAccount");
+
+                    if (allFourFlags
+                        && !string.IsNullOrEmpty(student.StudentUsername)
+                        && (student.IsConfirmed == null || student.IsConfirmed == false))
+                    {
+                        student.IsConfirmed = true;
+                     
+                        student.LastInsertTime = DateTime.Now;
+                    }
+                }
+            }
+            catch { /* ignore activation failures silently */ }
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -2291,6 +2350,17 @@ namespace centrny.Controllers
             return await GetStudentAssignments(item_key);
         }
 
+        private static bool GetBoolProp(object obj, string propName)
+        {
+            try
+            {
+                var pi = obj?.GetType().GetProperty(propName);
+                if (pi == null) return false;
+                var val = pi.GetValue(obj);
+                return val is bool b && b;
+            }
+            catch { return false; }
+        }
         private static string FormatFileSize(long bytes)
         {
             string[] sizes = { "B", "KB", "MB", "GB" };
