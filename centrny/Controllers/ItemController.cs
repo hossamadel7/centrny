@@ -193,31 +193,44 @@ namespace centrny1.Controllers
             if (sessionUserCode == null)
                 return Unauthorized();
 
-            // Use the root code sent from the frontend, not the session!
             request.InsertUserCode = sessionUserCode.Value;
+
+            // Get the first active Edu_Year for the specified RootCode
+            var firstActiveEduYear = _context.EduYears
+                .Where(e => e.IsActive && e.RootCode == request.RootCode)
+                .OrderBy(e => e.EduCode)
+                .Select(e => e.EduCode)
+                .FirstOrDefault();
+
+            if (firstActiveEduYear == 0)
+                return BadRequest(new { error = "No active Edu_Year found for this RootCode." });
 
             try
             {
-                var sql = "EXEC InsertIntoItem @RootCode, @InsertUser, @RecordCount, @ItemTypeCode";
+                var sql = "EXEC InsertIntoItem @RootCode, @InsertUser, @RecordCount, @ItemTypeCode, @Edu_Year";
 
                 _context.Database.ExecuteSqlRaw(
                     sql,
                     new SqlParameter("@RootCode", request.RootCode),
                     new SqlParameter("@InsertUser", request.InsertUserCode),
                     new SqlParameter("@RecordCount", request.RecordCount),
-                    new SqlParameter("@ItemTypeCode", request.ItemTypeCode)
+                    new SqlParameter("@ItemTypeCode", request.ItemTypeCode),
+                    new SqlParameter("@Edu_Year", firstActiveEduYear)
                 );
 
+                // Select the last inserted items for confirmation/output
                 var lastInsertedItems = (from i in _context.Items
                                          join r in _context.Roots on i.RootCode equals r.RootCode
                                          where i.RootCode == request.RootCode
                                                && i.ItemTypeKey == request.ItemTypeCode
                                                && i.IsActive
+                                               && i.EduYear == firstActiveEduYear
                                          orderby i.ItemCode descending
                                          select new
                                          {
                                              itemCode = i.ItemCode,
                                              itemKey = i.ItemKey,
+                                             serialNumber = i.SerialNumber,
                                              rootDomain = r.RootDomain
                                          })
                               .Take(request.RecordCount)
