@@ -58,6 +58,7 @@
 	<data name="InPerson" xml:space="preserve"><value>In-Person</value></data>
 	<data name="Degree" xml:space="preserve"><value>Degree</value></data>
 	<data name="NA" xml:space="preserve"><value>N/A</value></data>
+	<data name="Btn_OK" xml:space="preserve"><value>OK</value></data>
 <data name="ViewAssignmentsAndExams" xml:space="preserve">
   <value>View your assignments and exams</value>
 </data>

@@ -59,4 +59,5 @@
 	<data name="Degree" xml:space="preserve"><value>الدرجة</value></data>
 	<data name="NA" xml:space="preserve"><value>غير متوفر</value></data>
 	<data name="ViewAssignmentsAndExams" xml:space="preserve"><value>عرض الواجبات والامتحانات الخاصة بك</value></data>
+	<data name="Btn_OK" xml:space="preserve"><value>موافق</value></data>
 </root>
