@@ -60,4 +60,16 @@
 	<data name="NA" xml:space="preserve"><value>غير متوفر</value></data>
 	<data name="ViewAssignmentsAndExams" xml:space="preserve"><value>عرض الواجبات والامتحانات الخاصة بك</value></data>
 	<data name="Btn_OK" xml:space="preserve"><value>موافق</value></data>
+	<data name="RegistrationSuccessfulTitle" xml:space="preserve">
+    <value>!تم التسجيل بنجاح</value>
+</data>
+	<data name="RegistrationSuccessfulMessage" xml:space="preserve">
+    <value>.تم التسجيل بنجاح! مرحبًا</value>
+</data>
+	<data name="StudentAlreadyRegistered" xml:space="preserve">
+    <value>الطالب مسجل بالفعل</value>
+</data>
+	<data name="UsernameValidationMessage" xml:space="preserve">
+    <value>اسم المستخدم يجب أن يتكون من 4 إلى 40 حرفًا ويحتوي فقط على حروف أو أرقام أو شرطة سفلية (_)</value>
+</data>
 </root>
