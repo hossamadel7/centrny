@@ -12,6 +12,9 @@ class OnlineStudentDashboard {
         this.currentSubject = null;
         this.currentChapter = null;
 
+        // NEW: attended sessions cache
+        this.sessions = [];
+
         // Auto-load chapters immediately if there is only one subject
         this.autoLoadSingleSubject = true;
 
@@ -72,6 +75,9 @@ class OnlineStudentDashboard {
     }
 
     init() {
+        // Disable Bootstrap collapse toggle on the navbar button (so only the sidebar opens)
+        this._forceSidebarOnlyOnMobile();
+
         const currentPath = window.location.pathname.toLowerCase();
         if (currentPath.includes('learning') || currentPath.endsWith('/learning')) {
             this.initLearningSystem();
@@ -83,6 +89,44 @@ class OnlineStudentDashboard {
         }
     }
 
+    _forceSidebarOnlyOnMobile() {
+        const navToggler = document.querySelector('.navbar-toggler');
+        const collapseEl = document.getElementById('navbarNav');
+
+        if (navToggler) {
+            ['data-bs-toggle', 'data-bs-target', 'aria-controls', 'aria-expanded'].forEach(attr => {
+                if (navToggler.hasAttribute(attr)) navToggler.removeAttribute(attr);
+            });
+
+            navToggler.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.innerWidth < 992) {
+                    openMobileNav();
+                }
+            }, true);
+        }
+
+        if (collapseEl) {
+            collapseEl.classList.remove('show', 'collapsing');
+            collapseEl.style.height = '';
+        }
+
+        document.querySelectorAll('.mobile-nav-link').forEach(a => {
+            a.addEventListener('click', () => closeMobileNav());
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMobileNav();
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 992) {
+                closeMobileNav();
+            }
+        });
+    }
+
     // DASHBOARD
     async loadAll() {
         try {
@@ -91,7 +135,8 @@ class OnlineStudentDashboard {
                 this.loadStats(),
                 this.loadSubscription(),
                 this.loadSubjects(),
-                this.loadExams()
+                this.loadExams(),
+                this.loadAttendedSessions() // NEW
             ]);
             this.hideLoading();
             this.showAlert(this.loc('Alert_DashboardLoaded', 'Dashboard loaded'));
@@ -257,6 +302,55 @@ class OnlineStudentDashboard {
         }).join('');
     }
 
+    // NEW: Attended Sessions
+    async loadAttendedSessions() {
+        const grid = document.getElementById('sessionsGrid');
+        if (!grid) return;
+        try {
+            const res = await fetch('/OnlineStudent/GetAttendedSessions');
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            if (data.error) {
+                this.renderError(grid, data.error);
+                return;
+            }
+            this.sessions = data.sessions || [];
+            this.renderAttendedSessions();
+        } catch (e) {
+            this.renderError(grid, this.loc('Alert_LoadSessionsFailed', 'Failed to load sessions'));
+        }
+    }
+
+    renderAttendedSessions() {
+        const grid = document.getElementById('sessionsGrid');
+        if (!grid) return;
+        if (!this.sessions || this.sessions.length === 0) {
+            grid.innerHTML = this.emptyState(
+                'fa-user-check',
+                this.loc('Empty_NoSessionsTitle', 'No Attended Sessions'),
+                this.loc('Empty_NoSessionsMessage', 'No attendance records yet.')
+            );
+            return;
+        }
+
+        grid.innerHTML = this.sessions.map(s => {
+            const when = this.formatDate(s.attendedAt);
+            const name = this.escape(s.lessonName || s.className || '—');
+            const source = s.source === 'Online' ? this.loc('Source_Online', 'Online') : this.loc('Source_Center', 'Center');
+            return `
+                <div class="exam-card">
+                    <div class="exam-header">
+                        <h4>${name}</h4>
+                        <div class="grade-badge">${this.escape(source)}</div>
+                    </div>
+                    <div class="exam-details">
+                        <div class="detail-row"><span class="label">${this.loc('Label_Date', 'Date')}</span><span class="value">${when}</span></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     // LEARNING
     initLearningSystem() {
         this.setupLearningEventListeners();
@@ -315,13 +409,11 @@ class OnlineStudentDashboard {
         const single = this.learningSubjects.length === 1;
         if (single) {
             const s = this.learningSubjects[0];
-            // Only one subject: select it
             subjectSelect.innerHTML = `<option value="${s.subjectCode}" selected>${this.escape(s.subjectName)} - ${this.escape(s.eduYearName)}</option>`;
             subjectSelect.value = s.subjectCode;
             const loadBtn = document.getElementById('loadChaptersBtn');
             if (loadBtn) loadBtn.disabled = false;
 
-            // Auto-load chapters immediately if configured
             if (this.autoLoadSingleSubject) {
                 setTimeout(() => this.loadChapters(s.subjectCode), 80);
             }
@@ -534,12 +626,13 @@ class OnlineStudentDashboard {
     }
 
     formatDate(d) {
-        if (!d || d === 'N/A') return 'N/A';
+        if (!d) return 'N/A';
         try {
             const dt = new Date(d);
+            if (isNaN(dt.getTime())) return String(d);
             return dt.toLocaleDateString(this.locale || 'en', { year: 'numeric', month: 'short', day: 'numeric' });
         } catch {
-            return d;
+            return String(d);
         }
     }
 
@@ -609,19 +702,16 @@ function switchLanguage(lang) {
     location.reload();
 }
 
+// Sidebar controls
+function openMobileNav() {
+    document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
+    document.querySelector('.mobile-nav-overlay')?.classList.add('show');
+    document.body.classList.add('mobile-nav-open');
+}
 function closeMobileNav() {
     document.querySelector('.mobile-nav-sidebar')?.classList.remove('open');
     document.querySelector('.mobile-nav-overlay')?.classList.remove('show');
+    document.body.classList.remove('mobile-nav-open');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const navToggler = document.querySelector('.navbar-toggler');
-    if (navToggler) {
-        navToggler.addEventListener('click', () => {
-            document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
-            document.querySelector('.mobile-nav-overlay')?.classList.add('show');
-        });
-    }
-});
-
-console.log('OnlineStudent.js loaded with single-subject auto-select + auto chapter loading.');
+console.log('OnlineStudent.js loaded with mobile sidebar-only navigation.');

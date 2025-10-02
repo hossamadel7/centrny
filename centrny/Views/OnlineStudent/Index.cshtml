@@ -42,6 +42,7 @@
         @Html.AntiForgeryToken()
     </div>
 
+    <!-- All localization keys must stay INSIDE this opening tag (no stray < or early >) -->
     <div id="js-online-localization"
          data-nav-dashboard="@Localizer["Nav_Dashboard"]"
          data-nav-learning="@Localizer["Nav_LearningCenter"]"
@@ -88,7 +89,14 @@
          data-not-provided="@Localizer["NotProvided"]"
          data-error="@Localizer["Error"]"
          data-locale="@htmlLang"
-         data-dir="@htmlDir"></div>
+         data-dir="@htmlDir"
+         data-section-attended-sessions="@Localizer["Section_AttendedSessions"]"
+         data-loading-sessions="@Localizer["Loading_Sessions"]"
+         data-empty-no-sessions-title="@Localizer["Empty_NoSessionsTitle"]"
+         data-empty-no-sessions-message="@Localizer["Empty_NoSessionsMessage"]"
+         data-alert-load-sessions-failed="@Localizer["Alert_LoadSessionsFailed"]"
+         data-source-online="@Localizer["Source_Online"]"
+         data-source-center="@Localizer["Source_Center"]"></div>
 
     <nav class="navbar navbar-expand-lg modern-navbar">
         <div class="container-fluid px-4">
@@ -96,7 +104,8 @@
                 <i class="fas fa-graduation-cap"></i>
                 @rootName
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <!-- IMPORTANT: remove Bootstrap collapse attributes so only the side menu opens on mobile -->
+            <button class="navbar-toggler" type="button" aria-label="Open navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -130,7 +139,7 @@
         </div>
     </nav>
 
-    <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+    <div class="mobile-nav-overlay" onclick="closeMobileNav"></div>
 
     <div class="mobile-nav-sidebar">
         <div class="mobile-nav-header">
@@ -301,6 +310,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- NEW: Attended Sessions -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-user-check"></i>
+                    @Localizer["Section_AttendedSessions"]
+                </h2>
+            </div>
+            <div class="section-content">
+                <div id="sessionsGrid" class="exams-grid">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>@Localizer["Loading_Sessions"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Attended Sessions -->
+
     </div>
 
     <script>
@@ -311,16 +340,8 @@
         function closeMobileNav() {
             document.querySelector('.mobile-nav-sidebar')?.classList.remove('open');
             document.querySelector('.mobile-nav-overlay')?.classList.remove('show');
+            document.body.classList.remove('mobile-nav-open');
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggler = document.querySelector('.navbar-toggler');
-            if (toggler) {
-                toggler.addEventListener('click', () => {
-                    document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
-                    document.querySelector('.mobile-nav-overlay')?.classList.add('show');
-                });
-            }
-        });
 
         async function logoutStudent() {
             try {
