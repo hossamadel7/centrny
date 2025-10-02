@@ -255,7 +255,6 @@ namespace centrny.Controllers
                     {
                         lessonCode = l.LessonCode,
                         chapterName = l.LessonName ?? "Unnamed Chapter",
-                       
                         insertTime = l.InsertTime,
                         subjectName = l.SubjectCodeNavigation.SubjectName ?? "Unknown Subject",
                         lessonsCount = _context.Lessons.Count(lesson => lesson.ChapterCode == l.LessonCode && lesson.IsActive == true)
@@ -314,8 +313,6 @@ namespace centrny.Controllers
                     {
                         lessonCode = l.LessonCode,
                         lessonName = l.LessonName ?? "Unnamed Lesson",
-                       
-                    
                         insertTime = l.InsertTime,
                         isActive = l.IsActive
                     })
@@ -328,7 +325,6 @@ namespace centrny.Controllers
                     {
                         chapterCode = chapter.LessonCode,
                         chapterName = chapter.LessonName,
-
                         subjectName = chapter.SubjectCodeNavigation?.SubjectName ?? "Unknown Subject",
                         subjectCode = chapter.SubjectCode
                     },
@@ -553,6 +549,7 @@ namespace centrny.Controllers
                 sessionId = HttpContext.Session.Id
             });
         }
+
         [HttpGet("GetStudentInfo")]
         public async Task<IActionResult> GetStudentInfo()
         {
@@ -625,6 +622,77 @@ namespace centrny.Controllers
             return age;
         }
 
+      [HttpGet("GetAttendedSessions")]
+public async Task<IActionResult> GetAttendedSessions()
+{
+    var studentCode = HttpContext.Session.GetInt32("StudentCode");
+    if (!studentCode.HasValue)
+    {
+        return Json(new { error = "Student not logged in" });
+    }
+
+    try
+    {
+        // Online sessions: Online_Attend (LessonCode -> Lesson.LessonName), date = InsertTime
+        var onlineSessions = await (
+            from oa in _context.OnlineAttends
+            where oa.StudentCode == studentCode.Value
+            join ls in _context.Lessons on oa.LessonCode equals ls.LessonCode into lj
+            from ls in lj.DefaultIfEmpty()
+            select new AttendedSessionDto
+            {
+                Source = "Online",
+                LessonCode = oa.LessonCode,
+                LessonName = (ls != null && ls.LessonName != null) ? ls.LessonName : "Unknown Lesson",
+                ClassName = null,
+                AttendedAt = oa.InsertTime // InsertTime is non-nullable DateTime in your model
+            }
+        ).ToListAsync();
+
+        // Center sessions: Attend (ClassId -> Class -> ClassLessonCode -> Lesson.LessonName; fallback to ClassName)
+        var offlineSessions = await (
+            from a in _context.Attends
+            where a.StudentId == studentCode.Value
+            join c in _context.Classes on a.ClassId equals c.ClassCode into cj
+            from c in cj.DefaultIfEmpty()
+            join ls in _context.Lessons on c.ClassLessonCode equals ls.LessonCode into lj
+            from ls in lj.DefaultIfEmpty()
+            select new AttendedSessionDto
+            {
+                Source = "Center",
+                LessonCode = c != null ? c.ClassLessonCode : (int?)null,
+                LessonName = (ls != null && ls.LessonName != null)
+                                ? ls.LessonName
+                                : (c != null ? (c.ClassName ?? "Unknown Class") : "Unknown Class"),
+                ClassName = c != null ? c.ClassName : null,
+                AttendedAt = a.AttendDate // AttendDate is non-nullable DateTime in your model
+            }
+        ).ToListAsync();
+
+        var sessions = onlineSessions
+            .Concat(offlineSessions)
+            .OrderByDescending(s => s.AttendedAt)
+            .Take(200)
+            .Select(s => new
+            {
+                source = s.Source,
+                lessonCode = s.LessonCode,
+                lessonName = s.LessonName,
+                className = s.ClassName,
+                attendedAt = s.AttendedAt.ToString("yyyy-MM-dd HH:mm:ss") // ensure method is called
+            })
+            .ToList();
+
+        return Json(new { count = sessions.Count, sessions });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting attended sessions for StudentCode={StudentCode} at {DateTime}",
+            studentCode, DateTime.UtcNow);
+        return Json(new { error = ex.Message });
+    }
+}
+
         public class StudentDashboardViewModel
         {
             public Student Student { get; set; }
@@ -634,6 +702,16 @@ namespace centrny.Controllers
             public int TotalAttendanceCount { get; set; }
             public int RecentAttendanceCount { get; set; }
             public bool IsSubscribed { get; set; }
+        }
+
+        // DTO for attended sessions
+        private class AttendedSessionDto
+        {
+            public string Source { get; set; } = "";
+            public int? LessonCode { get; set; }
+            public string LessonName { get; set; } = "";
+            public string? ClassName { get; set; }
+            public DateTime AttendedAt { get; set; }
         }
     }
 }

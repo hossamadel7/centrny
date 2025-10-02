@@ -1,225 +1,315 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>2.0</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
 
-	<data name="Title_Dashboard">
-		<value>Student Dashboard</value>
-	</data>
-	<data name="Title_LearningCenter">
-		<value>Learning Center</value>
-	</data>
-
-	<data name="Nav_Dashboard">
-		<value>Dashboard</value>
-	</data>
-	<data name="Nav_LearningCenter">
-		<value>Learning Center</value>
-	</data>
-
-	<data name="Section_AcademicOverview">
-		<value>Academic Overview</value>
-	</data>
-	<data name="Section_StudentInformation">
-		<value>Student Information</value>
-	</data>
-	<data name="Section_EnrolledSubjects">
-		<value>Enrolled Subjects</value>
-	</data>
-	<data name="Section_ExaminationResults">
-		<value>Examination Results</value>
-	</data>
-
-	<data name="Stat_Subjects">
-		<value>Subjects</value>
-	</data>
-	<data name="Stat_Exams">
-		<value>Exams</value>
-	</data>
-	<data name="Stat_Attendance">
-		<value>Attendance</value>
-	</data>
-	<data name="Stat_Average">
-		<value>Average %</value>
-	</data>
-
-	<data name="Label_FullName">
-		<value>Full Name</value>
-	</data>
-	<data name="Label_Age">
-		<value>Age</value>
-	</data>
-	<data name="Label_AgeSuffix">
-		<value>years old</value>
-	</data>
-	<data name="Label_AcademicYear">
-		<value>Academic Year</value>
-	</data>
-	<data name="Label_Branch">
-		<value>Branch</value>
-	</data>
-	<data name="Label_ContactNumber">
-		<value>Contact Number</value>
-	</data>
-	<data name="Label_ParentContact">
-		<value>Parent Contact</value>
-	</data>
-	<data name="Label_MemberSince">
-		<value>Member Since</value>
-	</data>
-
-	<data name="Badge_Subscribed">
-		<value>Subscribed</value>
-	</data>
-	<data name="Badge_Regular">
-		<value>Regular</value>
-	</data>
-
-	<data name="Empty_NoSubjectsTitle">
-		<value>No Subjects</value>
-	</data>
-	<data name="Empty_NoSubjectsMessage">
-		<value>No enrolled subjects yet.</value>
-	</data>
-	<data name="Empty_NoExamsTitle">
-		<value>No Exams</value>
-	</data>
-	<data name="Empty_NoExamsMessage">
-		<value>No exam results yet.</value>
-	</data>
-	<data name="Empty_NoChaptersTitle">
-		<value>No Chapters</value>
-	</data>
-	<data name="Empty_NoChaptersMessage">
-		<value>No chapters available for this subject.</value>
-	</data>
-	<data name="Empty_NoLessonsTitle">
-		<value>No Lessons</value>
-	</data>
-	<data name="Empty_NoLessonsMessage">
-		<value>No lessons available for this chapter.</value>
-	</data>
-
-	<data name="Select_SubjectLabel">
-		<value>Select Your Subject</value>
-	</data>
-	<data name="Select_SubjectPlaceholder">
-		<value>Select a subject...</value>
-	</data>
-	<data name="Button_ExploreChapters">
-		<value>Explore Chapters</value>
-	</data>
-	<data name="Header_SubjectChapters">
-		<value>Subject Chapters</value>
-	</data>
-	<data name="Button_BackToSubjects">
-		<value>Back to Subjects</value>
-	</data>
-	<data name="Header_ChapterLessons">
-		<value>Chapter Lessons</value>
-	</data>
-	<data name="Button_BackToChapters">
-		<value>Back to Chapters</value>
-	</data>
-	<data name="Button_AccessLesson">
-		<value>Access Lesson</value>
-	</data>
-
-	<data name="Label_Subject">
-		<value>Subject</value>
-	</data>
-	<data name="Label_Teacher">
-		<value>Teacher</value>
-	</data>
-	<data name="Label_Date">
-		<value>Date</value>
-	</data>
-	<data name="Label_Type">
-		<value>Type</value>
-	</data>
-	<data name="Label_Status">
-		<value>Status</value>
-	</data>
-
-	<data name="Type_Exam">
-		<value>Exam</value>
-	</data>
-	<data name="Type_Quiz">
-		<value>Quiz</value>
-	</data>
-	<data name="Status_Passed">
-		<value>Passed</value>
-	</data>
-	<data name="Status_Failed">
-		<value>Failed</value>
-	</data>
-
-	<data name="Online_Badge">
-		<value>Online</value>
-	</data>
-	<data name="Fee_Label">
-		<value>Fee</value>
-	</data>
-	<data name="Added_Label">
-		<value>Added</value>
-	</data>
-
-	<data name="Alert_DashboardLoaded">
-		<value>Dashboard loaded</value>
-	</data>
-	<data name="Alert_DashboardFailed">
-		<value>Failed to load dashboard</value>
-	</data>
-	<data name="Alert_LoadChaptersFailed">
-		<value>Failed to load chapters</value>
-	</data>
-	<data name="Alert_LoadLessonsFailed">
-		<value>Failed to load lessons</value>
-	</data>
-	<data name="Alert_LoadSubjectsFailed">
-		<value>Failed to load subjects</value>
-	</data>
-	<data name="Alert_LoadExamsFailed">
-		<value>Failed to load exams</value>
-	</data>
-
-	<data name="Loading_Subjects">
-		<value>Loading subjects...</value>
-	</data>
-	<data name="Loading_Exams">
-		<value>Loading examination results...</value>
-	</data>
-	<data name="Loading_Chapters">
-		<value>Loading chapters...</value>
-	</data>
-	<data name="Loading_Lessons">
-		<value>Loading lessons...</value>
-	</data>
-
-	<data name="Confirm_AccessLesson">
-		<value>Access this lesson?</value>
-	</data>
-	<data name="Redirecting">
-		<value>Redirecting...</value>
-	</data>
-
-	<data name="NotAssigned">
-		<value>Not Assigned</value>
-	</data>
-	<data name="NotProvided">
-		<value>Not Provided</value>
-	</data>
-	<data name="Error">
-		<value>Error</value>
-	</data>
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title_Dashboard" xml:space="preserve">
+    <value>Student Dashboard</value>
+  </data>
+  <data name="Title_LearningCenter" xml:space="preserve">
+    <value>Learning Center</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Nav_LearningCenter" xml:space="preserve">
+    <value>Learning Center</value>
+  </data>
+  <data name="Section_AcademicOverview" xml:space="preserve">
+    <value>Academic Overview</value>
+  </data>
+  <data name="Section_StudentInformation" xml:space="preserve">
+    <value>Student Information</value>
+  </data>
+  <data name="Section_EnrolledSubjects" xml:space="preserve">
+    <value>Enrolled Subjects</value>
+  </data>
+  <data name="Section_ExaminationResults" xml:space="preserve">
+    <value>Examination Results</value>
+  </data>
+  <data name="Stat_Subjects" xml:space="preserve">
+    <value>Subjects</value>
+  </data>
+  <data name="Stat_Exams" xml:space="preserve">
+    <value>Exams</value>
+  </data>
+  <data name="Stat_Attendance" xml:space="preserve">
+    <value>Attendance</value>
+  </data>
+  <data name="Stat_Average" xml:space="preserve">
+    <value>Average %</value>
+  </data>
+  <data name="Label_FullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="Label_Age" xml:space="preserve">
+    <value>Age</value>
+  </data>
+  <data name="Label_AgeSuffix" xml:space="preserve">
+    <value>years old</value>
+  </data>
+  <data name="Label_AcademicYear" xml:space="preserve">
+    <value>Academic Year</value>
+  </data>
+  <data name="Label_Branch" xml:space="preserve">
+    <value>Branch</value>
+  </data>
+  <data name="Label_ContactNumber" xml:space="preserve">
+    <value>Contact Number</value>
+  </data>
+  <data name="Label_ParentContact" xml:space="preserve">
+    <value>Parent Contact</value>
+  </data>
+  <data name="Label_MemberSince" xml:space="preserve">
+    <value>Member Since</value>
+  </data>
+  <data name="Badge_Subscribed" xml:space="preserve">
+    <value>Subscribed</value>
+  </data>
+  <data name="Badge_Regular" xml:space="preserve">
+    <value>Regular</value>
+  </data>
+  <data name="Empty_NoSubjectsTitle" xml:space="preserve">
+    <value>No Subjects</value>
+  </data>
+  <data name="Empty_NoSubjectsMessage" xml:space="preserve">
+    <value>No enrolled subjects yet.</value>
+  </data>
+  <data name="Empty_NoExamsTitle" xml:space="preserve">
+    <value>No Exams</value>
+  </data>
+  <data name="Empty_NoExamsMessage" xml:space="preserve">
+    <value>No exam results yet.</value>
+  </data>
+  <data name="Empty_NoChaptersTitle" xml:space="preserve">
+    <value>No Chapters</value>
+  </data>
+  <data name="Empty_NoChaptersMessage" xml:space="preserve">
+    <value>No chapters available for this subject.</value>
+  </data>
+  <data name="Empty_NoLessonsTitle" xml:space="preserve">
+    <value>No Lessons</value>
+  </data>
+  <data name="Empty_NoLessonsMessage" xml:space="preserve">
+    <value>No lessons available for this chapter.</value>
+  </data>
+  <data name="Select_SubjectLabel" xml:space="preserve">
+    <value>Select Your Subject</value>
+  </data>
+  <data name="Select_SubjectPlaceholder" xml:space="preserve">
+    <value>Select a subject...</value>
+  </data>
+  <data name="Button_ExploreChapters" xml:space="preserve">
+    <value>Explore Chapters</value>
+  </data>
+  <data name="Header_SubjectChapters" xml:space="preserve">
+    <value>Subject Chapters</value>
+  </data>
+  <data name="Button_BackToSubjects" xml:space="preserve">
+    <value>Back to Subjects</value>
+  </data>
+  <data name="Header_ChapterLessons" xml:space="preserve">
+    <value>Chapter Lessons</value>
+  </data>
+  <data name="Button_BackToChapters" xml:space="preserve">
+    <value>Back to Chapters</value>
+  </data>
+  <data name="Button_AccessLesson" xml:space="preserve">
+    <value>View Lesson</value>
+  </data>
+  <data name="Label_Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="Label_Teacher" xml:space="preserve">
+    <value>Teacher</value>
+  </data>
+  <data name="Label_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Label_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Label_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Type_Exam" xml:space="preserve">
+    <value>Exam</value>
+  </data>
+  <data name="Type_Quiz" xml:space="preserve">
+    <value>Quiz</value>
+  </data>
+  <data name="Status_Passed" xml:space="preserve">
+    <value>Passed</value>
+  </data>
+  <data name="Status_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Online_Badge" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="Fee_Label" xml:space="preserve">
+    <value>Fee</value>
+  </data>
+  <data name="Added_Label" xml:space="preserve">
+    <value>Added</value>
+  </data>
+  <data name="Alert_DashboardLoaded" xml:space="preserve">
+    <value>Dashboard loaded</value>
+  </data>
+  <data name="Alert_DashboardFailed" xml:space="preserve">
+    <value>Failed to load dashboard</value>
+  </data>
+  <data name="Alert_LoadChaptersFailed" xml:space="preserve">
+    <value>Failed to load chapters</value>
+  </data>
+  <data name="Alert_LoadLessonsFailed" xml:space="preserve">
+    <value>Failed to load lessons</value>
+  </data>
+  <data name="Alert_LoadSubjectsFailed" xml:space="preserve">
+    <value>Failed to load subjects</value>
+  </data>
+  <data name="Alert_LoadExamsFailed" xml:space="preserve">
+    <value>Failed to load exams</value>
+  </data>
+  <data name="Loading_Subjects" xml:space="preserve">
+    <value>Loading subjects...</value>
+  </data>
+  <data name="Loading_Exams" xml:space="preserve">
+    <value>Loading examination results...</value>
+  </data>
+  <data name="Loading_Chapters" xml:space="preserve">
+    <value>Loading chapters...</value>
+  </data>
+  <data name="Loading_Lessons" xml:space="preserve">
+    <value>Loading lessons...</value>
+  </data>
+  <data name="Confirm_AccessLesson" xml:space="preserve">
+    <value>Access this lesson?</value>
+  </data>
+  <data name="Redirecting" xml:space="preserve">
+    <value>Redirecting...</value>
+  </data>
+  <data name="NotAssigned" xml:space="preserve">
+    <value>Not Assigned</value>
+  </data>
+  <data name="NotProvided" xml:space="preserve">
+    <value>Not Provided</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
 </root>
