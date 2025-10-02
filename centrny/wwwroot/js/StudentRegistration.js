@@ -102,6 +102,17 @@ function setupEventListeners() {
         });
     }
 
+    // Optional: check phone on blur and warn early
+    const studentPhoneInput = document.getElementById('studentPhone');
+    if (studentPhoneInput) {
+        studentPhoneInput.addEventListener('blur', async () => {
+            const exists = await checkPhoneAlreadyRegistered();
+            if (exists) {
+                await Swal.fire({ icon: 'error', title: '', text: 'student already registered' });
+            }
+        });
+    }
+
     const completeOnlineBtn = document.getElementById('completeOnlineBtn');
     if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
 }
@@ -498,8 +509,6 @@ function toggleAccountCreationSectionIfNeeded() {
         const validateBtn = document.getElementById('validatePinAndUsernameBtn');
         if (validateBtn) validateBtn.style.display = offlineNoPin ? 'none' : '';
     }
-
-  
 }
 
 function initModeToggle() {
@@ -915,7 +924,8 @@ function renderSubjects() {
             el.addEventListener('click', _teacherClickHandler);
         });
 
-        container.querySelectorAll('.teacher-radio').forEach(r => {
+        // FIX: wrap parameter in parentheses
+        container.querySelectorAll('.teacher-radio').forEach((r) => {
             r.removeEventListener('change', _radioChangeHandler);
             r.addEventListener('change', _radioChangeHandler);
         });
@@ -1066,8 +1076,6 @@ window.removeSubject = function (subjectCode) {
     if (checkbox) { checkbox.checked = false; toggleSubject(subjectCode, ''); }
 };
 
-
-
 // ---------------- Summary UI ----------------
 function updateSelectedSubjectsSummary() {
     const container = document.getElementById('selectedSubjectsSummary');
@@ -1216,7 +1224,38 @@ async function checkUsername() {
     } catch (ex) { if (ue) ue.textContent = 'Network error checking username.'; derror('checkUsername error', ex); } finally { hideLoading(); }
 }
 
+// Helper: check if phone already registered for this root code
+// REPLACE the existing checkPhoneAlreadyRegistered() with this
+async function checkPhoneAlreadyRegistered() {
+    const studentPhone = (document.getElementById('studentPhone')?.value || '').trim();
+    const rootCode = getRootCodeFromUrl();
+    const yearCode =
+        (registrationMode === 'Online'
+            ? document.getElementById('onlineYearCode')?.value
+            : document.getElementById('yearCode')?.value) || '';
+
+    if (!studentPhone || !rootCode) return false;
+
+    try {
+        const url = `/Student/CheckPhone?phone=${encodeURIComponent(studentPhone)}&rootCode=${encodeURIComponent(rootCode)}${yearCode ? `&yearCode=${encodeURIComponent(yearCode)}` : ''}`;
+        const existsRes = await fetch(url);
+        const existsData = await existsRes.json();
+        return !!(existsData && existsData.exists);
+    } catch (ex) {
+        derror('Phone existence check failed', ex);
+        // Fail open if the check fails (do not block)
+        return false;
+    }
+}
+
 async function submitOnlineRegistration() {
+    // Small check: ensure phone not already registered for this root
+    const phoneExists = await checkPhoneAlreadyRegistered();
+    if (phoneExists) {
+        await Swal.fire({ icon: 'error', title: '', text: 'student already registered' });
+        return;
+    }
+
     const usernameInput = document.getElementById('username');
     const usernameRaw = usernameInput?.value || '';
     const username = normalizeUsername(usernameRaw);
@@ -1276,6 +1315,13 @@ async function submitOnlineRegistration() {
 async function submitRegistration() {
     if (registrationMode === "Online") { await submitOnlineRegistration(); return; }
     const terms = document.getElementById('termsAccepted'); if (terms && !terms.checked) { await Swal.fire({ icon: 'error', title: 'Terms required', text: 'You must accept the terms and conditions.' }); return; }
+
+    // Phone uniqueness check before any heavy validation/submission (Offline)
+    const phoneExists = await checkPhoneAlreadyRegistered();
+    if (phoneExists) {
+        await Swal.fire({ icon: 'error', title: '', text: 'student already registered' });
+        return;
+    }
 
     const prevStep = currentStep; currentStep = 2; if (!validateCurrentStep()) { currentStep = prevStep; return; } currentStep = prevStep;
 

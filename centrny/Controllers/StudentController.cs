@@ -485,18 +485,26 @@ namespace centrny.Controllers
             return Json(eduyears);
         }
 
+        // REPLACE the existing CheckPhone action with this
         [HttpGet]
         [Route("Student/CheckPhone")]
-        public async Task<IActionResult> CheckPhone(string phone, int rootCode)
+        public async Task<IActionResult> CheckPhone(string phone, int rootCode, int? yearCode = null)
         {
             if (string.IsNullOrWhiteSpace(phone) || rootCode <= 0)
                 return Json(new { exists = false });
 
-            var exists = await _context.Students
-                .AnyAsync(s => s.StudentPhone == phone.Trim() && s.RootCode == rootCode && s.IsActive);
+            var query = _context.Students
+                .Where(s => s.StudentPhone == phone.Trim() &&
+                            s.RootCode == rootCode &&
+                            s.IsActive);
 
+            if (yearCode.HasValue)
+                query = query.Where(s => s.YearCode == yearCode.Value);
+
+            var exists = await query.AnyAsync();
             return Json(new { exists });
         }
+
         [HttpGet]
         [Route("Register/{root_code:int}/Success")]
         public IActionResult PublicRegisterSuccess(int root_code)

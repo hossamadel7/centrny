@@ -3,16 +3,14 @@
 }
 
 <style>
-    /* Layout & spacing improvements */
     #widgetBox .widget-body {
-        padding-bottom: 4rem; /* leave space so content not hidden behind sticky bar */
+        padding-bottom: 4rem;
     }
 
     .color-input-wrapper small.form-text {
         font-size: 11px;
     }
 
-    /* Sticky action bar */
     .action-bar-bottom {
         position: fixed;
         left: 0;
@@ -29,39 +27,39 @@
         transition: transform .25s ease;
     }
 
-    .action-bar-bottom.hidden {
-        transform: translateY(110%);
-    }
+        .action-bar-bottom.hidden {
+            transform: translateY(110%);
+        }
 
-    .action-bar-bottom .info {
-        font-size: 0.85rem;
-        color: #666;
-        display: flex;
-        gap: 1.25rem;
-        flex-wrap: wrap;
-    }
+        .action-bar-bottom .info {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
 
-    .action-bar-bottom .btn-primary:disabled {
-        opacity: .6;
-        cursor: not-allowed;
-    }
+        .action-bar-bottom .btn-primary:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
 
     .fade-in {
         animation: fadeIn .35s ease;
     }
-    /* Use @@ to escape  inside Razor view */
+
     @@keyframes fadeIn {
         from {
             opacity: 0;
             transform: translateY(8px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
         }
     }
 
-    /* Optional nicer header spacing */
     #top .widget-header {
         display: flex;
         align-items: center;
@@ -70,7 +68,6 @@
         gap: .75rem;
     }
 
-    /* Responsive tweaks */
     @@media (max-width: 768px) {
         .action-bar-bottom {
             flex-direction: column;
@@ -78,10 +75,10 @@
             gap: .75rem;
         }
 
-        .action-bar-bottom .info {
-            width: 100%;
-            justify-content: space-between;
-        }
+            .action-bar-bottom .info {
+                width: 100%;
+                justify-content: space-between;
+            }
 
         #widgetBox .widget-body {
             padding-bottom: 6rem;
@@ -102,7 +99,6 @@
                             </button>
                         </div>
                     </div>
-
                     <div class="widget-body">
 
                         <!-- Root Filter & Column selectors -->
@@ -138,6 +134,12 @@
                             </div>
                         </div>
 
+                        <!-- VS-style Editor Search (only 1, for loaded content) -->
+                        <div class="input-group mb-2" style="max-width:440px;margin:1em 1em 0 1em;">
+                            <input type="text" id="editorSearch" class="form-control" placeholder="Find in loaded content...">
+                            <button type="button" id="editorSearchBtn" class="btn btn-info">Find Next</button>
+                        </div>
+
                         <!-- Editor -->
                         <div class="row" style="padding: 1.25em 1em 0 1em;">
                             <div class="col-sm-12">
@@ -150,7 +152,6 @@
 
                         <!-- Spacer so bottom bar doesn't overlap -->
                         <div style="height: 90px;"></div>
-
                     </div><!-- /widget-body -->
                 </div>
             </div>
@@ -177,20 +178,18 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/searchcursor.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Ensure this JS version includes the gymFilter logic -->
     <script src="/Js/Content.js?v=5"></script>
     <script>
         function updateActionBarState() {
             var gymVal = $('#gym').val();
             var colVal = $('#column').val();
             var $bar = $('#actionBar');
-
             if (gymVal && gymVal !== "0") {
                 $bar.removeClass('hidden');
                 $('#selectedRootInfo').text('Root: ' + $('#gym option:selected').text());
@@ -198,14 +197,12 @@
                 $bar.addClass('hidden');
                 $('#selectedRootInfo').text('No root selected');
             }
-
             if (colVal && colVal !== "0") {
                 $('#selectedColumnInfo').text('Column: ' + $('#column option:selected').text());
             } else {
                 $('#selectedColumnInfo').text('No column selected');
             }
         }
-
         $(document).on('change', '#gym, #column', updateActionBarState);
         setTimeout(updateActionBarState, 800);
     </script>

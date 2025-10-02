@@ -312,16 +312,17 @@ namespace centrny.Controllers
             return View();
         }
 
-        public IActionResult Gallery()
+        public IActionResult Test()
         {
             var culture = Request.Cookies["SelectedCulture"];
             var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
+            var domainNoPort = HttpContext.Request.Host.Host;
             var fullHost = HttpContext.Request.Host.ToString();
             var currentYear = DateTime.Now.Year.ToString();
 
             var res = (from c in DB.Contents
                        join r in DB.Roots on c.RootCode equals r.RootCode
-                       where (r.RootDomain == domain || r.RootName + ".gymsofto.com" == fullHost)
+                       where (r.RootDomain == domain || r.RootDomain == domainNoPort || r.RootName + ".gymsofto.com" == fullHost)
                        select new
                        {
                            root_code = c.RootCode,
@@ -331,27 +332,72 @@ namespace centrny.Controllers
                            web_header_ar = c.WebLayoutHAr,
                            web_footer = c.WebLayoutF,
                            web_footer_ar = c.WebLayoutFAr,
-                           gallery = c.Gallery,
-                           gallery_ar = c.GallerAr
+                           about = c.About,
+                           about_ar = c.AboutAr
                        }).FirstOrDefault();
 
-            if (res == null) return RedirectToAction(nameof(Index));
+            if (res == null)
+            {
+                ViewBag.title = "About";
+                ViewBag.web_header = "";
+                ViewBag.web_footer = "";
+                ViewBag.about = "<h1>About Page - No Content Found</h1>";
+            }
+            else
+            {
+                var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
+                var rootCodeStr = res.root_code.ToString();
+                ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
 
-            var useArabic = string.Equals(culture, "ar", StringComparison.OrdinalIgnoreCase);
-            var content = useArabic && !string.IsNullOrWhiteSpace(res.gallery_ar) ? res.gallery_ar : res.gallery;
-            if (string.IsNullOrWhiteSpace(content)) return RedirectToAction(nameof(Index));
+                ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
+
+                var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
+                var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
+                var content = useArabic && !string.IsNullOrWhiteSpace(res.about_ar) ? res.about_ar : res.about;
+
+                ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
+                ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
+                ViewBag.about = string.IsNullOrWhiteSpace(content) ? "<h1>About Page - Content Empty</h1>" : ApplyTokens(content, rootCodeStr, currentYear);
+            }
+
+            ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
+            ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";
+            return View();
+        }
+
+        public IActionResult Gallery()
+        {
+            var culture = Request.Cookies["SelectedCulture"];
+            var domain = HttpContext.Request.Host.ToString().Replace("www.", "");
+            var fullHost = HttpContext.Request.Host.ToString();
+            var currentYear = DateTime.Now.Year.ToString();
+
+            var res = (from c in DB.Contents
+                       join r in DB.Roots on c.RootCode equals r.RootCode
+                       where (r.RootDomain == domain || r.RootName + ".clasrio.com" == fullHost)
+                       select new
+                       {
+                           root_code = c.RootCode,
+                           title = c.Title,
+                           title_ar = c.TitleAr,
+                           web_header = c.WebLayoutH,
+                           web_header_ar = c.WebLayoutHAr,
+                           web_footer = c.WebLayoutF,
+                           web_footer_ar = c.WebLayoutFAr,
+                           gallery = c.Gallery
+                       }).FirstOrDefault();
+
+            if (res == null || string.IsNullOrWhiteSpace(res.gallery))
+                return RedirectToAction(nameof(Index));
 
             var rootCodeStr = res.root_code.ToString();
             ViewBag.root_code = string.IsNullOrWhiteSpace(rootCodeStr) ? "NOT_FOUND" : rootCodeStr;
-
-            ViewBag.title = useArabic && !string.IsNullOrWhiteSpace(res.title_ar) ? res.title_ar : res.title;
-
-            var headerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_header_ar) ? res.web_header_ar : res.web_header;
-            var footerRaw = useArabic && !string.IsNullOrWhiteSpace(res.web_footer_ar) ? res.web_footer_ar : res.web_footer;
-
+            ViewBag.title = res.title;
+            var headerRaw = res.web_header;
+            var footerRaw = res.web_footer;
             ViewBag.web_header = ApplyTokens(headerRaw, rootCodeStr, currentYear);
             ViewBag.web_footer = ApplyTokens(footerRaw, rootCodeStr, currentYear);
-            ViewBag.gallery = ApplyTokens(content, rootCodeStr, currentYear);
+            ViewBag.Gallery = ApplyTokens(res.gallery, rootCodeStr, currentYear);
 
             ViewBag.Culture = string.IsNullOrWhiteSpace(culture) ? "en" : culture;
             ViewBag.CurrentLanguage = string.Equals(ViewBag.Culture, "ar", StringComparison.OrdinalIgnoreCase) ? "العربية" : "English";

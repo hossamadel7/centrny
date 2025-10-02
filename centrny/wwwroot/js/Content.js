@@ -1,4 +1,4 @@
-﻿// Content.js (with Root filter)
+﻿// Content.js with VS-style Find-in-Editor for current loaded column
 
 var editor;
 
@@ -11,10 +11,37 @@ const rootColorColumns = [
     { CODE: "RootBackgroundColor", NAME: "Background color" }
 ];
 
-// Store original DB values (empty string => null)
 let originalColors = {};
 
-// Init
+var lastEditorSearch = { cursor: null, query: "" };
+function setupEditorSearch() {
+    $('#editorSearchBtn').on('click', function () {
+        var query = $('#editorSearch').val();
+        if (!query) return;
+        if (!lastEditorSearch.cursor || lastEditorSearch.query !== query) {
+            lastEditorSearch.cursor = editor.getSearchCursor(query, null, { caseFold: true, multiline: true });
+            lastEditorSearch.query = query;
+        }
+        if (!lastEditorSearch.cursor.findNext()) {
+            lastEditorSearch.cursor = editor.getSearchCursor(query, null, { caseFold: true, multiline: true });
+            lastEditorSearch.query = query;
+            if (!lastEditorSearch.cursor.findNext()) {
+                Swal.fire("No matches found.");
+                return;
+            }
+        }
+        editor.focus();
+        editor.setSelection(lastEditorSearch.cursor.from(), lastEditorSearch.cursor.to());
+        editor.scrollIntoView({ from: lastEditorSearch.cursor.from(), to: lastEditorSearch.cursor.to() });
+    });
+    $('#editorSearch').on('keydown', function (e) {
+        if (e.key === 'Enter') $('#editorSearchBtn').click();
+    });
+}
+function resetEditorSearch() {
+    lastEditorSearch = { cursor: null, query: "" };
+}
+
 $(document).ready(function () {
     editor = CodeMirror.fromTextArea(document.getElementById('content'), {
         mode: 'htmlmixed',
@@ -22,40 +49,31 @@ $(document).ready(function () {
         theme: 'default',
         height: '300px'
     });
+    setupEditorSearch();
+    editor.on('change', resetEditorSearch);
 
-    // Load filters & lists
     loadGyms();
     loadColumns();
-
-    // Events
-    $('#gymFilter').on('change', function () {
-        loadGyms();
-    });
-
+    $('#gymFilter').on('change', loadGyms);
     $('#gym').on("change", function () {
         loadRootColors();
         loadContent();
         updateActionBarState();
     });
-
     $('#column').on("change", function () {
         loadContent();
         updateActionBarState();
     });
-
     $("#save").on("click", function (e) {
         e.preventDefault();
         saveAll();
     });
-
-    // Initial colors/content (will re-trigger after lists populated)
     loadRootColors();
     loadContent();
-
     setTimeout(updateActionBarState, 700);
 });
 
-/* ---------- Dropdown Loading ---------- */
+/* Dropdown Loading, Colors, Content Loading, Save, Action Bar... unchanged from previous versions */
 
 function loadGyms() {
     const mode = $('#gymFilter').val() || 'all';
@@ -82,7 +100,6 @@ function loadGyms() {
         }
     });
 }
-
 function loadColumns() {
     $.ajax({
         url: '/Content/get_column',
@@ -103,14 +120,10 @@ function loadColumns() {
         }
     });
 }
-
-/* ---------- Utility ---------- */
-
 function prepareForm() {
     document.getElementById('content').value = editor.getValue();
     return true;
 }
-
 function toggleFullScreen() {
     var widgetBox = document.getElementById("widgetBox");
     if (!document.fullscreenElement) {
@@ -127,9 +140,6 @@ function toggleFullScreen() {
         $(".CodeMirror").css("height", "300px");
     }
 }
-
-/* ---------- Colors ---------- */
-
 function loadRootColors() {
     const gymVal = $('#gym').val();
     const $row = $('#rootColorsRow');
@@ -141,10 +151,8 @@ function loadRootColors() {
         $inputsDiv.html("");
         return;
     }
-
     $row.show();
     $inputsDiv.html('<div class="col-12 mb-2">Loading...</div>');
-
     $.ajax({
         type: 'POST',
         url: "/Content/getRootColorsAll",
@@ -161,7 +169,6 @@ function loadRootColors() {
                 const statusClass = normalized ? "secondary" : "warning";
                 const displayVal = normalized || "";
                 const previewColor = normalized || "#FFFFFF";
-
                 html += `
                     <div class="col-md-4 mb-3">
                         <label for="${col.CODE}Input" style="display:flex;justify-content:space-between;align-items:center;">
@@ -190,7 +197,6 @@ function loadRootColors() {
                 `;
             });
             $inputsDiv.html(html);
-
             $('.root-color-input').on('input', function () {
                 const code = $(this).data('code');
                 validateAndMark(code);
@@ -201,7 +207,6 @@ function loadRootColors() {
         }
     });
 }
-
 function normalizeColor(v) {
     if (!v) return "";
     v = v.trim();
@@ -212,12 +217,10 @@ function normalizeColor(v) {
     }
     return "";
 }
-
 function validateAndMark(code) {
     const $inp = $('#' + code + 'Input');
     const $status = $('#' + code + 'Status');
     const $preview = $('#' + code + 'Preview');
-
     let val = $inp.val().trim();
     if (val === "") {
         $inp.attr('data-changed', originalColors[code] ? '1' : '0');
@@ -225,22 +228,18 @@ function validateAndMark(code) {
         $preview.css('background', '#FFFFFF');
         return;
     }
-
     if (!val.startsWith("#")) val = "#" + val;
     const full = /^#[0-9A-Fa-f]{6}$/;
     const short = /^#[0-9A-Fa-f]{3}$/;
-
     if (!(full.test(val) || short.test(val))) {
         setStatus($status, "Invalid", "danger");
         $inp.addClass('is-invalid');
         $preview.css('background', '#FFFFFF');
         return;
     }
-
     val = normalizeColor(val);
     $inp.removeClass('is-invalid');
     $preview.css('background', val);
-
     const normOriginal = normalizeColor(originalColors[code]);
     if (normOriginal !== val) {
         $inp.attr('data-changed', '1');
@@ -251,13 +250,11 @@ function validateAndMark(code) {
     }
     $inp.val(val);
 }
-
 function setStatus($el, text, tone) {
     $el.text(text);
     $el.removeClass(function (i, c) { return (c.match(/(^|\\s)text-\\S+/g) || []).join(' '); });
     $el.addClass('text-' + tone);
 }
-
 function gatherColorChanges(gymVal) {
     const payloads = [];
     rootColorColumns.forEach(function (col) {
@@ -276,14 +273,12 @@ function gatherColorChanges(gymVal) {
     });
     return payloads;
 }
-
-/* ---------- Content Column ---------- */
-
 function loadContent() {
     const gymVal = $('#gym').val();
     const columnVal = $('#column').val();
     if (gymVal === "0" || columnVal === "0") {
         editor.setValue("");
+        resetEditorSearch();
         return;
     }
     $.ajax({
@@ -298,27 +293,23 @@ function loadContent() {
                 editor.setValue(data[0]);
             }
             prepareForm();
+            resetEditorSearch();
         },
         error: function () {
             editor.setValue("");
+            resetEditorSearch();
         }
     });
 }
-
-/* ---------- Save ---------- */
-
 function saveAll() {
     prepareForm();
     const gymVal = $('#gym').val();
     const columnVal = $('#column').val();
     const contentVal = $('#content').val();
-
     if (gymVal === "0") {
         Swal.fire("Select Root", "Please select a root first.", "warning");
         return;
     }
-
-    // Validate colors again
     let anyInvalid = false;
     $('.root-color-input').each(function () {
         const val = $(this).val().trim();
@@ -333,9 +324,7 @@ function saveAll() {
         Swal.fire("Invalid Colors", "Fix invalid color values before saving.", "error");
         return;
     }
-
     const ajaxCalls = [];
-
     const colorUpdates = gatherColorChanges(gymVal);
     colorUpdates.forEach(function (cu) {
         ajaxCalls.push($.ajax({
@@ -346,7 +335,6 @@ function saveAll() {
             data: JSON.stringify(cu)
         }));
     });
-
     if (columnVal !== "0") {
         ajaxCalls.push($.ajax({
             type: 'POST',
@@ -356,12 +344,10 @@ function saveAll() {
             data: JSON.stringify({ gym: gymVal, column: columnVal, content: contentVal })
         }));
     }
-
     if (ajaxCalls.length === 0) {
         Swal.fire("Nothing to save", "No changes detected.", "info");
         return;
     }
-
     $.when.apply($, ajaxCalls).done(function () {
         Swal.fire("Success", "Changes saved successfully.", "success");
         loadRootColors();
@@ -369,13 +355,10 @@ function saveAll() {
         Swal.fire("Error", "Saving failed.", "error");
     });
 }
-
-/* ---------- Action Bar State (already referenced in view) ---------- */
 function updateActionBarState() {
     var gymVal = $('#gym').val();
     var colVal = $('#column').val();
     var $bar = $('#actionBar');
-
     if (gymVal && gymVal !== "0") {
         $bar.removeClass('hidden');
         $('#selectedRootInfo').text('Root: ' + $('#gym option:selected').text());
@@ -383,7 +366,6 @@ function updateActionBarState() {
         $bar.addClass('hidden');
         $('#selectedRootInfo').text('No root selected');
     }
-
     if (colVal && colVal !== "0") {
         $('#selectedColumnInfo').text('Column: ' + $('#column option:selected').text());
     } else {

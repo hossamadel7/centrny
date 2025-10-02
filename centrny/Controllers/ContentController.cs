@@ -196,6 +196,24 @@ namespace centrny.Controllers
         }
 
         [HttpPost]
+        public string searchContent([FromBody] data d)
+        {
+            if (d == null || string.IsNullOrEmpty(d.column) || string.IsNullOrWhiteSpace(d.content))
+                return Newtonsoft.Json.JsonConvert.SerializeObject(new List<object>());
+
+            var results = DB.Contents
+                .Where(x => EF.Functions.Like(EF.Property<string>(x, d.column), $"%{d.content}%"))
+                .Select(x => new {
+                    RootCode = x.RootCode,
+                    Value = EF.Property<string>(x, d.column)
+                })
+                .Take(100) // limit results
+                .ToList();
+
+            return Newtonsoft.Json.JsonConvert.SerializeObject(results);
+        }
+
+        [HttpPost]
         public string saveRootColumn([FromBody] data d)
         {
             if (d == null) return "0";
