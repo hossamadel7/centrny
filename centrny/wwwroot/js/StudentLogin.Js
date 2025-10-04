@@ -1,14 +1,4 @@
-﻿/* studentLogin.js
-   Redirects to /OnlineStudent after successful login.
-   Requirements:
-   - Form id: studentLoginForm
-   - Inputs: name="username", name="password"
-   - Anti-forgery hidden input: __RequestVerificationToken
-   - Button id: btnStudentLogin
-   - Status div id: studentLoginStatus
-   - Optional toggle password button id: toggleStudentPwd
-*/
-(function () {
+﻿(function () {
     const form = document.getElementById('studentLoginForm');
     if (!form) return;
 
@@ -45,20 +35,26 @@
 
         setBusy(true);
 
+        // Add a client-side timeout so UI doesn't hang forever
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s max on client
+
         try {
             const resp = await fetch('/StudentLogin/Login', {
                 method: 'POST',
+                credentials: 'same-origin',
+                cache: 'no-store',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                     'RequestVerificationToken': getAntiForgeryToken()
                 },
-                body: buildFormData({ username, password })
+                body: buildFormData({ username, password }),
+                signal: controller.signal
             });
 
             if (!resp.ok) {
                 showError('Server error. Please try again.');
-                setBusy(false);
                 return;
             }
 
@@ -67,18 +63,23 @@
                 data = await resp.json();
             } catch {
                 showError('Unexpected response.');
-                setBusy(false);
                 return;
             }
 
             if (data.success) {
+                // Fast redirect
                 window.location.href = data.redirectUrl; // /OnlineStudent
             } else {
                 showError(data.error || 'Login failed.');
-                setBusy(false);
             }
-        } catch {
-            showError('Network error. Check connection.');
+        } catch (err) {
+            if (err?.name === 'AbortError') {
+                showError('Request took too long. Please try again.');
+            } else {
+                showError('Network error. Check connection.');
+            }
+        } finally {
+            clearTimeout(timeoutId);
             setBusy(false);
         }
     });
@@ -127,6 +128,8 @@
         try {
             const resp = await fetch('/StudentLogin/Logout', {
                 method: 'POST',
+                credentials: 'same-origin',
+                cache: 'no-store',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',

@@ -451,8 +451,10 @@ namespace centrny.Controllers
                     .CountAsync();
 
                 var examsCount = await _context.StudentExams
-                    .Where(se => se.StudentCode == studentCode.Value && se.IsActive == true)
-                    .CountAsync();
+     .Where(se => se.StudentCode == studentCode.Value
+               && se.IsActive == true
+               && se.ExamCodeNavigation.IsExam == true)
+     .CountAsync();
 
                 var averageGrade = examsCount > 0 ? await _context.StudentExams
                     .Where(se => se.StudentCode == studentCode.Value && se.IsActive == true && se.StudentPercentage.HasValue)

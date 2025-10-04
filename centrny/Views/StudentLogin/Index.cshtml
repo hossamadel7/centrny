@@ -1,6 +1,10 @@
 ﻿@{
     ViewData["Title"] = "Student Login";
     Layout = null; // Standalone page
+
+    // Build Register link from RootCode resolved in controller (ViewBag.RootCode)
+    var rootCode = ViewBag.RootCode as int? ?? 0;
+    var registerHref = rootCode > 0 ? Url.Content($"~/Register/{rootCode}") : Url.Content("~/Register");
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -145,9 +149,9 @@
         }
     </style>
 </head>
-<body class="preloader-visible login-page" data-barba="wrapper">
-    <!-- Preloader -->
-    <div class="preloader js-preloader">
+<body class="login-page">
+    <!-- Preloader (soft) -->
+    <div class="preloader js-preloader" style="display:none;">
         <div class="preloader__bg"></div>
     </div>
 
@@ -218,7 +222,7 @@
                             </div>
                             <div class="header-right__buttons d-flex items-center lg:d-none">
                                 <a href="~/StudentLogin" class="button -underline text-dark-1 -before-border py-3 pl-30 xl:pl-20">Log in</a>
-                                <a href="~/Register/58" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">Sign up</a>
+                                <a href="@registerHref" class="button h-50 px-25 -purple-3 -rounded text-purple-1 ml-20">Sign up</a>
                             </div>
                         </div>
                     </div>
@@ -233,19 +237,19 @@
                 <div class="form-page__img bg-dark-1 d-none d-lg-block">
                     <div class="form-page-composition">
                         <div class="-bg">
-                            <img data-move="30" class="js-mouse-move" src="/AWS/img/login/bg.png" alt="bg" />
+                            <img loading="lazy" data-move="30" class="js-mouse-move" src="/AWS/img/login/bg.png" alt="bg" />
                         </div>
                         <div class="-el-1">
-                            <img data-move="20" class="js-mouse-move" src="/AWS/img/home-9/hero/bg.png" alt="image" />
+                            <img loading="lazy" data-move="20" class="js-mouse-move" src="/AWS/img/home-9/hero/bg.png" alt="image" />
                         </div>
                         <div class="-el-2">
-                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/1.png" alt="icon" />
+                            <img loading="lazy" data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/1.png" alt="icon" />
                         </div>
                         <div class="-el-3">
-                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/2.png" alt="icon" />
+                            <img loading="lazy" data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/2.png" alt="icon" />
                         </div>
                         <div class="-el-4">
-                            <img data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/3.png" alt="icon" />
+                            <img loading="lazy" data-move="40" class="js-mouse-move" src="/AWS/img/home-9/hero/3.png" alt="icon" />
                         </div>
                     </div>
                 </div>
@@ -258,11 +262,11 @@
                                     <h3 class="text-30 lh-13">تسجيل الدخول إلى دروسك</h3>
                                     <p class="mt-10">
                                         الوصول إلى الدروس والواجبات والامتحانات. ليس لديك حساب؟
-                                        <a href="~/Register/58" class="text-purple-1">سجل مجاناً</a>
+                                        <a href="@registerHref" class="text-purple-1">سجل مجاناً</a>
                                     </p>
 
                                     <!-- Login Form -->
-                                    <form id="studentLoginForm" method="post" autocomplete="off" class="contact-form respondForm__form row y-gap-20 pt-30">
+                                    <form id="studentLoginForm" method="post" action="/StudentLogin/Login" autocomplete="off" class="contact-form respondForm__form row y-gap-20 pt-30">
                                         @Html.AntiForgeryToken()
 
                                         <div class="col-12">
@@ -311,7 +315,7 @@
                                         <div class="col-12 text-center">
                                             <p class="auth-switch mt-20">
                                                 Don’t have an account?
-                                                <a href="~/Register/58" class="auth-link">Sign up</a>
+                                                <a href="@registerHref" class="auth-link">Sign up</a>
                                             </p>
                                         </div>
                                     </form>
@@ -325,15 +329,19 @@
         </div>
     </main>
 
-    <!-- JS (updated to /AWS/ paths) -->
-    <script src="/js/vendors.js"></script>
-    <script src="/js/main.js"></script>
-    <script src="/aws/js/language-switcher.js"></script>
-    <!-- Move or copy your login logic file into /AWS/js/ then use the line below -->
-    <script src="/js/StudentLogin.js"></script>
-    <script src="~/aws/js/auth-layout-fix.js"></script>
-    <script src="~/aws/js/enhanced-hover-effects.js"></script>
+    <!-- JS: defer non-critical, correct login script -->
+    <script src="/js/vendors.js" defer></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/aws/js/language-switcher.js" defer></script>
+    <script src="/js/StudentLogin.js" ></script>
+    <script src="~/aws/js/auth-layout-fix.js" defer></script>
+    <script src="~/aws/js/enhanced-hover-effects.js" defer></script>
     <script>
+        // Make preloader non-blocking and fast to disappear
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('.preloader')?.remove();
+            document.body.classList.remove('preloader-visible');
+        });
         window.addEventListener('load', function () {
             document.querySelector('.preloader')?.remove();
             document.body.classList.remove('preloader-visible');
@@ -357,20 +365,7 @@
             }
         })();
 
-        document.getElementById('studentLoginForm')?.addEventListener('submit', function () {
-            const submitButton = document.getElementById('btnStudentLogin');
-            const loginText = submitButton.querySelector('.login-text');
-            submitButton.disabled = true;
-            loginText.innerHTML = '<span class="loading-spinner"></span>Signing In...';
-            // Safety fallback if AJAX script fails to re-enable:
-            setTimeout(() => {
-                if (submitButton.disabled) {
-                    submitButton.disabled = false;
-                    loginText.textContent = 'Sign In';
-                }
-            }, 8000);
-        });
-
+        // Helper for inline status (optional)
         window.showLoginStatus = function (message, isError = true) {
             const statusDiv = document.getElementById('studentLoginStatus');
             if (!statusDiv) return;

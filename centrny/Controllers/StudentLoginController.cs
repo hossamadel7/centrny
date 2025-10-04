@@ -20,13 +20,13 @@ namespace centrny.Controllers
             _cache = cache;
         }
 
-        private bool IsStudentRootValid()
+        private async Task<bool> IsStudentRootValidAsync()
         {
             var sessionRootCode = HttpContext.Session.GetInt32("RootCode");
             if (!sessionRootCode.HasValue) return false;
 
             var domain = HttpContext.Request.Host.Host.ToString().Replace("www.", "");
-            var rootCode = GetRootCodeForDomain(domain).GetAwaiter().GetResult();
+            var rootCode = await GetRootCodeForDomain(domain, HttpContext.RequestAborted);
             return rootCode != 0 && sessionRootCode.Value == rootCode;
         }
 
@@ -46,26 +46,34 @@ namespace centrny.Controllers
 
             if (rootCode != 0)
                 _cache.Set(cacheKey, rootCode, TimeSpan.FromMinutes(10));
+            else
+                _cache.Set(cacheKey, 0, TimeSpan.FromMinutes(1)); // short negative cache
 
             return rootCode;
         }
 
         [HttpGet("")]
         [HttpGet("Index")]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            // 1) Resolve RootCode from domain for Register links
+            var domain = HttpContext.Request.Host.Host.ToString().Replace("www.", "");
+            var rootCodeForLinks = await GetRootCodeForDomain(domain, HttpContext.RequestAborted);
+            ViewBag.RootCode = rootCodeForLinks;
+
+            // 2) Existing session handling
             var code = HttpContext.Session.GetInt32("StudentCode");
 
             if (code.HasValue)
             {
-                if (!IsStudentRootValid())
+                if (!await IsStudentRootValidAsync())
                 {
                     _logger.LogWarning("StudentLogin Index: root domain mismatch for StudentCode={Code}. Clearing session.", code);
                     HttpContext.Session.Clear();
                     return View("Index");
                 }
 
-                bool valid = _context.Students.Any(s =>
+                bool valid = await _context.Students.AnyAsync(s =>
                     s.StudentCode == code &&
                     s.IsActive &&
                     (s.IsConfirmed == true)
@@ -84,65 +92,72 @@ namespace centrny.Controllers
             return View("Index");
         }
 
+        private bool IsAjaxRequest()
+        {
+            var xrw = Request.Headers["X-Requested-With"].ToString();
+            if (!string.IsNullOrEmpty(xrw) && xrw.Equals("XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var accept = Request.Headers.Accept.ToString();
+            return accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+        }
+
         [HttpPost("Login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password)
         {
+            bool isAjax = IsAjaxRequest();
+
             try
             {
                 if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                    return Json(new { success = false, error = "Username and password are required." });
+                {
+                    if (isAjax) return Json(new { success = false, error = "Username and password are required." });
+                    ViewData["Error"] = "Username and password are required.";
+                    return View("Index");
+                }
 
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                string normalized = username.Trim().ToLowerInvariant();
+                string trimmedUser = username.Trim();
                 string domain = HttpContext.Request.Host.Host.ToString().Replace("www.", "");
-                _logger.LogInformation("Student login attempt: {User} on domain {Domain}", normalized, domain);
+                _logger.LogInformation("Student login attempt: {User} on domain {Domain}", trimmedUser, domain);
 
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var ct = HttpContext.RequestAborted;
 
-                // 1) Resolve root for this domain (cached)
-                var rootCode = await GetRootCodeForDomain(domain, cts.Token);
+                var rootCode = await GetRootCodeForDomain(domain, ct);
                 if (rootCode == 0)
                 {
                     _logger.LogWarning("Login attempt on unrecognized domain: {Domain}", domain);
-                    return Json(new { success = false, error = "Invalid domain." });
+                    if (isAjax) return Json(new { success = false, error = "Invalid domain." });
+                    ViewData["Error"] = "Invalid domain.";
+                    return View("Index");
                 }
 
-                // 2) Fast path: exact match (no ToLower on column). Works if DB collation is case-insensitive.
                 var student = await _context.Students
                     .AsNoTracking()
-                    .Where(s => s.RootCode == rootCode && s.IsActive && s.StudentUsername != null && s.StudentUsername == normalized)
+                    .Where(s => s.RootCode == rootCode && s.IsActive && s.StudentUsername != null && s.StudentUsername == trimmedUser)
                     .Select(s => new { s.StudentCode, s.StudentUsername, s.StudentPassword, s.IsConfirmed })
-                    .FirstOrDefaultAsync(cts.Token);
-
-                // 3) Fallback path: case-insensitive scan using ToLower only if fast path failed.
-                if (student == null)
-                {
-                    student = await _context.Students
-                        .AsNoTracking()
-                        .Where(s => s.RootCode == rootCode && s.IsActive && s.StudentUsername != null)
-                        .Where(s => s.StudentUsername.ToLower() == normalized) // fallback (may be slower)
-                        .Select(s => new { s.StudentCode, s.StudentUsername, s.StudentPassword, s.IsConfirmed })
-                        .FirstOrDefaultAsync(cts.Token);
-                }
+                    .FirstOrDefaultAsync(ct);
 
                 sw.Stop();
                 _logger.LogInformation("Login DB lookup took {Ms} ms", sw.ElapsedMilliseconds);
 
-                // 4) Differentiate errors as requested
                 if (student == null || student.StudentPassword != password)
                 {
-                    _logger.LogWarning("Failed login (invalid creds): {User} on domain {Domain}", normalized, domain);
-                    return Json(new { success = false, error = "Invalid username or password." });
+                    _logger.LogInformation("Failed login (invalid creds): {User} on domain {Domain}", trimmedUser, domain);
+                    if (isAjax) return Json(new { success = false, error = "Invalid username or password." });
+                    ViewData["Error"] = "Invalid username or password.";
+                    return View("Index");
                 }
 
                 if (student.IsConfirmed != true)
                 {
-                    _logger.LogWarning("Failed login (unconfirmed): {User} on domain {Domain}", normalized, domain);
-                    return Json(new { success = false, error = "inactive account." });
+                    _logger.LogInformation("Failed login (inactive): {User} on domain {Domain}", trimmedUser, domain);
+                    if (isAjax) return Json(new { success = false, error = "inactive account." });
+                    ViewData["Error"] = "inactive account.";
+                    return View("Index");
                 }
 
-                // 5) Set session
                 HttpContext.Session.SetInt32("StudentCode", student.StudentCode);
                 HttpContext.Session.SetString("StudentUsername", student.StudentUsername);
                 HttpContext.Session.SetInt32("RootCode", rootCode);
@@ -150,21 +165,27 @@ namespace centrny.Controllers
                 _logger.LogInformation("Successful login: StudentCode={StudentCode}, RootCode={RootCode}",
                     student.StudentCode, rootCode);
 
-                return Json(new { success = true, redirectUrl = "/OnlineStudent" });
+                if (isAjax) return Json(new { success = true, redirectUrl = "/OnlineStudent" });
+                return Redirect("/OnlineStudent");
             }
             catch (TaskCanceledException)
             {
-                _logger.LogWarning("Login request timed out");
-                return Json(new { success = false, error = "Login timed out. Please try again." });
+                _logger.LogWarning("Login request was canceled by the client");
+                if (isAjax) return Json(new { success = false, error = "Request canceled." });
+                ViewData["Error"] = "Request canceled.";
+                return View("Index");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Student login error for user {User}", username);
 #if DEBUG
-                return Json(new { success = false, error = ex.Message });
+                var err = ex.Message;
 #else
-                return Json(new { success = false, error = "An error occurred. Try again later." });
+                var err = "An error occurred. Try again later.";
 #endif
+                if (isAjax) return Json(new { success = false, error = err });
+                ViewData["Error"] = err;
+                return View("Index");
             }
         }
 
