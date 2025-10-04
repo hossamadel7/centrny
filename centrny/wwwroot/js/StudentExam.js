@@ -4,6 +4,8 @@
 let examCode = (new URLSearchParams(window.location.search)).get('examCode');
 let studentCode = (new URLSearchParams(window.location.search)).get('studentCode');
 let itemKey = (new URLSearchParams(window.location.search)).get('itemKey');
+let returnUrl = (new URLSearchParams(window.location.search)).get('returnUrl') || '';
+
 let examDurationSeconds = null;
 let timer = null;
 let timeLeft = null;
@@ -28,7 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function loadExamInfo() {
-    fetch(`/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`)
+    // Let the server infer studentCode from session if it's not in URL
+    const singleExamUrl = studentCode
+        ? `/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`
+        : `/StudentExam/GetSingleExam?examCode=${examCode}`;
+
+    fetch(singleExamUrl)
         .then(res => res.json())
         .then(data => {
             if (data.error) {
@@ -42,7 +49,7 @@ function loadExamInfo() {
             }
             const examTitle = document.getElementById('examTitle');
             if (examTitle)
-                examTitle.textContent = data.examName ;
+                examTitle.textContent = data.examName;
 
             isExam = (typeof data.isExam !== "undefined") ? data.isExam : true;
 
@@ -55,7 +62,12 @@ function loadExamInfo() {
 
             const timerDiv = document.getElementById('examTimer');
             if (timerDiv) timerDiv.style.display = '';
-            fetch(`/StudentExam/GetStudentExamStartTime?studentCode=${studentCode}&examCode=${examCode}`)
+
+            const startTimeUrl = studentCode
+                ? `/StudentExam/GetStudentExamStartTime?studentCode=${studentCode}&examCode=${examCode}`
+                : `/StudentExam/GetStudentExamStartTime?examCode=${examCode}`;
+
+            fetch(startTimeUrl)
                 .then(res => res.json())
                 .then(timerData => {
                     console.log("TimerData response from backend:", timerData);
@@ -134,7 +146,11 @@ function loadQuestions(autoSubmitIfTimeUp = false) {
                 renderQuestions(data, answers);
 
                 // Double-check with server if exam is already submitted before attempting auto-submit
-                fetch(`/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`)
+                const singleExamUrl = studentCode
+                    ? `/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`
+                    : `/StudentExam/GetSingleExam?examCode=${examCode}`;
+
+                fetch(singleExamUrl)
                     .then(res => res.json())
                     .then(singleExam => {
                         if (singleExam.alreadyTaken) {
@@ -142,7 +158,7 @@ function loadQuestions(autoSubmitIfTimeUp = false) {
                             showError('You have already taken this exam.');
                             setTimeout(() => {
                                 window.onbeforeunload = null;
-                                redirectToProfile();
+                                redirectBack();
                             }, 2200);
                             return;
                         }
@@ -153,7 +169,7 @@ function loadQuestions(autoSubmitIfTimeUp = false) {
                             showError('Time is up! No answers to submit.');
                             setTimeout(() => {
                                 window.onbeforeunload = null;
-                                redirectToProfile();
+                                redirectBack();
                             }, 2200);
                         }
                     });
@@ -216,7 +232,11 @@ function startTimer(answers) {
         if (timeLeft <= 0) {
             clearInterval(timer);
             // Double-check with server before auto-submitting
-            fetch(`/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`)
+            const singleExamUrl = studentCode
+                ? `/StudentExam/GetSingleExam?studentCode=${studentCode}&examCode=${examCode}`
+                : `/StudentExam/GetSingleExam?examCode=${examCode}`;
+
+            fetch(singleExamUrl)
                 .then(res => res.json())
                 .then(singleExam => {
                     if (singleExam.alreadyTaken) {
@@ -224,7 +244,7 @@ function startTimer(answers) {
                         showError('You have already taken this exam.');
                         setTimeout(() => {
                             window.onbeforeunload = null;
-                            redirectToProfile();
+                            redirectBack();
                         }, 2200);
                         return;
                     }
@@ -234,7 +254,7 @@ function startTimer(answers) {
                         showError('Time is up! No answers to submit.');
                         setTimeout(() => {
                             window.onbeforeunload = null;
-                            redirectToProfile();
+                            redirectBack();
                         }, 2200);
                     }
                 });
@@ -289,7 +309,7 @@ function submitExam(auto = false, answersObj = null) {
         showError('Time is up! No answers to submit.');
         setTimeout(() => {
             window.onbeforeunload = null;
-            redirectToProfile();
+            redirectBack();
         }, 2200);
         return;
     }
@@ -298,7 +318,7 @@ function submitExam(auto = false, answersObj = null) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            studentCode: parseInt(studentCode),
+            studentCode: studentCode ? parseInt(studentCode) : undefined,
             examCode: parseInt(examCode),
             answers: answers
         })
@@ -313,24 +333,55 @@ function submitExam(auto = false, answersObj = null) {
             }
             setTimeout(() => {
                 window.onbeforeunload = null;
-                redirectToProfile();
+                redirectBack();
             }, 2200);
         })
         .catch(() => {
             showError('Submission failed. Your answers may be lost.');
             setTimeout(() => {
                 window.onbeforeunload = null;
-                redirectToProfile();
+                redirectBack();
             }, 2400);
         });
 }
 
-function redirectToProfile() {
+// Ensure we only redirect to same-origin, relative paths to avoid open redirects
+function sanitizeReturnUrl(u) {
+    try {
+        if (!u) return '';
+        const url = new URL(u, window.location.origin);
+        if (url.origin !== window.location.origin) return '';
+        // Keep path, query, hash
+        return url.pathname + url.search + url.hash;
+    } catch {
+        // If a plain relative path like "/OnlineStudent/Homework"
+        if (typeof u === 'string' && u.startsWith('/')) return u;
+        return '';
+    }
+}
+
+function redirectBack() {
+    // Priority: explicit returnUrl -> same-origin referrer -> student area fallbacks -> OnlineStudent
+    const safeExplicit = sanitizeReturnUrl(returnUrl);
+    if (safeExplicit) {
+        window.location.href = safeExplicit;
+        return;
+    }
+    const ref = document.referrer;
+    const safeRef = sanitizeReturnUrl(ref);
+    if (safeRef) {
+        window.location.href = safeRef;
+        return;
+    }
     if (itemKey) {
         window.location.href = '/Student/' + itemKey;
-    } else {
-        window.location.href = '/Student/' + studentCode;
+        return;
     }
+    if (studentCode) {
+        window.location.href = '/Student/' + studentCode;
+        return;
+    }
+    window.location.href = '/OnlineStudent';
 }
 
 function getSavedProgress() {

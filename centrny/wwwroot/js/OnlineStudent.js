@@ -79,6 +79,14 @@ class OnlineStudentDashboard {
         this._forceSidebarOnlyOnMobile();
 
         const currentPath = window.location.pathname.toLowerCase();
+
+        // Homework page detection
+        if (document.getElementById('homeworkContainer')) {
+            this.initHomework();
+            return;
+        }
+
+        // Learning vs Dashboard
         if (currentPath.includes('learning') || currentPath.endsWith('/learning')) {
             this.initLearningSystem();
         } else if (currentPath.includes('onlinestudent') || currentPath === '/' || currentPath.includes('index')) {
@@ -127,7 +135,9 @@ class OnlineStudentDashboard {
         });
     }
 
-    // DASHBOARD
+    // ==================
+    // DASHBOARD ROUTINE
+    // ==================
     async loadAll() {
         try {
             this.showLoading();
@@ -136,7 +146,7 @@ class OnlineStudentDashboard {
                 this.loadSubscription(),
                 this.loadSubjects(),
                 this.loadExams(),
-                this.loadAttendedSessions() // NEW
+                this.loadAttendedSessions()
             ]);
             this.hideLoading();
             this.showAlert(this.loc('Alert_DashboardLoaded', 'Dashboard loaded'));
@@ -351,7 +361,9 @@ class OnlineStudentDashboard {
         }).join('');
     }
 
-    // LEARNING
+    // ==================
+    // LEARNING WORKFLOW
+    // ==================
     initLearningSystem() {
         this.setupLearningEventListeners();
         setTimeout(() => this.loadLearningSubjects(), 50);
@@ -693,6 +705,236 @@ class OnlineStudentDashboard {
             "'": '&#39;'
         }[c]));
     }
+
+    // =================
+    // HOMEWORK SECTION
+    // =================
+    initHomework() {
+        // root container where we will render per-subject sections
+        this.loadHomework();
+    }
+
+    async loadHomework() {
+        const container = document.getElementById('homeworkContainer');
+        if (!container) return;
+
+        try {
+            container.innerHTML = `
+                <div class="loading-spinner" id="homeworkLoading">
+                    <div class="spinner"></div>
+                    <span>${this.loc('Loading_Homework', 'Loading homework...')}</span>
+                </div>
+            `;
+
+            const res = await fetch('/OnlineStudent/GetHomeworkSubjects');
+            if (!res.ok) throw new Error('Failed to load homework subjects');
+            const subjects = await res.json();
+            if (subjects.error) {
+                container.innerHTML = this.emptyState('fa-exclamation-triangle', this.loc('Error', 'Error'), this.escape(subjects.error));
+                return;
+            }
+
+            if (!Array.isArray(subjects) || subjects.length === 0) {
+                container.innerHTML = this.emptyState('fa-book', this.loc('Empty_NoSubjectsTitle', 'No Subjects'), this.loc('Empty_NoSubjectsMessage', 'You are not enrolled in any subjects yet.'));
+                return;
+            }
+
+            // Render a card per subject with 3 sections (Assignments, Videos, Downloads)
+            container.innerHTML = subjects.map(s => this.homeworkSubjectSkeleton(s)).join('');
+
+            // For each subject, load the three sections in parallel
+            for (const subj of subjects) {
+                this.loadSubjectAssignments(subj.subjectCode);
+                this.loadSubjectVideos(subj.subjectCode);
+                this.loadSubjectDownloads(subj.subjectCode);
+            }
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = this.emptyState('fa-exclamation-triangle', this.loc('Error', 'Error'), this.loc('Alert_DashboardFailed', 'Failed to load dashboard'));
+        }
+    }
+
+    homeworkSubjectSkeleton(subject) {
+        const title = `${this.escape(subject.subjectName)}${subject.teacherName ? ' - ' + this.escape(subject.teacherName) : ''}`;
+        const sc = subject.subjectCode;
+        return `
+            <div class="section-card homework-subject" data-subject-code="${sc}">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-book-open"></i>
+                        ${title}
+                    </h2>
+                </div>
+                <div class="section-content">
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-4">
+                            <div class="sub-card">
+                                <div class="sub-card-header"><i class="fas fa-tasks"></i> ${this.loc('Assignments', 'Assignments')}</div>
+                                <div class="sub-card-body" id="assignmentsGrid-${sc}">
+                                    <div class="loading-spinner">
+                                        <div class="spinner"></div>
+                                        <span>${this.loc('Loading_Assignments', 'Loading assignments...')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="sub-card">
+                                <div class="sub-card-header"><i class="fas fa-video"></i> ${this.loc('Available_Videos', 'Available Videos')}</div>
+                                <div class="sub-card-body" id="videosGrid-${sc}">
+                                    <div class="loading-spinner">
+                                        <div class="spinner"></div>
+                                        <span>${this.loc('Loading_Videos', 'Loading videos...')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="sub-card">
+                                <div class="sub-card-header"><i class="fas fa-download"></i> ${this.loc('Downloadable_Files', 'Downloadable Files')}</div>
+                                <div class="sub-card-body" id="downloadsGrid-${sc}">
+                                    <div class="loading-spinner">
+                                        <div class="spinner"></div>
+                                        <span>${this.loc('Loading_Downloads', 'Loading files...')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async loadSubjectAssignments(subjectCode) {
+        const grid = document.getElementById(`assignmentsGrid-${subjectCode}`);
+        if (!grid) return;
+        try {
+            const res = await fetch(`/OnlineStudent/GetLatestSubjectAssignments?subjectCode=${subjectCode}`);
+            if (!res.ok) throw new Error();
+            const items = await res.json();
+            if (!Array.isArray(items) || items.length === 0) {
+                grid.innerHTML = this.emptyState('fa-tasks', this.loc('NoAssignments', 'No Assignments'), this.loc('NoAssignmentsMsg', 'No assignments available for your latest lesson in this subject.'));
+                return;
+            }
+            grid.innerHTML = items.map(a => {
+                const attended = a.attended;
+                const hideAttendBtn = false; // assignment availability handled by StudentExam screen
+                return `
+                    <div class="exam-card ${attended ? 'attended' : ''}">
+                        <div class="exam-header">
+                            <div class="exam-icon"><i class="fas fa-tasks"></i></div>
+                            <h3 class="exam-name">${this.escape(a.examName)}</h3>
+                        </div>
+                        <div class="exam-details">
+                            <div class="exam-detail"><i class="fas fa-book"></i> <span>${this.escape(a.subjectName || '')}</span></div>
+                            <div class="exam-detail"><i class="fas fa-chalkboard-teacher"></i> <span>${this.escape(a.teacherName || '')}</span></div>
+                            ${a.durationFormatted ? `<div class="exam-detail"><i class="fas fa-clock"></i> <span>${a.durationFormatted}</span></div>` : ''}
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            ${attended
+                        ? `<button class="attend-exam-btn" disabled><i class="fas fa-check"></i> ${this.loc('Attended', 'Attended')}</button>`
+                        : (hideAttendBtn
+                            ? `<div class="alert-error" style="margin-top:10px;">${this.loc('Closed', 'Closed.')}</div>`
+                            : `<button class="attend-exam-btn" onclick="window.onlineStudentDashboard.attendAssignment(${a.examCode})">
+                                         <i class="fas fa-play"></i> ${this.loc('Attend_Assignment', 'Attend Assignment')}
+                                       </button>`
+                        )
+                    }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch {
+            grid.innerHTML = this.emptyState('fa-exclamation-triangle', this.loc('Error', 'Error'), this.loc('Failed_Load_Assignments', 'Failed to load assignments.'));
+        }
+    }
+
+    attendAssignment(examCode) {
+        // We don't have item_key in OnlineStudent area; route to StudentExam landing that uses session
+        if (!examCode || examCode === 0) return;
+        window.location.href = `/StudentExam?examCode=${examCode}`;
+    }
+    // Add this inside OnlineStudentDashboard class (e.g., right below attendAssignment)
+    watchVideo(fileCode) {
+        if (!fileCode) return;
+        window.location.href = `/OnlineStudent/WatchVideo/${fileCode}`;
+    }
+
+    async loadSubjectVideos(subjectCode) {
+        const grid = document.getElementById(`videosGrid-${subjectCode}`);
+        if (!grid) return;
+        try {
+            const res = await fetch(`/OnlineStudent/GetLatestSubjectVideos?subjectCode=${subjectCode}`);
+            if (!res.ok) throw new Error();
+            const videos = await res.json();
+            if (!Array.isArray(videos) || videos.length === 0) {
+                grid.innerHTML = this.emptyState('fa-video', this.loc('NoVideos', 'No Videos'), this.loc('NoVideosMsg', 'No videos available for your latest lesson in this subject.'));
+                return;
+            }
+            grid.innerHTML = videos.map(v => `
+            <div class="media-card accent-video">
+                <div class="media-header">
+                    <div class="media-icon video"><i class="fas fa-video"></i></div>
+                    <h3 class="media-title">${this.escape(v.displayName)}</h3>
+                </div>
+                <ul class="media-meta">
+                    <li><i class="fas fa-book"></i><span>${this.escape(v.subjectName || '')}</span></li>
+                    <li><i class="fas fa-chalkboard-teacher"></i><span>${this.escape(v.teacherName || '')}</span></li>
+                    <li><i class="fas fa-bookmark"></i><span>${this.escape(v.lessonName || '')}</span></li>
+                </ul>
+                <div class="media-actions">
+                    <button class="btn-watch" onclick="window.onlineStudentDashboard.watchVideo(${v.fileCode})">
+                        <i class="fas fa-play-circle"></i> ${this.loc('Watch_Video', 'Watch Video')}
+                    </button>
+                    ${v.duration ? `<span class="meta-pill duration-pill"><i class="fas fa-clock"></i>${this.escape(v.duration)}</span>` : '<span></span>'}
+                </div>
+            </div>
+        `).join('');
+        } catch {
+            grid.innerHTML = this.emptyState('fa-exclamation-triangle', this.loc('Error', 'Error'), this.loc('Failed_Load_Videos', 'Failed to load videos.'));
+        }
+    }
+
+    async loadSubjectDownloads(subjectCode) {
+        const grid = document.getElementById(`downloadsGrid-${subjectCode}`);
+        if (!grid) return;
+        try {
+            const res = await fetch(`/OnlineStudent/GetLatestSubjectDownloads?subjectCode=${subjectCode}`);
+            if (!res.ok) throw new Error();
+            const files = await res.json();
+            if (!Array.isArray(files) || files.length === 0) {
+                grid.innerHTML = this.emptyState('fa-download', this.loc('NoFiles', 'No Files'), this.loc('NoFilesMsg', 'No downloadable files available for your latest lesson in this subject.'));
+                return;
+            }
+            grid.innerHTML = files.map(f => {
+                const fixedPath = (f.fileLocation || '').replace(/\\/g, '/');
+                const url = fixedPath.startsWith('/') ? fixedPath : '/' + fixedPath;
+                return `
+                <div class="media-card accent-download">
+                    <div class="media-header">
+                        <div class="media-icon download"><i class="fas fa-file-arrow-down"></i></div>
+                        <h3 class="media-title">${this.escape(f.displayName)}</h3>
+                    </div>
+                    <ul class="media-meta">
+                        <li><i class="fas fa-book"></i><span>${this.escape(f.subjectName || '')}</span></li>
+                        <li><i class="fas fa-chalkboard-teacher"></i><span>${this.escape(f.teacherName || '')}</span></li>
+                        <li><i class="fas fa-bookmark"></i><span>${this.escape(f.lessonName || '')}</span></li>
+                        <li><i class="fas fa-calendar"></i><span>${f.insertTime ? this.formatDate(f.insertTime) : ''}</span></li>
+                    </ul>
+                    <div class="media-actions">
+                        <a class="btn-download" href="${url}" download target="_blank">
+                            <i class="fas fa-download"></i> ${this.loc('Download', 'Download')}
+                        </a>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        } catch {
+            grid.innerHTML = this.emptyState('fa-exclamation-triangle', this.loc('Error', 'Error'), this.loc('Failed_Load_Downloads', 'Failed to load downloadable files.'));
+        }
+    }
 }
 
 window.onlineStudentDashboard = new OnlineStudentDashboard();
@@ -714,4 +956,4 @@ function closeMobileNav() {
     document.body.classList.remove('mobile-nav-open');
 }
 
-console.log('OnlineStudent.js loaded with mobile sidebar-only navigation.');
+console.log('OnlineStudent.js loaded with dashboard, learning, and homework features.');

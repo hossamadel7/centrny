@@ -234,7 +234,6 @@ namespace centrny.Controllers
 
             try
             {
-                // Check if student is enrolled in this subject
                 var isEnrolled = await _context.Learns
                     .AnyAsync(l => l.StudentCode == studentCode.Value &&
                                   l.SubjectCode == subjectCode &&
@@ -245,7 +244,6 @@ namespace centrny.Controllers
                     return Json(new { error = "Student not enrolled in this subject" });
                 }
 
-                // Get chapters (lessons without ChapterCode)
                 var chapters = await _context.Lessons
                     .Where(l => l.SubjectCode == subjectCode &&
                                l.ChapterCode == null &&
@@ -283,7 +281,6 @@ namespace centrny.Controllers
 
             try
             {
-                // Get chapter info
                 var chapter = await _context.Lessons
                     .Include(l => l.SubjectCodeNavigation)
                     .FirstOrDefaultAsync(l => l.LessonCode == chapterCode &&
@@ -295,7 +292,6 @@ namespace centrny.Controllers
                     return Json(new { error = "Chapter not found" });
                 }
 
-                // Check if student is enrolled in this subject
                 var isEnrolled = await _context.Learns
                     .AnyAsync(l => l.StudentCode == studentCode.Value &&
                                   l.SubjectCode == chapter.SubjectCode &&
@@ -306,7 +302,6 @@ namespace centrny.Controllers
                     return Json(new { error = "Student not enrolled in this subject" });
                 }
 
-                // Get lessons for this chapter
                 var lessons = await _context.Lessons
                     .Where(l => l.ChapterCode == chapterCode && l.IsActive == true)
                     .Select(l => new
@@ -355,12 +350,13 @@ namespace centrny.Controllers
             try
             {
                 var exams = await _context.StudentExams
-                    .Where(se => se.StudentCode == studentCode.Value && se.IsActive == true)
-                    .Include(se => se.ExamCodeNavigation)
-                        .ThenInclude(e => e.SubjectCodeNavigation)
-                    .Include(se => se.ExamCodeNavigation)
-                        .ThenInclude(e => e.TeacherCodeNavigation)
-                    .OrderByDescending(se => se.InsertTime)
+            .Where(se => se.StudentCode == studentCode.Value && se.IsActive == true)
+            .Where(se => se.ExamCodeNavigation.IsExam == true) 
+            .Include(se => se.ExamCodeNavigation)
+                .ThenInclude(e => e.SubjectCodeNavigation)
+            .Include(se => se.ExamCodeNavigation)
+                .ThenInclude(e => e.TeacherCodeNavigation)
+            .OrderByDescending(se => se.InsertTime)
                     .Select(se => new
                     {
                         examCode = se.ExamCode,
@@ -561,7 +557,6 @@ namespace centrny.Controllers
                     return Json(new { error = "Student not found in session" });
                 }
 
-                // Convert string to int for comparison
                 if (!int.TryParse(studentCodeString, out int studentCode))
                 {
                     return Json(new { error = "Invalid student code format" });
@@ -582,7 +577,7 @@ namespace centrny.Controllers
                     studentName = student.StudentName
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(new { error = "Failed to load student info" });
             }
@@ -622,76 +617,420 @@ namespace centrny.Controllers
             return age;
         }
 
-      [HttpGet("GetAttendedSessions")]
-public async Task<IActionResult> GetAttendedSessions()
-{
-    var studentCode = HttpContext.Session.GetInt32("StudentCode");
-    if (!studentCode.HasValue)
-    {
-        return Json(new { error = "Student not logged in" });
-    }
-
-    try
-    {
-        // Online sessions: Online_Attend (LessonCode -> Lesson.LessonName), date = InsertTime
-        var onlineSessions = await (
-            from oa in _context.OnlineAttends
-            where oa.StudentCode == studentCode.Value
-            join ls in _context.Lessons on oa.LessonCode equals ls.LessonCode into lj
-            from ls in lj.DefaultIfEmpty()
-            select new AttendedSessionDto
+        // ======================
+        // Attended Sessions Feed
+        // ======================
+        [HttpGet("GetAttendedSessions")]
+        public async Task<IActionResult> GetAttendedSessions()
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
             {
-                Source = "Online",
-                LessonCode = oa.LessonCode,
-                LessonName = (ls != null && ls.LessonName != null) ? ls.LessonName : "Unknown Lesson",
-                ClassName = null,
-                AttendedAt = oa.InsertTime // InsertTime is non-nullable DateTime in your model
+                return Json(new { error = "Student not logged in" });
             }
-        ).ToListAsync();
 
-        // Center sessions: Attend (ClassId -> Class -> ClassLessonCode -> Lesson.LessonName; fallback to ClassName)
-        var offlineSessions = await (
-            from a in _context.Attends
-            where a.StudentId == studentCode.Value
-            join c in _context.Classes on a.ClassId equals c.ClassCode into cj
-            from c in cj.DefaultIfEmpty()
-            join ls in _context.Lessons on c.ClassLessonCode equals ls.LessonCode into lj
-            from ls in lj.DefaultIfEmpty()
-            select new AttendedSessionDto
+            try
             {
-                Source = "Center",
-                LessonCode = c != null ? c.ClassLessonCode : (int?)null,
-                LessonName = (ls != null && ls.LessonName != null)
-                                ? ls.LessonName
-                                : (c != null ? (c.ClassName ?? "Unknown Class") : "Unknown Class"),
-                ClassName = c != null ? c.ClassName : null,
-                AttendedAt = a.AttendDate // AttendDate is non-nullable DateTime in your model
+                var onlineSessions = await (
+                    from oa in _context.OnlineAttends
+                    where oa.StudentCode == studentCode.Value
+                    join ls in _context.Lessons on oa.LessonCode equals ls.LessonCode into lj
+                    from ls in lj.DefaultIfEmpty()
+                    select new AttendedSessionDto
+                    {
+                        Source = "Online",
+                        LessonCode = oa.LessonCode,
+                        LessonName = (ls != null && ls.LessonName != null) ? ls.LessonName : "Unknown Lesson",
+                        ClassName = null,
+                        AttendedAt = oa.InsertTime
+                    }
+                ).ToListAsync();
+
+                var offlineSessions = await (
+                    from a in _context.Attends
+                    where a.StudentId == studentCode.Value
+                    join c in _context.Classes on a.ClassId equals c.ClassCode into cj
+                    from c in cj.DefaultIfEmpty()
+                    join ls in _context.Lessons on c.ClassLessonCode equals ls.LessonCode into lj
+                    from ls in lj.DefaultIfEmpty()
+                    select new AttendedSessionDto
+                    {
+                        Source = "Center",
+                        LessonCode = c != null ? c.ClassLessonCode : (int?)null,
+                        LessonName = (ls != null && ls.LessonName != null)
+                                        ? ls.LessonName
+                                        : (c != null ? (c.ClassName ?? "Unknown Class") : "Unknown Class"),
+                        ClassName = c != null ? c.ClassName : null,
+                        AttendedAt = a.AttendDate
+                    }
+                ).ToListAsync();
+
+                var sessions = onlineSessions
+                    .Concat(offlineSessions)
+                    .OrderByDescending(s => s.AttendedAt)
+                    .Take(200)
+                    .Select(s => new
+                    {
+                        source = s.Source,
+                        lessonCode = s.LessonCode,
+                        lessonName = s.LessonName,
+                        className = s.ClassName,
+                        attendedAt = s.AttendedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                    })
+                    .ToList();
+
+                return Json(new { count = sessions.Count, sessions });
             }
-        ).ToListAsync();
-
-        var sessions = onlineSessions
-            .Concat(offlineSessions)
-            .OrderByDescending(s => s.AttendedAt)
-            .Take(200)
-            .Select(s => new
+            catch (Exception ex)
             {
-                source = s.Source,
-                lessonCode = s.LessonCode,
-                lessonName = s.LessonName,
-                className = s.ClassName,
-                attendedAt = s.AttendedAt.ToString("yyyy-MM-dd HH:mm:ss") // ensure method is called
-            })
-            .ToList();
+                _logger.LogError(ex, "Error getting attended sessions for StudentCode={StudentCode} at {DateTime}",
+                    studentCode, DateTime.UtcNow);
+                return Json(new { error = ex.Message });
+            }
+        }
 
-        return Json(new { count = sessions.Count, sessions });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error getting attended sessions for StudentCode={StudentCode} at {DateTime}",
-            studentCode, DateTime.UtcNow);
-        return Json(new { error = ex.Message });
-    }
-}
+        // ==============================
+        // HOMEWORK: per-subject sections
+        // ==============================
+
+        [HttpGet("Homework")]
+        public async Task<IActionResult> Homework()
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+            {
+                _logger.LogWarning("Student not logged in, redirecting to login page at {DateTime}", DateTime.UtcNow);
+                return Redirect("/StudentLogin");
+            }
+
+            try
+            {
+                _logger.LogInformation("Loading homework view for StudentCode={StudentCode} at {DateTime}",
+                    studentCode.Value, DateTime.UtcNow);
+
+                var dashboardData = await GetStudentDashboardData(studentCode.Value);
+                return View("Homework", dashboardData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading homework view for StudentCode={StudentCode} at {DateTime}",
+                    studentCode, DateTime.UtcNow);
+                return View("Error");
+            }
+        }
+        // List of subjects for which we will display homework sections.
+        [HttpGet("GetHomeworkSubjects")]
+        public async Task<IActionResult> GetHomeworkSubjects()
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+                return Json(new { error = "Student not logged in" });
+
+            try
+            {
+                var subjects = await _context.Learns
+                    .Where(l => l.StudentCode == studentCode.Value && l.IsActive)
+                    .Include(l => l.SubjectCodeNavigation)
+                    .Include(l => l.TeacherCodeNavigation)
+                    .Include(l => l.YearCodeNavigation)
+                    .Select(l => new
+                    {
+                        subjectCode = l.SubjectCode,
+                        subjectName = l.SubjectCodeNavigation.SubjectName,
+                        teacherCode = l.TeacherCode,
+                        teacherName = l.TeacherCodeNavigation.TeacherName,
+                        yearCode = l.YearCode,
+                        yearName = l.YearCodeNavigation.YearName
+                    })
+                    .Distinct()
+                    .OrderBy(x => x.subjectName)
+                    .ToListAsync();
+
+                return Json(subjects);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetHomeworkSubjects failed");
+                return Json(new { error = ex.Message });
+            }
+        }
+        // ADD these members to your existing OnlineStudentController class
+
+        // Replace your existing WatchVideo action with this implementation
+        [HttpGet("WatchVideo/{fileCode:int}")]
+        public async Task<IActionResult> WatchVideo(int fileCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+                return Redirect("/StudentLogin");
+
+            // Authorize: the student must have attended a class that maps to this video's lesson
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == studentCode.Value)
+                .Select(a => a.ClassId)
+                .ToListAsync();
+
+            var hasAccess = await _context.Files
+                .Where(f => f.FileCode == fileCode &&
+                            f.IsActive &&
+                            f.FileType == 1 &&
+                            (f.IsOnlineLesson == false)) // offline-accessible videos only
+                .Join(_context.Classes.Where(c => attendedClassCodes.Contains(c.ClassCode)),
+                      f => f.LessonCode,
+                      c => c.ClassLessonCode,
+                      (f, c) => f)
+                .AnyAsync();
+
+            if (!hasAccess)
+                return Forbid("Access denied to this video.");
+
+            var videoFile = await _context.Files
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.SubjectCodeNavigation)
+                .Include(f => f.LessonCodeNavigation)
+                    .ThenInclude(l => l.TeacherCodeNavigation)
+                .FirstOrDefaultAsync(f => f.FileCode == fileCode);
+
+            if (videoFile == null)
+                return NotFound("Video not found.");
+
+            ViewBag.VideoFile = videoFile;
+            ViewBag.FileCode = fileCode;
+
+            // IMPORTANT: this must match your actual view file name Views/OnlineStudent/video_viewer.cshtml
+            return View("WatchVideo");
+        }
+
+        [HttpGet("GetSecureVideoUrl")]
+        public async Task<IActionResult> GetSecureVideoUrl(int fileCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+                return Unauthorized("Student not found");
+
+            // Verify access same as above
+            var attendedClassCodes = await _context.Attends
+                .Where(a => a.StudentId == studentCode.Value)
+                .Select(a => a.ClassId)
+                .ToListAsync();
+
+            var videoFile = await _context.Files
+                .Where(f => f.FileCode == fileCode &&
+                            f.IsActive &&
+                            f.FileType == 1 &&
+                            (f.IsOnlineLesson == false || f.IsOnlineLesson == null))
+                .Join(_context.Classes.Where(c => attendedClassCodes.Contains(c.ClassCode)),
+                      f => f.LessonCode,
+                      c => c.ClassLessonCode,
+                      (f, c) => f)
+                .Include(f => f.LessonCodeNavigation)
+                .FirstOrDefaultAsync();
+
+            if (videoFile == null)
+                return NotFound("Video not found or access denied");
+
+            // Decrypt to original URL (same logic used in StudentController)
+            var originalUrl = DecryptString(videoFile.FileLocation);
+            var expiryHours = videoFile.LessonCodeNavigation?.LessonExpireDays.HasValue == true
+                ? videoFile.LessonCodeNavigation.LessonExpireDays.Value * 24
+                : 24;
+
+            return Json(new
+            {
+                secureUrl = originalUrl,
+                displayName = videoFile.DisplayName,
+                duration = videoFile.Duration?.ToString(@"hh\:mm\:ss"),
+                provider = videoFile.VideoProvider == 0 ? "YouTube" : "Bunny CDN",
+                expiryTime = DateTime.Now.AddHours(expiryHours)
+            });
+        }
+
+        // Reuse the same decrypt helper from StudentController
+        private string DecryptString(string encryptedText)
+        {
+            var data = Convert.FromBase64String(encryptedText ?? "");
+            return System.Text.Encoding.UTF8.GetString(data);
+        }
+
+        // Helper to resolve latest attended lesson code for a subject (same subject + student's year)
+        private async Task<int?> GetLatestLessonCodeForSubject(int studentId, int subjectCode)
+        {
+            // Get student's year to constrain within the same academic year
+            var stu = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.StudentCode == studentId);
+            int? studentYear = stu?.YearCode;
+
+            var latest = await (
+                from a in _context.Attends
+                join c in _context.Classes on a.ClassId equals c.ClassCode
+                where a.StudentId == studentId
+                      && c.SubjectCode == subjectCode
+                      && (!studentYear.HasValue || c.YearCode == studentYear.Value)
+                orderby a.AttendDate descending
+                select c.ClassLessonCode
+            ).FirstOrDefaultAsync();
+
+            return latest;
+        }
+
+        // Videos for latest attended lesson in a subject (FileType==1, IsOnlineLesson==false)
+        [HttpGet("GetLatestSubjectVideos")]
+        public async Task<IActionResult> GetLatestSubjectVideos(int subjectCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+                return Json(new List<object>());
+
+            try
+            {
+                var latestLesson = await GetLatestLessonCodeForSubject(studentCode.Value, subjectCode);
+                if (!latestLesson.HasValue)
+                    return Json(new List<object>());
+
+                var videos = await _context.Files
+                    .Where(f => f.LessonCode == latestLesson.Value
+                                && f.IsActive
+                                && f.FileType == 1
+                                && (f.IsOnlineLesson == false)) // only offline-accessible lesson content
+                    .Include(f => f.LessonCodeNavigation)
+                        .ThenInclude(l => l.SubjectCodeNavigation)
+                    .Include(f => f.LessonCodeNavigation)
+                        .ThenInclude(l => l.TeacherCodeNavigation)
+                    .OrderByDescending(f => f.InsertTime)
+                    .Select(f => new
+                    {
+                        fileCode = f.FileCode,
+                        displayName = f.DisplayName ?? "Video",
+                        fileLocation = f.FileLocation,
+                        insertTime = f.InsertTime,
+                        lessonName = f.LessonCodeNavigation.LessonName,
+                        subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                        teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
+                        duration = f.Duration
+                    })
+                    .ToListAsync();
+
+                return Json(videos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetLatestSubjectVideos failed for Student={Student}, Subject={Subject}", studentCode, subjectCode);
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        // Downloads for latest attended lesson in a subject (FileType==2, IsOnlineLesson false/null)
+        [HttpGet("GetLatestSubjectDownloads")]
+        public async Task<IActionResult> GetLatestSubjectDownloads(int subjectCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+                return Json(new List<object>());
+
+            try
+            {
+                var latestLesson = await GetLatestLessonCodeForSubject(studentCode.Value, subjectCode);
+                if (!latestLesson.HasValue)
+                    return Json(new List<object>());
+
+                var files = await _context.Files
+                    .Where(f => f.LessonCode == latestLesson.Value
+                                && f.IsActive
+                                && f.FileType == 2
+                                && (f.IsOnlineLesson == false || f.IsOnlineLesson == null))
+                    .OrderByDescending(f => f.InsertTime)
+                    .Select(f => new
+                    {
+                        fileCode = f.FileCode,
+                        displayName = f.DisplayName ?? "Downloadable File",
+                        fileLocation = f.FileLocation,
+                        insertTime = f.InsertTime,
+                        lessonName = f.LessonCodeNavigation.LessonName,
+                        subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                        teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName
+                    })
+                    .ToListAsync();
+
+                return Json(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetLatestSubjectDownloads failed for Student={Student}, Subject={Subject}", studentCode, subjectCode);
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        // Assignments for latest attended lesson in a subject (FileType 4 or 5, IsOnlineLesson false/null, must have ExamCode)
+        [HttpGet("GetLatestSubjectAssignments")]
+        public async Task<IActionResult> GetLatestSubjectAssignments(int subjectCode)
+        {
+            var studentCode = HttpContext.Session.GetInt32("StudentCode");
+            if (!studentCode.HasValue)
+                return Json(new List<object>());
+
+            try
+            {
+                var latestLesson = await GetLatestLessonCodeForSubject(studentCode.Value, subjectCode);
+                if (!latestLesson.HasValue)
+                    return Json(new List<object>());
+
+                var assignmentFiles = await _context.Files
+                    .Where(f => f.LessonCode == latestLesson.Value
+                                && f.IsActive
+                                && (f.IsOnlineLesson == false || f.IsOnlineLesson == null)
+                                && (f.FileType == 4 || f.FileType == 5)
+                                && f.ExamCode.HasValue)
+                    .Include(f => f.LessonCodeNavigation)
+                        .ThenInclude(l => l.SubjectCodeNavigation)
+                    .Include(f => f.LessonCodeNavigation)
+                        .ThenInclude(l => l.TeacherCodeNavigation)
+                    .OrderByDescending(f => f.InsertTime)
+                    .ToListAsync();
+
+                var assignmentExamCodes = assignmentFiles.Select(f => f.ExamCode.Value).Distinct().ToList();
+
+                var assignmentsData = await _context.Exams
+                    .Where(e => assignmentExamCodes.Contains(e.ExamCode) && e.IsActive == true)
+                    .ToListAsync();
+
+                var attendedAssignmentCodes = await _context.StudentExams
+                    .Where(se => se.StudentCode == studentCode.Value && assignmentExamCodes.Contains(se.ExamCode) && se.IsActive == true)
+                    .Select(se => se.ExamCode)
+                    .ToListAsync();
+
+                var result = assignmentFiles.Select(f =>
+                {
+                    var assignment = assignmentsData.FirstOrDefault(a => a.ExamCode == f.ExamCode);
+                    bool attended = attendedAssignmentCodes.Contains(f.ExamCode.Value);
+
+                    return new
+                    {
+                        examCode = f.ExamCode.Value,
+                        examName = assignment?.ExamName ?? f.DisplayName ?? "Unknown Assignment",
+                        fileCode = f.FileCode,
+                        displayName = assignment?.ExamName ?? f.DisplayName,
+                        fileType = f.FileType,
+                        fileTypeName = f.FileType == 4 ? "Assignment" : "Assignment Video",
+                        duration = f.Duration,
+                        durationFormatted = f.Duration.HasValue ? f.Duration.Value.ToString(@"hh\:mm\:ss") : null,
+                        sortOrder = f.SortOrder,
+                        insertTime = f.InsertTime,
+                        isActive = f.IsActive,
+                        lessonCode = f.LessonCode,
+                        lessonName = f.LessonCodeNavigation.LessonName,
+                        subjectName = f.LessonCodeNavigation.SubjectCodeNavigation.SubjectName,
+                        teacherName = f.LessonCodeNavigation.TeacherCodeNavigation.TeacherName,
+                        attended = attended
+                    };
+                }).ToList();
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetLatestSubjectAssignments failed for Student={Student}, Subject={Subject}", studentCode, subjectCode);
+                return Json(new { error = ex.Message });
+            }
+        }
 
         public class StudentDashboardViewModel
         {
@@ -704,7 +1043,6 @@ public async Task<IActionResult> GetAttendedSessions()
             public bool IsSubscribed { get; set; }
         }
 
-        // DTO for attended sessions
         private class AttendedSessionDto
         {
             public string Source { get; set; } = "";

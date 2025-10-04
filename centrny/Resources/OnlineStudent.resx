@@ -121,13 +121,13 @@
     <value>Student Dashboard</value>
   </data>
   <data name="Title_LearningCenter" xml:space="preserve">
-    <value>Learning Center</value>
+    <value>Online lessons</value>
   </data>
   <data name="Nav_Dashboard" xml:space="preserve">
-    <value>Dashboard</value>
-  </data>
+    <value>ٍStudent Profile</value>
+  </data>S
   <data name="Nav_LearningCenter" xml:space="preserve">
-    <value>Learning Center</value>
+    <value>Online lessons</value>
   </data>
   <data name="Section_AcademicOverview" xml:space="preserve">
     <value>Academic Overview</value>
@@ -311,5 +311,108 @@
   </data>
   <data name="Error" xml:space="preserve">
     <value>Error</value>
+  </data>
+	<data name="Title_Homework" xml:space="preserve">
+    <value>Homework</value>
+  </data>
+	<data name="Nav_Homework" xml:space="preserve">
+    <value>Homework</value>
+  </data>
+	<data name="Assignments" xml:space="preserve">
+    <value>Assignments</value>
+  </data>
+	<data name="Available_Videos" xml:space="preserve">
+    <value>Available Videos</value>
+  </data>
+	<data name="Downloadable_Files" xml:space="preserve">
+    <value>Downloadable Files</value>
+  </data>
+	<data name="Loading_Homework" xml:space="preserve">
+    <value>Loading homework...</value>
+  </data>
+	<data name="Loading_Assignments" xml:space="preserve">
+    <value>Loading assignments...</value>
+  </data>
+	<data name="Loading_Videos" xml:space="preserve">
+    <value>Loading videos...</value>
+  </data>
+	<data name="Loading_Downloads" xml:space="preserve">
+    <value>Loading files...</value>
+  </data>
+	<data name="NoAssignments" xml:space="preserve">
+    <value>No Assignments</value>
+  </data>
+	<data name="NoAssignmentsMsg" xml:space="preserve">
+    <value>No assignments available for your latest lesson in this subject.</value>
+  </data>
+	<data name="NoVideos" xml:space="preserve">
+    <value>No Videos</value>
+  </data>
+	<data name="NoVideosMsg" xml:space="preserve">
+    <value>No videos available for your latest lesson in this subject.</value>
+  </data>
+	<data name="NoFiles" xml:space="preserve">
+    <value>No Files</value>
+  </data>
+	<data name="NoFilesMsg" xml:space="preserve">
+    <value>No downloadable files available for your latest lesson in this subject.</value>
+  </data>
+	<data name="Attend_Assignment" xml:space="preserve">
+    <value>Attend Assignment</value>
+  </data>
+	<data name="Attended" xml:space="preserve">
+    <value>Attended</value>
+  </data>
+	<data name="Watch_Video" xml:space="preserve">
+    <value>Watch Video</value>
+  </data>
+	<data name="Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+	<data name="Failed_Load_Assignments" xml:space="preserve">
+    <value>Failed to load assignments.</value>
+  </data>
+	<data name="Failed_Load_Videos" xml:space="preserve">
+    <value>Failed to load videos.</value>
+  </data>
+	<data name="Failed_Load_Downloads" xml:space="preserve">
+    <value>Failed to load downloadable files.</value>
+  </data>
+	<data name="Closed" xml:space="preserve">
+    <value>Closed.</value>
+  </data>
+	<data name="Access_Expired" xml:space="preserve">
+    <value>Access expired. Enter PIN.</value>
+  </data>
+
+	<!-- Attended Sessions -->
+	<data name="Section_AttendedSessions" xml:space="preserve">
+    <value>Attended Sessions</value>
+  </data>
+	<data name="Loading_Sessions" xml:space="preserve">
+    <value>Loading sessions...</value>
+  </data>
+	<data name="Empty_NoSessionsTitle" xml:space="preserve">
+    <value>No Attended Sessions</value>
+  </data>
+	<data name="Empty_NoSessionsMessage" xml:space="preserve">
+    <value>No attendance records yet.</value>
+  </data>
+	<data name="Alert_LoadSessionsFailed" xml:space="preserve">
+    <value>Failed to load sessions</value>
+  </data>
+	<data name="Source_Online" xml:space="preserve">
+    <value>Online</value>
+  </data>
+	<data name="Source_Center" xml:space="preserve">
+    <value>Center</value>
+  </data>
+
+	<!-- Common UI -->
+	<data name="Label_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+	<data name="Logout" xml:space="preserve">
+    <value>Logout</value>
   </data>
 </root>

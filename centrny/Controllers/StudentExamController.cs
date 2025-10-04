@@ -23,13 +23,22 @@ namespace centrny.Controllers
         private int? GetSessionInt(string key) => HttpContext.Session.GetInt32(key);
         private string GetSessionString(string key) => HttpContext.Session.GetString(key);
         private int GetCurrentUserId() => GetSessionInt("UserCode") ?? 1;
+        private int? GetLoggedInStudentCode() => HttpContext.Session.GetInt32("StudentCode");
 
         [HttpGet]
         [Route("StudentExam")]
         [Route("StudentExam/Index")]
-        public IActionResult Index(int studentCode, int examCode, string itemKey = null)
+        public IActionResult Index(int? studentCode, int examCode, string itemKey = null)
         {
-            ViewBag.StudentCode = studentCode;
+            // Prefer explicit param; otherwise fall back to OnlineStudent session
+            var sc = studentCode ?? GetLoggedInStudentCode();
+            if (!sc.HasValue)
+            {
+                // Not logged in
+                return Redirect("/StudentLogin");
+            }
+
+            ViewBag.StudentCode = sc.Value;
             ViewBag.ExamCode = examCode;
             ViewBag.ItemKey = itemKey ?? "";
             return View();
@@ -40,19 +49,25 @@ namespace centrny.Controllers
         /// Never auto-submits here! Only returns info.
         /// </summary>
         [HttpGet]
-        public JsonResult GetStudentExamStartTime(int studentCode, int examCode)
+        [Route("StudentExam/GetStudentExamStartTime")]
+        [Route("GetStudentExamStartTime")]
+        public JsonResult GetStudentExamStartTime(int? studentCode, int examCode)
         {
             try
             {
+                var sc = studentCode ?? GetLoggedInStudentCode();
+                if (!sc.HasValue)
+                    return Json(new { error = "Student not found in session." });
+
                 var studentExam = _context.StudentExams
-                    .FirstOrDefault(se => se.StudentCode == studentCode && se.ExamCode == examCode);
+                    .FirstOrDefault(se => se.StudentCode == sc.Value && se.ExamCode == examCode);
 
                 var exam = _context.Exams.FirstOrDefault(e => e.ExamCode == examCode);
 
                 DateTime examStartTime;
                 if (studentExam == null)
                 {
-                    var studentExists = _context.Students.Any(s => s.StudentCode == studentCode);
+                    var studentExists = _context.Students.Any(s => s.StudentCode == sc.Value);
                     if (!studentExists)
                         return Json(new { error = "Student not found." });
 
@@ -65,7 +80,7 @@ namespace centrny.Controllers
                     examStartTime = DateTime.UtcNow;
                     studentExam = new StudentExam
                     {
-                        StudentCode = studentCode,
+                        StudentCode = sc.Value,
                         ExamCode = examCode,
                         ExamTimer = examStartTime,
                         IsActive = false,
@@ -128,11 +143,18 @@ namespace centrny.Controllers
         /// API: Get info for a single exam for a student (for attend exam)
         /// </summary>
         [HttpGet]
-        public JsonResult GetSingleExam(int studentCode, int examCode)
+        [Route("StudentExam/GetSingleExam")]
+        [Route("GetSingleExam")]
+        public JsonResult GetSingleExam(int? studentCode, int examCode)
         {
+            var sc = studentCode ?? GetLoggedInStudentCode();
+            if (!sc.HasValue)
+                return Json(new { error = "Student not found in session." });
+
             var learn = _context.Learns
-                .Where(l => l.StudentCode == studentCode && l.IsActive == true)
+                .Where(l => l.StudentCode == sc.Value && l.IsActive == true)
                 .ToList();
+
             var exam = _context.Exams
                 .Include(e => e.SubjectCodeNavigation)
                 .Include(e => e.TeacherCodeNavigation)
@@ -151,7 +173,7 @@ namespace centrny.Controllers
                 return Json(new { error = "You are not allowed to take this exam." });
 
             var alreadyTaken = _context.StudentExams.Any(se =>
-                se.StudentCode == studentCode &&
+                se.StudentCode == sc.Value &&
                 se.ExamCode == examCode &&
                 se.IsActive == true);
 
@@ -172,6 +194,8 @@ namespace centrny.Controllers
         /// API: Get questions for a specific exam
         /// </summary>
         [HttpGet]
+        [Route("StudentExam/GetExamQuestions")]
+        [Route("GetExamQuestions")]
         public JsonResult GetExamQuestions(int examCode)
         {
             var questions = _context.ExamQuestions
@@ -202,18 +226,33 @@ namespace centrny.Controllers
         /// API: Submit exam answers
         /// </summary>
         [HttpPost]
+        [Route("StudentExam/SubmitExam")]
+        [Route("SubmitExam")]
         public JsonResult SubmitExam([FromBody] ExamSubmission submission)
         {
             using (var transaction = _context.Database.BeginTransaction())
             {
                 try
                 {
-                    // Logging for debugging
+                    // If StudentCode is missing from payload, use session value
+                    var sessionStudent = GetLoggedInStudentCode();
+                    if ((!submission.StudentCode.HasValue || submission.StudentCode.Value <= 0) && sessionStudent.HasValue)
+                    {
+                        submission.StudentCode = sessionStudent.Value;
+                    }
+
+                    if (!submission.StudentCode.HasValue || submission.StudentCode.Value <= 0)
+                        return Json(new { message = "Login required to submit." });
+
+                    // Hard-enforce that a logged-in student can only submit for himself
+                    if (sessionStudent.HasValue && submission.StudentCode.Value != sessionStudent.Value)
+                        return Json(new { message = "You are not authorized to submit for another student." });
+
                     _logger.LogInformation("SubmitExam: studentCode={StudentCode}, examCode={ExamCode}", submission.StudentCode, submission.ExamCode);
 
                     // Try to find existing StudentExam record
                     var studExam = _context.StudentExams
-                        .FirstOrDefault(se => se.StudentCode == submission.StudentCode && se.ExamCode == submission.ExamCode);
+                        .FirstOrDefault(se => se.StudentCode == submission.StudentCode.Value && se.ExamCode == submission.ExamCode);
 
                     _logger.LogInformation("Before insert, studExam exists? {Exists}", studExam != null);
 
@@ -222,10 +261,10 @@ namespace centrny.Controllers
                     {
                         studExam = new StudentExam
                         {
-                            StudentCode = submission.StudentCode,
+                            StudentCode = submission.StudentCode.Value,
                             ExamCode = submission.ExamCode,
                             ExamTimer = DateTime.UtcNow,
-                            IsActive = false, // Important: default to false
+                            IsActive = false, // default to false
                             InsertUser = GetCurrentUserId(),
                             InsertTime = DateTime.Now
                         };
@@ -234,7 +273,7 @@ namespace centrny.Controllers
 
                         // Defensive: re-fetch it
                         studExam = _context.StudentExams
-                            .FirstOrDefault(se => se.StudentCode == submission.StudentCode && se.ExamCode == submission.ExamCode);
+                            .FirstOrDefault(se => se.StudentCode == submission.StudentCode.Value && se.ExamCode == submission.ExamCode);
 
                         _logger.LogInformation("After insert, studExam exists? {Exists}", studExam != null);
                         if (studExam == null)
@@ -288,7 +327,7 @@ namespace centrny.Controllers
 
                         totalDegree = examQuestions.Sum(eq => eq.QuestionDegree);
 
-                        foreach (var ans in submission.Answers)
+                        foreach (var ans in submission.Answers ?? Enumerable.Empty<AnswerObj>())
                         {
                             if (!int.TryParse(ans.QuestionCode, out int qCode) ||
                                 !int.TryParse(ans.AnswerCode, out int aCode))
@@ -313,7 +352,7 @@ namespace centrny.Controllers
                             }
 
                             var studentAnswerRow = _context.StudentAnswers.FirstOrDefault(
-                                sa => sa.StudentCode == submission.StudentCode
+                                sa => sa.StudentCode == submission.StudentCode.Value
                                     && sa.ExamCode == submission.ExamCode
                                     && sa.QuestionCode == qCode
                             );
@@ -327,7 +366,7 @@ namespace centrny.Controllers
                             {
                                 var newStudentAnswer = new StudentAnswer
                                 {
-                                    StudentCode = submission.StudentCode,
+                                    StudentCode = submission.StudentCode.Value,
                                     ExamCode = submission.ExamCode,
                                     QuestionCode = qCode,
                                     StudentAnswerCode = aCode,
@@ -340,8 +379,7 @@ namespace centrny.Controllers
                     }
                     else
                     {
-                        // Assignment: no timer, no grading logic unless you want to add it here
-                        // If you want to save answers, you can do so here as well
+                        // Assignment: no timer/grading here unless desired
                     }
 
                     // Save result and mark as submitted
@@ -376,7 +414,7 @@ namespace centrny.Controllers
 
         public class ExamSubmission
         {
-            public int StudentCode { get; set; }
+            public int? StudentCode { get; set; }
             public int ExamCode { get; set; }
             public List<AnswerObj> Answers { get; set; } = new List<AnswerObj>();
         }

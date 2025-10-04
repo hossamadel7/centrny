@@ -1,4 +1,4 @@
-@using Microsoft.Extensions.Localization
+ï»¿@using Microsoft.Extensions.Localization
 @using System.Globalization
 @model centrny.Controllers.OnlineStudentController.StudentDashboardViewModel
 @inject IStringLocalizerFactory LocalizerFactory
@@ -10,12 +10,8 @@
     var htmlDir = isArabic ? "rtl" : "ltr";
     Layout = null;
 
-    // Show root name if available, else dash (no forced "EduCenter")
     var rootName = Model?.Student?.RootCodeNavigation?.RootName ?? "-";
-
-    ViewData["Title"] = Localizer["Title_LearningCenter"];
-
-    var studentName = Model?.Student?.StudentName;
+    var studentName = Model?.Student?.StudentName ?? "";
     var yearName = Model?.Student?.YearCodeNavigation?.YearName ?? Localizer["NotAssigned"];
     var branchName = Model?.Student?.BranchCodeNavigation?.BranchName ?? Localizer["NotAssigned"];
     int? studentCode = Model?.Student?.StudentCode;
@@ -24,7 +20,7 @@
 <html lang="@htmlLang" dir="@htmlDir">
 <head>
     <meta charset="utf-8" />
-    <title>@ViewData["Title"]</title>
+    <title>@(Localizer["Title_Homework"].ResourceNotFound ? "Homework" : Localizer["Title_Homework"])</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     @if (isArabic)
     {
@@ -36,18 +32,29 @@
     }
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
+
+    <!-- Theme CSS -->
     <link href="~/css/OnlineStudent.css" rel="stylesheet" />
     <style>
+        <style >
         html, body {
             margin: 0;
             padding: 0;
         }
 
+        /* Ensure the navbar sticks to the top without any space above it */
         .navbar, .modern-navbar {
             margin-top: 0 !important;
             border-top: 0 !important;
         }
+
+        /* Check if there is any extra space caused by wrappers */
+        .dashboard-container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
     </style>
+   
 </head>
 <body>
     <!-- Hidden anti-forgery token for AJAX logout -->
@@ -55,71 +62,39 @@
         @Html.AntiForgeryToken()
     </div>
 
+    <!-- Localization dataset for OnlineStudent.js (Homework) -->
     <div id="js-online-localization"
+         data-badge-regular="@Localizer["Badge_Regular"]"
          data-nav-dashboard="@Localizer["Nav_Dashboard"]"
          data-nav-learning="@Localizer["Nav_LearningCenter"]"
-         data-badge-subscribed="@Localizer["Badge_Subscribed"]"
-         data-badge-regular="@Localizer["Badge_Regular"]"
-         data-section-academic="@Localizer["Section_AcademicOverview"]"
-         data-stat-subjects="@Localizer["Stat_Subjects"]"
-         data-stat-exams="@Localizer["Stat_Exams"]"
-         data-stat-attendance="@Localizer["Stat_Attendance"]"
-         data-stat-average="@Localizer["Stat_Average"]"
-         data-section-student-information="@Localizer["Section_StudentInformation"]"
-         data-label-full-name="@Localizer["Label_FullName"]"
-         data-label-age="@Localizer["Label_Age"]"
-         data-label-age-suffix="@Localizer["Label_AgeSuffix"]"
-         data-label-academic-year="@Localizer["Label_AcademicYear"]"
-         data-label-branch="@Localizer["Label_Branch"]"
-         data-label-contact-number="@Localizer["Label_ContactNumber"]"
-         data-label-parent-contact="@Localizer["Label_ParentContact"]"
-         data-label-member-since="@Localizer["Label_MemberSince"]"
-         data-section-enrolled-subjects="@Localizer["Section_EnrolledSubjects"]"
-         data-section-examination-results="@Localizer["Section_ExaminationResults"]"
+         data-nav-homework="@Localizer["Nav_Homework"]"
+         data-assignments="@Localizer["Assignments"]"
+         data-available-videos="@Localizer["Available_Videos"]"
+         data-downloadable-files="@Localizer["Downloadable_Files"]"
+         data-loading-homework="@Localizer["Loading_Homework"]"
+         data-loading-assignments="@Localizer["Loading_Assignments"]"
+         data-loading-videos="@Localizer["Loading_Videos"]"
+         data-loading-downloads="@Localizer["Loading_Downloads"]"
+         data-no-assignments="@Localizer["NoAssignments"]"
+         data-no-assignments-msg="@Localizer["NoAssignmentsMsg"]"
+         data-no-videos="@Localizer["NoVideos"]"
+         data-no-videos-msg="@Localizer["NoVideosMsg"]"
+         data-no-files="@Localizer["NoFiles"]"
+         data-no-files-msg="@Localizer["NoFilesMsg"]"
          data-empty-no-subjects-title="@Localizer["Empty_NoSubjectsTitle"]"
          data-empty-no-subjects-message="@Localizer["Empty_NoSubjectsMessage"]"
-         data-empty-no-exams-title="@Localizer["Empty_NoExamsTitle"]"
-         data-empty-no-exams-message="@Localizer["Empty_NoExamsMessage"]"
-         data-label-subject="@Localizer["Label_Subject"]"
-         data-label-teacher="@Localizer["Label_Teacher"]"
-         data-label-date="@Localizer["Label_Date"]"
-         data-label-type="@Localizer["Label_Type"]"
-         data-label-status="@Localizer["Label_Status"]"
-         data-status-passed="@Localizer["Status_Passed"]"
-         data-status-failed="@Localizer["Status_Failed"]"
-         data-type-exam="@Localizer["Type_Exam"]"
-         data-type-quiz="@Localizer["Type_Quiz"]"
-         data-online-badge="@Localizer["Online_Badge"]"
-         data-fee-label="@Localizer["Fee_Label"]"
-         data-loading-subjects="@Localizer["Loading_Subjects"]"
-         data-loading-exams="@Localizer["Loading_Exams"]"
-         data-alert-dashboard-loaded="@Localizer["Alert_DashboardLoaded"]"
-         data-alert-dashboard-failed="@Localizer["Alert_DashboardFailed"]"
-         data-alert-load-subjects-failed="@Localizer["Alert_LoadSubjectsFailed"]"
-         data-alert-load-exams-failed="@Localizer["Alert_LoadExamsFailed"]"
-         data-alert-load-chapters-failed="@Localizer["Alert_LoadChaptersFailed"]"
-         data-alert-load-lessons-failed="@Localizer["Alert_LoadLessonsFailed"]"
-         data-empty-no-chapters-title="@Localizer["Empty_NoChaptersTitle"]"
-         data-empty-no-chapters-message="@Localizer["Empty_NoChaptersMessage"]"
-         data-empty-no-lessons-title="@Localizer["Empty_NoLessonsTitle"]"
-         data-empty-no-lessons-message="@Localizer["Empty_NoLessonsMessage"]"
-         data-select-subject-placeholder="@Localizer["Select_SubjectPlaceholder"]"
-         data-select-subject-label="@Localizer["Select_SubjectLabel"]"
-         data-button-explore-chapters="@Localizer["Button_ExploreChapters"]"
-         data-header-subject-chapters="@Localizer["Header_SubjectChapters"]"
-         data-button-back-to-subjects="@Localizer["Button_BackToSubjects"]"
-         data-header-chapter-lessons="@Localizer["Header_ChapterLessons"]"
-         data-button-back-to-chapters="@Localizer["Button_BackToChapters"]"
-         data-button-access-lesson="@Localizer["Button_AccessLesson"]"
-         data-added-label="@Localizer["Added_Label"]"
-         data-confirm-access-lesson="@Localizer["Confirm_AccessLesson"]"
-         data-redirecting="@Localizer["Redirecting"]"
-         data-not-assigned="@Localizer["NotAssigned"]"
-         data-not-provided="@Localizer["NotProvided"]"
+         data-attend-assignment="@Localizer["Attend_Assignment"]"
+         data-attended="@Localizer["Attended"]"
+         data-watch-video="@Localizer["Watch_Video"]"
+         data-download="@Localizer["Download"]"
          data-error="@Localizer["Error"]"
+         data-failed-load-assignments="@Localizer["Failed_Load_Assignments"]"
+         data-failed-load-videos="@Localizer["Failed_Load_Videos"]"
+         data-failed-load-downloads="@Localizer["Failed_Load_Downloads"]"
          data-locale="@htmlLang"
          data-dir="@htmlDir"></div>
 
+    <!-- Navbar (matches dashboard/learning theme) -->
     <nav class="navbar navbar-expand-lg modern-navbar">
         <div class="container-fluid px-4">
             <a class="navbar-brand" href="/OnlineStudent">
@@ -145,10 +120,10 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/OnlineStudent/Homework">
+                        <span class="nav-link active">
                             <i class="fas fa-clipboard-check"></i>
                             @Localizer["Nav_Homework"]
-                        </a>
+                        </span>
                     </li>
                 </ul>
                 <div class="language-switcher d-flex align-items-center gap-2">
@@ -166,8 +141,8 @@
         </div>
     </nav>
 
+    <!-- Mobile overlay + sidebar (same as dashboard/learning) -->
     <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
-
     <div class="mobile-nav-sidebar">
         <div class="mobile-nav-header">
             <a href="/OnlineStudent" class="mobile-nav-brand">
@@ -179,7 +154,7 @@
             </button>
         </div>
         <div class="mobile-nav-links">
-            <a href="/OnlineStudent" class="mobile-nav-link active">
+            <a href="/OnlineStudent" class="mobile-nav-link">
                 <i class="fas fa-tachometer-alt"></i>
                 @Localizer["Nav_Dashboard"]
             </a>
@@ -187,7 +162,7 @@
                 <i class="fas fa-book-reader"></i>
                 @Localizer["Nav_LearningCenter"]
             </a>
-            <a href="/OnlineStudent/Homework" class="mobile-nav-link">
+            <a href="javascript:void(0)" class="mobile-nav-link active">
                 <i class="fas fa-clipboard-check"></i>
                 @Localizer["Nav_Homework"]
             </a>
@@ -196,7 +171,7 @@
             <div class="mobile-language-title">@Localizer["Label_Language"]</div>
             <div class="mobile-language-options">
                 <button class="language-btn @(isArabic ? "" : "active")" onclick="switchLanguage('en')">English</button>
-                <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">ÇáÚÑÈíÉ</button>
+                <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©</button>
                 <button class="language-btn logout-btn mt-2" onclick="logoutStudent()">
                     <i class="fas fa-right-from-bracket"></i> @Localizer["Logout"]
                 </button>
@@ -226,109 +201,36 @@
                             </span>
                         </div>
                     </div>
-                    <div class="col-md-4 text-@(isArabic ? "start" : "end")">
-                        <span id="subscription-status" class="badge bg-secondary">
-                            @Localizer["Badge_Regular"]
-                        </span>
-                    </div>
+                 
                 </div>
             </div>
         }
 
-        <!-- Subject Selection -->
-        <div id="subjectSelection" class="row">
-            <div class="col-lg-8 col-md-10 mx-auto">
-                <div class="learning-card">
-                    <div class="learning-card-header">
-                        <h2 class="learning-card-title">
-                            <i class="fas fa-book"></i>
-                            @Localizer["Select_SubjectLabel"]
-                        </h2>
-                    </div>
-                    <div class="learning-card-body">
-                        <div class="mb-4">
-                            <label for="subjectSelect" class="form-label">
-                                @Localizer["Select_SubjectLabel"]
-                            </label>
-                            <select class="form-select" id="subjectSelect">
-                                <option value="">@Localizer["Select_SubjectPlaceholder"]</option>
-                            </select>
-                        </div>
-                        <div class="d-grid">
-                            <button type="button" class="btn btn-primary btn-lg" id="loadChaptersBtn" disabled>
-                                <i class="fas fa-arrow-right"></i>
-                                @Localizer["Button_ExploreChapters"]
-                            </button>
-                        </div>
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-clipboard-check"></i>
+                    @Localizer["Nav_Homework"]
+                </h2>
+            </div>
+            <div class="section-content">
+                <!-- JS will render per-subject homework blocks here -->
+                <div id="homeworkContainer">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>@(Localizer["Loading_Homework"].ResourceNotFound ? "Loading homework..." : Localizer["Loading_Homework"])</span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Chapters -->
-        <div id="chaptersSection" class="row d-none">
-            <div class="col-12">
-                <div class="learning-card">
-                    <div class="learning-card-header">
-                        <div class="d-flex justify-content-between align-items-center w-100">
-                            <h2 class="learning-card-title">
-                                <i class="fas fa-layer-group"></i>
-                                @Localizer["Header_SubjectChapters"]
-                            </h2>
-                            <button type="button" class="btn btn-outline-light btn-sm" id="backToSubjectsBtn">
-                                <i class="fas fa-arrow-left"></i>
-                                @Localizer["Button_BackToSubjects"]
-                            </button>
-                        </div>
-                    </div>
-                    <div class="learning-card-body">
-                        <div class="loading-spinner text-center d-none">
-                            <div class="spinner"></div>
-                            <p>@Localizer["Loading_Chapters"]</p>
-                        </div>
-                        <div class="row" id="chaptersGrid"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lessons -->
-        <div id="lessonsSection" class="row d-none">
-            <div class="col-12">
-                <div class="learning-card">
-                    <div class="learning-card-header">
-                        <div class="d-flex justify-content-between align-items-center w-100">
-                            <h2 class="learning-card-title">
-                                <i class="fas fa-play-circle"></i>
-                                @Localizer["Header_ChapterLessons"]
-                            </h2>
-                            <button type="button" class="btn btn-outline-light btn-sm" id="backToChaptersBtn">
-                                <i class="fas fa-arrow-left"></i>
-                                @Localizer["Button_BackToChapters"]
-                            </button>
-                        </div>
-                    </div>
-                    <div class="learning-card-body">
-                        <div class="loading-spinner text-center d-none">
-                            <div class="spinner"></div>
-                            <p>@Localizer["Loading_Lessons"]</p>
-                        </div>
-                        <div id="lessonsContainer"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- (Optional) If you also want enrolled subjects / exams here, you can add those sections again -->
-
     </div>
 
     <script>
-        // If rootName is just "-" attempt to fetch real one (in case model wasn't provided)
+        // If brand title is '-', try to fetch it
         document.addEventListener('DOMContentLoaded', () => {
             const brandEls = document.querySelectorAll('.navbar-brand, .mobile-nav-brand');
             const currentRoot = '@rootName';
-            if (!currentRoot || currentRoot === '-' || currentRoot === '' ) {
+            if (!currentRoot || currentRoot === '-' || currentRoot === '') {
                 fetch('/OnlineStudent/GetStudentInfo')
                     .then(r => r.json())
                     .then(d => {
@@ -343,7 +245,33 @@
                             });
                         }
                     })
+                    .catch(() => { });
+            }
+
+            // Update subscription badge on this page (since dashboard loader isn't run here)
+            try {
+                fetch('/OnlineStudent/GetSubscriptionStatus')
+                    .then(r => r.json())
+                    .then(sub => {
+                        const badge = document.getElementById('subscription-status');
+                        if (!badge || sub?.error) return;
+                        const isSub = !!sub.isSubscribed;
+                        badge.textContent = isSub ? '@Localizer["Badge_Subscribed"]' : '@Localizer["Badge_Regular"]';
+                        badge.className = `badge ${isSub ? 'bg-success' : 'bg-secondary'}`;
+                    })
                     .catch(() => {});
+            } catch {}
+
+            // Navbar toggler opens the custom mobile sidebar only
+            const toggler = document.querySelector('.navbar-toggler');
+            if (toggler) {
+                toggler.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.innerWidth < 992) {
+                        openMobileNav();
+                    }
+                }, true);
             }
         });
 
@@ -354,17 +282,8 @@
         function closeMobileNav() {
             document.querySelector('.mobile-nav-sidebar')?.classList.remove('open');
             document.querySelector('.mobile-nav-overlay')?.classList.remove('show');
+            document.body.classList.remove('mobile-nav-open');
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggler = document.querySelector('.navbar-toggler');
-            if (toggler) {
-                toggler.addEventListener('click', () => {
-                    document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
-                    document.querySelector('.mobile-nav-overlay')?.classList.add('show');
-                });
-            }
-        });
-
         async function logoutStudent() {
             try {
                 const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
@@ -386,7 +305,15 @@
                 alert('Network error. Please try again.');
             }
         }
+        // Sidebar helpers
+        function openMobileNav() {
+            document.querySelector('.mobile-nav-sidebar')?.classList.add('open');
+            document.querySelector('.mobile-nav-overlay')?.classList.add('show');
+            document.body.classList.add('mobile-nav-open');
+        }
     </script>
+
+    <!-- App JS -->
     <script src="~/js/OnlineStudent.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

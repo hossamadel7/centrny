@@ -35,6 +35,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
     <link href="~/css/OnlineStudent.css" rel="stylesheet" />
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar, .modern-navbar {
+            margin-top: 0 !important;
+            border-top: 0 !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Hidden anti-forgery token for AJAX logout -->
@@ -104,22 +115,28 @@
                 <i class="fas fa-graduation-cap"></i>
                 @rootName
             </a>
-            <!-- IMPORTANT: remove Bootstrap collapse attributes so only the side menu opens on mobile -->
+            <!-- Keep toggler simple; JS will open the custom sidebar -->
             <button class="navbar-toggler" type="button" aria-label="Open navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav @(!isArabic ? "me-auto" : "ms-auto")">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/OnlineStudent">
+                        <a class="nav-link" href="/OnlineStudent">
                             <i class="fas fa-tachometer-alt"></i>
                             @Localizer["Nav_Dashboard"]
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/OnlineStudent/Learning">
-                            <i class="fas a-book-reader fa-book-reader"></i>
+                            <i class="fas fa-book-reader"></i>
                             @Localizer["Nav_LearningCenter"]
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/OnlineStudent/Homework">
+                            <i class="fas fa-clipboard-check"></i>
+                            @Localizer["Nav_Homework"]
                         </a>
                     </li>
                 </ul>
@@ -130,7 +147,6 @@
                     <button class="language-btn @(isArabic ? "active" : "")" onclick="switchLanguage('ar')">
                         <i class="fas fa-globe"></i> AR
                     </button>
-                    <!-- Logout button (to the right of AR/EN) -->
                     <button class="language-btn logout-btn" onclick="logoutStudent()" title="@Localizer["Logout"]" aria-label="@Localizer["Logout"]">
                         <i class="fas fa-right-from-bracket"></i>
                     </button>
@@ -139,7 +155,7 @@
         </div>
     </nav>
 
-    <div class="mobile-nav-overlay" onclick="closeMobileNav"></div>
+    <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
 
     <div class="mobile-nav-sidebar">
         <div class="mobile-nav-header">
@@ -159,6 +175,10 @@
             <a href="/OnlineStudent/Learning" class="mobile-nav-link">
                 <i class="fas fa-book-reader"></i>
                 @Localizer["Nav_LearningCenter"]
+            </a>
+            <a href="/OnlineStudent/Homework" class="mobile-nav-link">
+                <i class="fas fa-clipboard-check"></i>
+                @Localizer["Nav_Homework"]
             </a>
         </div>
         <div class="mobile-language-switcher">

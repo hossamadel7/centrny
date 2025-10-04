@@ -1174,11 +1174,54 @@ body {
 
 .navbar-toggler {
     border: none;
-    padding: .5rem;
-    background: rgba(255,255,255,0.15);
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
     border-radius: var(--border-radius);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
+/* Default alignment for larger screens */
+html[dir="ltr"] .navbar-toggler {
+    left: 33rem; /* Adjust for larger screens */
+}
+
+html[dir="rtl"] .navbar-toggler {
+    right: 54rem; /* Adjust for larger screens */
+}
+
+/* For screens smaller than 990px */
+@media (max-width: 990px) {
+    html[dir="ltr"] .navbar-toggler {
+        left: 45rem; /* Adjust dynamically for smaller screens */
+    }
+
+    html[dir="rtl"] .navbar-toggler {
+        right: 45rem; /* Adjust dynamically for smaller screens */
+    }
+}
+
+/* For screens smaller than 768px */
+@media (max-width: 768px) {
+    html[dir="ltr"] .navbar-toggler {
+        left: 34rem; /* Further adjust for mobile devices */
+    }
+
+    html[dir="rtl"] .navbar-toggler {
+        right: 34rem; /* Further adjust for mobile devices */
+    }
+}
+
+@media (max-width: 480px) {
+    html[dir="ltr"] .navbar-toggler {
+        left: 18rem; /* Further adjust for mobile devices */
+    }
+
+    html[dir="rtl"] .navbar-toggler {
+        right: 18rem; /* Further adjust for mobile devices */
+    }
+}
     .navbar-toggler:focus {
         box-shadow: 0 0 0 .2rem rgba(255,255,255,.25);
     }
@@ -2035,4 +2078,258 @@ html[dir="rtl"] .nav-link {
         body.mobile-nav-open #navbarNav {
             display: none !important;
         }
+}
+/* === Homework (per-subject) blocks === */
+.homework-subject .sub-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+    .homework-subject .sub-card + .sub-card {
+        margin-top: 1rem;
+    }
+
+    .homework-subject .sub-card .sub-card-header {
+        background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
+        border-bottom: 1px solid var(--gray-200);
+        padding: 0.85rem 1rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+    }
+
+        .homework-subject .sub-card .sub-card-header i {
+            color: var(--primary-color);
+            width: 18px;
+            text-align: center;
+        }
+
+    .homework-subject .sub-card .sub-card-body {
+        padding: 1rem;
+    }
+
+.homework-subject .exam-card.video-card .exam-icon i {
+    color: var(--secondary-color);
+}
+
+.homework-subject .exam-card.download-card .exam-icon i {
+    color: var(--primary-color);
+}
+
+/* Responsive tweaks */
+@media (max-width: 992px) {
+    .homework-subject .sub-card .sub-card-body {
+        padding: 0.85rem;
+    }
+}
+/* === Homework media cards (polished) === */
+.homework-subject .media-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    padding: 1rem 1rem 1.1rem;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+    .homework-subject .media-card::before {
+        content: '';
+        position: absolute;
+        inset-inline: 0;
+        top: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .homework-subject .media-card.accent-video::before {
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-light));
+    }
+
+    .homework-subject .media-card.accent-download::before {
+        background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+    }
+
+    .homework-subject .media-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+    }
+
+/* Header */
+.homework-subject .media-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+
+.homework-subject .media-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    line-height: 1.35;
+}
+
+.homework-subject .media-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--gray-50);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+    .homework-subject .media-icon.video {
+        background: rgba(6, 182, 212, .08);
+        color: var(--secondary-color);
+    }
+
+    .homework-subject .media-icon.download {
+        background: rgba(79, 70, 229, .08);
+        color: var(--primary-color);
+    }
+
+/* Meta list */
+.homework-subject .media-meta {
+    list-style: none;
+    margin: .25rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+    .homework-subject .media-meta li {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        font-size: .92rem;
+        color: var(--gray-600);
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        padding: .5rem .6rem;
+        border-radius: 10px;
+        transition: background-color .15s ease;
+    }
+
+        .homework-subject .media-meta li i {
+            color: var(--primary-color);
+            width: 18px;
+            text-align: center;
+        }
+
+/* Pills */
+.homework-subject .meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .35rem .6rem;
+    border-radius: 999px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    color: var(--gray-700);
+}
+
+.homework-subject .duration-pill {
+    border-color: rgba(6, 182, 212, .25);
+    background: rgba(6, 182, 212, .08);
+    color: var(--secondary-color);
+}
+
+/* Actions */
+.homework-subject .media-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-top: .9rem;
+}
+
+.homework-subject .btn-watch {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: #fff;
+    border: none;
+    padding: .6rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+
+    .homework-subject .btn-watch:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+.homework-subject .btn-download {
+    border: 1px solid var(--gray-300);
+    background: #fff;
+    color: var(--gray-700);
+    padding: .55rem .9rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+}
+
+    .homework-subject .btn-download:hover {
+        background: var(--gray-50);
+        border-color: var(--gray-400);
+        transform: translateY(-1px);
+    }
+
+/* Make existing attend-exam-btn look like the rest on Homework */
+.homework-subject .attend-exam-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: #fff;
+    border: none;
+    padding: .55rem .9rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+    .homework-subject .attend-exam-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .homework-subject .attend-exam-btn[disabled] {
+        opacity: .6;
+        cursor: not-allowed;
+    }
+
+/* Align buttons dynamically based on language direction */
+html[dir="ltr"] .navbar-nav {
+    justify-content: flex-start!important; /* Align to left for LTR */
+}
+
+html[dir="rtl"] .navbar-nav {
+    justify-content: flex-end!important; /* Align to right for RTL */
 }

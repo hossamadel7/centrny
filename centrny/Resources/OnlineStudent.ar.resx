@@ -14,17 +14,17 @@
 	</resheader>
 
 	<data name="Title_Dashboard">
-		<value>لوحة الطالب</value>
+		<value> الطالب</value>
 	</data>
 	<data name="Title_LearningCenter">
-		<value>مركز التعلم</value>
+		<value>ملف الطالب</value>
 	</data>
 
 	<data name="Nav_Dashboard">
-		<value>لوحة القيادة</value>
+		<value>ملف الطالب</value>
 	</data>
 	<data name="Nav_LearningCenter">
-		<value>مركز التعلم</value>
+		<value> الحصص الاونلاين</value>
 	</data>
 
 	<data name="Section_AcademicOverview">
@@ -222,4 +222,107 @@
 	<data name="Error">
 		<value>خطأ</value>
 	</data>
+  <data name="Title_Homework">
+    <value>الواجبات</value>
+  </data>
+  <data name="Nav_Homework">
+    <value>الواجبات</value>
+  </data>
+  <data name="Assignments">
+    <value>الواجبات</value>
+  </data>
+  <data name="Available_Videos">
+    <value>فيديوهات متاحة</value>
+  </data>
+  <data name="Downloadable_Files">
+    <value>ملفات قابلة للتحميل</value>
+  </data>
+  <data name="Loading_Homework">
+    <value>جارٍ تحميل الواجبات...</value>
+  </data>
+  <data name="Loading_Assignments">
+    <value>جارٍ تحميل الواجبات...</value>
+  </data>
+  <data name="Loading_Videos">
+    <value>جارٍ تحميل الفيديوهات...</value>
+  </data>
+  <data name="Loading_Downloads">
+    <value>جارٍ تحميل الملفات...</value>
+  </data>
+  <data name="NoAssignments">
+    <value>لا توجد واجبات</value>
+  </data>
+  <data name="NoAssignmentsMsg">
+    <value>لا توجد واجبات متاحة لآخر درس في هذه المادة.</value>
+  </data>
+  <data name="NoVideos">
+    <value>لا توجد فيديوهات</value>
+  </data>
+  <data name="NoVideosMsg">
+    <value>لا توجد فيديوهات متاحة لآخر درس في هذه المادة.</value>
+  </data>
+  <data name="NoFiles">
+    <value>لا توجد ملفات</value>
+  </data>
+  <data name="NoFilesMsg">
+    <value>لا توجد ملفات قابلة للتحميل لآخر درس في هذه المادة.</value>
+  </data>
+  <data name="Attend_Assignment">
+    <value>حضور الواجب</value>
+  </data>
+  <data name="Attended">
+    <value>تم الحضور</value>
+  </data>
+  <data name="Watch_Video">
+    <value>مشاهدة الفيديو</value>
+  </data>
+  <data name="Download">
+    <value>تنزيل</value>
+  </data>
+  <data name="Failed_Load_Assignments">
+    <value>فشل تحميل الواجبات.</value>
+  </data>
+  <data name="Failed_Load_Videos">
+    <value>فشل تحميل الفيديوهات.</value>
+  </data>
+  <data name="Failed_Load_Downloads">
+    <value>فشل تحميل الملفات القابلة للتحميل.</value>
+  </data>
+  <data name="Closed">
+    <value>مغلق.</value>
+  </data>
+  <data name="Access_Expired">
+    <value>انتهى الوصول. أدخل رمز PIN.</value>
+  </data>
+
+  <!-- Attended Sessions -->
+  <data name="Section_AttendedSessions">
+    <value>الجلسات التي تم حضورها</value>
+  </data>
+  <data name="Loading_Sessions">
+    <value>جارٍ تحميل الجلسات...</value>
+  </data>
+  <data name="Empty_NoSessionsTitle">
+    <value>لا توجد جلسات</value>
+  </data>
+  <data name="Empty_NoSessionsMessage">
+    <value>لا توجد سجلات حضور حتى الآن.</value>
+  </data>
+  <data name="Alert_LoadSessionsFailed">
+    <value>فشل تحميل الجلسات</value>
+  </data>
+  <data name="Source_Online">
+    <value>أونلاين</value>
+  </data>
+  <data name="Source_Center">
+    <value>السنتر</value>
+  </data>
+
+  <!-- Common UI -->
+  <data name="Label_Language">
+    <value>اللغة</value>
+  </data>
+  <data name="Logout">
+    <value>تسجيل الخروج</value>
+  </data>
 </root>

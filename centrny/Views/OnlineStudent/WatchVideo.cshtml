@@ -1,0 +1,180 @@
+﻿@{
+    Layout = null;
+    var vf = ViewBag.VideoFile as centrny.Models.File;
+    var fileCode = (int)(ViewBag.FileCode ?? 0);
+    var title = vf?.DisplayName ?? "Video";
+}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8" />
+    <title>@title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/OnlineStudent.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
+    <style>
+        .video-viewer-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-50);
+            padding: 2rem;
+        }
+
+        .video-card {
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: min(1100px, 100%);
+            padding: 1rem 1rem 1.5rem;
+        }
+
+        .video-header {
+            padding: .75rem 1rem 1rem;
+        }
+
+        .video-title {
+            margin: 0;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .player-area {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+            .player-area iframe, .player-area video {
+                width: 100%;
+                height: 62vh;
+            }
+
+        .loading-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            padding: 3rem;
+        }
+
+        .back-btn {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-viewer-wrap">
+        <div class="video-card">
+            <div class="video-header">
+                <h3 class="video-title"><i class="fas fa-video me-2"></i>@title</h3>
+            </div>
+            <div id="playerArea" class="player-area">
+                <div class="loading-panel">
+                    <div class="spinner"></div>
+                    <div>Loading video...</div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    @if (vf != null)
+                    {
+                        <span><i class="fas fa-bookmark me-1"></i>@(vf.LessonCodeNavigation?.LessonName ?? "")</span>
+                        <span class="mx-2">•</span>
+                        <span><i class="fas fa-chalkboard-teacher me-1"></i>@(vf.LessonCodeNavigation?.TeacherCodeNavigation?.TeacherName ?? "")</span>
+                    }
+                </div>
+                <a class="btn btn-outline-secondary back-btn" href="/OnlineStudent/Homework">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Build a robust YouTube embed URL from watch or youtu.be links and preserve query params.
+        function buildYouTubeEmbedUrl(raw) {
+            try {
+                const u = new URL(raw);
+                const host = u.hostname.replace(/^www\./, '');
+                let videoId = null;
+
+                if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') {
+                    // watch?v=ID
+                    videoId = u.searchParams.get('v');
+                }
+                if (!videoId && (host === 'youtu.be')) {
+                    // youtu.be/ID
+                    videoId = u.pathname.split('/').filter(Boolean).pop();
+                }
+                if (!videoId) {
+                    return null; // not a recognized YouTube URL
+                }
+
+                // Preserve useful params
+                const keepParams = ['list', 'index', 'start', 't', 'si']; // add others if you need
+                const qs = new URLSearchParams();
+                for (const k of keepParams) {
+                    if (u.searchParams.has(k)) qs.set(k, u.searchParams.get(k));
+                }
+                // Recommended params
+                qs.set('rel', '0');
+                qs.set('modestbranding', '1');
+                qs.set('origin', window.location.origin);
+
+                // Use nocookie embed for better privacy (optional)
+                const base = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}`;
+                const url = `${base}?${qs.toString()}`;
+                return url;
+            } catch {
+                return null;
+            }
+        }
+
+        (function () {
+            const fileCode = @fileCode;
+            const playerArea = document.getElementById('playerArea');
+
+            fetch(`/OnlineStudent/GetSecureVideoUrl?fileCode=${fileCode}`)
+                .then(r => {
+                    if (!r.ok) throw new Error('Failed to get secure URL');
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data || !data.secureUrl) {
+                        playerArea.innerHTML = `<div class="loading-panel">Failed to load video.</div>`;
+                        return;
+                    }
+
+                    const provider = String(data.provider || '').toLowerCase();
+                    if (provider.includes('youtube')) {
+                        const embedUrl = buildYouTubeEmbedUrl(data.secureUrl);
+                        if (!embedUrl) {
+                            playerArea.innerHTML = `<div class="loading-panel">Invalid YouTube URL.</div>`;
+                            return;
+                        }
+                        playerArea.innerHTML = `
+                            <iframe
+                                src="${embedUrl}"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen
+                                referrerpolicy="origin-when-cross-origin">
+                            </iframe>`;
+                    } else {
+                        // Direct file/CDN
+                        playerArea.innerHTML = `<video controls playsinline src="${data.secureUrl}"></video>`;
+                    }
+                })
+                .catch(() => {
+                    playerArea.innerHTML = `<div class="loading-panel">Error loading video.</div>`;
+                });
+        })();
+    </script>
+</body>
+</html>

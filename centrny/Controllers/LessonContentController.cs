@@ -644,6 +644,18 @@ namespace centrny.Controllers
                     .Select(et => et.Exam)
                     .ToListAsync();
 
+                // Find the required lesson exam (IsExam == true)
+                var requiredExam = examsData.FirstOrDefault(e => e.IsExam == true);
+                var studentCode = GetSessionInt("StudentCode");
+                bool hasAttendedRequiredExam = false;
+                if (studentCode.HasValue && requiredExam != null)
+                {
+                    hasAttendedRequiredExam = await _context.StudentExams
+                        .AnyAsync(se => se.StudentCode == studentCode.Value
+                                        && se.ExamCode == requiredExam.ExamCode
+                                        && se.IsActive == true);
+                }
+
                 // Build exam/assignment items with explicit examCode and fileCode
                 var examItems = examFileLinks.Select(f =>
                 {
@@ -657,9 +669,10 @@ namespace centrny.Controllers
                         // explicit identifiers
                         fileCode = f.FileCode,
                         examCode = exam.ExamCode,
+                        isExam = exam.IsExam, // important for front-end label
 
                         displayName = exam.ExamName ?? "Unknown Exam",
-                        itemType = exam.IsExam ? "Exam" : "Assignment",
+                        itemType = exam.IsExam == true ? "Exam" : "Assignment",
                         fileType = 3,
                         // prefer exam.SortOrder, fallback to file.SortOrder
                         sortOrder = exam.SortOrder ?? f.SortOrder,
@@ -670,11 +683,13 @@ namespace centrny.Controllers
                         fileSizeFormatted = (string)null,
                         duration = (TimeSpan?)null,
                         durationFormatted = (string)null,
-                        contentType = exam.IsExam ? "exam" : "assignment",
+                        contentType = exam.IsExam == true ? "exam" : "assignment",
                         examDegree = exam.ExamDegree,
-                        examTimer = exam.ExamTimer.ToString(@"HH\\:mm"),
+                        examTimer = exam.ExamTimer.ToString(@"HH\:mm"),
                         isOnline = exam.IsOnline,
-                        isDone = exam.IsDone
+                        isDone = exam.IsDone,
+                        // helpful for client (optional)
+                        isLessonExam = (exam.IsExam == true)
                     };
                 }).Where(x => x != null).ToList();
 
@@ -697,13 +712,13 @@ namespace centrny.Controllers
                         fileSizeBytes = f.FileSizeBytes,
                         fileSizeFormatted = f.FileSizeBytes.HasValue ? FormatFileSize(f.FileSizeBytes.Value) : null,
                         duration = f.Duration,
-                        durationFormatted = f.Duration?.ToString(@"hh\\:mm\\:ss"),
+                        durationFormatted = f.Duration?.ToString(@"hh\:mm\:ss"),
                         contentType = "content",
                         isOnlineLesson = f.IsOnlineLesson,
-                        examDegree = (string)null,
-                        examTimer = (string)null,
-                        isOnline = (bool?)null,
-                        isDone = (bool?)null
+                        // FIX: coalesce nullable bool to avoid '&&' with bool?
+                        locked = (f.FileType == 1 && (f.IsOnlineLesson ?? false) && !hasAttendedRequiredExam),
+                        lockReason = (f.FileType == 1 && (f.IsOnlineLesson ?? false) && !hasAttendedRequiredExam)
+                                        ? "ExamRequired" : null
                     }).ToList();
 
                 var allContent = normalFiles.Cast<object>().Concat(examItems.Cast<object>())
@@ -721,6 +736,8 @@ namespace centrny.Controllers
                 return StatusCode(500, $"Error loading lesson content: {ex.Message}");
             }
         }
+
+
         [HttpGet]
         public async Task<IActionResult> GetAvailableExams(int lessonCode, bool? isExam = null)
         {
@@ -1326,7 +1343,8 @@ namespace centrny.Controllers
                 examDegree = e.ExamDegree,
                 examTimer = e.ExamTimer.ToString(@"HH\:mm"),
                 isOnline = e.IsOnline,
-                isDone = e.IsDone
+                isDone = e.IsDone,
+                isExam = e.IsExam // <--- ADD THIS LINE
             }).Cast<object>().ToList();
 
             return files.Concat(exams).OrderBy(o =>
@@ -1365,6 +1383,36 @@ namespace centrny.Controllers
 
             if (videoFile == null)
                 return NotFound("Video not found");
+
+            // FIX: handle nullable bool (IsOnlineLesson is bool?)
+            if (videoFile.IsOnlineLesson == true)
+            {
+                var studentCode = GetSessionInt("StudentCode");
+                // Find the lesson's main exam (IsExam == true)
+                var requiredExam = await _context.Exams
+                    .Join(_context.Teachers, e => e.TeacherCode, t => t.TeacherCode, (e, t) => new { e, t })
+                    .Where(et => et.e.LessonCode == videoFile.LessonCode
+                                 && et.e.IsActive == true
+                                 && et.e.IsExam == true
+                                 && et.t.RootCode == rootCode.Value)
+                    .Select(et => et.e)
+                    .FirstOrDefaultAsync();
+
+                if (requiredExam != null)
+                {
+                    var attended = studentCode.HasValue && await _context.StudentExams
+                        .AnyAsync(se => se.StudentCode == studentCode.Value
+                                        && se.ExamCode == requiredExam.ExamCode
+                                        && se.IsActive == true);
+
+                    if (!attended)
+                    {
+                        // Deny until exam is attended
+                        return StatusCode(403, "You must attend the exam before accessing this video.");
+                    }
+                }
+                // If no required exam exists, allow by default
+            }
 
             var originalUrl = DecryptString(videoFile.FileLocation);
             var expiryHours = videoFile.LessonCodeNavigation?.LessonExpireDays.HasValue == true
