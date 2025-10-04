@@ -59,7 +59,9 @@
 	<data name="Degree" xml:space="preserve"><value>Degree</value></data>
 	<data name="NA" xml:space="preserve"><value>N/A</value></data>
 	<data name="Btn_OK" xml:space="preserve"><value>OK</value></data>
-<data name="ViewAssignmentsAndExams" xml:space="preserve">
-  <value>View your assignments and exams</value>
-</data>
+	<data name="ViewAssignmentsAndExams" xml:space="preserve"><value>View your assignments and exams</value></data>
+	<data name="RegistrationSuccessfulTitle" xml:space="preserve"><value>Registration Successful!</value></data>
+	<data name="RegistrationSuccessfulMessage" xml:space="preserve"><value>Registration successful! Welcome {0}</value></data>
+	<data name="StudentAlreadyRegistered" xml:space="preserve"><value>Student already registered</value></data>
+	<data name="UsernameValidationMessage" xml:space="preserve"><value>Username must be 4-40 characters and contain only letters, numbers, or underscores.</value></data>
 </root>

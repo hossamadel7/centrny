@@ -16,6 +16,8 @@
 // Toggle debug: window.__regDebug = true/false
 
 window.__regDebug = true;
+
+
 function dlog(...args) { if (window.__regDebug) console.debug('[Reg]', ...args); }
 function derror(...args) { if (window.__regDebug) console.error('[Reg]', ...args); }
 
@@ -87,6 +89,25 @@ function setupEventListeners() {
     if (validatePinAndUsernameBtn) validatePinAndUsernameBtn.addEventListener('click', validatePinAndUsername);
 
     const usernameInput = document.getElementById('username');
+
+    const isRtl = document.documentElement.dir === 'rtl';
+    const localizedUsernameError = isRtl
+        ? "اسم المستخدم يجب أن يتكون من 4 إلى 40 حرفًا ويحتوي فقط على حروف أو أرقام أو شرطة سفلية (_)"
+        : "Username must be 4-40 characters and contain only letters, numbers, or underscores.";
+
+    if (usernameInput) {
+        usernameInput.addEventListener('input', function () {
+            const value = usernameInput.value.trim();
+            if (!isValidUsername(value)) {
+                document.getElementById('userError').textContent = localizedUsernameError;
+                usernameInput.classList.add('is-invalid');
+            } else {
+                document.getElementById('userError').textContent = "";
+                usernameInput.classList.remove('is-invalid');
+            }
+        });
+    }
+
     if (usernameInput) {
         usernameInput.addEventListener('blur', async () => {
             const raw = usernameInput.value || '';
@@ -116,6 +137,8 @@ function setupEventListeners() {
     const completeOnlineBtn = document.getElementById('completeOnlineBtn');
     if (completeOnlineBtn) completeOnlineBtn.addEventListener('click', submitOnlineRegistration);
 }
+
+
 window.setupEventListeners = setupEventListeners; // make globally accessible just in case
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -255,6 +278,13 @@ function ensureScrollEnabled() { document.documentElement.style.overflowY = 'aut
 function escapeHtml(s) { if (s == null) return ''; return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", "&#39;"); }
 function escapeHtmlAttr(s) { return escapeHtml(String(s ?? '')).replaceAll(' ', '&#32;'); }
 function escapeJs(s) { if (s == null) return ''; return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+
+
+const USERNAME_REGEX = /^[A-Za-z0-9_]{4,40}$/;
+
+function isValidUsername(username) {
+    return USERNAME_REGEX.test(username);
+}
 
 function normalizeUsername(u) {
     if (!u) return '';
